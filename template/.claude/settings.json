@@ -8,6 +8,9 @@
     ],
     "SessionEnd": [
       { "hooks": [ { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/session-end.sh\"", "timeout": 10 } ] }
+    ],
+    "PreCompact": [
+      { "hooks": [ { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/pre-compact.sh\"", "timeout": 10 } ] }
     ]
   }
 }

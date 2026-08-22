@@ -1,13 +1,22 @@
 #!/bin/bash
-# Second Brain — UserPromptSubmit hook
-# Counts prompts; nudges once at 15 to save memory before the session ends.
-VAULT_DIR="$(dirname "$(dirname "$(dirname "$0")")")"
-STATE_DIR="$VAULT_DIR/.claude/hooks/.state"
-mkdir -p "$STATE_DIR"
-COUNT=0; [ -f "$STATE_DIR/prompt_count" ] && COUNT=$(cat "$STATE_DIR/prompt_count" 2>/dev/null || echo 0)
-COUNT=$((COUNT + 1)); echo "$COUNT" > "$STATE_DIR/prompt_count"
-if [ "$COUNT" -eq 15 ]; then
-  ESC=$(python3 -c "import json; print(json.dumps('[Memory] Oturum uzadı. Bitirirken 🔮 850-Companion/Last-Session.md ve Threads.md güncellemeyi unutma.'))" 2>/dev/null)
-  [ -n "$ESC" ] && echo "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":$ESC}}"
+[ -n "${BEYIN_INVOKED_BY:-}" ] && exit 0
+# Count prompts and nudge at every multiple of fifteen.
+
+BEYIN_HOOK_DIR=$(CDPATH= cd "$(dirname "$0")" 2>/dev/null && pwd)
+. "$BEYIN_HOOK_DIR/lib.sh" 2>/dev/null || exit 0
+
+BEYIN_COUNT=0
+if [ -f "$BEYIN_STATE_DIR/prompt_count" ]; then
+  BEYIN_COUNT=$(sed -n '1p' "$BEYIN_STATE_DIR/prompt_count" 2>/dev/null || :)
+fi
+case "$BEYIN_COUNT" in
+  ''|*[!0-9]*) BEYIN_COUNT=0 ;;
+esac
+
+BEYIN_COUNT=$((BEYIN_COUNT + 1))
+printf '%s\n' "$BEYIN_COUNT" > "$BEYIN_STATE_DIR/prompt_count" 2>/dev/null || :
+
+if [ $((BEYIN_COUNT % 15)) -eq 0 ]; then
+  beyin_emit UserPromptSubmit "[Hafıza] $BEYIN_COUNT. mesaj. Oturum sonunda 🔮 850-Companion/Last-Session.md ve Threads.md güncellemeyi unutma."
 fi
 exit 0
