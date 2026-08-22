@@ -46,6 +46,38 @@ beyin_json_escape() {
   fi
 }
 
+beyin_session_key() {
+  if ! command -v python3 >/dev/null 2>&1; then
+    beyin_mark_python_missing
+    return 1
+  fi
+
+  python3 -c '
+import hashlib
+import json
+import sys
+
+payload = json.load(sys.stdin)
+session_id = payload.get("session_id") if isinstance(payload, dict) else None
+if not isinstance(session_id, str) or not session_id:
+    raise SystemExit(1)
+print(hashlib.sha256(session_id.encode("utf-8")).hexdigest())
+' 2>/dev/null
+}
+
+beyin_cleanup_session_state() {
+  [ -d "$BEYIN_STATE_DIR" ] || return 0
+
+  find "$BEYIN_STATE_DIR" -type f \( \
+    -name 'session_start_time.*' -o \
+    -name 'prompt_count.*' -o \
+    -name 'needs_reflection.*' -o \
+    -name 'hookin-*.json' \
+  \) -mtime +7 -exec rm -f {} \; 2>/dev/null || :
+  find "$BEYIN_STATE_DIR" -type d -name 'prompt_count.*.lock' \
+    -mtime +7 -exec rmdir {} \; 2>/dev/null || :
+}
+
 beyin_emit() {
   BEYIN_EVENT=$1
   BEYIN_TEXT=$2

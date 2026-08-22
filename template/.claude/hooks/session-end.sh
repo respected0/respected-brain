@@ -12,11 +12,24 @@ if ! cat > "$BEYIN_HOOK_INPUT" 2>/dev/null; then
   BEYIN_HOOK_INPUT=""
 fi
 
+BEYIN_SESSION_KEY=""
+if [ -n "$BEYIN_HOOK_INPUT" ]; then
+  BEYIN_SESSION_KEY=$(beyin_session_key < "$BEYIN_HOOK_INPUT" 2>/dev/null || :)
+fi
+
 BEYIN_MEMORY_DIR="$BEYIN_PROJECT_DIR/🔮 850-Companion"
 BEYIN_START=0
 BEYIN_PROMPTS=0
-[ -f "$BEYIN_STATE_DIR/session_start_time" ] && BEYIN_START=$(sed -n '1p' "$BEYIN_STATE_DIR/session_start_time" 2>/dev/null || :)
-[ -f "$BEYIN_STATE_DIR/prompt_count" ] && BEYIN_PROMPTS=$(sed -n '1p' "$BEYIN_STATE_DIR/prompt_count" 2>/dev/null || :)
+BEYIN_SESSION_START_FILE=""
+BEYIN_PROMPT_COUNT_FILE=""
+BEYIN_REFLECTION_FILE=""
+if [ -n "$BEYIN_SESSION_KEY" ]; then
+  BEYIN_SESSION_START_FILE="$BEYIN_STATE_DIR/session_start_time.$BEYIN_SESSION_KEY"
+  BEYIN_PROMPT_COUNT_FILE="$BEYIN_STATE_DIR/prompt_count.$BEYIN_SESSION_KEY"
+  BEYIN_REFLECTION_FILE="$BEYIN_STATE_DIR/needs_reflection.$BEYIN_SESSION_KEY"
+  [ -f "$BEYIN_SESSION_START_FILE" ] && BEYIN_START=$(sed -n '1p' "$BEYIN_SESSION_START_FILE" 2>/dev/null || :)
+  [ -f "$BEYIN_PROMPT_COUNT_FILE" ] && BEYIN_PROMPTS=$(sed -n '1p' "$BEYIN_PROMPT_COUNT_FILE" 2>/dev/null || :)
+fi
 case "$BEYIN_START" in ''|*[!0-9]*) BEYIN_START=0 ;; esac
 case "$BEYIN_PROMPTS" in ''|*[!0-9]*) BEYIN_PROMPTS=0 ;; esac
 
@@ -27,10 +40,10 @@ if [ -f "$BEYIN_MEMORY_DIR/Last-Session.md" ]; then
   [ "$BEYIN_FILE_MTIME" -gt "$BEYIN_START" ] 2>/dev/null && BEYIN_MODIFIED=1
 fi
 
-if [ "$BEYIN_PROMPTS" -ge 5 ] && [ "$BEYIN_MODIFIED" -eq 0 ]; then
+if [ "$BEYIN_PROMPTS" -ge 5 ] && [ "$BEYIN_MODIFIED" -eq 0 ] && [ -n "$BEYIN_REFLECTION_FILE" ]; then
   printf 'Oturum hafıza güncellemeden bitti. Prompt: %s. %s\n' \
     "$BEYIN_PROMPTS" "$(date '+%Y-%m-%d %H:%M' 2>/dev/null)" \
-    > "$BEYIN_STATE_DIR/needs_reflection" 2>/dev/null || :
+    > "$BEYIN_REFLECTION_FILE" 2>/dev/null || :
 fi
 
 if [ -n "$BEYIN_HOOK_INPUT" ]; then
@@ -44,5 +57,6 @@ if [ -n "$BEYIN_HOOK_INPUT" ]; then
   fi
 fi
 
-rm -f "$BEYIN_STATE_DIR/session_start_time" "$BEYIN_STATE_DIR/prompt_count" 2>/dev/null || :
+[ -n "$BEYIN_SESSION_START_FILE" ] && rm -f "$BEYIN_SESSION_START_FILE" 2>/dev/null || :
+[ -n "$BEYIN_PROMPT_COUNT_FILE" ] && rm -f "$BEYIN_PROMPT_COUNT_FILE" 2>/dev/null || :
 exit 0

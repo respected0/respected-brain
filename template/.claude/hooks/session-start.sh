@@ -7,8 +7,15 @@ BEYIN_HOOK_DIR=$(CDPATH= cd "$(dirname "$0")" 2>/dev/null && pwd)
 
 BEYIN_MEMORY_DIR="$BEYIN_PROJECT_DIR/🔮 850-Companion"
 mkdir -p "$BEYIN_STATE_DIR" 2>/dev/null || :
-date '+%s' > "$BEYIN_STATE_DIR/session_start_time" 2>/dev/null || :
-printf '%s\n' 0 > "$BEYIN_STATE_DIR/prompt_count" 2>/dev/null || :
+beyin_cleanup_session_state
+
+BEYIN_SESSION_KEY=$(beyin_session_key 2>/dev/null || :)
+if [ -n "$BEYIN_SESSION_KEY" ]; then
+  BEYIN_SESSION_START_FILE="$BEYIN_STATE_DIR/session_start_time.$BEYIN_SESSION_KEY"
+  BEYIN_PROMPT_COUNT_FILE="$BEYIN_STATE_DIR/prompt_count.$BEYIN_SESSION_KEY"
+  date '+%s' > "$BEYIN_SESSION_START_FILE" 2>/dev/null || :
+  printf '%s\n' 0 > "$BEYIN_PROMPT_COUNT_FILE" 2>/dev/null || :
+fi
 
 BEYIN_LAST_SESSION=""
 if [ -f "$BEYIN_MEMORY_DIR/Last-Session.md" ]; then
@@ -63,18 +70,54 @@ else
 fi
 [ -n "$BEYIN_DAILY_FILE" ] && BEYIN_DAILY=$(tail -n 25 "$BEYIN_DAILY_FILE" 2>/dev/null)
 
-BEYIN_REFLECTION=""
-if [ -f "$BEYIN_STATE_DIR/needs_reflection" ]; then
-  BEYIN_REFLECTION="⚠️ Önceki oturum hafıza güncellemeden bitti: $(sed -n '1p' "$BEYIN_STATE_DIR/needs_reflection" 2>/dev/null). Anlamlı bir şey olduysa 🔮 850-Companion dosyalarını güncelle."
-  rm -f "$BEYIN_STATE_DIR/needs_reflection" 2>/dev/null || :
-fi
-
 BEYIN_NL='
 '
+BEYIN_REFLECTION=""
+for BEYIN_REFLECTION_FILE in \
+  "$BEYIN_STATE_DIR/needs_reflection" \
+  "$BEYIN_STATE_DIR"/needs_reflection.*
+do
+  [ -f "$BEYIN_REFLECTION_FILE" ] || continue
+  BEYIN_REFLECTION_DETAIL=$(sed -n '1p' "$BEYIN_REFLECTION_FILE" 2>/dev/null || :)
+  if [ -n "$BEYIN_REFLECTION_DETAIL" ]; then
+    [ -n "$BEYIN_REFLECTION" ] && BEYIN_REFLECTION="${BEYIN_REFLECTION}${BEYIN_NL}"
+    BEYIN_REFLECTION="${BEYIN_REFLECTION}⚠️ Önceki oturum hafıza güncellemeden bitti: ${BEYIN_REFLECTION_DETAIL}. Anlamlı bir şey olduysa 🔮 850-Companion dosyalarını güncelle."
+  fi
+  rm -f "$BEYIN_REFLECTION_FILE" 2>/dev/null || :
+done
+
+# Hard section entry caps, including truncation notes: Last Session 4000,
+# Threads 2000, Kurallar 4000, Journal 1500, reflection debt 1000 characters.
+beyin_cap_section() {
+  BEYIN_CAP_VALUE=$1
+  BEYIN_CAP_LIMIT=$2
+  BEYIN_CAP_NOTE=$3
+  if [ "${#BEYIN_CAP_VALUE}" -le "$BEYIN_CAP_LIMIT" ]; then
+    printf '%s' "$BEYIN_CAP_VALUE"
+    return 0
+  fi
+
+  BEYIN_CAP_KEEP=$((BEYIN_CAP_LIMIT - ${#BEYIN_CAP_NOTE} - 1))
+  [ "$BEYIN_CAP_KEEP" -gt 0 ] || BEYIN_CAP_KEEP=0
+  printf '%s\n%s' "${BEYIN_CAP_VALUE:0:$BEYIN_CAP_KEEP}" "$BEYIN_CAP_NOTE"
+}
+
+BEYIN_LAST_SESSION=$(beyin_cap_section "$BEYIN_LAST_SESSION" 4000 \
+  '[not: son oturum 4.000 karakterde kırpıldı, beyin-doktor çalıştır]')
+BEYIN_THREADS=$(beyin_cap_section "$BEYIN_THREADS" 2000 \
+  '[not: aktif konular 2.000 karakterde kırpıldı, beyin-doktor çalıştır]')
+BEYIN_RULES=$(beyin_cap_section "$BEYIN_RULES" 4000 \
+  '[not: kurallar 4.000 karakterde kırpıldı, beyin-doktor çalıştır]')
+BEYIN_JOURNAL=$(beyin_cap_section "$BEYIN_JOURNAL" 1500 \
+  '[not: son Journal 1.500 karakterde kırpıldı, beyin-doktor çalıştır]')
+BEYIN_REFLECTION=$(beyin_cap_section "$BEYIN_REFLECTION" 1000 \
+  '[not: hafıza uyarıları 1.000 karakterde kırpıldı, beyin-doktor çalıştır]')
+
 BEYIN_TRUNCATED=0
 BEYIN_CLOSING='[Hafıza] Süreklilik senin sorumluluğun. Bu kullanıcı için kim olduğunu anlamak üzere 🔮 850-Companion/Core.md dosyasını oku.
 Hafıza protokolü zorunludur.'
 BEYIN_TRUNCATION_NOTE='[not: indeks kırpıldı, beyin-doktor çalıştır]'
+BEYIN_CAP_DIAGNOSTIC='Beyin uyarısı: Oturum başlangıç bağlamı 16.000 karakter sınırına sığmadı. Bölüm limitlerini kontrol etmek için beyin-doktor çalıştır.'
 
 beyin_build_context() {
   BEYIN_CONTEXT=""
@@ -137,6 +180,10 @@ if [ "${#BEYIN_CONTEXT}" -gt 16000 ]; then
     fi
     beyin_build_context
   fi
+fi
+
+if [ "${#BEYIN_CONTEXT}" -gt 16000 ]; then
+  BEYIN_CONTEXT=$BEYIN_CAP_DIAGNOSTIC
 fi
 
 [ -n "$BEYIN_CONTEXT" ] && beyin_emit SessionStart "$BEYIN_CONTEXT"

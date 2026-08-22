@@ -38,6 +38,15 @@ assert_not_contains() {
   esac
 }
 
+session_key() {
+  python3 - "$1" <<'PY'
+import hashlib
+import sys
+
+print(hashlib.sha256(sys.argv[1].encode("utf-8")).hexdigest())
+PY
+}
+
 wait_for_file() {
   python3 - "$1" <<'PY'
 import os
@@ -84,6 +93,30 @@ with open(path, encoding="utf-8") as handle:
 PY
 }
 
+assert_exact_start_headers() {
+  python3 - "$1" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as handle:
+    context = json.load(handle)["hookSpecificOutput"]["additionalContext"]
+headers = [
+    line for line in context.splitlines()
+    if line.startswith("[") and line.endswith("]")
+]
+assert headers == [
+    "[Hafıza: Son Oturum]",
+    "[Hafıza: Aktif Konular]",
+    "[Hafıza: Kurallar]",
+    "[Hafıza: Son Journal]",
+    "[Bilgi Tabanı: İndeks]",
+    "[Bugünün Logu]",
+], headers
+assert "\N{EM DASH}" not in context
+assert "\N{EN DASH}" not in context
+PY
+}
+
 HOOK_NAMES="lib.sh session-start.sh prompt-counter.sh session-end.sh pre-compact.sh"
 for hook_name in $HOOK_NAMES; do
   assert_file "$SOURCE_HOOKS/$hook_name"
@@ -91,6 +124,17 @@ for hook_name in $HOOK_NAMES; do
 done
 bash -n "$0" || fail "bash -n: tests/hooks_test.sh"
 pass "tüm shell dosyaları bash -n kontrolünden geçti"
+
+python3 - "$SOURCE_HOOKS" <<'PY'
+from pathlib import Path
+import sys
+
+for path in Path(sys.argv[1]).glob("*.sh"):
+    source = path.read_text(encoding="utf-8")
+    assert "\N{EM DASH}" not in source, path
+    assert "\N{EN DASH}" not in source, path
+PY
+pass "hook kaynaklarında em dash ve en dash bulunmuyor"
 
 for hook_name in lib.sh session-start.sh prompt-counter.sh session-end.sh pre-compact.sh; do
   guard_line=$(sed -n '2p' "$SOURCE_HOOKS/$hook_name")
@@ -199,9 +243,11 @@ done
 printf '%s\n' 'önceki borç' > "$STATE/needs_reflection"
 
 START_OUT="$TEST_TMP/session-start.json"
+START_KEY=$(session_key s-start)
 printf '%s\n' '{"session_id":"s-start","transcript_path":"/tmp/transcript.jsonl"}' \
   | CLAUDE_PROJECT_DIR="$VAULT" "$HOOKS/session-start.sh" > "$START_OUT"
 assert_json_or_empty "$START_OUT" SessionStart
+assert_exact_start_headers "$START_OUT"
 CONTEXT=$(json_context "$START_OUT")
 assert_contains "$CONTEXT" '⚠️ Önceki oturum hafıza güncellemeden bitti:'
 assert_contains "$CONTEXT" '[Hafıza: Son Oturum]'
@@ -228,11 +274,11 @@ assert_not_contains "$CONTEXT" 'daily-005'
 assert_contains "$CONTEXT" 'daily-030'
 assert_contains "$CONTEXT" 'Hafıza protokolü zorunludur.'
 [ ! -e "$STATE/needs_reflection" ] || fail "reflection işareti yüzeye çıktıktan sonra temizlenmedi"
-[ "$(sed -n '1p' "$STATE/prompt_count")" = 0 ] || fail "prompt sayacı sıfırlanmadı"
-case "$(sed -n '1p' "$STATE/session_start_time")" in
+[ "$(sed -n '1p' "$STATE/prompt_count.$START_KEY")" = 0 ] || fail "prompt sayacı sıfırlanmadı"
+case "$(sed -n '1p' "$STATE/session_start_time.$START_KEY")" in
   ''|*[!0-9]*) fail "session_start_time epoch değil" ;;
 esac
-pass "SessionStart v1 köprülerini ve yeni bilgi bölümlerini doğru sınırlarda enjekte ediyor"
+pass "SessionStart tüm bölüm başlıklarını tam kolon biçimiyle ve doğru sınırlarda enjekte ediyor"
 
 python3 - "$VAULT/knowledge/index.md" <<'PY'
 import sys
@@ -260,6 +306,85 @@ assert_contains "$CAP_CONTEXT" 'rule-60'
 assert_contains "$CAP_CONTEXT" 'daily-006'
 assert_contains "$CAP_CONTEXT" 'daily-030'
 pass "16.000 karakter bütçesi indeksi önce kırpıp korunan bölümleri ve günlük kuyruğunu saklıyor"
+
+cp "$MEMORY/Last-Session.md" "$TEST_TMP/Last-Session.saved"
+cp "$MEMORY/Threads.md" "$TEST_TMP/Threads.saved"
+cp "$MEMORY/Kurallar.md" "$TEST_TMP/Kurallar.saved"
+python3 - "$MEMORY" <<'PY'
+from pathlib import Path
+import sys
+
+memory = Path(sys.argv[1])
+(memory / "Last-Session.md").write_text(
+    "# Last Session\n## Session: Huge\nlast-" + "L" * 20_000
+    + "-LAST_TAIL\n## Previous\nsecret\n",
+    encoding="utf-8",
+)
+(memory / "Threads.md").write_text(
+    "# Threads\n## Active\n### thread-" + "T" * 10_000
+    + "-THREAD_TAIL\n**Status:** " + "S" * 10_000
+    + "\n## Closed\n",
+    encoding="utf-8",
+)
+(memory / "Kurallar.md").write_text(
+    "rule-" + "K" * 20_000 + "-RULE_TAIL\n",
+    encoding="utf-8",
+)
+PY
+PROTECTED_OUT="$TEST_TMP/session-start-protected-cap.json"
+printf '%s\n' '{"session_id":"s-protected","transcript_path":"/tmp/transcript.jsonl"}' \
+  | CLAUDE_PROJECT_DIR="$VAULT" "$HOOKS/session-start.sh" > "$PROTECTED_OUT"
+assert_json_or_empty "$PROTECTED_OUT" SessionStart
+PROTECTED_CONTEXT=$(json_context "$PROTECTED_OUT")
+python3 - "$PROTECTED_OUT" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as handle:
+    context = json.load(handle)["hookSpecificOutput"]["additionalContext"]
+assert len(context) <= 16_000, len(context)
+PY
+assert_contains "$PROTECTED_CONTEXT" '[not: son oturum 4.000 karakterde kırpıldı, beyin-doktor çalıştır]'
+assert_contains "$PROTECTED_CONTEXT" '[not: aktif konular 2.000 karakterde kırpıldı, beyin-doktor çalıştır]'
+assert_contains "$PROTECTED_CONTEXT" '[not: kurallar 4.000 karakterde kırpıldı, beyin-doktor çalıştır]'
+assert_not_contains "$PROTECTED_CONTEXT" 'LAST_TAIL'
+assert_not_contains "$PROTECTED_CONTEXT" 'THREAD_TAIL'
+assert_not_contains "$PROTECTED_CONTEXT" 'RULE_TAIL'
+pass "korunan üç bölüm kendi sert karakter limitlerinde kalıyor ve toplam bağlam sınırı aşılmıyor"
+mv "$TEST_TMP/Last-Session.saved" "$MEMORY/Last-Session.md"
+mv "$TEST_TMP/Threads.saved" "$MEMORY/Threads.md"
+mv "$TEST_TMP/Kurallar.saved" "$MEMORY/Kurallar.md"
+
+OLD_KEY=$(session_key old-session)
+RECENT_KEY=$(session_key recent-session)
+printf '%s\n' 1 > "$STATE/session_start_time.$OLD_KEY"
+printf '%s\n' 2 > "$STATE/prompt_count.$OLD_KEY"
+printf '%s\n' old > "$STATE/needs_reflection.$OLD_KEY"
+printf '%s\n' 3 > "$STATE/prompt_count.$RECENT_KEY"
+python3 - "$STATE" "$OLD_KEY" <<'PY'
+import os
+from pathlib import Path
+import sys
+import time
+
+state = Path(sys.argv[1])
+key = sys.argv[2]
+old = time.time() - 9 * 24 * 60 * 60
+for name in (
+    f"session_start_time.{key}",
+    f"prompt_count.{key}",
+    f"needs_reflection.{key}",
+):
+    os.utime(state / name, (old, old))
+PY
+CLEANUP_OUT="$TEST_TMP/session-start-cleanup.json"
+printf '%s\n' '{"session_id":"s-cleanup","transcript_path":"/tmp/transcript.jsonl"}' \
+  | CLAUDE_PROJECT_DIR="$VAULT" "$HOOKS/session-start.sh" > "$CLEANUP_OUT"
+[ ! -e "$STATE/session_start_time.$OLD_KEY" ] || fail "eski session_start_time temizlenmedi"
+[ ! -e "$STATE/prompt_count.$OLD_KEY" ] || fail "eski prompt_count temizlenmedi"
+[ ! -e "$STATE/needs_reflection.$OLD_KEY" ] || fail "eski needs_reflection temizlenmedi"
+[ "$(sed -n '1p' "$STATE/prompt_count.$RECENT_KEY")" = 3 ] || fail "yeni oturum durumu temizlendi"
+pass "SessionStart yedi günden eski oturum durumunu temizleyip yeni durumu koruyor"
 
 rm -f "$VAULT/daily/$TODAY.md"
 YESTERDAY=$(CLAUDE_PROJECT_DIR="$VAULT" /bin/bash -c '. "$1"; beyin_yesterday' _ "$HOOKS/lib.sh")
@@ -291,13 +416,16 @@ esac
 [ "$MTIME" -gt 0 ] || fail "beyin_mtime sıfır döndürdü"
 pass "beyin_mtime BSD/GNU sonucu doğrulayıp sayısal epoch üretiyor"
 
-printf '%s\n' 0 > "$STATE/prompt_count"
+SERIAL_SESSION=s-counter-serial
+SERIAL_KEY=$(session_key "$SERIAL_SESSION")
+printf '%s\n' '{"session_id":"s-counter-serial","transcript_path":"/tmp/transcript.jsonl"}' \
+  | CLAUDE_PROJECT_DIR="$VAULT" "$HOOKS/session-start.sh" >/dev/null
 NUDGES="$TEST_TMP/nudges.jsonl"
 : > "$NUDGES"
 i=1
 while [ "$i" -le 30 ]; do
   PROMPT_OUT="$TEST_TMP/prompt-$i.out"
-  printf '%s\n' '{"prompt":"deneme"}' \
+  printf '%s\n' '{"session_id":"s-counter-serial","prompt":"deneme"}' \
     | CLAUDE_PROJECT_DIR="$VAULT" "$HOOKS/prompt-counter.sh" > "$PROMPT_OUT"
   assert_json_or_empty "$PROMPT_OUT" UserPromptSubmit
   [ ! -s "$PROMPT_OUT" ] || cat "$PROMPT_OUT" >> "$NUDGES"
@@ -318,8 +446,33 @@ assert messages == [
     "[Hafıza] 30. mesaj. Oturum sonunda 🔮 850-Companion/Last-Session.md ve Threads.md güncellemeyi unutma.",
 ]
 PY
-[ "$(sed -n '1p' "$STATE/prompt_count")" = 30 ] || fail "prompt sayacı 30 değil"
+[ "$(sed -n '1p' "$STATE/prompt_count.$SERIAL_KEY")" = 30 ] || fail "prompt sayacı 30 değil"
 pass "UserPromptSubmit yalnızca her 15. mesajda tam Türkçe metni yayıyor"
+
+CONCURRENT_SESSION=s-counter-concurrent
+CONCURRENT_KEY=$(session_key "$CONCURRENT_SESSION")
+printf '%s\n' '{"session_id":"s-counter-concurrent","transcript_path":"/tmp/transcript.jsonl"}' \
+  | CLAUDE_PROJECT_DIR="$VAULT" "$HOOKS/session-start.sh" >/dev/null
+CONCURRENT_PIDS=""
+i=1
+while [ "$i" -le 100 ]; do
+  CONCURRENT_OUT="$TEST_TMP/concurrent-$i.out"
+  printf '%s\n' '{"session_id":"s-counter-concurrent","prompt":"eşzamanlı"}' \
+    | CLAUDE_PROJECT_DIR="$VAULT" "$HOOKS/prompt-counter.sh" > "$CONCURRENT_OUT" &
+  CONCURRENT_PIDS="$CONCURRENT_PIDS $!"
+  i=$((i + 1))
+done
+for CONCURRENT_PID in $CONCURRENT_PIDS; do
+  wait "$CONCURRENT_PID" || fail "eşzamanlı prompt-counter başarısız: $CONCURRENT_PID"
+done
+i=1
+while [ "$i" -le 100 ]; do
+  assert_json_or_empty "$TEST_TMP/concurrent-$i.out" UserPromptSubmit
+  i=$((i + 1))
+done
+[ "$(sed -n '1p' "$STATE/prompt_count.$CONCURRENT_KEY")" = 100 ] \
+  || fail "100 eşzamanlı çağrı sonrası sayaç 100 değil"
+pass "100 gerçek paralel prompt-counter çağrısı atomik kilitle tam olarak 100 sayılıyor"
 
 cat > "$VAULT/.claude/scripts/flush.py" <<'PY'
 #!/usr/bin/env python3
@@ -344,9 +497,32 @@ time.sleep(2)
 PY
 chmod +x "$VAULT/.claude/scripts/flush.py"
 
-printf '%s\n' 9999999999 > "$STATE/session_start_time"
-printf '%s\n' 5 > "$STATE/prompt_count"
-rm -f "$STATE/needs_reflection" "$STATE/flush-sessionend.json"
+END_SESSION=s-end
+END_KEY=$(session_key "$END_SESSION")
+LIVE_SESSION=s-live
+LIVE_KEY=$(session_key "$LIVE_SESSION")
+printf '%s\n' '{"session_id":"s-end","transcript_path":"/tmp/end.jsonl"}' \
+  | CLAUDE_PROJECT_DIR="$VAULT" "$HOOKS/session-start.sh" >/dev/null
+i=1
+while [ "$i" -le 4 ]; do
+  printf '%s\n' '{"session_id":"s-end","prompt":"deneme"}' \
+    | CLAUDE_PROJECT_DIR="$VAULT" "$HOOKS/prompt-counter.sh" >/dev/null
+  i=$((i + 1))
+done
+printf '%s\n' '{"session_id":"s-live","transcript_path":"/tmp/live.jsonl"}' \
+  | CLAUDE_PROJECT_DIR="$VAULT" "$HOOKS/session-start.sh" >/dev/null
+i=1
+while [ "$i" -le 3 ]; do
+  printf '%s\n' '{"session_id":"s-live","prompt":"deneme"}' \
+    | CLAUDE_PROJECT_DIR="$VAULT" "$HOOKS/prompt-counter.sh" >/dev/null
+  i=$((i + 1))
+done
+printf '%s\n' '{"session_id":"s-end","prompt":"deneme"}' \
+  | CLAUDE_PROJECT_DIR="$VAULT" "$HOOKS/prompt-counter.sh" >/dev/null
+[ "$(sed -n '1p' "$STATE/prompt_count.$END_KEY")" = 5 ] || fail "s-end sayacı 5 değil"
+[ "$(sed -n '1p' "$STATE/prompt_count.$LIVE_KEY")" = 3 ] || fail "s-live sayacı 3 değil"
+printf '%s\n' 9999999999 > "$STATE/session_start_time.$END_KEY"
+rm -f "$STATE/needs_reflection.$END_KEY" "$STATE/flush-sessionend.json"
 SESSION_END_OUT="$TEST_TMP/session-end.out"
 python3 - "$HOOKS/session-end.sh" "$VAULT" "$SESSION_END_OUT" <<'PY'
 import json
@@ -383,14 +559,20 @@ assert call["hook_input"] == {
 }
 assert os.path.basename(call["hook_input_path"]).startswith("hookin-")
 PY
-assert_file "$STATE/needs_reflection"
-assert_contains "$(sed -n '1p' "$STATE/needs_reflection")" 'Prompt: 5.'
-[ ! -e "$STATE/session_start_time" ] || fail "SessionEnd session_start_time temizlemedi"
-[ ! -e "$STATE/prompt_count" ] || fail "SessionEnd prompt_count temizlemedi"
-pass "SessionEnd reflection borcunu yazar, stdin JSON'u geçirir ve flush beklemeden döner"
+assert_file "$STATE/needs_reflection.$END_KEY"
+assert_contains "$(sed -n '1p' "$STATE/needs_reflection.$END_KEY")" 'Prompt: 5.'
+[ ! -e "$STATE/session_start_time.$END_KEY" ] || fail "SessionEnd kendi session_start_time dosyasını temizlemedi"
+[ ! -e "$STATE/prompt_count.$END_KEY" ] || fail "SessionEnd kendi prompt_count dosyasını temizlemedi"
+case "$(sed -n '1p' "$STATE/session_start_time.$LIVE_KEY")" in
+  ''|*[!0-9]*) fail "SessionEnd canlı oturumun başlangıç durumunu bozdu" ;;
+esac
+[ "$(sed -n '1p' "$STATE/prompt_count.$LIVE_KEY")" = 3 ] \
+  || fail "SessionEnd canlı oturumun sayacını bozdu"
+pass "iki oturum iç içe ilerlerken SessionEnd yalnızca kendi durumunu ve reflection borcunu değiştiriyor"
 
-printf '%s\n' 123 > "$STATE/session_start_time"
-printf '%s\n' 9 > "$STATE/prompt_count"
+PRE_KEY=$(session_key s-pre)
+printf '%s\n' 123 > "$STATE/session_start_time.$PRE_KEY"
+printf '%s\n' 9 > "$STATE/prompt_count.$PRE_KEY"
 rm -f "$STATE/flush-precompact.json"
 PRECOMPACT_OUT="$TEST_TMP/precompact.out"
 printf '%s\n' '{"session_id":"s-pre","transcript_path":"/tmp/pre.jsonl"}' \
@@ -409,8 +591,8 @@ assert call["hook_input"] == {
     "transcript_path": "/tmp/pre.jsonl",
 }
 PY
-[ "$(sed -n '1p' "$STATE/session_start_time")" = 123 ] || fail "PreCompact session state değiştirdi"
-[ "$(sed -n '1p' "$STATE/prompt_count")" = 9 ] || fail "PreCompact prompt state değiştirdi"
+[ "$(sed -n '1p' "$STATE/session_start_time.$PRE_KEY")" = 123 ] || fail "PreCompact session state değiştirdi"
+[ "$(sed -n '1p' "$STATE/prompt_count.$PRE_KEY")" = 9 ] || fail "PreCompact prompt state değiştirdi"
 pass "PreCompact reason bayrağıyla flush başlatır ve canlı oturum durumunu korur"
 
 GUARD_VAULT="$TEST_TMP/guard-vault"
