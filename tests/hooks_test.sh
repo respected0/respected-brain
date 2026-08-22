@@ -204,22 +204,22 @@ printf '%s\n' '{"session_id":"s-start","transcript_path":"/tmp/transcript.jsonl"
 assert_json_or_empty "$START_OUT" SessionStart
 CONTEXT=$(json_context "$START_OUT")
 assert_contains "$CONTEXT" '⚠️ Önceki oturum hafıza güncellemeden bitti:'
-assert_contains "$CONTEXT" '[Hafıza — Son Oturum]'
+assert_contains "$CONTEXT" '[Hafıza: Son Oturum]'
 assert_contains "$CONTEXT" 'current-49'
 assert_not_contains "$CONTEXT" 'current-50'
 assert_not_contains "$CONTEXT" 'previous-secret'
-assert_contains "$CONTEXT" '[Hafıza — Aktif Konular]'
+assert_contains "$CONTEXT" '[Hafıza: Aktif Konular]'
 assert_contains "$CONTEXT" 'Active-06'
 assert_not_contains "$CONTEXT" 'Active-07'
 assert_not_contains "$CONTEXT" 'Closed-01'
-assert_contains "$CONTEXT" '[Hafıza — Kurallar]'
+assert_contains "$CONTEXT" '[Hafıza: Kurallar]'
 assert_contains "$CONTEXT" 'rule-60'
 assert_not_contains "$CONTEXT" 'rule-61'
-assert_contains "$CONTEXT" '[Hafıza — Son Journal]'
+assert_contains "$CONTEXT" '[Hafıza: Son Journal]'
 assert_not_contains "$CONTEXT" 'old-journal-secret'
 assert_contains "$CONTEXT" 'journal-latest-09'
 assert_not_contains "$CONTEXT" 'journal-latest-10'
-assert_contains "$CONTEXT" '[Bilgi Tabanı — İndeks]'
+assert_contains "$CONTEXT" '[Bilgi Tabanı: İndeks]'
 assert_contains "$CONTEXT" 'index-150'
 assert_not_contains "$CONTEXT" 'index-151'
 assert_contains "$CONTEXT" '[Bugünün Logu]'
@@ -253,7 +253,7 @@ with open(sys.argv[1], encoding="utf-8") as handle:
     context = json.load(handle)["hookSpecificOutput"]["additionalContext"]
 assert len(context) <= 16000, len(context)
 PY
-assert_contains "$CAP_CONTEXT" '[not: indeks kırpıldı — beyin-doktor çalıştır]'
+assert_contains "$CAP_CONTEXT" '[not: indeks kırpıldı, beyin-doktor çalıştır]'
 assert_contains "$CAP_CONTEXT" 'current-49'
 assert_contains "$CAP_CONTEXT" 'Active-06'
 assert_contains "$CAP_CONTEXT" 'rule-60'

@@ -270,7 +270,7 @@ def _append_daily(
             encoding="utf-8",
         )
 
-    suffix = " — compaction öncesi" if reason == "precompact" else ""
+    suffix = ", compaction öncesi" if reason == "precompact" else ""
     with daily_path.open("a", encoding="utf-8") as daily_file:
         daily_file.write(
             f"\n### Oturum ({now.strftime('%H:%M')}){suffix}\n\n"
