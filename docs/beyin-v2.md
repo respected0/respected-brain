@@ -69,18 +69,40 @@ Placeholders you must resolve:
 Ask the user in Turkish: **"Daha önce kurulmuş bir beynin var mı? Varsa klasör yolunu ver."**
 Then scan the two default locations anyway:
 
+No globs. An empty `Documents` folder makes `"$HOME/Documents"/*` abort the whole command under
+zsh with `no matches found`, and under bash it silently iterates a literal unexpanded pattern. You
+do not know which shell you are in. `find` cannot do either.
+
 ```bash
-for D in "$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents"/* "$HOME/Documents"/*; do
-  [ -d "$D" ] || continue
-  if [ -f "$D/CLAUDE.md" ] && ls -d "$D/🔮 850-"* >/dev/null 2>&1; then
-    echo "ADAY: $D  sürüm: $(cat "$D/.beyin-version" 2>/dev/null || echo 'v1')"
-  fi
+BEYIN_LIST=$(mktemp)
+for BEYIN_BASE in "$HOME/Library/Mobile Documents/iCloud~md~obsidian/Documents" "$HOME/Documents"; do
+  [ -d "$BEYIN_BASE" ] || continue
+  find "$BEYIN_BASE" -mindepth 1 -maxdepth 1 -type d -print 2>/dev/null >> "$BEYIN_LIST"
 done
+BEYIN_HITS=0
+while IFS= read -r BEYIN_D; do
+  [ -f "$BEYIN_D/CLAUDE.md" ] || continue
+  BEYIN_MEM=$(find "$BEYIN_D" -mindepth 1 -maxdepth 1 -type d -name "🔮 850-*" -print 2>/dev/null | head -1)
+  [ -n "$BEYIN_MEM" ] || continue
+  BEYIN_HITS=$((BEYIN_HITS + 1))
+  echo "ADAY: $BEYIN_D"
+  echo "  hafıza klasörü: $(basename "$BEYIN_MEM")"
+  if [ -f "$BEYIN_D/.beyin-version" ]; then
+    echo "  sürüm: $(sed -n '1p' "$BEYIN_D/.beyin-version")"
+  else
+    echo "  sürüm: v1 (.beyin-version yok)"
+  fi
+done < "$BEYIN_LIST"
+rm -f "$BEYIN_LIST"
+echo "TARAMA TAMAM: $BEYIN_HITS aday bulundu"
 ```
+
+`TARAMA TAMAM` is the success line. If you do not see it, the scan did not finish and you may not
+pick a path yet: fix the error first.
 
 | Bulgu | Yol |
 | --- | --- |
-| Aday yok | Yeni kurulum. FAST PATH, sonra gerekirse from-scratch fallback |
+| `TARAMA TAMAM: 0 aday` | Yeni kurulum. FAST PATH, sonra gerekirse from-scratch fallback |
 | Aday var, `.beyin-version` yok | **Yükseltme.** FAST PATH ile repoyu klonla, `SETUP.md` MODE B |
 | Aday var, sürüm `2.0.0` | Zaten v2. Vault'ta `claude` açıp `beyin doktor` çalıştır, bitir |
 
@@ -99,6 +121,16 @@ git clone https://github.com/avenoxai/avenoxbeyin.git /tmp/avenoxbeyin && cd /tm
 Then read and follow `SETUP.md` in that repo. It decides the mode (fresh install or upgrade from
 v1) and carries the full interview, personalize, upgrade, launcher and verification runbook. The
 scaffold is already in `template/`, so you only copy and fill in the blanks.
+
+**If this is an upgrade, there is no from-scratch fallback and you must not improvise one.** The
+upgrade is a single committed script, `scripts/upgrade.sh`, run in three stages
+(`--stage check`, `--stage apply`, `--stage finalize`) with the vault path passed as an argument on
+every call. It takes a verified git snapshot first, makes the `🔮 850-Companion` folder name
+mandatory with the user's explicit yes, removes only the exact v1 hook entries from
+`settings.local.json`, and writes `.beyin-version` last of all. Improvising the upgrade in loose
+shell blocks is how a vault ends up stamped v2 while broken: shell variables do not survive between
+separate Bash calls. If the clone failed, do not upgrade at all, tell the user to retry when they
+have network.
 
 If the clone fails (no network, no git), fall back to the phases below. They produce the same
 system, with one honest limitation spelled out in PHASE 4.
@@ -146,23 +178,50 @@ Set `{{TODAY}}` from `date +%F`.
 
 Check each, install only what is missing, narrate progress.
 
+Branch on the platform. macOS is the tested path; the Linux path skips every macOS tool and has
+not been verified on a real Linux desktop. Say that instead of implying it works.
+
 ```bash
-# Homebrew, required on macOS
-command -v brew >/dev/null || /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+BEYIN_PLATFORM=$(uname -s)
+echo "platform: $BEYIN_PLATFORM"
+if [ "$BEYIN_PLATFORM" = "Darwin" ]; then
+  if ! command -v brew >/dev/null 2>&1; then
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    # The installer only PRINTS the shellenv lines. Apply them or the next brew call fails.
+    for BEYIN_BREW in /opt/homebrew/bin/brew /usr/local/bin/brew; do
+      [ -x "$BEYIN_BREW" ] || continue
+      eval "$("$BEYIN_BREW" shellenv)"
+      break
+    done
+  fi
+  if command -v brew >/dev/null 2>&1; then
+    echo "brew ✓ $(command -v brew)"
+    [ -d "/Applications/Obsidian.app" ] || brew install --cask obsidian
+    command -v obsidian >/dev/null 2>&1 \
+      || (brew tap yakitrak/yakitrak >/dev/null 2>&1 && brew install yakitrak/yakitrak/obsidian-cli >/dev/null 2>&1) \
+      || echo "obsidian-cli atlandı (opsiyonel)"
+  else
+    echo "🔴 BREW YOK: Obsidian'ı elle kur, https://obsidian.md/download"
+  fi
+else
+  echo "macOS değil. Homebrew, Obsidian cask ve macOS uygulama adımları atlanıyor."
+  echo "Obsidian'ı paket yöneticinden veya https://obsidian.md/download üstünden kur."
+fi
 
-# Obsidian, required
-ls "/Applications/Obsidian.app" >/dev/null 2>&1 || brew install --cask obsidian
-
-# Obsidian CLI, OPTIONAL, never block
-command -v obsidian >/dev/null 2>&1 || (brew tap yakitrak/yakitrak 2>/dev/null && brew install yakitrak/yakitrak/obsidian-cli 2>/dev/null) || echo "obsidian-cli atlandı (opsiyonel)"
-
-# python3, required for the v2 machine layer
-command -v python3 >/dev/null && python3 -V || echo "PYTHON3 YOK: xcode-select --install"
+BEYIN_MISSING=0
+command -v python3 >/dev/null 2>&1 && echo "python3 ✓ $(python3 -V 2>&1)" \
+  || { echo "🔴 python3 YOK"; BEYIN_MISSING=$((BEYIN_MISSING + 1)); }
+command -v claude >/dev/null 2>&1 && echo "claude CLI ✓" \
+  || { echo "🔴 claude CLI YOK"; BEYIN_MISSING=$((BEYIN_MISSING + 1)); }
+echo "ONKOSUL SONUC: $BEYIN_MISSING eksik"
 ```
 
-Claude Code is already installed, the user is running you. Do not reinstall it. If `python3` is
-missing and cannot be installed, say so plainly in Turkish: the vault and the hooks still work, the
-automatic daily log and knowledge compilation stay off until python3 exists.
+`ONKOSUL SONUC: 0` is the only line that lets you go on. Claude Code is already installed, the user
+is running you, so a missing `claude` on PATH means an alias-only install and you must say so. If
+`python3` is missing (macOS: `xcode-select --install`, Linux: your package manager), stop and get
+it installed. If the user insists on continuing anyway, call it a **degraded kurulum** in Turkish,
+repeat that in the final report and never call the install successful: the vault and the hooks
+still work, the automatic daily log and the knowledge compilation do not.
 
 ---
 
@@ -536,7 +595,26 @@ Leave `daily/`, `knowledge/concepts/` and `knowledge/connections/` empty. The ma
 One-click app that opens the vault in Obsidian, with the native macOS brain emoji as its icon.
 Pure system tools, nothing to download. It works after the vault has been added to Obsidian once.
 
+**macOS only.** `osacompile` and AppKit do not exist on Linux. Guard the whole thing:
+
 ```bash
+if [ "$(uname -s)" != "Darwin" ]; then
+  mkdir -p "$HOME/.local/share/applications"
+  cat > "$HOME/.local/share/applications/{{OS_NAME}}.desktop" <<'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name={{OS_NAME}}
+Comment=Ikinci beyin vault
+Exec=xdg-open "obsidian://open?vault={{OS_NAME}}"
+Icon=obsidian
+Terminal=false
+Categories=Utility;
+DESKTOP
+  chmod +x "$HOME/.local/share/applications/{{OS_NAME}}.desktop"
+  echo "BASLATICI: Linux .desktop yazıldı (gerçek bir Linux masaüstünde doğrulanmadı)"
+  exit 0
+fi
+
 osacompile -o "$HOME/Desktop/{{OS_NAME}}.app" \
   -e 'do shell script "open \"obsidian://open?vault={{OS_NAME}}\""'
 
@@ -593,11 +671,31 @@ The vault is the user's memory. Version it from day one so any bad edit is rever
 cd "{{VAULT_PATH}}"
 git init -q 2>/dev/null || true
 git add -A
-git commit -q -m "{{OS_NAME}}: ikinci beyin kuruldu" || echo "commit atlandı"
-git log --oneline -1
+BEYIN_LEAK=$(git diff --cached --name-only | grep -E 'settings\.local\.json|\.yedek|\.bak$|(^|/)\.env$' || true)
+if [ -n "$BEYIN_LEAK" ]; then
+  git reset -q
+  echo "🔴 SAHNELENMESI YASAK DOSYA: $BEYIN_LEAK"
+  echo "   .gitignore eksik. Once onu duzelt, sonra tekrar dene."
+  exit 1
+fi
+BEYIN_STAGED=$(git diff --cached --name-only | wc -l | tr -d ' ')
+BEYIN_NAME=$(git config user.name  2>/dev/null || echo "")
+BEYIN_MAIL=$(git config user.email 2>/dev/null || echo "")
+[ -n "$BEYIN_NAME" ] || BEYIN_NAME="{{USER_NAME}}"
+[ -n "$BEYIN_MAIL" ] || BEYIN_MAIL="beyin@localhost"
+if [ "$BEYIN_STAGED" -gt 0 ]; then
+  git -c user.name="$BEYIN_NAME" -c user.email="$BEYIN_MAIL" \
+    commit -q -m "{{OS_NAME}}: ikinci beyin kuruldu" \
+    && echo "ILK COMMIT: $(git rev-parse --short HEAD) ($BEYIN_STAGED dosya)" \
+    || echo "🔴 ILK COMMIT BASARISIZ: $BEYIN_STAGED dosya sahnede kaldı"
+else
+  echo "🔴 SAHNEDE DOSYA YOK: iskelet adımı çalışmamış olabilir"
+fi
 ```
 
-No remote, no push. Local and private by default.
+Always pass the `-c` identity flags. On a machine with no git identity the commit fails, and the
+old `|| echo "commit atlandı"` line turns that failure into a success-looking message while every
+file stays staged. No remote, no push. Local and private by default.
 
 ---
 
@@ -622,10 +720,39 @@ Then give the user this report, in Turkish:
 - ▶️ **İlk çalıştırma:** Obsidian'ı aç → vault olarak `{{VAULT_PATH}}` seç (bu vault'u Obsidian'a
   bir kez tanıtır, masaüstündeki 🧠 ikonu bundan sonra tek tıkla açar). Sonra terminalde o klasöre
   gir ve `claude` çalıştır.
-- ✨ **Sihri göster:** Bir şey konuş, sonra `/exit`. Tekrar `claude` aç, {{COMPANION}} geçen
-  oturumu hatırlıyor olacak. Asıl fark bu akşam belli olur: saat 18'den sonraki ilk oturum
-  kapanışında `daily/` altında o günün logu oluşur, ardından `knowledge/` altında konuştuklarınızdan
-  derlenmiş makaleler belirir. Yarın sabah bu indeks kendiliğinden bağlama girer.
+- ✨ **Sihri göster, ama önce doğrula:** Bir şey konuş, sonra `/exit`. SessionEnd kancası
+  özetleyiciyi arka plana atıp bir saniyeden kısa sürede döner, yani `/exit` anında günlük log
+  henüz diskte değildir. Kullanıcıyı `claude`'a geri sokmadan önce dosyayı gördüğünden emin ol:
+
+  ```bash
+  BEYIN_LOG="{{VAULT_PATH}}/daily/$(date +%F).md"
+  BEYIN_TRY=0
+  BEYIN_OK=0
+  while [ "$BEYIN_TRY" -lt 24 ]; do
+    if [ -f "$BEYIN_LOG" ] && grep -q '^### Oturum' "$BEYIN_LOG" 2>/dev/null; then
+      BEYIN_OK=1
+      break
+    fi
+    BEYIN_TRY=$((BEYIN_TRY + 1))
+    sleep 5
+  done
+  if [ "$BEYIN_OK" = "1" ]; then
+    echo "GUNLUK LOG HAZIR: $BEYIN_LOG"
+    tail -12 "$BEYIN_LOG"
+  else
+    echo "GUNLUK LOG 120 SANIYEDE YAZILMADI: $BEYIN_LOG"
+  fi
+  ```
+
+  `GUNLUK LOG HAZIR` gelirse kuyruğu kullanıcıya göster, asıl demo odur, sonra `claude`'u tekrar aç.
+  `YAZILMADI` gelirse tekrar açma, önce `beyin doktor` çalıştır. İki sıkıcı sebep vakaların çoğunu
+  kapatır: konuşma özetlenecek kadar uzun değildi (özetleyici `FLUSH_BOS` der ve hiçbir şey yazmaz,
+  bu doğru davranıştır) ya da `python3` yok.
+- ⏱️ **Dürüst zamanlama:** Günlük log oturum kapanışında, saniyeler içinde, küçük bir Haiku
+  çağrısıyla yazılır. Bilgi derlemesi aynı dakikada olmaz: saat 18'den sonraki ilk oturum
+  kapanışında, günde bir kez çalışır ve bir Sonnet çağrısı olduğu için dakikalar sürebilir. O anda
+  `knowledge/` klasörünün boş olması normaldir. Ertesi sabah indeks kendiliğinden bağlama girer.
+  Makaleleri aynı dakikaya söz verme.
 - 🩺 **Bir şey ters giderse:** `beyin doktor` yaz. Tek tabloda tanı ve düzeltme komutu gelir.
 - 📦 **Eski geçmişin varsa:** `geçmiş import` yaz. ChatGPT, Claude veya Gemini dışa aktarımını
   yerel olarak günlük loglara çevirir, hiçbir yere yüklenmez.

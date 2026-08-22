@@ -38,11 +38,23 @@ masaüstüne 🧠 ikonlu bir kısayol koyar.
 
 ### Zaten v1 beynin varsa
 
-Aynı komut yeter. `SETUP.md` önce mevcut bir beyin arar, bulursa yükseltme moduna geçer.
-Yükseltme **sadece ekler**: mevcut hafıza dosyalarına, Dashboard'a, notlarına dokunulmaz. Sadece
-`daily/`, `knowledge/`, scriptler ve skill'ler eklenir, dört kanca dosyası yenisiyle değiştirilir,
-`settings.json` kanca kaydı tekrar tekrar çalıştırılabilecek şekilde birleştirilir. İlk adım
-vault'un git anlık görüntüsünü almaktır, yani geri dönüş her zaman açıktır.
+Aynı komut yeter. `SETUP.md` önce mevcut bir beyin arar, bulursa yükseltme moduna geçer ve işi
+tek bir script'e devreder: `scripts/upgrade.sh`. Yükseltme **sadece ekler**: mevcut hafıza
+dosyalarına, Dashboard'a, notlarına dokunulmaz. `daily/`, `knowledge/`, scriptler ve skill'ler
+eklenir, dört kanca dosyası yenisiyle değiştirilir, `settings.json` kanca kaydı tekrar tekrar
+çalıştırılabilecek şekilde birleştirilir.
+
+Üç şeyi peşinen bilmen iyi olur:
+
+- **Hafıza klasörünün adı `🔮 850-Companion` olmak zorunda.** Kancalar ve scriptler bu sabit yolu
+  okuyor. Klasörün adı ortağının adıysa (`🔮 850-Echo` gibi) script bunu `git mv` ile değiştirmeyi
+  teklif eder. İçerik hiç değişmez, sadece klasör adı değişir. Hayır dersen yükseltme hiç
+  başlamaz ve vault'a v2 damgası vurulmaz; yarım kurulmuş bir v2'den dürüst bir v1 iyidir.
+- **İlk iş git anlık görüntüsü.** Alınamazsa yükseltme durur, devam etmez. Geri dönüş her zaman
+  açık.
+- **Sürüm damgası en sona yazılır.** Kancalar, scriptler, placeholder'lar, kanca sayısı ve
+  `.gitignore` koruması tek tek doğrulandıktan sonra. Bir kapı bile geçilmezse `.beyin-version`
+  yazılmaz.
 
 ---
 
@@ -116,7 +128,8 @@ dosyalarını kendi eliyle günceller. Makine katmanı onun yerine geçmez, alt�
 - **Dosya tabanlı hafıza.** API anahtarı yok, ücretli servis yok, her şey senin diskinde.
 - **Opsiyonel semantik hafıza.** [mem0](https://mem0.ai) ücretsiz katmanı üstüne anlamsal arama
   ekler, temel sürümü tamamen ücretsiz ve kredi kartı istemez. İstemezsen sistem eksiksiz çalışır.
-- **Tek tık başlatıcı.** Masaüstünde 🧠 ikonlu bir uygulama vault'u anında açar.
+- **Tek tık başlatıcı.** macOS'ta masaüstünde 🧠 ikonlu bir uygulama vault'u anında açar. Linux'ta
+  yerine bir `.desktop` kısayolu yazılır (test edilmedi).
 
 ## Maliyet, dürüst hâliyle
 
@@ -126,10 +139,19 @@ Sonnet çağrısı).
 
 ## Gereksinimler
 
-- macOS (masaüstü kısayolu ve ikonu macOS araçlarını kullanır; vault'un kendisi platform bağımsız)
-- Linux destekli, Windows için WSL önerilir
-- [Claude Code](https://claude.com/claude-code), [Obsidian](https://obsidian.md), `python3`
-  (macOS'ta Command Line Tools ile gelir)
+Zorunlu, her platformda: [Claude Code](https://claude.com/claude-code),
+[Obsidian](https://obsidian.md) ve `python3` (macOS'ta Command Line Tools ile gelir). `python3`
+opsiyonel değil: günlük log da gece derlemesi de onun üstünde çalışır.
+
+| Platform | Durum | Ne çalışır, ne çalışmaz |
+| --- | --- | --- |
+| macOS | **test edildi** | hepsi: kancalar, `daily/`, `knowledge/`, 🧠 masaüstü kısayolu |
+| Linux | **test edilmedi** | kurulum `uname` ile dallanır: Homebrew, Obsidian cask ve macOS `.app` adımları atlanır, yerine XDG `.desktop` kısayolu yazılır. Vault, kancalar ve scriptler taşınabilir yazıldı ama gerçek bir Linux masaüstünde doğrulanmadı. Denersen sorun aç. |
+| Windows | **test edilmedi**, WSL önerilir | WSL içinde Linux yolu geçerli. Yerel Windows için kurulum yolu yok. |
+
+Masaüstü kısayolu macOS'ta `osacompile` ve AppKit kullanır, ikisi de Linux'ta yoktur. Vault'un
+kendisi düz Markdown, yani her yerde açılır; kurulum akışının tamamı için doğrulanmış tek platform
+şu an macOS.
 
 ## Bir şey ters giderse
 
@@ -164,8 +186,17 @@ articles under `knowledge/`. The next session starts with that knowledge index a
 
 Install: `git clone https://github.com/avenoxai/avenoxbeyin.git && cd avenoxbeyin && claude "Read
 SETUP.md and follow it exactly to set up my second brain from this template."` Already running v1?
-The same command detects it and upgrades in place: additive only, your memory files are never
-touched, the settings merge is idempotent, and it snapshots the vault with git before it starts.
+The same command detects it and hands the work to one committed script, `scripts/upgrade.sh`:
+additive only, your memory files are never touched, the settings merge is idempotent, and it takes
+a **verified** git snapshot before it changes anything. Two things it will ask you about, and stop
+for if you say no: renaming the memory folder to the fixed `🔮 850-Companion` path (a `git mv`, the
+contents never move), and removing v1 hook wiring left behind in `settings.local.json` so hooks
+stop firing twice. The `.beyin-version` stamp is the last write of all, only after every gate
+passes.
+
+Platform honesty: macOS is the tested path. The installer branches on `uname` and writes an XDG
+`.desktop` launcher instead of a macOS app on Linux, but that path has not been verified on a real
+Linux desktop. Windows is WSL-only, also unverified.
 
 No extra cost: everything runs on your existing Claude subscription through `claude -p`. No API
 keys, no paid services, bash and python3 stdlib only. Knowledge-compilation architecture credit:
