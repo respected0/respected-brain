@@ -1,9 +1,10 @@
-# Secrets — never commit
+# Secrets, never commit
 .claude/settings.local.json
 
-# Local hook state
-.claude/hooks/.state/*
-!.claude/hooks/.state/.gitkeep
+# Local runtime state
+.claude/hooks/.state/
+.claude/scripts/.state/*
+!.claude/scripts/.state/.gitkeep
 
 # OS / editor noise
 .DS_Store
