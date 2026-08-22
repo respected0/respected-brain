@@ -10,3 +10,5 @@
 .DS_Store
 .obsidian/workspace*
 .obsidian/cache
+__pycache__/
+*.pyc
