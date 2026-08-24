@@ -411,6 +411,15 @@ sits inside it, and any directory without the v1 markers (`CLAUDE.md` plus a `ðŸ
 - Secrets in `.claude/settings.local.json` (`env`, API keys), unrelated hooks, permissions, and
   every other key in that file.
 
+**UNTRACKED FROM GIT (file stays on disk, contents untouched):**
+- `.claude/settings.local.json`, `.env`, and any leftover `*.yedek` / `*.bak` / `*.orig`, if the
+  v1 vault had them committed. Adding a `.gitignore` rule does not untrack an already-tracked
+  path, so the upgrade runs `git rm --cached` on them before taking its snapshot. Without this
+  the run dies at the final commit gate with every check green and no way forward.
+- Tell the user plainly: **the secret is still in the repository history.** If that file held an
+  API key, they should revoke and reissue it at the provider. Rewriting history is a separate
+  job (`git filter-repo` or BFG) and the upgrade will not attempt it.
+
 **ADD (only if absent):**
 - `daily/`, `knowledge/`, `knowledge/concepts/`, `knowledge/connections/` with their `.gitkeep`s
 - `knowledge/index.md`, `knowledge/log.md`

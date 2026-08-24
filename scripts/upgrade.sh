@@ -108,7 +108,11 @@ git_id() {
 }
 
 assert_no_secret_staged() {
-  BAD=$(git -C "$V" diff --cached --name-only 2>/dev/null \
+  # Only ADDING or MODIFYING a secret path is a leak. A staged DELETION of one is the cure
+  # (untrack_ignored_secrets stages exactly that), so status D must not trip the alarm,
+  # otherwise the fix itself aborts the upgrade.
+  BAD=$(git -C "$V" diff --cached --name-status 2>/dev/null \
+        | awk '$1 !~ /^D/ { $1=""; sub(/^[ \t]+/, ""); print }' \
         | grep -E '(^|/)\.env$|settings\.local\.json|\.yedek|\.bak$|\.orig$|\.pem$|\.key$' || printf '')
   if [ -n "$BAD" ]; then
     git -C "$V" reset -q >/dev/null 2>&1 || :
@@ -143,6 +147,11 @@ ensure_gitignore() {
     fi
   done <<'IGN'
 .claude/settings.local.json
+.env
+*.yedek
+*.yedek-*
+*.bak
+*.orig
 .claude/hooks/.state/
 .claude/scripts/.state/*
 !.claude/scripts/.state/.gitkeep
@@ -151,6 +160,41 @@ ensure_gitignore() {
 .obsidian/cache
 IGN
   say "gitignore: $GI_ADDED satır eklendi"
+}
+
+untrack_ignored_secrets() {
+  # A v1 vault created on a machine without a global ignore rule has
+  # .claude/settings.local.json COMMITTED. Adding the path to .gitignore does not untrack an
+  # already-tracked file, so the later "git add -u" restages it, assert_no_secret_staged kills
+  # the run, and the upgrade dead-ends with every gate green. Untrack it here, before the
+  # snapshot, so the ignore rule can actually take effect.
+  command -v git >/dev/null 2>&1 || return 0
+  [ -d "$V/.git" ] || return 0
+  UNTRACKED_ANY=0
+  for SECRET in ".claude/settings.local.json" ".env"; do
+    if git -C "$V" ls-files --error-unmatch -- "$SECRET" >/dev/null 2>&1; then
+      git -C "$V" rm --cached -q -- "$SECRET" || die "izlemeden çıkarılamadı: $SECRET"
+      say "izlemeden çıkarıldı (dosya diskte duruyor): $SECRET"
+      UNTRACKED_ANY=1
+    fi
+  done
+  # Any backup artefact that a previous half-run left tracked.
+  TRACKED_BAK=$(git -C "$V" ls-files -- '*.yedek' '*.yedek-*' '*.bak' '*.orig' 2>/dev/null || printf '')
+  if [ -n "$TRACKED_BAK" ]; then
+    printf '%s\n' "$TRACKED_BAK" | while IFS= read -r B; do
+      [ -n "$B" ] || continue
+      git -C "$V" rm --cached -q -- "$B" >/dev/null 2>&1 || :
+      say "izlemeden çıkarıldı (yedek artığı): $B"
+    done
+    UNTRACKED_ANY=1
+  fi
+  if [ "$UNTRACKED_ANY" = "1" ]; then
+    say ""
+    say "!! DİKKAT: bu dosyalar bundan sonra izlenmiyor, ama GEÇMİŞTE duruyorlar."
+    say "!! İçlerinde API anahtarı varsa anahtarı sağlayıcıdan İPTAL ET ve yenile."
+    say "!! Geçmişi temizlemek istersen: git filter-repo ya da BFG, yükseltmeden ayrı bir iş."
+    say ""
+  fi
 }
 
 local_hooks_report() {
@@ -163,8 +207,16 @@ EV = ("SessionStart", "UserPromptSubmit", "SessionEnd", "PreCompact")
 try:
     with open(p, encoding="utf-8") as f:
         d = json.load(f)
-except (FileNotFoundError, ValueError):
+except FileNotFoundError:
     print("0 0")
+    sys.exit(0)
+except ValueError:
+    # Present but not parseable. Not the same as absent: the user has a file we cannot
+    # reason about, so the caller must stop rather than silently assume "no hooks".
+    print("BOZUK gecersiz-json")
+    sys.exit(0)
+if not isinstance(d, dict):
+    print("BOZUK json-nesnesi-degil")
     sys.exit(0)
 mine = other = 0
 for ev, matchers in (d.get("hooks") or {}).items():
@@ -192,9 +244,24 @@ fi
 NEED_RENAME=0
 [ "$MEM_NAME" = "$BEYIN_MEMORY_DIR_NAME" ] || NEED_RENAME=1
 
-set -- $(local_hooks_report)
-LOCAL_MINE="$1"
-LOCAL_OTHER="$2"
+LOCAL_REPORT=$(local_hooks_report 2>/dev/null || printf '')
+set -- $LOCAL_REPORT
+LOCAL_MINE="${1:-}"
+LOCAL_OTHER="${2:-}"
+case "$LOCAL_MINE" in
+  BOZUK)
+    say ".claude/settings.local.json okunamıyor: ${LOCAL_OTHER:-bilinmeyen sebep}"
+    say "Bu dosya bir JSON nesnesi olmalı, örneğin: {\"hooks\": { ... }}"
+    say "Elle düzelt ya da geçici olarak vault dışına taşı, sonra yükseltmeyi tekrar çalıştır."
+    die "yükseltme durduruldu, hiçbir şey değiştirilmedi"
+    ;;
+esac
+case "$LOCAL_MINE" in
+  ''|*[!0-9]*) die "settings.local.json taraması beklenen sayıyı vermedi: '${LOCAL_REPORT}'" ;;
+esac
+case "$LOCAL_OTHER" in
+  ''|*[!0-9]*) die "settings.local.json taraması beklenen sayıyı vermedi: '${LOCAL_REPORT}'" ;;
+esac
 
 # ---------------------------------------------------------------- STAGE: check
 if [ "$STAGE" = "check" ]; then
@@ -249,6 +316,7 @@ if [ "$STAGE" = "apply" ]; then
 
   step "1/9 .gitignore (anlık görüntüden ÖNCE, sır sahnelenmesin diye)"
   ensure_gitignore
+  untrack_ignored_secrets
 
   step "2/9 anlık görüntü (doğrulanmış)"
   SNAP_OK=0

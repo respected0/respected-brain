@@ -153,6 +153,54 @@ if [ -f "🔮 850-Companion/Kurallar.md" ]; then echo "kurallar: var, $(wc -l < 
 🟢 var. 🟡 yok: kullanıcının düzeltmeleri kalıcı hale gelmiyor.
 Düzeltme: depodaki tohum `Kurallar.md` dosyasını `🔮 850-Companion/` altına kopyala.
 
+### 14. Çift etkin kanca (settings.json + settings.local.json)
+
+```bash
+python3 - <<'PYCHK'
+import json, os
+EV = ("SessionStart", "UserPromptSubmit", "SessionEnd", "PreCompact")
+V1 = ("session-start.sh", "prompt-counter.sh", "session-end.sh", "pre-compact.sh")
+n = {e: 0 for e in EV}
+for f in (".claude/settings.json", ".claude/settings.local.json"):
+    try:
+        d = json.load(open(f, encoding="utf-8"))
+    except FileNotFoundError:
+        continue
+    except ValueError:
+        print("%s: BOZUK JSON" % f); raise SystemExit(0)
+    if not isinstance(d, dict):
+        print("%s: JSON nesnesi degil" % f); continue
+    for ev, ms in (d.get("hooks") or {}).items():
+        if ev not in EV: continue
+        for m in (ms or []):
+            for h in (m.get("hooks") or []):
+                if any(b in (h.get("command") or "") for b in V1):
+                    n[ev] += 1
+for e in EV:
+    print("%s: %d" % (e, n[e]))
+PYCHK
+```
+
+🟢 dört olayın da sayısı tam olarak `1`. 🔴 herhangi biri `2` veya daha fazla: o olayda
+kancalar her seferinde iki kez çalışıyor, yani her prompt iki kez sayılıyor ve her oturum
+sonunda iki flush tetikleniyor. `0` ise o olay hiç bağlı değil.
+Düzeltme: `.claude/settings.local.json` içindeki beyin kanca girdisini sil, ilgisiz
+kancalara ve `env`, `permissions` gibi diğer anahtarlara dokunma. Tek bağlantı
+`.claude/settings.json` içinde kalmalı.
+
+### 15. Vault içinde sır taşıyabilecek yedek artığı
+
+```bash
+find . -path ./.git -prune -o -type f \( -name "*.yedek" -o -name "*.yedek-*" -o -name "settings.local.json.*" -o -name "*.bak" -o -name "*.orig" \) -print 2>/dev/null | head -10; echo "---"; git ls-files 2>/dev/null | grep -E 'settings\.local\.json|\.yedek|\.env$' || echo "izlenen sirli dosya yok"
+```
+
+🟢 iki bölüm de boş. 🔴 bir yedek dosyası çıkarsa: bu dosyalar `settings.local.json`
+kopyası olabilir ve API anahtarı taşır; ikinci bölümde bir şey çıkarsa sır zaten git
+tarafından izleniyor demektir.
+Düzeltme: yedeği vault dışına taşı ve `chmod 600` ver; git izliyorsa
+`git rm --cached <dosya>` ile izlemeden çıkar, `.gitignore` kuralını doğrula, ve
+sızmış anahtarı sağlayıcıdan **iptal edip yenile**.
+
 ## Rapor formatı
 
 Tüm kontroller bittikten sonra tek tablo bas:
@@ -173,6 +221,8 @@ Tüm kontroller bittikten sonra tek tablo bas:
 | Git | 🟢 | repo var, 3 dosya kaydedilmemiş |
 | Sürüm | 🟢 | 2.0.0 |
 | Kurallar | 🟢 | var, 24 satır |
+| Çift etkin kanca | 🔴 | SessionEnd 2 kez bağlı |
+| Sır yedeği artığı | 🟢 | temiz |
 ```
 
 Tablodan sonra sadece 🔴 satırlar için "Düzeltme:" ile başlayan birer satır yaz, komutu da ver.

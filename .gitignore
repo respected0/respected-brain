@@ -1,1 +1,4 @@
 .DS_Store
+
+# Yerel ajan logları, repoya girmez
+tmp-brief/
