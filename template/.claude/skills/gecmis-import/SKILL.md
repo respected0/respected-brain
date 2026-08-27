@@ -8,7 +8,7 @@ description: Eski sohbet geçmişini (ChatGPT, Claude, Gemini Takeout dışa akt
 Eski sohbet arşivini beynin normal hattına sokar. Dışa aktarım dosyası yerelde okunur,
 sohbetler aylara bölünür ve `daily/import-YYYY-MM-part-NNN.md` dosyalarına yazılır.
 Akşam derleyicisi bu dosyaların içeriğini normal günlük loglar gibi okur ve özetleme için
-kullanıcının kendi Claude aboneliği üzerinden Claude'a gönderir. Dışa aktarım dosyasının
+kullanıcının seçili yerel AI CLI oturumu üzerinden modele gönderir. Dışa aktarım dosyasının
 kendisi yüklenmez ve veriler başka hiçbir yere gönderilmez.
 
 Özel veya hassas sohbetler, kullanıcı tarih ya da anahtar kelime filtresiyle hariç tutmadıkça
@@ -21,7 +21,7 @@ dosyasını açmak, ayrıştırmak veya `daily/` altına dosya yazmak YASAKTIR.
 
 1. Agent veri akışını açıkça anlatmak ZORUNDADIR: dışa aktarım yerelde okunur, seçilen sohbetler
    yerel `daily/` dosyalarına yazılır, akşam derleyicisi bu dosyaların içeriğini özetleme için
-   kullanıcının kendi Claude aboneliği üzerinden Claude'a gönderir. Bunun dışında hiçbir yere
+   kullanıcının seçili yerel AI CLI oturumu üzerinden modele gönderir. Bunun dışında hiçbir yere
    yükleme veya gönderim yapılmaz.
 2. Agent özel ve hassas sohbetlerin varsayılan olarak dahil olacağını söylemek ZORUNDADIR.
    Kullanıcıya başlangıç ve bitiş tarihi sınırı ile bir veya daha fazla anahtar kelimeden oluşan

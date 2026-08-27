@@ -10,7 +10,8 @@ loglar tazeliğini koruyor mu, vault kirlenmiş mi. Amaç sessiz arızayı gör�
 
 ## Nasıl çalışırsın
 
-1. Vault kökünde (CLAUDE.md'nin bulunduğu klasör) çalış. Tüm yollar göreceli, mutlak yol yazma.
+1. Vault kökünde (`.beyin/`, `AGENTS.md` veya `CLAUDE.md` bulunan klasör) çalış. Tüm yollar
+   göreceli, mutlak yol yazma.
 2. Aşağıdaki kontrolleri **Bash ile sırayla çalıştır**. Komutları olduğu gibi kullan, tahmin etme.
 3. Her kontrolün çıktısını 🟢 / 🟡 / 🔴 olarak sınıfla.
 4. Sonucu tek bir tabloda ver, her 🔴 için bir düzeltme satırı yaz.
@@ -30,15 +31,15 @@ for h in session-start prompt-counter session-end pre-compact; do f=".claude/hoo
 🟢 dördü de `ok`. 🔴 eksik veya çalıştırılabilir değil.
 Düzeltme: `chmod +x .claude/hooks/*.sh`, dosya yoksa depodan kopyala.
 
-### 2. Hook'lar settings.json içinde bağlı mı
+### 2. Araç adaptörleri ve hook bağlantıları var mı
 
 ```bash
-for h in session-start prompt-counter session-end pre-compact; do if grep -q "$h.sh" .claude/settings.json 2>/dev/null; then echo "$h: bagli"; else echo "$h: SETTINGS ICINDE YOK"; fi; done
+for f in AGENTS.md CLAUDE.md .codex/hooks.json .cursor/hooks.json .agents/hooks.json .agents/rules/beyin.md; do if [ -f "$f" ]; then echo "$f: var"; else echo "$f: YOK"; fi; done; python3 scripts/render_integrations.py --check 2>/dev/null || echo "adaptör drift'i var (kaynak repo dışındaki vault'ta bu kontrol atlanabilir)"
 ```
 
-🟢 dördü de bağlı. 🔴 biri bile eksikse o hook hiç çalışmıyor demektir.
-Düzeltme: `.claude/settings.json` içindeki `hooks` bloğuna eksik olayı ekle (SessionStart,
-UserPromptSubmit, SessionEnd, PreCompact), sonra Claude Code'u yeniden başlat.
+🟢 kullanılan aracın talimat ve hook dosyası var. 🔴 kullanılan aracın dosyası eksik.
+Düzeltme: kaynak repoda `python3 scripts/render_integrations.py`; kurulmuş vault'ta kaynak
+repodan `python3 scripts/enable_multiai.py <vault> --apply` çalıştır.
 
 ### 3. Özyineleme koruması her hook'ta var mı
 
@@ -50,16 +51,15 @@ for f in .claude/hooks/*.sh; do if grep -q 'BEYIN_INVOKED_BY' "$f"; then echo "$
 tetiklenir ve sonsuz döngü riski doğar.
 Düzeltme: dosyanın shebang'inden hemen sonraki satıra `[ -n "${BEYIN_INVOKED_BY:-}" ] && exit 0` ekle.
 
-### 4. python3 ve claude CLI yolda mı
+### 4. python3 ve en az bir model CLI yolda mı
 
 ```bash
-if command -v python3 >/dev/null 2>&1; then echo "python3: $(python3 -V 2>&1)"; else echo "python3: YOK"; fi; if command -v claude >/dev/null 2>&1; then echo "claude: var"; else echo "claude: YOK"; fi
+if command -v python3 >/dev/null 2>&1; then echo "python3: $(python3 -V 2>&1)"; else echo "python3: YOK"; fi; n=0; for c in claude codex agy; do if command -v "$c" >/dev/null 2>&1; then echo "$c: var"; n=$((n+1)); else echo "$c: yok"; fi; done; echo "model_cli_sayisi: $n"
 ```
 
-🟢 ikisi de var. 🔴 python3 yoksa flush ve derleme hiç çalışmaz, claude yoksa arka plan
-özetleyici sessizce durur.
-Düzeltme: python3 kur (macOS: Xcode command line tools, Linux: dağıtım paketi), claude CLI'yi
-PATH'e ekle.
+🟢 python3 ve en az bir model CLI var. 🔴 python3 yoksa flush ve derleme çalışmaz; model CLI
+yoksa arka plan özetleyici durur. Cursor hook'ları için de arka planda `claude`, `codex`, `agy`
+veya `BEYIN_LLM_COMMAND` gerekir.
 
 ### 5. python3-missing işareti
 
