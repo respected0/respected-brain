@@ -233,11 +233,12 @@ class WizardTest(unittest.TestCase):
 
         self.assertIsNotNone(shortcut_file)
         self.assertTrue(shortcut_file.is_file())
-        expected_name = (
-            "ShortcutVault.url"
-            if (os.name == "nt" or sys.platform == "darwin" or str(desktop_dir).startswith("/mnt/c/"))
-            else "ShortcutVault.desktop"
-        )
+        if sys.platform == "darwin":
+            expected_name = "ShortcutVault.webloc"
+        elif os.name == "nt" or str(desktop_dir).startswith("/mnt/c/"):
+            expected_name = "ShortcutVault.url"
+        else:
+            expected_name = "ShortcutVault.desktop"
         self.assertEqual(shortcut_file.name, expected_name)
         content = shortcut_file.read_text(encoding="utf-8")
         self.assertIn("obsidian://open?vault=ShortcutVault", content)
