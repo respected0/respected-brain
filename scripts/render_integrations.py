@@ -192,6 +192,45 @@ def _claude_settings(profile: Profile) -> dict[str, Any]:
         hooks[event_name] = [
             {"hooks": [{"type": "command", "command": command, "timeout": timeout}]}
         ]
+    turn_command = command_text(profile, TEMPLATE, "claude", "turn")
+    hooks["Stop"] = [
+        {
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": turn_command,
+                    "timeout": 10,
+                    "async": True,
+                }
+            ]
+        }
+    ]
+    return {"hooks": hooks}
+
+
+def _gemini_settings(profile: Profile) -> dict[str, Any]:
+    events = {
+        "SessionStart": ("start", 15000),
+        "BeforeAgent": ("prompt", 5000),
+        "AfterAgent": ("turn", 10000),
+        "SessionEnd": ("end", 10000),
+        "PreCompress": ("precompact", 10000),
+    }
+    hooks: dict[str, Any] = {}
+    for event_name, (event, timeout) in events.items():
+        hooks[event_name] = [
+            {
+                "hooks": [
+                    {
+                        "name": f"respected-brain-{event_name.lower()}",
+                        "type": "command",
+                        "command": command_text(profile, TEMPLATE, "gemini", event),
+                        "timeout": timeout,
+                        "description": "Sync Respected Brain memory",
+                    }
+                ]
+            }
+        ]
     return {"hooks": hooks}
 
 
@@ -203,7 +242,7 @@ def render(check: bool, profile: Profile) -> bool:
     config["platform"] = profile.name
     config["python_command"] = list(profile.python_command)
     changed |= write_json(SOURCE / "config.json", config, check)
-    for path in (TEMPLATE / "AGENTS.md", TEMPLATE / "CLAUDE.md"):
+    for path in (TEMPLATE / "AGENTS.md", TEMPLATE / "CLAUDE.md", TEMPLATE / ".gemini" / "GEMINI.md"):
         changed |= write_text(path, generated, check)
     changed |= write_text(
         TEMPLATE / ".agents" / "rules" / "beyin.md",
@@ -218,6 +257,7 @@ def render(check: bool, profile: Profile) -> bool:
     )
     changed |= sync_skills(check)
     changed |= write_json(TEMPLATE / ".claude" / "settings.json", _claude_settings(profile), check)
+    changed |= write_json(TEMPLATE / ".gemini" / "settings.json", _gemini_settings(profile), check)
 
     portable = Profile("portable", DEFAULT_PYTHON_COMMANDS["portable"])
     legacy_windows = Profile("windows-wsl", DEFAULT_PYTHON_COMMANDS["windows-wsl"])
@@ -234,6 +274,7 @@ def render(check: bool, profile: Profile) -> bool:
     codex_start, codex_start_windows = codex_commands("start")
     codex_prompt, codex_prompt_windows = codex_commands("prompt")
     codex_end, codex_end_windows = codex_commands("end")
+    codex_turn, codex_turn_windows = codex_commands("turn")
     codex_precompact, codex_precompact_windows = codex_commands("precompact")
 
     codex_hooks = {
@@ -242,7 +283,7 @@ def render(check: bool, profile: Profile) -> bool:
             "SessionStart": [{"hooks": [{"type": "command", "command": codex_start, "commandWindows": codex_start_windows, "timeout": 15, "additionalContextLimit": 16000}]}],
             "UserPromptSubmit": [{"hooks": [{"type": "command", "command": codex_prompt, "commandWindows": codex_prompt_windows, "timeout": 5}]}],
             "SessionEnd": [{"hooks": [{"type": "command", "command": codex_end, "commandWindows": codex_end_windows, "timeout": 10}]}],
-            "Stop": [{"hooks": [{"type": "command", "command": codex_end, "commandWindows": codex_end_windows, "timeout": 10}]}],
+            "Stop": [{"hooks": [{"type": "command", "command": codex_turn, "commandWindows": codex_turn_windows, "timeout": 10}]}],
             "PreCompact": [{"hooks": [{"type": "command", "command": codex_precompact, "commandWindows": codex_precompact_windows, "timeout": 10}]}],
         },
     }
@@ -255,6 +296,7 @@ def render(check: bool, profile: Profile) -> bool:
             "beforeSubmitPrompt": [{"command": command_text(profile, TEMPLATE, "cursor", "prompt"), "timeout": 5}],
             "sessionEnd": [{"command": command_text(profile, TEMPLATE, "cursor", "end"), "timeout": 10}],
             "preCompact": [{"command": command_text(profile, TEMPLATE, "cursor", "precompact"), "timeout": 10}],
+            "afterAgentResponse": [{"command": command_text(profile, TEMPLATE, "cursor", "turn"), "timeout": 10}],
         },
     }
     changed |= write_json(TEMPLATE / ".cursor" / "hooks.json", cursor_hooks, check)
@@ -262,7 +304,7 @@ def render(check: bool, profile: Profile) -> bool:
     antigravity_hooks = {
         "respected-brain": {
             "PreInvocation": [{"type": "command", "command": command_text(profile, TEMPLATE, "antigravity", "start"), "timeout": 15}],
-            "Stop": [{"type": "command", "command": command_text(profile, TEMPLATE, "antigravity", "end"), "timeout": 10}],
+            "Stop": [{"type": "command", "command": command_text(profile, TEMPLATE, "antigravity", "turn"), "timeout": 10}],
         }
     }
     changed |= write_json(TEMPLATE / ".agents" / "hooks.json", antigravity_hooks, check)

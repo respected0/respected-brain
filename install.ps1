@@ -30,9 +30,41 @@ if (-not $RepoRoot) {
 Write-Host "Respected Brain v0.0.1 — Windows Kurulum Başlatıcı" -ForegroundColor Cyan
 
 # 1. Python Tespiti ve Otomatik Yükleme Teklifi
-$Python = Get-Command python, py, python3 -All -ErrorAction SilentlyContinue | Where-Object {
-    $_.Source -and -not $_.Source.ToLowerInvariant().Contains("\windowsapps\")
-} | Select-Object -First 1
+function Find-RespectedPython {
+    $Candidates = @()
+    foreach ($Resolved in @(Get-Command python, py, python3 -All -ErrorAction SilentlyContinue)) {
+        if ($Resolved.Source -and -not $Resolved.Source.ToLowerInvariant().Contains("\windowsapps\")) {
+            $Prefix = if ($Resolved.Name -match '^py(\.exe)?$') { @("-3") } else { @() }
+            $Candidates += ,@($Resolved.Source, $Prefix)
+        }
+    }
+    if ($env:LOCALAPPDATA) {
+        foreach ($Root in @((Join-Path $env:LOCALAPPDATA "Python"), (Join-Path $env:LOCALAPPDATA "Programs\Python"))) {
+            foreach ($Candidate in @(Get-ChildItem -LiteralPath $Root -Filter "python.exe" -Recurse -ErrorAction SilentlyContinue)) {
+                $Candidates += ,@($Candidate.FullName, @())
+            }
+        }
+    }
+    foreach ($Candidate in $Candidates) {
+        $Command = $Candidate[0]
+        $Prefix = @($Candidate[1])
+        try {
+            $ProbeLines = @(& $Command @Prefix -c "import sys; print('RESPECTED_PYTHON_OK'); print(sys.executable)" 2>&1)
+            $ProbeExit = $LASTEXITCODE
+            $Probe = ($ProbeLines | ForEach-Object { "$_" }) -join "`n"
+            if ($ProbeExit -eq 0 -and $Probe.Contains("RESPECTED_PYTHON_OK") -and -not $Probe.ToLowerInvariant().Contains("microsoft store")) {
+                $RuntimeValue = $ProbeLines | ForEach-Object { "$_" } | Where-Object { $_ -and $_ -ne "RESPECTED_PYTHON_OK" } | Select-Object -Last 1
+                $RuntimeCommand = if ($RuntimeValue) { ([string]$RuntimeValue).Trim() } else { $Command }
+                if (-not $RuntimeCommand) { $RuntimeCommand = $Command }
+                return @{ Command = $Command; Prefix = $Prefix; RuntimeCommand = $RuntimeCommand }
+            }
+        }
+        catch { }
+    }
+    return $null
+}
+
+$Python = Find-RespectedPython
 
 if (-not $Python) {
     Write-Host "UYARI: Sisteminizde Python 3 tespit edilemedi." -ForegroundColor Yellow
@@ -41,11 +73,11 @@ if (-not $Python) {
         $InstallChoice = Read-Host "Windows Paket Yöneticisi (winget) ile Python 3.13 otomatik yüklensin mi? [E/h]"
         if (-not $InstallChoice -or $InstallChoice -match '^(e|evet|y|yes)$') {
             Write-Host "Python 3.13 kuruluyor (winget)..." -ForegroundColor Cyan
-            winget install --id Python.Python.3.13 -e --source winget --accept-package-agreements --accept-source-agreements
-            # Yeniden tara
-            $Python = Get-Command python, py, python3 -All -ErrorAction SilentlyContinue | Where-Object {
-                $_.Source -and -not $_.Source.ToLowerInvariant().Contains("\windowsapps\")
-            } | Select-Object -First 1
+            & $Winget.Source install --id Python.Python.3.13 -e --source winget --accept-package-agreements --accept-source-agreements
+            $MachinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
+            $UserPath = [Environment]::GetEnvironmentVariable("Path", "User")
+            $env:PATH = "$MachinePath;$UserPath"
+            $Python = Find-RespectedPython
         }
     }
     if (-not $Python) {
@@ -54,11 +86,9 @@ if (-not $Python) {
     }
 }
 
-$PythonExe = $Python.Source
-$PythonPrefix = @()
-if ($Python.Name -match '^py(\.exe)?$') {
-    $PythonPrefix = @("-3")
-}
+$PythonExe = $Python.Command
+$PythonPrefix = @($Python.Prefix)
+$PythonRuntime = $Python.RuntimeCommand
 
 # 2. install.py konumu
 $InstallScript = Join-Path $RepoRoot "install.py"
@@ -88,16 +118,17 @@ if (-not (Test-Path -LiteralPath $InstallScript)) {
 }
 
 # 3. Argümanları hazırla
-$Arguments = @($PythonPrefix) + @('"' + $InstallScript + '"')
+$Arguments = @($PythonPrefix) + @($InstallScript)
 
-if ($VaultPath) { $Arguments += @("--vault-path", '"' + $VaultPath + '"') }
-if ($UserName) { $Arguments += @("--user-name", '"' + $UserName + '"') }
-if ($UserBio) { $Arguments += @("--user-bio", '"' + $UserBio + '"') }
-if ($Companion) { $Arguments += @("--companion", '"' + $Companion + '"') }
-if ($OsName) { $Arguments += @("--os-name", '"' + $OsName + '"') }
+if ($VaultPath) { $Arguments += @("--vault-path", $VaultPath) }
+if ($UserName) { $Arguments += @("--user-name", $UserName) }
+if ($UserBio) { $Arguments += @("--user-bio", $UserBio) }
+if ($Companion) { $Arguments += @("--companion", $Companion) }
+if ($OsName) { $Arguments += @("--os-name", $OsName) }
 if ($Provider) { $Arguments += @("--provider", $Provider) }
 if ($Priority) { $Arguments += @("--priority") + $Priority }
 if ($Environment) { $Arguments += @("--environment", $Environment) }
+$Arguments += @("--python-executable", $PythonRuntime)
 if ($DesktopShortcut) { $Arguments += "--desktop-shortcut" }
 if ($NoDesktopShortcut) { $Arguments += "--no-desktop-shortcut" }
 if ($InstallSchedule) { $Arguments += "--install-schedule" }
@@ -110,5 +141,5 @@ if ($NoInstallMcp) { $Arguments += "--no-install-mcp" }
 if ($Quiet) { $Arguments += "--quiet" }
 
 # 4. Çalıştır
-$Process = Start-Process -FilePath $PythonExe -ArgumentList $Arguments -NoNewWindow -Wait -PassThru
-exit $Process.ExitCode
+& $PythonExe @Arguments
+exit $LASTEXITCODE

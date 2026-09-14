@@ -118,6 +118,23 @@ class AdversarialQualityTest(unittest.TestCase):
         self.assertEqual((output, error, provider), ("codex-salvaged", None, "codex"))
         self.assertEqual(run_mock.call_count, 2)
 
+    def test_auto_fallback_rejects_empty_success_and_advances(self) -> None:
+        commands = {
+            "gemini": self.runner.Invocation(["gemini"], "prompt"),
+            "codex": self.runner.Invocation(["codex"], "prompt"),
+        }
+        with mock.patch.object(self.runner, "_configured_provider", return_value="auto"), \
+             mock.patch.object(self.runner, "_available", return_value=["gemini", "codex"]), \
+             mock.patch.object(self.runner, "_command", side_effect=lambda p, pr, m: commands[p]), \
+             mock.patch.object(self.runner.subprocess, "run", side_effect=[
+                 SimpleNamespace(returncode=0, stdout='{\"response\":\"\",\"error\":null}', stderr=""),
+                 SimpleNamespace(returncode=0, stdout="codex-recovered", stderr=""),
+             ]) as run_mock:
+            result = self.runner.run_model("prompt", REPO_ROOT, "text", 10)
+
+        self.assertEqual(result, ("codex-recovered", None, "codex"))
+        self.assertEqual(run_mock.call_count, 2)
+
     def test_preferred_provider_still_fails_fast_on_non_retryable_error(self) -> None:
         """When an explicit provider is requested, fail-fast contract MUST be preserved."""
         commands = {

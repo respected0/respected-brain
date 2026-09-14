@@ -18,8 +18,11 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import re
+import shutil
 import subprocess
 import sys
+import uuid
 
 
 def _parse_payload(argv: list[str]) -> dict:
@@ -46,7 +49,58 @@ def _parse_payload(argv: list[str]) -> dict:
     return {}
 
 
+def _chain_file_and_payload(argv: list[str]) -> tuple[Path | None, list[str]]:
+    payload_args = list(argv)
+    try:
+        index = payload_args.index("--chain-file")
+    except ValueError:
+        return None, payload_args
+    if index + 1 >= len(payload_args):
+        return None, payload_args
+    chain_file = Path(payload_args[index + 1])
+    del payload_args[index:index + 2]
+    return chain_file, payload_args
+
+
+def _wsl_executable(value: str) -> str:
+    if os.name != "nt" and re.match(r"^[A-Za-z]:[\\/]", value):
+        drive = value[0].lower()
+        return f"/mnt/{drive}/{value[2:].lstrip('\\/').replace('\\', '/')}"
+    return value
+
+
+def _read_persisted_chain(path: Path | None) -> list[str] | None:
+    if path is None:
+        return None
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+        argv = document.get("argv") if isinstance(document, dict) else None
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(argv, list) or not argv or not all(isinstance(item, str) for item in argv):
+        return None
+    command = list(argv)
+    command[0] = _wsl_executable(command[0])
+    return command
+
+
 def _forward_chained(argv: list[str]) -> None:
+    chain_file, payload_args = _chain_file_and_payload(argv)
+    persisted = _read_persisted_chain(chain_file)
+    if persisted:
+        try:
+            subprocess.Popen(
+                [*persisted, *payload_args],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                creationflags=(getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0),
+                close_fds=True,
+            )
+            return
+        except Exception:
+            pass
+
     chained_env = os.environ.get("CODEX_NOTIFY_CHAIN")
     candidates = []
     if chained_env:
@@ -74,10 +128,10 @@ def _forward_chained(argv: list[str]) -> None:
 
     flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0
     for target in candidates:
-        if os.path.isfile(target):
+        if os.path.isfile(target) or shutil.which(target):
             try:
                 subprocess.Popen(
-                    [target, "turn-ended", *argv],
+                    [target, "turn-ended", *payload_args],
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
                     stdin=subprocess.DEVNULL,
@@ -146,6 +200,8 @@ def main() -> int:
         str(flush_script),
         "--hook-input",
         str(hook_input_file),
+        "--reason",
+        "turn",
     ]
 
     flags = 0

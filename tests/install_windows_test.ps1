@@ -62,6 +62,7 @@ New-Item -ItemType Directory -Path $Root | Out-Null
 try {
     $Commands = Join-Path $Root "commands"
     New-ProviderStub $Commands "codex"
+    New-ProviderStub $Commands "gemini"
     New-ProviderStub $Commands "git"
     $env:RESPECTED_TEST_COMMAND_ROOT = $Commands
     $LegacyCommands = Join-Path $Root "ignored-legacy-commands"
@@ -85,6 +86,12 @@ try {
     Assert-True ($preflight.Code -eq 0) "Codex-only preflight Claude olmadan geçmeli: $($preflight.Output)"
     Assert-True (-not (Test-Path -LiteralPath $PreflightVault)) "Preflight hedef oluşturmamalı"
     Assert-True (($Before -join "|") -eq ($After -join "|")) "Preflight dosya sistemini değiştirmemeli: $SnapshotDifference"
+
+    $geminiPreflight = Invoke-Installer @(
+        "-VaultPath", (Join-Path $Root "gemini-preflight"), "-UserName", "Ada", "-UserBio", "Geliştirici",
+        "-Companion", "Echo", "-OsName", "AdaOS", "-Providers", "gemini", "-PreflightOnly"
+    )
+    Assert-True ($geminiPreflight.Code -eq 0) "Gemini CLI Windows Native provider olarak desteklenmeli: $($geminiPreflight.Output)"
 
     $StoreStub = Join-Path $Root "store-python.cmd"
     [IO.File]::WriteAllText($StoreStub, "@echo off`r`necho Python was not found; run without arguments to install from the Microsoft Store.`r`nexit /b 0`r`n", [Text.UTF8Encoding]::new($false))
@@ -147,7 +154,11 @@ try {
         "-VaultPath", $Vault, "-UserName", "Ada", "-UserBio", "Geliştirici ve tasarımcı",
         "-Companion", "Echo", "-OsName", "AdaOS", "-Providers", "codex"
     )
+    if ($install.Code -ne 0) { throw "Temiz Windows kurulumu başarısız: $($install.Output)" }
     Assert-True ((Get-Content -Raw -LiteralPath (Join-Path $Vault ".respectedbrain-version")).Trim() -eq "0.0.1") "Sürüm damgası 0.0.1 olmalı"
+    $RuntimeConfig = Get-Content -Raw -LiteralPath (Join-Path $Vault ".beyin\config.json") | ConvertFrom-Json
+    $InstalledPythonRuntime = [string]$RuntimeConfig.python_command[0]
+    Assert-True ((Test-Path -LiteralPath $InstalledPythonRuntime -PathType Leaf)) "Doğrulanan gerçek Python hook config'e taşınmalı: $InstalledPythonRuntime"
     Assert-True ((Test-Path -LiteralPath (Join-Path $Vault "scripts\update_respected.py") -PathType Leaf)) "Güncel updater kurulmalı"
     Assert-True ((Test-Path -LiteralPath (Join-Path $Vault "scripts\respected_manifest.py") -PathType Leaf)) "Güncel manifest kurulmalı"
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $Vault "scripts\update_respot.py"))) "Eski updater temiz kurulumda olmamalı"
@@ -156,6 +167,7 @@ try {
         Join-Path $Vault ".codex\hooks.json"
         Join-Path $Vault ".cursor\hooks.json"
         Join-Path $Vault ".agents\hooks.json"
+        Join-Path $Vault ".gemini\settings.json"
         Join-Path $Vault "AGENTS.md"
         Join-Path $Vault "CLAUDE.md"
     )
@@ -164,7 +176,8 @@ try {
     Assert-True (-not $Combined.Contains("wsl.exe")) "Native hook WSL içermemeli"
     Assert-True (-not $Combined.Contains(".sh")) "Native hook POSIX launcher içermemeli"
     Assert-True (-not $Combined.ToLowerInvariant().Contains("bash")) "Native hook Bash içermemeli"
-    Assert-True ($Combined.Contains("py.exe")) "Native hook py.exe kullanmalı"
+    $EscapedWorkingPython = $InstalledPythonRuntime.Replace('\', '\\')
+    Assert-True ($Combined.Contains($InstalledPythonRuntime) -or $Combined.Contains($EscapedWorkingPython)) "Native hook doğrulanan gerçek Python executable'ı kullanmalı"
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $env:USERPROFILE ".claude"))) "Temiz kurulum kullanıcı profilini değiştirmemeli"
     Assert-True (-not (Test-Path -LiteralPath (Join-Path $env:USERPROFILE ".codex"))) "Global kurulum açıkça ayrıca uygulanmalı"
 
@@ -176,7 +189,7 @@ try {
     Assert-True ($install2.Code -eq 0) "İkinci temiz kurulum geçmeli: $($install2.Output)"
     $RelativeManaged = @(
         ".claude\settings.json", ".codex\hooks.json", ".cursor\hooks.json",
-        ".agents\hooks.json", "AGENTS.md", "CLAUDE.md"
+        ".agents\hooks.json", ".gemini\settings.json", "AGENTS.md", "CLAUDE.md"
     )
     $EscapedVault = $Vault.Replace('\', '\\')
     $EscapedVault2 = $Vault2.Replace('\', '\\')
@@ -197,11 +210,29 @@ try {
     )
     Assert-True ($existing.Code -eq 3) "Dolu hedef exit 3 dönmeli"
     Assert-True ((Get-Content -Raw -LiteralPath (Join-Path $SentinelVault "keep.txt")) -eq "keep") "Dolu hedef değişmemeli"
+
+    $RollbackVault = Join-Path $Root "rollback-race"
+    New-Item -ItemType Directory -Path $RollbackVault | Out-Null
+    $ConcurrentSentinel = Join-Path $RollbackVault "created-by-another-process.txt"
+    $env:RESPECTED_TEST_FAIL_AFTER_COPY = "1"
+    $env:RESPECTED_TEST_CONCURRENT_SENTINEL = $ConcurrentSentinel
+    $rollback = Invoke-Installer @(
+        "-VaultPath", $RollbackVault, "-UserName", "Ada", "-UserBio", "Geliştirici",
+        "-Companion", "Echo", "-OsName", "AdaOS", "-Providers", "codex"
+    )
+    if ($install.Code -ne 0) { throw "Temiz Windows kurulumu başarısız: $($install.Output)" }
+    Remove-Item Env:RESPECTED_TEST_FAIL_AFTER_COPY
+    Remove-Item Env:RESPECTED_TEST_CONCURRENT_SENTINEL
+    Assert-True ($rollback.Code -ne 0) "Enjekte edilen kurulum arızası başarısız dönmeli"
+    Assert-True (Test-Path -LiteralPath $ConcurrentSentinel -PathType Leaf) "Rollback başka sürecin dosyasını korumalı"
+    Assert-True (-not (Test-Path -LiteralPath (Join-Path $RollbackVault "AGENTS.md"))) "Rollback kurulumun kendi dosyalarını temizlemeli"
 }
 finally {
     Remove-Item Env:RESPECTED_TEST_COMMAND_ROOT -ErrorAction SilentlyContinue
     Remove-Item Env:RESPECTED_TEST_PYTHON -ErrorAction SilentlyContinue
     Remove-Item Env:RESPECTED_PROBE_TIMEOUT_MS -ErrorAction SilentlyContinue
+    Remove-Item Env:RESPECTED_TEST_FAIL_AFTER_COPY -ErrorAction SilentlyContinue
+    Remove-Item Env:RESPECTED_TEST_CONCURRENT_SENTINEL -ErrorAction SilentlyContinue
     Remove-Item Env:RESPOT_TEST_COMMAND_ROOT -ErrorAction SilentlyContinue
     Remove-Item -LiteralPath $Root -Recurse -Force -ErrorAction SilentlyContinue
 }

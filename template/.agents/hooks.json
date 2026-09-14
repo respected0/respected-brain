@@ -10,7 +10,7 @@
     "Stop": [
       {
         "type": "command",
-        "command": "python3 .beyin/hooks/bridge.py --provider antigravity --event end",
+        "command": "python3 .beyin/hooks/bridge.py --provider antigravity --event turn",
         "timeout": 10
       }
     ]

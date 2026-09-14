@@ -43,6 +43,18 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .beyin/hooks/bridge.py --provider claude --event turn",
+            "timeout": 10,
+            "async": true
+          }
+        ]
+      }
     ]
   }
 }

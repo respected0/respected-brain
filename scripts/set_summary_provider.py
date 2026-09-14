@@ -21,7 +21,7 @@ def _configure_console_output() -> None:
 _configure_console_output()
 
 
-PROVIDERS = ("auto", "claude", "codex", "antigravity", "cursor")
+PROVIDERS = ("auto", "claude", "codex", "antigravity", "gemini", "cursor")
 
 
 def main() -> int:
@@ -43,7 +43,7 @@ def main() -> int:
     if args.provider is not None:
         document["summary_provider"] = args.provider
     if args.priority:
-        valid_providers = ("claude", "codex", "antigravity", "cursor")
+        valid_providers = ("claude", "codex", "antigravity", "gemini", "cursor")
         normalized = []
         for p in args.priority:
             p_low = p.lower()

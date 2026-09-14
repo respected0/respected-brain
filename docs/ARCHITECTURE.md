@@ -3,7 +3,7 @@
 Durum: **Yetkili Mimari Kılavuz (Golden Standard)**<br>
 Kaynak: `https://github.com/respected0/respectedbrain`
 
-Respected Brain; Antigravity, Codex, Cursor ve Claude Code araçlarını yerel bir Obsidian Markdown vault'u etrafında birleştiren, bağımsız ve provider-neutral bir yapay zeka hafıza katmanıdır. Herhangi bir harici cloud bağımlılığı, merkezi veritabanı veya ek API anahtarı gerektirmez.
+Respected Brain; Antigravity, Gemini CLI, Codex, Cursor ve Claude Code araçlarını yerel bir Obsidian Markdown vault'u etrafında birleştiren, bağımsız ve provider-neutral bir yapay zeka hafıza katmanıdır. Herhangi bir harici cloud bağımlılığı, merkezi veritabanı veya ek API anahtarı gerektirmez.
 
 ---
 
@@ -44,7 +44,7 @@ Farklı yapay zeka araçlarıyla çalışırken en büyük problem **bağlam kop
 
 1. **Tek Doğruluk Kaynağı (SSOT):** Tüm kurallar ve çalışma talimatları `template/.beyin/instructions.md` dosyasında, yetenekler ise `template/.beyin/skills/` altında tutulur. Agent yapılandırmaları bu kaynaktan otomatik üretilir.
 2. **Sağlayıcı Bağımsızlığı (Provider-Neutral):** Kodlama yaptığınız agent (örn. Antigravity) ile arka planda hafıza özetini çıkaran CLI (örn. Codex) birbirinden bağımsızdır.
-3. **Sıfır Ek Maliyet & Ek Anahtar Yok:** Sistem kendi başına ücretli bir API anahtarı istemez; geliştiricinin makinesinde kurulu ve oturum açmış yerel CLI araçlarının (`agy`, `codex`, `cursor-agent`, `claude`) mevcut oturumlarını kullanır.
+3. **Sıfır Ek Maliyet & Ek Anahtar Yok:** Sistem kendi başına ücretli bir API anahtarı istemez; geliştiricinin makinesinde kurulu ve oturum açmış yerel CLI araçlarının (`agy`, `gemini`, `codex`, `cursor-agent`, `claude`) mevcut oturumlarını kullanır.
 4. **Dayanıklı Fallback Mimarisi:** Oturumu kapatan agent'ın CLI'ı yanıt vermezse, kota aşımı (429) veya servis hatası (502/503/504) verirse, sistem otomatik olarak kurulu diğer hazır CLI'a geçer.
 5. **Yerel Dosya Bütünlüğü & Geri Alınabilirlik:** Tüm veriler standart Markdown dosyalarıdır. Veri kaybına karşı otomatik Git snapshot'ları ve Restic desteği bulunur.
 6. **Güvenli Sınırlar (Zero-Trust):** Transkript ve günlük metinleri potansiyel olarak düşmanca (untrusted) kabul edilir. Derleme izole staging dizininde yapılır; model komutları shell injection riskine karşı her zaman doğrudan argüman dizileri (`argv`) ile çalıştırılır.
@@ -86,7 +86,7 @@ respectedbrain/
 │   │   ├── instructions.md         # Kanonik talimatlar (SSOT)
 │   │   ├── config.json             # Runtime yapılandırması (`summary_provider`)
 │   │   ├── engine/                 # Arka plan motorları
-│   │   │   ├── flush.py            # Oturum kapanış özetleyicisi
+│   │   │   ├── flush.py            # Turn bazlı atomik günlük özetleyicisi
 │   │   │   └── compile.py          # Staging'de izole bilgi tabanı derleyicisi
 │   │   ├── hooks/                  # Yaşam döngüsü köprüleri
 │   │   │   ├── bridge.py           # Ortak olay normalizasyonu ve yönlendirme
@@ -134,8 +134,8 @@ Agent bir projede veya vault içinde açıldığında:
 3. `Last-Session.md`, aktif `Threads.md`, `Kurallar.md` dosyasının ilk 60 satırı, son Journal girdisi, bilgi indeksi ve günün daily kuyruğu birleştirilir.
 4. Toplam bağlam **16.000 karakterlik üst sınırla (bounded context)** sınırlandırılır. Token şişmesini engellemek için önce indeks, sonra günlükler güvenli biçimde kırpılır; ilişkisel çekirdek daima korunur.
 
-### Aşama 2: Oturum Kapanışı ve Flush (Session End / Stop / Pre-Compact)
-Oturum bittiğinde veya bağlam sıkıştırma (pre-compact) gerektiğinde:
+### Aşama 2: Turn Tamamlama ve Catch-Up Flush
+Her agent yanıtı tamamlandığında; ayrıca session-end veya pre-compact catch-up gerektiğinde:
 1. Native hook olayından gelen transkript yolu veya stdin verisi yakalanır.
 2. `flush.py` arka planda bağımsız bir süreç olarak başlatılır ve ana agent IDE'yi bloke etmeden milisaniyeler içinde kullanıcıya döner.
 3. Transkript sağlayıcıya göre normalize edilir; CLI üzerinden model çalıştırılarak şu 5 sabit Türkçe başlıkta özet üretilir:
@@ -145,7 +145,7 @@ Oturum bittiğinde veya bağlam sıkıştırma (pre-compact) gerektiğinde:
    - `## 4. Karşılaşılan Sorunlar ve Çözümler`
    - `## 5. Sonraki Adımlar ve Açık Kalan Konular`
 4. Bu 5 bölümü eksiksiz içermeyen, boş veya hatalı çıktılar reddedilir.
-5. Geçerli özet `daily/YYYY-MM-DD.md` dosyasına atomik kilit (file lock) ve deduplication korumasıyla eklenir.
+5. Geçerli özet `daily/YYYY-MM-DD.md` içinde provider+session kimliğine ait yönetilen bloğa atomik olarak upsert edilir. Sonraki turn eski bloğu değiştirir; insan notları korunur.
 
 ### Aşama 3: Bilgi Tabanı Derlemesi (Compilation)
 Günlük oturum özetlerinin kalıcı bilgiye dönüştürülmesi:
@@ -178,7 +178,7 @@ Her sabah 08:00'de zamanlayıcı (Windows Task Scheduler, systemd timer veya Lau
 1. `auto` modu: Oturumu kapatan agent'ın kendi CLI'ını ilk sıraya koyar.
 2. CLI bulunamazsa, süreç zaman aşımına uğrarsa, HTTP 429 / kota sınırı alınırsa veya 502/503/504 servis hatası gerçekleşirse sistem durmaz; kurulu ve giriş yapılmış diğer CLI'a geçer.
 3. Yetkilendirme (auth) veya kalıcı sözdizimi hatalarında ise sessizce başka sağlayıcıya geçilmez; hata geliştiriciye bildirilir.
-4. İstenirse kullanıcı `scripts/set_summary_provider.py` ile kalıcı bir tercih (`antigravity`, `codex`, `cursor`, `claude`) belirleyebilir.
+4. İstenirse kullanıcı `scripts/set_summary_provider.py` ile kalıcı bir tercih (`antigravity`, `gemini`, `codex`, `cursor`, `claude`) belirleyebilir.
 
 ```text
 ┌─────────────────────────────────────────────────────────────┐
@@ -196,7 +196,7 @@ Her sabah 08:00'de zamanlayıcı (Windows Task Scheduler, systemd timer veya Lau
                      │                            │
                      ▼                            ▼
             [Fallback Zinciri: Diğer Hazır CLI'lar]
-            (agy -> codex -> cursor-agent -> claude)
+            (agy -> gemini -> codex -> cursor-agent -> claude)
 ```
 
 ---
@@ -210,7 +210,7 @@ Respected Brain üç ana platform profilini birinci sınıf vatandaş olarak des
    - Vault `/mnt/c/...` altındadır; Obsidian aynı dizini doğrudan Windows üzerinden açar.
 2. **`windows-native` (Native Windows):**
    - WSL, Bash veya POSIX emülasyonu gerektirmez.
-   - `py.exe -3` mutlak Windows yollarıyla `C:\...\.beyin\hooks\bridge.py` dosyasını çalıştırır.
+   - Kurucunun gerçekten çalıştırıp doğruladığı mutlak Python executable, mutlak Windows yollarıyla `C:\...\.beyin\hooks\bridge.py` dosyasını çalıştırır; Microsoft Store aliası kabul edilmez.
    - `install-windows.ps1` PowerShell üzerinden ortamı doğrular ve kurulumu tamamlar.
 3. **`portable` (macOS & Linux):**
    - Standart POSIX dosya sistemi ve sistem Python 3'ü ile çalışır.

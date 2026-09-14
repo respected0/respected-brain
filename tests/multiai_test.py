@@ -94,6 +94,10 @@ class MultiAITest(unittest.TestCase):
         with redirect_stdout(captured):
             bridge.output("antigravity", "end", "")
         self.assertEqual(json.loads(captured.getvalue()), {"decision": "stop"})
+        captured = io.StringIO()
+        with redirect_stdout(captured):
+            bridge.output("gemini", "turn", "")
+        self.assertEqual(json.loads(captured.getvalue()), {})
 
     def test_antigravity_normalize_resolves_ide_then_cli_transcript(self):
         bridge = load(
@@ -251,6 +255,20 @@ class MultiAITest(unittest.TestCase):
         )
         self.assertIsNone(invocation.stdin)
 
+    def test_runner_supports_gemini_headless_without_putting_prompt_in_argv(self):
+        runner = load("model_runner_gemini", ROOT / "template/.beyin/model_runner.py")
+        prompt = "ö" * 100_000
+        with mock.patch.object(
+            runner.shutil,
+            "which",
+            side_effect=lambda name: "/bin/gemini" if name == "gemini" else None,
+        ):
+            invocation = runner._command("gemini", prompt, "text")
+
+        self.assertNotIn(prompt, invocation.argv)
+        self.assertEqual(invocation.stdin, prompt)
+        self.assertEqual(invocation.argv, ["/bin/gemini", "--output-format", "json", "-p", ""])
+
     def test_runner_keeps_codex_and_antigravity_prompts_on_stdin(self):
         runner = load("model_runner_stdin", ROOT / "template/.beyin/model_runner.py")
         prompt = "ö" * 100_000
@@ -325,17 +343,31 @@ class MultiAITest(unittest.TestCase):
         self.assertEqual(resp, "düz metin çıktısı")
         self.assertIsNone(err)
 
+        resp, err = runner._extract_response(
+            '{"response":"Gemini özeti","stats":{},"error":null}',
+            "gemini",
+        )
+        self.assertEqual(resp, "Gemini özeti")
+        self.assertIsNone(err)
+
+        resp, err = runner._extract_response(
+            '{"response":null,"error":{"message":"quota exceeded"}}',
+            "gemini",
+        )
+        self.assertEqual(resp, "")
+        self.assertEqual(err, "quota exceeded")
+
     def test_runner_candidate_order_contract_is_unchanged(self):
         runner = load("model_runner_order", ROOT / "template/.beyin/model_runner.py")
         with mock.patch.object(runner, "_configured_provider", return_value="auto"):
             self.assertEqual(
                 runner._available("antigravity"),
-                ["antigravity", "claude", "codex", "cursor"],
+                ["antigravity", "claude", "codex", "gemini", "cursor"],
             )
         with mock.patch.object(runner, "_configured_provider", return_value="cursor"):
             self.assertEqual(
                 runner._available("antigravity"),
-                ["cursor", "antigravity", "claude", "codex"],
+                ["cursor", "antigravity", "claude", "codex", "gemini"],
             )
 
     def test_wsl_windows_cli_receives_translatable_profile_environment(self):
@@ -513,7 +545,7 @@ class MultiAITest(unittest.TestCase):
             "portable",
             "windows-wsl",
             "windows-native",
-            "py.exe -3",
+            "doğrulanan mutlak Python",
             "0.0.1",
             "0.0.1 öncesi",
             "Claude zorunlu değildir",
@@ -658,6 +690,122 @@ class MultiAITest(unittest.TestCase):
             self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
             repeated = {path.relative_to(home): path.read_bytes() for path in home.rglob("*") if path.is_file() and ".respected-backups" not in path.parts}
             self.assertEqual(managed_files, repeated)
+
+    def test_global_codex_installer_chains_existing_notify_without_losing_it(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            vault = root / "Ada Brain"
+            shutil.copytree(ROOT / "template", vault)
+            home = root / "user"
+            codex = home / ".codex"
+            codex.mkdir(parents=True)
+            original = [str(root / "custom notify.exe"), "turn-ended"]
+            (codex / "config.toml").write_text(
+                "notify = " + json.dumps(original) + "\nmodel = \"gpt-test\"\n",
+                encoding="utf-8",
+            )
+            command = [
+                sys.executable,
+                str(ROOT / "scripts/install_global.py"),
+                str(vault),
+                "--home", str(home),
+                "--providers", "codex",
+                "--apply",
+            ]
+
+            first = subprocess.run(command, capture_output=True, text=True, check=False)
+            self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+            config = (codex / "config.toml").read_text(encoding="utf-8")
+            self.assertIn("codex_notify.py", config)
+            self.assertIn("--chain-file", config)
+            self.assertIn('model = "gpt-test"', config)
+            chain = json.loads((codex / "respected-notify-chain.json").read_text(encoding="utf-8"))
+            self.assertEqual(chain, {"argv": original})
+
+            second = subprocess.run(command, capture_output=True, text=True, check=False)
+            self.assertEqual(second.returncode, 0, second.stdout + second.stderr)
+            self.assertEqual(
+                json.loads((codex / "respected-notify-chain.json").read_text(encoding="utf-8")),
+                {"argv": original},
+            )
+
+    def test_global_native_hooks_reuse_vaults_verified_python_command(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            vault = root / "Ada Brain"
+            shutil.copytree(ROOT / "template", vault)
+            runtime = r"C:\Users\Ada\Custom Python\python.exe"
+            (vault / ".beyin/config.json").write_text(
+                json.dumps({
+                    "platform": "windows-native",
+                    "python_command": [runtime],
+                    "summary_provider": "auto",
+                }),
+                encoding="utf-8",
+            )
+            home = root / "user"
+            home.mkdir()
+            result = subprocess.run(
+                [
+                    sys.executable, str(ROOT / "scripts/install_global.py"), str(vault),
+                    "--home", str(home), "--platform", "windows-native",
+                    "--providers", "codex", "--apply",
+                ],
+                capture_output=True, text=True, check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("Custom Python", (home / ".codex/config.toml").read_text(encoding="utf-8"))
+            self.assertIn("Custom Python", (home / ".codex/hooks.json").read_text(encoding="utf-8"))
+
+    def test_global_codex_installer_preserves_valid_multiline_notify(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            vault = root / "Ada Brain"
+            shutil.copytree(ROOT / "template", vault)
+            home = root / "user"
+            codex = home / ".codex"
+            codex.mkdir(parents=True)
+            original = 'notify = ["custom",\n  "multiline"]\n'
+            config = codex / "config.toml"
+            config.write_text(original, encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable, str(ROOT / "scripts/install_global.py"), str(vault),
+                    "--home", str(home), "--providers", "codex", "--apply",
+                ],
+                capture_output=True, text=True, check=False,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn("codex_notify.py", config.read_text(encoding="utf-8"))
+            self.assertEqual(
+                json.loads((codex / "respected-notify-chain.json").read_text(encoding="utf-8")),
+                {"argv": ["custom", "multiline"]},
+            )
+
+    def test_global_codex_installer_fails_closed_on_invalid_notify(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            vault = root / "Ada Brain"
+            shutil.copytree(ROOT / "template", vault)
+            home = root / "user"
+            codex = home / ".codex"
+            codex.mkdir(parents=True)
+            original = "notify = definitely-not-an-array\n"
+            config = codex / "config.toml"
+            config.write_text(original, encoding="utf-8")
+            result = subprocess.run(
+                [
+                    sys.executable, str(ROOT / "scripts/install_global.py"), str(vault),
+                    "--home", str(home), "--providers", "codex", "--apply",
+                ],
+                capture_output=True, text=True, check=False,
+            )
+
+            self.assertNotEqual(result.returncode, 0)
+            self.assertEqual(config.read_text(encoding="utf-8"), original)
+            self.assertFalse((codex / "respected-notify-chain.json").exists())
 
     def test_global_installer_manages_explicit_antigravity_homes_only(self):
         with tempfile.TemporaryDirectory() as temporary:

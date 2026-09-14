@@ -24,6 +24,12 @@
         "command": "python3 .beyin/hooks/bridge.py --provider cursor --event precompact",
         "timeout": 10
       }
+    ],
+    "afterAgentResponse": [
+      {
+        "command": "python3 .beyin/hooks/bridge.py --provider cursor --event turn",
+        "timeout": 10
+      }
     ]
   }
 }

@@ -1,6 +1,6 @@
 # SETUP.md multi-AI: Activate this second brain (agent runbook)
 
-> Respected Brain Claude Code, Codex, Cursor ve Antigravity ile kullanılabilir. Kurulum sonunda
+> Respected Brain Claude Code, Codex, Cursor, Antigravity ve Gemini CLI ile kullanılabilir. Kurulum sonunda
 > `python3 scripts/render_integrations.py` çalıştır. Mevcut bir Respected Brain vault'unu güncellemek
 > için `scripts/update_respected.py` (veya `python update.py`) kullan; eksik multi-AI katmanını tamamlamak için `enable_multiai.py`
 > kullanılır. Ayrıntı: `MULTI_AI.md`.
@@ -13,7 +13,7 @@ Respected has exactly three installed runtime profiles:
 | --- | --- | --- |
 | `portable` | `python3` | macOS or Linux |
 | `windows-wsl` | `wsl.exe --cd <vault> python3` | Windows IDE + WSL runtime |
-| `windows-native` | `py.exe -3` | Windows without WSL/Bash |
+| `windows-native` | kurulumda doğrulanan mutlak Python 3 executable | Windows without WSL/Bash |
 
 If this checkout is running directly in Windows and the user wants a fresh native vault, stop this
 POSIX-oriented runbook and follow `SETUP-WINDOWS.md`. 0.0.1 öncesi veya önceki sürümlerden kalan mevcut bir vault için,
@@ -40,7 +40,7 @@ Claude is never mandatory when another selected provider CLI is installed and au
    go: "Vault iskeletini kuruyorum...", "Hafıza motorunu bağlıyorum...", "Derleyiciyi yerine
    koyuyorum...". Short sentences, no walls of text.
 7. **No extra API key is required.** The background summarizer and compiler use an authenticated
-   local CLI (`claude`, `codex`, `agy`, or `cursor-agent`) and consume that provider's existing
+   local CLI (`claude`, `codex`, `agy`, `gemini`, or `cursor-agent`) and consume that provider's existing
    subscription/quota.
 8. **Do not force one provider.** Default the summary provider to `auto`. Only persist a specific
    provider when the user explicitly asks. Switching the coding agent must not require migration.
@@ -138,7 +138,7 @@ Ask (Turkish, conversational, not a form):
 5. **Semantik hafıza (mem0)?** Temel sürümü **ücretsiz** (mem0.ai, kredi kartı yok). Dosya
    tabanlı hafıza onsuz da tam çalışır, mem0 üstüne anlamsal arama katar. Önerilir. →
    `{{USE_MEM0}}`
-6. **Hangi agentları kullanıyorsun?** Claude Code, Codex, Cursor, Antigravity arasından seçtir.
+6. **Hangi agentları kullanıyorsun?** Claude Code, Codex, Cursor, Antigravity, Gemini arasından seçtir.
    Birden fazla seçim normaldir. Bu değer global kurulumun `--providers` listesidir.
 7. **Her kod reposunda aynı beyin otomatik açılsın mı?** Evet önerilir. Evetse kullanıcı düzeyi
    global bağlantıyı PHASE 3B'de önizle, açık onaydan sonra uygula.
@@ -199,14 +199,14 @@ else
   BEYIN_MISSING=$((BEYIN_MISSING + 1))
 fi
 BEYIN_CLI_COUNT=0
-for BEYIN_CLI in claude codex agy cursor-agent; do
+for BEYIN_CLI in claude codex agy gemini cursor-agent; do
   if command -v "$BEYIN_CLI" >/dev/null 2>&1; then
     echo "$BEYIN_CLI CLI ✓ $(command -v "$BEYIN_CLI")"
     BEYIN_CLI_COUNT=$((BEYIN_CLI_COUNT + 1))
   fi
 done
 if [ "$BEYIN_CLI_COUNT" -eq 0 ]; then
-  echo "🔴 DESTEKLENEN AI CLI YOK: claude | codex | agy | cursor-agent"
+  echo "🔴 DESTEKLENEN AI CLI YOK: claude | codex | agy | gemini | cursor-agent"
   BEYIN_MISSING=$((BEYIN_MISSING + 1))
 fi
 echo "ONKOSUL SONUC: $BEYIN_MISSING eksik"
@@ -538,7 +538,7 @@ Report in Turkish:
 
 - ✅ **Ne kuruldu:** vault yolu ve kullanıcı seçtiği adı, hafıza motoru, `daily/`, `knowledge/`,
   canonical rules/skills, kurulan workspace adaptörleri ve varsa global provider bağlantıları.
-- 🔁 **Agent değiştirme:** bir agentın kapanış özeti ortak vault'a yazıldıktan sonra diğer agent
+- 🔁 **Agent değiştirme:** bir agentın tamamlanan turn özeti ortak vault'a yazıldıktan sonra diğer agent
   aynı bağlamı alır; sağlayıcının ham chat UI geçmişi taşınmaz.
 - 🤖 **Özetleyici:** varsayılan `auto`; mevcut agent önce denenir, geçici limitte kurulu ve giriş
   yapılmış başka CLI'a fallback edilir. Kalıcı seçim yalnız kullanıcı isterse yapılır.
@@ -547,9 +547,8 @@ Report in Turkish:
 
 ## Prove one real lifecycle
 
-The exact close action depends on the host: Claude CLI may use `/exit`; Codex, Cursor and
-Antigravity use their own end/close controls. Do not prescribe `/exit` to every product. Ask the
-user to end the test session normally, then poll for the daily log:
+Do not require session close. Send one harmless but meaningful prompt, wait for the provider's
+completed-turn hook, then poll for the daily log:
 
 ```bash
 BEYIN_LOG="{{VAULT_PATH}}/daily/$(date +%F).md"
@@ -579,7 +578,8 @@ fi
 
 ## Honest timing and quota behavior
 
-- **Daily log:** starts at a supported session-end/pre-compact event and normally takes seconds.
+- **Daily log:** starts at a supported native completed-turn event and normally takes seconds;
+  session-end/pre-compact are catch-up paths.
 - **Knowledge compile:** runs in the morning pipeline before the 08:00 briefing and catches up
   completed earlier days on session start without ingesting today's partial log. It runs completely
   headless and quiet in the background without opening UI windows.
@@ -590,4 +590,4 @@ Do not end with only "kuruldu". Report the tested provider, whether fallback alt
 actually installed/authenticated, the global backup path, and any one-time action still needed
 (for example Codex `/hooks` trust or restarting an IDE to reload user hooks).
 
-Done. The user now has one portable memory layer instead of four disconnected agent memories.
+Done. The user now has one portable memory layer instead of five disconnected agent memories.

@@ -15,6 +15,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 from typing import Any, Callable, Sequence
 
@@ -51,6 +52,29 @@ DIRECTIVE_SHAPED = re.compile(
 HOOK_INPUT_NAME = re.compile(r"hookin-[^/]+\.json\Z")
 INVALID_UNICODE_ESCAPE = re.compile(r"\\u(?![0-9a-fA-F]{4})")
 INVALID_JSON_ESCAPE = re.compile(r'\\(?!["\\/bfnrtu])')
+_DAILY_THREAD_LOCKS: dict[str, threading.Lock] = {}
+_DAILY_THREAD_LOCKS_GUARD = threading.Lock()
+
+
+def _atomic_write_text(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        for attempt in range(5):
+            try:
+                os.replace(temporary, path)
+                return
+            except PermissionError:
+                if attempt == 4:
+                    raise
+                time.sleep(0.02 * (attempt + 1))
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def _atomic_write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -368,6 +392,7 @@ def _is_recent_duplicate(
     session_id: str,
     now_epoch: float,
     current_turns: int | None = None,
+    transcript_hash: str | None = None,
 ) -> bool:
     session_state_path = _session_state_path(state_dir, session_id)
     state_path = (
@@ -383,10 +408,31 @@ def _is_recent_duplicate(
     timestamp = state.get("ts")
     if not isinstance(timestamp, (int, float)):
         return False
+    last_hash = state.get("transcript_hash")
+    if transcript_hash is not None:
+        return isinstance(last_hash, str) and transcript_hash == last_hash
     last_turns = state.get("turns")
     if current_turns is not None and isinstance(last_turns, int):
         return current_turns <= last_turns
     return abs(now_epoch - float(timestamp)) < 60
+
+
+def _is_stale_successful_event(
+    state_dir: Path,
+    session_id: str,
+    now_epoch: float,
+) -> bool:
+    state_path = _session_state_path(state_dir, session_id)
+    if not state_path.exists():
+        return False
+    state = _load_json_object(state_path, {})
+    timestamp = state.get("ts")
+    return (
+        state.get("session_id") == session_id
+        and state.get("status", "ok") == "ok"
+        and isinstance(timestamp, (int, float))
+        and float(timestamp) > now_epoch
+    )
 
 
 def _write_flush_state(
@@ -396,16 +442,19 @@ def _write_flush_state(
     status: str,
     detail: str = "",
     turn_count: int | None = None,
+    transcript_hash: str | None = None,
 ) -> None:
     payload: dict[str, Any] = {
         "session_id": session_id,
-        "ts": int(now_epoch),
+        "ts": now_epoch,
         "status": status,
     }
     if detail:
         payload["detail"] = detail
     if turn_count is not None:
         payload["turns"] = turn_count
+    if transcript_hash is not None:
+        payload["transcript_hash"] = transcript_hash
     _atomic_write_json(_session_state_path(state_dir, session_id), payload)
     try:
         _atomic_write_json(state_dir / "last-flush.json", payload)
@@ -597,7 +646,7 @@ def _record_session_event(
         events.record_event(
             vault_root=vault_root,
             provider=os.environ.get("BEYIN_PROVIDER", "auto"),
-            event_type="session_end",
+            event_type="session_end" if reason == "sessionend" else reason,
             session_id=session_id,
             context=sections.get("Bağlam", ""),
             decisions=[d.lstrip("- *").strip() for d in sections.get("Alınan Kararlar", "").splitlines() if d.strip()],
@@ -612,29 +661,60 @@ def _record_session_event(
 
 
 
-def _append_daily(
+def _daily_thread_lock(lock_path: Path) -> threading.Lock:
+    key = str(lock_path.resolve(strict=False))
+    with _DAILY_THREAD_LOCKS_GUARD:
+        return _DAILY_THREAD_LOCKS.setdefault(key, threading.Lock())
+
+
+def _upsert_daily_session(
     vault_root: Path,
+    state_dir: Path,
     summary: str,
     reason: str,
     now: dt.datetime,
+    session_id: str,
+    provider: str,
 ) -> None:
     daily_dir = vault_root / "daily"
     daily_dir.mkdir(parents=True, exist_ok=True)
     date_text = now.strftime("%Y-%m-%d")
     daily_path = daily_dir / f"{date_text}.md"
-    if not daily_path.exists():
-        daily_path.write_text(
-            f"# Günlük Log: {date_text}\n\n## Oturumlar\n",
-            encoding="utf-8",
-        )
-
+    lock_path = state_dir / f"daily-{date_text}.lock"
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    identity = hashlib.sha256(f"{provider}\0{session_id}".encode("utf-8")).hexdigest()
+    begin = f"<!-- RESPECTED-SESSION:{identity}:BEGIN -->"
+    end = f"<!-- RESPECTED-SESSION:{identity}:END -->"
     suffix = ", compaction öncesi" if reason == "precompact" else ""
     entry = (
-        f"\n### Oturum ({now.strftime('%H:%M')}){suffix}\n\n"
-        f"{summary}\n"
+        f"{begin}\n"
+        f"### Oturum ({now.strftime('%H:%M')}){suffix}\n\n"
+        f"{summary.rstrip()}\n"
+        f"{end}"
     )
-    with daily_path.open("a", encoding="utf-8") as daily_file:
-        daily_file.write(entry)
+    with _daily_thread_lock(lock_path):
+        with lock_path.open("a+", encoding="utf-8") as lock_file:
+            with runtime_platform.exclusive_lock(
+                lock_file, blocking=True, timeout=30.0
+            ) as held:
+                if not held:
+                    raise OSError("daily-lock-busy")
+                if daily_path.exists():
+                    content = daily_path.read_text(encoding="utf-8")
+                else:
+                    content = f"# Günlük Log: {date_text}\n\n## Oturumlar\n"
+                start = content.find(begin)
+                finish = content.find(end)
+                if (start < 0) != (finish < 0) or (
+                    start >= 0 and content.find(begin, start + len(begin)) >= 0
+                ):
+                    raise OSError("daily-session-markers-invalid")
+                if start >= 0:
+                    finish += len(end)
+                    updated = content[:start] + entry + content[finish:]
+                else:
+                    updated = content.rstrip() + "\n\n" + entry + "\n"
+                _atomic_write_text(daily_path, updated)
 
 
 def _sha256(path: Path) -> str:
@@ -791,7 +871,7 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
     parser.add_argument("--hook-input", type=Path)
     parser.add_argument(
         "--reason",
-        choices=("sessionend", "precompact"),
+        choices=("turn", "sessionend", "precompact", "postcompact"),
         default="sessionend",
     )
     parser.add_argument("--maybe-compile", action="store_true", help=argparse.SUPPRESS)
@@ -823,9 +903,19 @@ def _flush_session_transcript(
                 )
                 return False
 
+            if _is_stale_successful_event(state_dir, session_id, now_epoch):
+                return False
+
             turns = read_transcript(transcript_path)
             transcript, turn_count = format_turns(turns)
-            if _is_recent_duplicate(state_dir, session_id, now_epoch, current_turns=turn_count):
+            transcript_hash = hashlib.sha256(transcript.encode("utf-8")).hexdigest()
+            if _is_recent_duplicate(
+                state_dir,
+                session_id,
+                now_epoch,
+                current_turns=turn_count,
+                transcript_hash=transcript_hash,
+            ):
                 return False
 
             minimum_turns = 5 if reason == "precompact" else 1
@@ -837,6 +927,7 @@ def _flush_session_transcript(
                     "ok",
                     "below-minimum-turns",
                     turn_count=turn_count,
+                    transcript_hash=transcript_hash,
                 )
                 return False
 
@@ -879,15 +970,20 @@ def _flush_session_transcript(
                     "ok",
                     "flush-bos",
                     turn_count=turn_count,
+                    transcript_hash=transcript_hash,
                 )
                 return True
 
             try:
-                _append_daily(
+                provider = os.environ.get("BEYIN_PROVIDER", "auto")
+                _upsert_daily_session(
                     vault_root,
+                    state_dir,
                     normalized_summary,
                     reason,
                     event_time,
+                    session_id,
+                    provider,
                 )
                 _record_session_event(
                     vault_root,
@@ -903,6 +999,7 @@ def _flush_session_transcript(
                     "ok",
                     "appended",
                     turn_count=turn_count,
+                    transcript_hash=transcript_hash,
                 )
                 return True
             except OSError:
@@ -989,10 +1086,6 @@ def catch_up_unflushed_sessions(
         if not match:
             continue
         session_id = match.group(1)
-
-        state_file = _session_state_path(state_dir, session_id)
-        if state_file.is_file():
-            continue
 
         try:
             t_event_time = dt.datetime.fromtimestamp(mtime, tz=current.tzinfo)

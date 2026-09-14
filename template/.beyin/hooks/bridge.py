@@ -28,7 +28,7 @@ if str(HOOK_DIR) not in sys.path:
 import lifecycle as LIFECYCLE
 
 
-EVENTS = ("start", "prompt", "end", "precompact", "postcompact")
+EVENTS = ("start", "prompt", "turn", "end", "precompact", "postcompact")
 SESSION_COMPONENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$")
 
 
@@ -172,8 +172,38 @@ def output(provider: str, event: str, context: str) -> None:
             print(json.dumps({"injectSteps": steps}, ensure_ascii=False))
         else:
             print(json.dumps({"decision": "stop"}, ensure_ascii=False))
+    elif provider == "gemini":
+        if context:
+            event_name = {
+                "start": "SessionStart",
+                "prompt": "BeforeAgent",
+                "turn": "AfterAgent",
+                "end": "SessionEnd",
+                "precompact": "PreCompress",
+                "postcompact": "PostCompact",
+            }[event]
+            print(
+                json.dumps(
+                    {
+                        "hookSpecificOutput": {
+                            "hookEventName": event_name,
+                            "additionalContext": context,
+                        }
+                    },
+                    ensure_ascii=False,
+                )
+            )
+        else:
+            print("{}")
     elif context:
-        event_name = {"start": "SessionStart", "prompt": "UserPromptSubmit", "end": "SessionEnd", "precompact": "PreCompact", "postcompact": "PostCompact"}[event]
+        event_name = {
+            "start": "SessionStart",
+            "prompt": "UserPromptSubmit",
+            "turn": "Stop" if provider == "claude" else "AfterAgent",
+            "end": "SessionEnd",
+            "precompact": "PreCompact" if provider == "claude" else "PreCompress",
+            "postcompact": "PostCompact",
+        }[event]
         print(json.dumps({"hookSpecificOutput": {"hookEventName": event_name, "additionalContext": context}}, ensure_ascii=False))
 
 
@@ -212,7 +242,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     if LIFECYCLE._is_reentrant():
         return 0
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--provider", choices=("claude", "codex", "cursor", "antigravity"), required=True)
+    parser.add_argument(
+        "--provider",
+        choices=("claude", "codex", "cursor", "antigravity", "gemini"),
+        required=True,
+    )
     parser.add_argument("--event", choices=EVENTS, required=True)
     parser.add_argument("--global-hook", action="store_true", help="vault dışındaki repolar için kullanıcı düzeyi hook")
     args = parser.parse_args(argv)

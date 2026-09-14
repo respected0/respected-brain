@@ -11,6 +11,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 import time
 from typing import Sequence
 
@@ -19,9 +20,10 @@ REPO_ROOT = Path(__file__).resolve().parent
 TEMPLATE_DIR = REPO_ROOT / "template"
 SCRIPTS_DIR = REPO_ROOT / "scripts"
 
-SUPPORTED_PROVIDERS = ("antigravity", "codex", "claude", "cursor")
+SUPPORTED_PROVIDERS = ("antigravity", "gemini", "codex", "claude", "cursor")
 PROVIDER_COMMANDS = {
     "antigravity": "agy",
+    "gemini": "gemini",
     "codex": "codex",
     "claude": "claude",
     "cursor": "cursor-agent",
@@ -150,8 +152,19 @@ def create_desktop_shortcut(
         return None
 
     try:
-        is_windows_target = os.name == "nt" or str(desktop_dir).startswith("/mnt/c/")
-        if is_windows_target or sys.platform == "darwin":
+        is_macos_target = sys.platform == "darwin"
+        is_windows_target = not is_macos_target and (
+            os.name == "nt" or str(desktop_dir).startswith("/mnt/c/")
+        )
+        if is_macos_target:
+            import plistlib
+
+            shortcut_file = desktop_dir / f"{vault_name}.webloc"
+            shortcut_file.write_bytes(
+                plistlib.dumps({"URL": uri}, fmt=plistlib.FMT_XML, sort_keys=True)
+            )
+            return shortcut_file
+        if is_windows_target:
             shortcut_file = desktop_dir / f"{vault_name}.url"
             content = (
                 "[{000214A0-0000-0000-C000-000000000046}]\n"
@@ -190,6 +203,7 @@ def install_vault(
     os_name: str,
     summary_provider: str,
     provider_priority: list[str] | None = None,
+    python_command: list[str] | None = None,
     install_global: bool = False,
     install_schedule: bool = False,
     schedule_time: str = "08:00",
@@ -207,7 +221,8 @@ def install_vault(
     log(f"\n{Colors.CYAN}>> Kurulum Başlatılıyor:{Colors.RESET} {vault_path}")
 
     # Preflight target
-    if vault_path.exists():
+    target_existed = vault_path.exists()
+    if target_existed:
         if not vault_path.is_dir():
             print(f"{Colors.RED}HATA: Hedef yol bir klasör değil: {vault_path}{Colors.RESET}", file=sys.stderr)
             return 1
@@ -215,13 +230,19 @@ def install_vault(
             print(f"{Colors.RED}HATA: Hedef klasör boş değil: {vault_path}{Colors.RESET}", file=sys.stderr)
             return 1
     else:
-        vault_path.mkdir(parents=True, exist_ok=True)
+        vault_path.parent.mkdir(parents=True, exist_ok=True)
+
+    stage_container = Path(
+        tempfile.mkdtemp(prefix=f".{vault_path.name}.respected-stage-", dir=vault_path.parent)
+    )
+    working_path = stage_container / "vault"
+    working_path.mkdir()
 
     try:
         # 1. Copy template
         log(f"{Colors.DIM}• Şablon dosyaları aktarılıyor...{Colors.RESET}")
         for item in TEMPLATE_DIR.iterdir():
-            target_item = vault_path / item.name
+            target_item = working_path / item.name
             if item.is_dir():
                 shutil.copytree(item, target_item, dirs_exist_ok=True)
             else:
@@ -229,7 +250,7 @@ def install_vault(
 
         # 2. Copy scripts
         log(f"{Colors.DIM}• Yardımcı motor betikleri kopyalanıyor...{Colors.RESET}")
-        target_scripts = vault_path / "scripts"
+        target_scripts = working_path / "scripts"
         target_scripts.mkdir(parents=True, exist_ok=True)
         excluded_scripts = {"install-windows.ps1", "upstream_sync.sh", "install.py"}
         for script_file in SCRIPTS_DIR.glob("*.py"):
@@ -237,9 +258,9 @@ def install_vault(
                 shutil.copy2(script_file, target_scripts / script_file.name)
 
         # 3. Create required runtime dirs
-        (vault_path / "daily").mkdir(exist_ok=True)
-        (vault_path / "knowledge" / "concepts").mkdir(parents=True, exist_ok=True)
-        (vault_path / "knowledge" / "connections").mkdir(parents=True, exist_ok=True)
+        (working_path / "daily").mkdir(exist_ok=True)
+        (working_path / "knowledge" / "concepts").mkdir(parents=True, exist_ok=True)
+        (working_path / "knowledge" / "connections").mkdir(parents=True, exist_ok=True)
 
         # 4. Resolve placeholders
         log(f"{Colors.DIM}• Kimlik ve profil değişkenleri işleniyor...{Colors.RESET}")
@@ -254,7 +275,7 @@ def install_vault(
         }
 
         text_extensions = {".md", ".json", ".py", ".sh", ".ps1", ".txt", ".yml", ".yaml"}
-        for root, _dirs, files in os.walk(vault_path):
+        for root, _dirs, files in os.walk(working_path):
             for file_name in files:
                 file_path = Path(root) / file_name
                 if file_path.suffix.lower() in text_extensions or file_name.startswith("."):
@@ -269,18 +290,22 @@ def install_vault(
                         pass
 
         # 5. Write .beyin/config.json
-        platform_name = "windows-native" if os.name == "nt" else "portable"
+        if os.name == "nt":
+            platform_name = "windows-wsl" if environment in {"wsl", "hybrid"} else "windows-native"
+        else:
+            platform_name = "portable"
+        default_python_command = [sys.executable] if platform_name == "windows-native" else ["python3"]
         config_data = {
             "summary_provider": summary_provider,
             "platform": platform_name,
-            "python_command": ["python"] if os.name == "nt" else ["python3"],
+            "python_command": list(python_command or default_python_command),
         }
         if environment:
             config_data["environment"] = environment
         if provider_priority:
             config_data["provider_priority"] = provider_priority
 
-        config_path = vault_path / ".beyin" / "config.json"
+        config_path = working_path / ".beyin" / "config.json"
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config_path.write_text(json.dumps(config_data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
@@ -290,14 +315,51 @@ def install_vault(
             sys.executable,
             str(target_scripts / "render_integrations.py"),
             "--root",
-            str(vault_path),
+            str(working_path),
             "--platform",
             platform_name,
         ]
+        if python_command:
+            render_cmd += ["--python-command", *python_command]
         result = subprocess.run(render_cmd, capture_output=True, text=True, check=False)
         if result.returncode != 0:
             print(f"{Colors.RED}HATA: Entegrasyon render başarısız:{Colors.RESET}\n{result.stderr}", file=sys.stderr)
+            shutil.rmtree(stage_container, ignore_errors=True)
             return result.returncode
+
+        # Promote only after the complete staged vault has passed its render gate.
+        # Each top-level move is atomic on the same volume; rollback moves only
+        # our own entries and never sweeps an unrelated concurrent file.
+        if vault_path.exists():
+            if any(vault_path.iterdir()):
+                shutil.rmtree(stage_container, ignore_errors=True)
+                print(
+                    f"{Colors.RED}HATA: Hedef klasör kurulum sırasında değişti: {vault_path}{Colors.RESET}",
+                    file=sys.stderr,
+                )
+                return 1
+        else:
+            vault_path.mkdir()
+        promoted: list[Path] = []
+        try:
+            for item in working_path.iterdir():
+                destination = vault_path / item.name
+                os.replace(item, destination)
+                promoted.append(destination)
+        except OSError:
+            for destination in reversed(promoted):
+                try:
+                    os.replace(destination, working_path / destination.name)
+                except OSError:
+                    pass
+            if not target_existed:
+                try:
+                    vault_path.rmdir()
+                except OSError:
+                    pass
+            raise
+        shutil.rmtree(stage_container, ignore_errors=True)
+        target_scripts = vault_path / "scripts"
 
         # 7. Optional global install
         if install_global:
@@ -404,6 +466,12 @@ def install_vault(
         return 0
 
     except Exception as exc:
+        shutil.rmtree(stage_container, ignore_errors=True)
+        if not target_existed:
+            try:
+                vault_path.rmdir()
+            except OSError:
+                pass
         print(f"{Colors.RED}Kurulum sırasında beklenmeyen hata oluştu: {exc}{Colors.RESET}", file=sys.stderr)
         return 1
 
@@ -448,9 +516,9 @@ def _interactive_wizard() -> int:
     # 5. Model & Fallback Priority Selection Menu
     print(f"\n{Colors.BOLD}6. Model ve Fallback Sıralama Tercihi:{Colors.RESET}")
     print("  [1] Akıllı Otomatik (Auto) — Kurulu tüm modelleri hız/maliyet sırasıyla tara (Önerilen)")
-    print("  [2] Google Antigravity Öncelikli (Antigravity -> Codex -> Claude -> Cursor)")
-    print("  [3] OpenAI Codex Öncelikli (Codex -> Claude -> Antigravity -> Cursor)")
-    print("  [4] Anthropic Claude Öncelikli (Claude -> Codex -> Antigravity -> Cursor)")
+    print("  [2] Google Antigravity Öncelikli (Antigravity -> Gemini -> Codex -> Claude -> Cursor)")
+    print("  [3] OpenAI Codex Öncelikli (Codex -> Claude -> Gemini -> Antigravity -> Cursor)")
+    print("  [4] Anthropic Claude Öncelikli (Claude -> Codex -> Gemini -> Antigravity -> Cursor)")
     print("  [5] Yalnızca Tek Model Kitle (Fail-fast — Yalnızca seçilen model)")
     print("  [6] Özel Sıralama Belirle (Virgülle kendi sıranızı girin)")
 
@@ -461,18 +529,18 @@ def _interactive_wizard() -> int:
 
     if choice == "1":
         summary_provider = "auto"
-        provider_priority = ["claude", "codex", "antigravity", "cursor"]
+        provider_priority = ["claude", "codex", "gemini", "antigravity", "cursor"]
     elif choice == "2":
         summary_provider = "auto"
-        provider_priority = ["antigravity", "codex", "claude", "cursor"]
+        provider_priority = ["antigravity", "gemini", "codex", "claude", "cursor"]
     elif choice == "3":
         summary_provider = "auto"
-        provider_priority = ["codex", "claude", "antigravity", "cursor"]
+        provider_priority = ["codex", "claude", "gemini", "antigravity", "cursor"]
     elif choice == "4":
         summary_provider = "auto"
-        provider_priority = ["claude", "codex", "antigravity", "cursor"]
+        provider_priority = ["claude", "codex", "gemini", "antigravity", "cursor"]
     elif choice == "5":
-        print("  Hangi modeli kilitlemek istiyorsunuz? (antigravity / codex / claude / cursor)")
+        print("  Hangi modeli kilitlemek istiyorsunuz? (antigravity / gemini / codex / claude / cursor)")
         locked = _prompt_user("Model", "antigravity").lower()
         if locked in SUPPORTED_PROVIDERS:
             summary_provider = locked
@@ -555,6 +623,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--provider", default="auto", choices=("auto", *SUPPORTED_PROVIDERS), help="Birincil model")
     parser.add_argument("--priority", nargs="+", help="Model fallback öncelik sırası")
     parser.add_argument("--environment", choices=("native", "wsl", "hybrid"), default=None, help="Çalışma ortamı tercihi")
+    parser.add_argument("--python-executable", help="Windows bootstrap tarafından doğrulanan Python executable")
+    parser.add_argument("--python-launcher-arg", action="append", default=[], help="Python launcher için ek argv; tekrarlanabilir")
     parser.add_argument("--install-global", action="store_true", help="Global AI kural bağlantısını yap")
     parser.add_argument("--install-schedule", dest="install_schedule", action="store_true", default=False, help="Sabah brifingi zamanlayıcısını kur")
     parser.add_argument("--no-install-schedule", dest="install_schedule", action="store_false", help="Zamanlayıcıyı kurma")
@@ -575,6 +645,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     vault_path = args.vault_path or _default_vault_path()
     user_name = args.user_name or os.environ.get("USERNAME") or os.environ.get("USER") or "Furkan"
     priority = list(args.priority) if args.priority else None
+    python_command = (
+        [args.python_executable, *args.python_launcher_arg]
+        if args.python_executable
+        else None
+    )
 
     return install_vault(
         vault_path=vault_path,
@@ -584,6 +659,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         os_name=args.os_name,
         summary_provider=args.provider,
         provider_priority=priority,
+        python_command=python_command,
         install_global=args.install_global,
         install_schedule=args.install_schedule,
         schedule_time=args.schedule_time,

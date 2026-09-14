@@ -11,9 +11,9 @@ Bu belge, Respected Brain sisteminin bileşen mülkiyetini, yaşam döngüsü ku
 ## 1. Temel Prensipler ve Kapsam
 
 1. **Bağımsız ve Kendine Yeten (Self-Contained):** Respected Brain tamamen bağımsız bir projedir; harici bir fork veya upstream sync bağımlılığı barındırmaz.
-2. **Çoklu Ajan Desteği:** Antigravity, Codex, Cursor ve Claude Code aynı Obsidian vault'unu ortak hafıza olarak kullanır. Claude zorunlu değildir; sistem dilediğiniz yapay zeka aracı ile tek başına veya birlikte çalışabilir.
+2. **Çoklu Ajan Desteği:** Antigravity, Gemini CLI, Codex, Cursor ve Claude Code aynı Obsidian vault'unu ortak hafıza olarak kullanır. Claude zorunlu değildir; sistem dilediğiniz yapay zeka aracı ile tek başına veya birlikte çalışabilir.
 3. **Tek Doğruluk Kaynağı (SSOT):** Tüm kurallar ve skill tanımları `template/.beyin/` altında tutulur. Agent entegrasyon dosyaları bu kaynaktan deterministik olarak üretilir.
-4. **Platform Taşınabilirliği:** `portable` (POSIX/macOS/Linux), `windows-wsl` (Windows + WSL) ve `windows-native` (Native Windows / `py.exe -3`) profillerinin her biri eksiksiz test kapılarıyla korunur.
+4. **Platform Taşınabilirliği:** `portable` (POSIX/macOS/Linux), `windows-wsl` (Windows + WSL) ve `windows-native` (Native Windows / doğrulanmış mutlak Python executable) profillerinin her biri eksiksiz test kapılarıyla korunur.
 5. **Veri Güvenliği ve Geri Dönülebilirlik:** Vault Markdown dosyalarından oluşur. Güncellemeler öncesinde otomatik Git snapshot'ı ve Restic yedekleme desteği sağlanır.
 
 ---
@@ -65,8 +65,9 @@ Bu dosyalar elle düzenlenmez; `scripts/render_integrations.py` tarafından üre
 
 | Değer | Davranış | Fallback Sırası |
 | --- | --- | --- |
-| `auto` (Varsayılan) | Hook'u tetikleyen agent'ın CLI'ını ilk sıraya alır. | `agy` → `codex exec` → `cursor-agent -p` → `claude -p` |
+| `auto` (Varsayılan) | Hook'u tetikleyen agent'ın CLI'ını ilk sıraya alır. | `agy` → `gemini` → `codex exec` → `cursor-agent -p` → `claude -p` |
 | `antigravity` | İlk olarak Google Antigravity CLI (`agy`) denenir. | Kurulu ve giriş yapılmış diğer CLI'lar. |
+| `gemini` | İlk olarak Gemini CLI (`gemini --output-format json -p ""`) denenir; prompt stdin'den gider. | Kurulu ve giriş yapılmış diğer CLI'lar. |
 | `codex` | İlk olarak OpenAI Codex CLI (`codex exec`) denenir. | Kurulu ve giriş yapılmış diğer CLI'lar. |
 | `cursor` | İlk olarak Cursor CLI (`cursor-agent -p`) denenir. | Kurulu ve giriş yapılmış diğer CLI'lar. |
 | `claude` | İlk olarak Claude Code CLI (`claude -p`) denenir. | Kurulu ve giriş yapılmış diğer CLI'lar. |
@@ -87,7 +88,7 @@ Bu dosyalar elle düzenlenmez; `scripts/render_integrations.py` tarafından üre
 
 ### 4.2 `windows-native` (Native Windows)
 - WSL veya POSIX Bash katmanı gerektirmez.
-- `py.exe -3` mutlak Windows dosya yollarını (`C:\...`) kullanarak `.beyin/hooks/bridge.py` dosyasını çalıştırır.
+- Kurulumda gerçek bir `import sys` probe'u ile doğrulanan mutlak Python executable, mutlak Windows dosya yollarını (`C:\...`) kullanarak `.beyin/hooks/bridge.py` dosyasını çalıştırır; Store aliası reddedilir.
 - Kurulum `scripts/install-windows.ps1` ile yapılır; Python 3, Git ve seçilen CLI yürütücüleri doğrudan test edilir.
 
 ### 4.3 `portable` (macOS / Linux)
@@ -103,10 +104,10 @@ Bu dosyalar elle düzenlenmez; `scripts/render_integrations.py` tarafından üre
 2. Bağlam enjeksiyonu (`Last-Session.md`, `Threads.md`, `Kurallar.md` ilk 60 satır, son Journal girdisi, haritalar, bilgi indeksi ve günlükler) oluşturulur.
 3. Toplam bağlam **16.000 karakterlik üst sınırla (bounded recall)** sınırlandırılır.
 
-### 5.2 Oturum Kapanışı ve Flush (`flush.py`)
+### 5.2 Turn Tamamlama ve Catch-Up Flush (`flush.py`)
 1. Stdin veya transkript yolu alınarak asenkron `flush.py` süreci başlatılır; IDE gecikmesiz döner.
 2. Modelden dönen özet 5 sabit Türkçe başlık (`## 1. Oturum Özeti` ... `## 5. Sonraki Adımlar`) için doğrulanır.
-3. Eksik veya geçersiz özetler reddedilir. Geçerli özet `daily/YYYY-MM-DD.md` dosyasına atomik eklenir.
+3. Eksik veya geçersiz özetler reddedilir. Geçerli özet provider+session yönetilen bloğuna atomik upsert edilir; aynı turn revizyonu idempotenttir.
 
 ### 5.3 Bilgi Tabanı Derlemesi (`compile.py`)
 1. Derleme sabah 08:00 zamanlanmış pipeline'ı tarafından veya SessionStart catch-up sırasında tetiklenir.

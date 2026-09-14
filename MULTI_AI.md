@@ -1,6 +1,6 @@
 # Respected Brain — çoklu AI kullanımı
 
-Bu dalda vault tek bir AI aracına ait değildir. Claude Code, Codex, Cursor ve Antigravity aynı
+Bu dalda vault tek bir AI aracına ait değildir. Claude Code, Codex, Cursor, Antigravity ve Gemini CLI aynı
 Markdown hafızasını, kuralları, skill'leri ve günlük/knowledge hattını paylaşır.
 
 Kurulu platform profili tam olarak üç değerden biridir: macOS/Linux için `portable`, Windows
@@ -21,6 +21,7 @@ Araçlara özel dosyalar üretilir; elle düzenlenmez:
 - `AGENTS.md` ve `.codex/hooks.json` — Codex
 - `.cursor/rules/` (`beyin.mdc`, `software-quality-1.mdc`, `software-quality-2.mdc`) ve `.cursor/hooks.json` — Cursor
 - `.agents/rules/` (`beyin.md`, `software-quality-1.md`, `software-quality-2.md`), `.agents/skills/` ve `.agents/hooks.json` — Antigravity
+- `.gemini/GEMINI.md` ve `.gemini/settings.json` — Gemini CLI
 - `.claude/skills/` — Claude Code
 
 Kaynaktan tekrar üretmek ve drift kontrolü yapmak için:
@@ -99,7 +100,7 @@ py -3 scripts/install_global.py `
   --providers codex,cursor
 ```
 
-Bu profil hook'larda `py.exe -3` ve vault içindeki `bridge.py` dosyasının mutlak Windows yolunu
+Bu profil hook'larda kurulum sırasında gerçekten çalıştırılıp doğrulanan mutlak Python executable'ını ve vault içindeki `bridge.py` dosyasının mutlak Windows yolunu
 kullanır; WSL, Bash veya `.sh` dosyası gerektirmez. `--providers` seçimi ana agent tercihi
 değildir: yalnız kurulu araçların hangilerine global bağlantı yazılacağını belirler. Bugün Codex ve
 Cursor ile başlayıp daha sonra `antigravity` veya `claude` ekleyebilirsin; mevcut kişisel kurallar
@@ -108,8 +109,8 @@ değildir.
 
 ## Arka plan modeli nasıl seçilir?
 
-Hook hangi araçtan geldiyse önce onun yerel CLI'ı denenir. Antigravity için `agy`, Codex için
-`codex`, Claude için `claude`, Cursor için `cursor-agent` kullanılır. Tercih edilen CLI kurulu
+Hook hangi araçtan geldiyse önce onun yerel CLI'ı denenir. Antigravity için `agy`, Gemini için
+`gemini`, Codex için `codex`, Claude için `claude`, Cursor için `cursor-agent` kullanılır. Tercih edilen CLI kurulu
 değilse diğerleri denenir. Kota, rate-limit, geçici kapasite, timeout veya 5xx servis hatasında
 otomatik olarak sıradaki kullanılabilir CLI'a geçilir; kimlik doğrulama ve kalıcı yapılandırma
 hataları gizlenmez.
@@ -119,7 +120,7 @@ tercih yapmak isterse vault içinde kalıcı seçim yapılabilir:
 
 ```bash
 python3 scripts/set_summary_provider.py auto
-python3 scripts/set_summary_provider.py codex   # claude | codex | antigravity | cursor
+python3 scripts/set_summary_provider.py codex   # claude | codex | gemini | antigravity | cursor
 ```
 
 Bu ayar coding agentı sabitlemez; yalnız arka plan özeti ve bilgi derlemesinde denenecek ilk CLI'ı
@@ -137,8 +138,9 @@ staging klasöründe yapılır ve yalnızca izin verilen `knowledge/` dosyaları
 
 ### “Bilgi derleme” gerçekte ne zaman çalışır?
 
-Sistem pencere veya alarm açmaz. Her oturum kapanışında konuşma `daily/YYYY-MM-DD.md` dosyasına
-sessizce özetlenir. Bilgi derlemesi (`compile.py`) sabah 08:00 zamanlayıcısında sabah brifingi
+Sistem pencere veya alarm açmaz. Her tamamlanan agent yanıtında konuşmanın aynı session bloğu
+`daily/YYYY-MM-DD.md` içinde atomik olarak güncellenir. Oturum kapanışı ve pre-compact kaçırılan
+turnler için catch-up güvenlik ağıdır. Bilgi derlemesi (`compile.py`) sabah 08:00 zamanlayıcısında sabah brifingi
 öncesinde dünün ve önceki günlerin loglarını işler. Kaçırılan günler varsa sonraki agent
 başlangıcı tamamlanmış önceki günleri catch-up olarak derler; içinde bulunulan günün hâlâ değişen
 daily dosyasını erken derlemez.
@@ -163,7 +165,7 @@ ve Zero-Trust güvenlik sınırları `docs/` altındaki yaşayan teknik döküma
 - **Respected Brain (v0.0.1) Temel Mimari Yetenekleri**:
   1. **Global Model Context Protocol (MCP) Sunucusu (`scripts/vault_mcp_server.py`)**: SQLite FTS5 tabanlı arama, karar madenciliği ve kasanın 7 temel aracını Claude Desktop, Cursor, Antigravity, Windsurf ve Cline editörlerine tek komutla sunar.
   2. **Bounded Recall (`bounded_recall.py`)**: Kullanıcı her mesaj attığında kasadan en alakalı 2-3 nottan max 900 karakterlik hafif bir hafıza fısıltısı üretir; kısa/selamlama mesajlarında fail-closed olarak tamamen susar.
-  3. **Yaşam Döngüsü ve Compact Güvencesi**: `session-start`, `user-prompt`, `pre-compact` ve `session-end` kancalarıyla konuşma sıkışmadan önce yakalanır, `flush.py` ile özetlenir.
+  3. **Turn Bazlı Yaşam Döngüsü ve Compact Güvencesi**: native turn-complete olayı her tamamlanan yanıtı `flush.py` ile günceller; `session-start`, `user-prompt`, `pre-compact` ve `session-end` kancaları bağlam ve catch-up güvencesi sağlar.
   4. **Bi-Temporal Zaman Çizelgesi (`timeline:`)**: Notlarda gerçeğin geçerlilik aralığı (`from`/`until`) ile öğrenilme anını (`learned`) ve kaynağını (`source`) ayıran çift zamanlı yapı.
   5. **5 Aşamalı Gece Derleme Mimarisi (`compile.py`)**: Gece derleyicisini Parse, Cluster, Synthesize, Challenge, Distill aşamalarıyla yapılandıran Karpathy LLM hattı.
   6. **Codebase Architect Scanner (`architect_scan.py`)**: Herhangi bir kod reposunun mimari hiyerarşisini, dillerini ve kararlarını tarayıp kasaya uygun mimari notu üreten araç.

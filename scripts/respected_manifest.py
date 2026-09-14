@@ -20,6 +20,8 @@ GENERATED = (
     ".cursor/rules/beyin.mdc",
     ".agents/hooks.json",
     ".agents/rules/beyin.md",
+    ".gemini/GEMINI.md",
+    ".gemini/settings.json",
 )
 
 RUNTIME = (

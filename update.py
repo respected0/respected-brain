@@ -109,7 +109,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument(
         "--summary-provider",
-        choices=["auto", "claude", "codex", "cursor", "antigravity"],
+        choices=["auto", "claude", "codex", "cursor", "antigravity", "gemini"],
         default="auto",
         help="Özetleme için tercih edilen varsayılan model sağlayıcısı",
     )

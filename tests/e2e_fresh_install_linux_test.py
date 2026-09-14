@@ -33,6 +33,8 @@ args = sys.argv[1:]
 if "{provider}" in ("antigravity", "agy"):
     # Output stream-json format as expected by model_runner
     print(json.dumps({{"event": "result", "result": {{"status": "OK", "response": "## Bağlam\\nE2E bağlam\\n\\n## Önemli Konuşmalar\\nE2E konuşma\\n\\n## Alınan Kararlar\\nE2E karar\\n\\n## Öğrenilenler\\nE2E öğrenilen\\n\\n## Yapılacaklar\\n- E2E tamamla"}}}}))
+elif "{provider}" == "gemini":
+    print(json.dumps({{"response": "## Bağlam\\nE2E bağlam\\n\\n## Önemli Konuşmalar\\nE2E konuşma\\n\\n## Alınan Kararlar\\nE2E karar\\n\\n## Öğrenilenler\\nE2E öğrenilen\\n\\n## Yapılacaklar\\n- E2E tamamla", "stats": {{}}, "error": None}}))
 else:
     print("## Bağlam\\nE2E bağlam\\n\\n## Önemli Konuşmalar\\nE2E konuşma\\n\\n## Alınan Kararlar\\nE2E karar\\n\\n## Öğrenilenler\\nE2E öğrenilen\\n\\n## Yapılacaklar\\n- E2E tamamla")
 sys.exit(0)
@@ -68,8 +70,8 @@ sys.exit(0)
         return vault
 
     def test_fresh_install_lifecycle_for_all_providers(self):
-        """Verify that all 4 providers can run flush and generate daily entries in a fresh vault."""
-        providers = ("claude", "codex", "antigravity", "cursor")
+        """Verify every provider can run flush and generate a daily entry."""
+        providers = ("claude", "codex", "antigravity", "gemini", "cursor")
 
         for provider in providers:
             with self.subTest(provider=provider):

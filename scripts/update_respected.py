@@ -47,7 +47,7 @@ def _configure_console_output() -> None:
 
 
 _configure_console_output()
-SUMMARY_PROVIDERS = {"auto", "claude", "codex", "cursor", "antigravity"}
+SUMMARY_PROVIDERS = ("auto", "claude", "codex", "gemini", "antigravity", "cursor")
 CURRENT_TOOL_FILES = ("scripts/update_respected.py", "scripts/respected_manifest.py")
 LEGACY_TOOL_FILES = (LEGACY_UPDATE_SCRIPT, LEGACY_MANIFEST_SCRIPT)
 LEGACY_ENGINE_FILES = (".claude/scripts/flush.py", ".claude/scripts/compile.py")
@@ -648,7 +648,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("vault", type=Path)
     parser.add_argument("--platform", choices=("auto", *PROFILES), default="auto")
-    parser.add_argument("--summary-provider", choices=("auto", *SUMMARY_PROVIDERS), default=None)
+    parser.add_argument("--summary-provider", choices=SUMMARY_PROVIDERS, default=None)
     parser.add_argument("--apply", action="store_true")
     parser.add_argument("--force", action="store_true", help="Sürüm aynı olsa bile güncelleştirmeyi yeniden uygula")
     parser.add_argument(

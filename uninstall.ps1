@@ -14,20 +14,42 @@ if (-not $RepoRoot) {
 Write-Host "Respected Brain v0.0.1 — Windows Kaldırma Başlatıcı (Uninstaller)" -ForegroundColor Cyan
 
 # 1. Python Tespiti
-$Python = Get-Command python, py, python3 -All -ErrorAction SilentlyContinue | Where-Object {
-    $_.Source -and -not $_.Source.ToLowerInvariant().Contains("\windowsapps\")
-} | Select-Object -First 1
+function Find-RespectedPython {
+    $Candidates = @()
+    foreach ($Resolved in @(Get-Command python, py, python3 -All -ErrorAction SilentlyContinue)) {
+        if ($Resolved.Source -and -not $Resolved.Source.ToLowerInvariant().Contains("\windowsapps\")) {
+            $Prefix = if ($Resolved.Name -match '^py(\.exe)?$') { @("-3") } else { @() }
+            $Candidates += ,@($Resolved.Source, $Prefix)
+        }
+    }
+    if ($env:LOCALAPPDATA) {
+        foreach ($Root in @((Join-Path $env:LOCALAPPDATA "Python"), (Join-Path $env:LOCALAPPDATA "Programs\Python"))) {
+            foreach ($Candidate in @(Get-ChildItem -LiteralPath $Root -Filter "python.exe" -Recurse -ErrorAction SilentlyContinue)) {
+                $Candidates += ,@($Candidate.FullName, @())
+            }
+        }
+    }
+    foreach ($Candidate in $Candidates) {
+        try {
+            $Probe = (& $Candidate[0] @($Candidate[1]) -c "import sys; print('RESPECTED_PYTHON_OK'); print(sys.executable)" 2>&1 | Out-String)
+            if ($LASTEXITCODE -eq 0 -and $Probe.Contains("RESPECTED_PYTHON_OK") -and -not $Probe.ToLowerInvariant().Contains("microsoft store")) {
+                return @{ Command = $Candidate[0]; Prefix = @($Candidate[1]) }
+            }
+        }
+        catch { }
+    }
+    return $null
+}
+
+$Python = Find-RespectedPython
 
 if (-not $Python) {
     Write-Host "HATA: Python 3 bulunamadı." -ForegroundColor Red
     exit 1
 }
 
-$PythonExe = $Python.Source
-$PythonPrefix = @()
-if ($Python.Name -match '^py(\.exe)?$') {
-    $PythonPrefix = @("-3")
-}
+$PythonExe = $Python.Command
+$PythonPrefix = @($Python.Prefix)
 
 # 2. uninstall.py tespiti veya indirme
 $UninstallScript = Join-Path $RepoRoot "uninstall.py"
@@ -55,11 +77,11 @@ if (-not (Test-Path -LiteralPath $UninstallScript)) {
 }
 
 # 3. Argümanlar
-$Arguments = @($PythonPrefix) + @('"' + $UninstallScript + '"')
-if ($VaultPath) { $Arguments += @("--vault-path", '"' + $VaultPath + '"') }
+$Arguments = @($PythonPrefix) + @($UninstallScript)
+if ($VaultPath) { $Arguments += @("--vault-path", $VaultPath) }
 if ($PurgeVault) { $Arguments += "--purge-vault" }
 if ($NonInteractive) { $Arguments += "--non-interactive" }
 
 # 4. Çalıştır
-$Process = Start-Process -FilePath $PythonExe -ArgumentList $Arguments -NoNewWindow -Wait -PassThru
-exit $Process.ExitCode
+& $PythonExe @Arguments
+exit $LASTEXITCODE

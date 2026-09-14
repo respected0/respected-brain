@@ -13,9 +13,10 @@ $ErrorActionPreference = "Stop"
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $TemplateRoot = Join-Path $RepoRoot "template"
 $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-$SupportedProviders = @("antigravity", "codex", "cursor", "claude")
+$SupportedProviders = @("antigravity", "gemini", "codex", "cursor", "claude")
 $ProviderCommands = @{
     antigravity = "agy"
+    gemini = "gemini"
     codex = "codex"
     cursor = "cursor-agent"
     claude = "claude"
@@ -149,7 +150,14 @@ function Find-Python {
         if (-not $ProbeOutput.Contains("RESPECTED_PYTHON_OK") -or $Lower.Contains("microsoft store") -or $Lower.Contains("python was not found")) {
             continue
         }
-        return @{ Command = $Command; Prefix = $Prefix; Probe = $ProbeOutput.Trim() }
+        $ProbeLines = @($ProbeOutput -split '\r?\n' | Where-Object { $_ })
+        $MarkerIndex = [Array]::IndexOf($ProbeLines, "RESPECTED_PYTHON_OK")
+        $RuntimeCommand = if ($MarkerIndex -ge 0 -and $MarkerIndex + 1 -lt $ProbeLines.Count) {
+            $ProbeLines[$MarkerIndex + 1].Trim()
+        } else {
+            $Command
+        }
+        return @{ Command = $Command; Prefix = $Prefix; RuntimeCommand = $RuntimeCommand; Probe = $ProbeOutput.Trim() }
     }
     return $null
 }
@@ -199,7 +207,7 @@ foreach ($Item in $Providers) {
     }
 }
 if ($NormalizedProviders.Count -eq 0) {
-    Stop-Install "en az bir provider seçilmeli: antigravity, codex, cursor, claude"
+    Stop-Install "en az bir provider seçilmeli: antigravity, gemini, codex, cursor, claude"
 }
 foreach ($Provider in $NormalizedProviders) {
     if (-not $SupportedProviders.Contains($Provider)) {
@@ -251,6 +259,8 @@ if ($TargetExisted) {
 }
 
 $CreatedTarget = $false
+$InstalledFiles = @()
+$InstalledDirectories = @()
 try {
     if (-not $TargetExisted) {
         New-Item -ItemType Directory -Path $ResolvedVault | Out-Null
@@ -270,6 +280,21 @@ try {
         if ($RepoOnlyScripts -notcontains $ScriptFile.Name) {
             Copy-Item -LiteralPath $ScriptFile.FullName -Destination (Join-Path $VaultScripts $ScriptFile.Name) -Force
         }
+    }
+
+    # Rollback owns only this exact snapshot. A file created concurrently after
+    # this point must never be swept merely because it lives under the target.
+    $InstalledFiles = @(Get-ChildItem -LiteralPath $ResolvedVault -File -Recurse -Force | ForEach-Object FullName)
+    $InstalledDirectories = @(
+        Get-ChildItem -LiteralPath $ResolvedVault -Directory -Recurse -Force |
+            Sort-Object { $_.FullName.Length } -Descending |
+            ForEach-Object FullName
+    )
+    if ($env:RESPECTED_TEST_FAIL_AFTER_COPY) {
+        if ($env:RESPECTED_TEST_CONCURRENT_SENTINEL) {
+            [IO.File]::WriteAllText($env:RESPECTED_TEST_CONCURRENT_SENTINEL, "external", $Utf8NoBom)
+        }
+        throw "test-only failure after copy"
     }
 
     $Replacements = @{
@@ -294,12 +319,14 @@ try {
     Invoke-Python $Python @(
         (Join-Path $ResolvedVault "scripts\render_integrations.py"),
         "--root", $ResolvedVault,
-        "--platform", "windows-native"
+        "--platform", "windows-native",
+        "--python-command", $Python.RuntimeCommand
     )
     Invoke-Python $Python @(
         (Join-Path $ResolvedVault "scripts\render_integrations.py"),
         "--root", $ResolvedVault,
-        "--check"
+        "--check",
+        "--python-command", $Python.RuntimeCommand
     )
 
     $Remaining = Get-ChildItem -LiteralPath $ResolvedVault -File -Recurse -Force | Where-Object {
@@ -315,11 +342,14 @@ try {
         (Join-Path $ResolvedVault ".claude\settings.json"),
         (Join-Path $ResolvedVault ".codex\hooks.json"),
         (Join-Path $ResolvedVault ".cursor\hooks.json"),
-        (Join-Path $ResolvedVault ".agents\hooks.json")
+        (Join-Path $ResolvedVault ".agents\hooks.json"),
+        (Join-Path $ResolvedVault ".gemini\settings.json")
     )
     $AdapterText = ($AdapterPaths | ForEach-Object { [IO.File]::ReadAllText($_) }) -join "`n"
     $LowerAdapters = $AdapterText.ToLowerInvariant()
-    if (-not $AdapterText.Contains("py.exe") -or $LowerAdapters.Contains("wsl.exe") -or $LowerAdapters.Contains("bash") -or $LowerAdapters.Contains(".sh")) {
+    $EscapedRuntime = $Python.RuntimeCommand.Replace('\', '\\')
+    $HasRuntime = $AdapterText.Contains($Python.RuntimeCommand) -or $AdapterText.Contains($EscapedRuntime)
+    if (-not $HasRuntime -or $LowerAdapters.Contains("wsl.exe") -or $LowerAdapters.Contains("bash") -or $LowerAdapters.Contains(".sh")) {
         throw "windows-native adapter gate başarısız"
     }
 
@@ -330,11 +360,14 @@ try {
     }
 }
 catch {
-    if ($CreatedTarget -and (Test-Path -LiteralPath $ResolvedVault)) {
-        Remove-Item -LiteralPath $ResolvedVault -Recurse -Force
+    foreach ($InstalledFile in $InstalledFiles) {
+        Remove-Item -LiteralPath $InstalledFile -Force -ErrorAction SilentlyContinue
     }
-    elseif ($TargetExisted -and (Test-Path -LiteralPath $ResolvedVault)) {
-        Get-ChildItem -LiteralPath $ResolvedVault -Force | Remove-Item -Recurse -Force
+    foreach ($InstalledDirectory in $InstalledDirectories) {
+        Remove-Item -LiteralPath $InstalledDirectory -Force -ErrorAction SilentlyContinue
+    }
+    if ($CreatedTarget -and (Test-Path -LiteralPath $ResolvedVault)) {
+        Remove-Item -LiteralPath $ResolvedVault -Force -ErrorAction SilentlyContinue
     }
     Stop-Install ("kurulum geri alındı: " + $_.Exception.Message)
 }

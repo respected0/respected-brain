@@ -42,6 +42,20 @@ class TestUninstall(unittest.TestCase):
             }),
             encoding="utf-8",
         )
+        (gemini_dir / "settings.json").write_text(
+            json.dumps({
+                "theme": "custom",
+                "hooks": {
+                    "AfterAgent": [
+                        {"hooks": [
+                            {"type": "command", "command": "python bridge.py --global-hook --provider gemini"},
+                            {"type": "command", "command": "other-tool"},
+                        ]}
+                    ]
+                },
+            }),
+            encoding="utf-8",
+        )
 
         # 2. Setup Cursor
         cursor_dir = self.fake_home / ".cursor"
@@ -64,6 +78,14 @@ class TestUninstall(unittest.TestCase):
             }),
             encoding="utf-8",
         )
+        original_notify = ["custom-notify", "turn-ended"]
+        (codex_dir / "config.toml").write_text(
+            'notify = ["python3", "/vault/.beyin/hooks/codex_notify.py", "--chain-file", "chain.json"]\nmodel = "gpt-test"\n',
+            encoding="utf-8",
+        )
+        (codex_dir / "respected-notify-chain.json").write_text(
+            json.dumps({"argv": original_notify}), encoding="utf-8"
+        )
 
         with patch("pathlib.Path.home", return_value=self.fake_home):
             cleaned = uninstall.remove_global_integrations()
@@ -81,9 +103,36 @@ class TestUninstall(unittest.TestCase):
         self.assertIn("other-tool-start", gemini_hooks_after["SessionStart"])
         self.assertNotIn("respected-brain-session-start", gemini_hooks_after["SessionStart"])
 
+        gemini_settings_after = json.loads((gemini_dir / "settings.json").read_text(encoding="utf-8"))
+        self.assertEqual(gemini_settings_after["theme"], "custom")
+        self.assertEqual(
+            gemini_settings_after["hooks"]["AfterAgent"][0]["hooks"],
+            [{"type": "command", "command": "other-tool"}],
+        )
+
         cursor_hooks_after = json.loads((cursor_dir / "hooks.json").read_text(encoding="utf-8"))
         self.assertIn("custom-hook", cursor_hooks_after["SessionStart"])
         self.assertEqual(len(cursor_hooks_after["SessionStart"]), 1)
+        codex_config_after = (codex_dir / "config.toml").read_text(encoding="utf-8")
+        self.assertIn('notify = ["custom-notify", "turn-ended"]', codex_config_after)
+        self.assertIn('model = "gpt-test"', codex_config_after)
+        self.assertFalse((codex_dir / "respected-notify-chain.json").exists())
+
+    def test_remove_global_integrations_removes_managed_codex_notify_without_chain(self):
+        codex = self.fake_home / ".codex"
+        codex.mkdir(parents=True)
+        config = codex / "config.toml"
+        config.write_text(
+            'notify = ["python3", "/vault/.beyin/hooks/codex_notify.py"]\nmodel = "gpt-test"\n',
+            encoding="utf-8",
+        )
+
+        with patch("pathlib.Path.home", return_value=self.fake_home):
+            uninstall.remove_global_integrations(clean_wsl=False)
+
+        content = config.read_text(encoding="utf-8")
+        self.assertNotIn("notify =", content)
+        self.assertIn('model = "gpt-test"', content)
 
     def test_remove_desktop_shortcuts(self):
         desktop = self.fake_home / "Desktop"
@@ -92,13 +141,16 @@ class TestUninstall(unittest.TestCase):
         sc1.write_text("[InternetShortcut]\nURL=obsidian://...", encoding="utf-8")
         sc2 = desktop / "CustomBrain.url"
         sc2.write_text("[InternetShortcut]\nURL=obsidian://...", encoding="utf-8")
+        sc3 = desktop / "CustomBrain.webloc"
+        sc3.write_text("plist", encoding="utf-8")
 
         with patch("pathlib.Path.home", return_value=self.fake_home):
             cleaned = uninstall.remove_desktop_shortcuts(vault_name="CustomBrain")
 
         self.assertFalse(sc1.exists())
         self.assertFalse(sc2.exists())
-        self.assertEqual(len(cleaned), 2)
+        self.assertFalse(sc3.exists())
+        self.assertEqual(len(cleaned), 3)
 
     def test_remove_mcp_config(self):
         claude_dir = self.fake_home / "AppData" / "Roaming" / "Claude"

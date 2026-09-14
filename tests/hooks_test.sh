@@ -161,7 +161,7 @@ expected = {
     "SessionEnd": ("session-end.sh", 10),
     "PreCompact": ("pre-compact.sh", 10),
 }
-assert set(hooks) == set(expected)
+assert set(hooks) == {*expected, "Stop"}
 for event, (script, timeout) in expected.items():
     entries = hooks[event]
     assert len(entries) == 1
@@ -173,8 +173,13 @@ for event, (script, timeout) in expected.items():
         "command": f'"$CLAUDE_PROJECT_DIR/.claude/hooks/{script}"',
         "timeout": timeout,
     }
+stop = hooks["Stop"][0]["hooks"][0]
+assert stop["type"] == "command"
+assert stop["timeout"] == 10
+assert stop["async"] is True
+assert ".beyin/hooks/bridge.py --provider claude --event turn" in stop["command"]
 PY
-pass "settings.json dört olayı doğru timeout ve proje yollarıyla bağlıyor"
+pass "settings.json lifecycle ve asenkron turn olaylarını doğru bağlıyor"
 
 CATCH_VAULT="$TEST_TMP/catchup-vault"
 CATCH_HOOKS="$CATCH_VAULT/.claude/hooks"

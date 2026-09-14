@@ -8,7 +8,7 @@ WSL kurulumun zaten çalışıyorsa onu bozmaz; native kurulumu önce ayrı bir 
 - Git for Windows
 - Gerçek Python 3 (Microsoft Store çalıştırma aliası değil)
 - Seçtiğin agentlardan en az birinin giriş yapılmış CLI'ı:
-  `agy`, `codex`, `cursor-agent` veya `claude`
+  `agy`, `gemini`, `codex`, `cursor-agent` veya `claude`
 
 Kurucu paket yöneticisi çalıştırmaz ve hesap girişi yapmaz. Eksik araç varsa önerilen komutu yazıp
 durur. PowerShell'de önce yalnız ön kontrol yap:
@@ -29,7 +29,7 @@ tamamen boş olmalıdır. Kurulum sonunda `.beyin-version` `0.0.1`, `.beyin-mult
 ve `.beyin/config.json` içindeki platform `windows-native` olur.
 
 `-Providers` ana agentı sabitlemez; yalnız ön koşulda hangi kurulu CLI'ların doğrulanacağını söyler.
-Vault her durumda Claude, Codex, Cursor ve Antigravity adaptörlerini birlikte içerir. Sonradan agent
+Vault her durumda Claude, Gemini, Codex, Cursor ve Antigravity adaptörlerini birlikte içerir. Sonradan agent
 değiştirmek taşıma gerektirmez.
 
 ## Her kod reposundan aynı vault'a bağlanmak

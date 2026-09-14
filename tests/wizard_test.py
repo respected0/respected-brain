@@ -7,10 +7,11 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import plistlib
 import shutil
 import sys
 import tempfile
-from types import ModuleType
+from types import ModuleType, SimpleNamespace
 import unittest
 from unittest import mock
 
@@ -66,6 +67,7 @@ class WizardTest(unittest.TestCase):
         config_data = json.loads(config_path.read_text(encoding="utf-8"))
         self.assertEqual(config_data.get("summary_provider"), "antigravity")
         self.assertEqual(config_data.get("provider_priority"), ["antigravity", "codex"])
+        self.assertEqual(config_data.get("platform"), "windows-native" if os.name == "nt" else "portable")
 
         # Check placeholders resolved in Companion / Core.md
         core_file = target_vault / "🔮 850-Companion" / "Core.md"
@@ -91,6 +93,49 @@ class WizardTest(unittest.TestCase):
         )
         self.assertEqual(code, 1)
 
+    @unittest.skipUnless(os.name == "nt", "native Windows interpreter propagation")
+    def test_native_install_persists_discovered_python_executable_in_hooks(self) -> None:
+        target_vault = self.temp_root / "RuntimeVault"
+        runtime = r"C:\Users\Ada\Custom Python\python.exe"
+        code = self.installer.install_vault(
+            vault_path=target_vault,
+            user_name="Ada",
+            user_bio="Engineer",
+            companion="Babbage",
+            os_name="AdaOS",
+            summary_provider="auto",
+            python_command=[runtime],
+            environment="native",
+            quiet=True,
+        )
+
+        self.assertEqual(code, 0)
+        config = json.loads((target_vault / ".beyin/config.json").read_text(encoding="utf-8"))
+        self.assertEqual(config["python_command"], [runtime])
+        rendered = (target_vault / ".claude/settings.json").read_text(encoding="utf-8")
+        self.assertIn("Custom Python", rendered)
+        self.assertNotIn("py.exe", rendered)
+
+    def test_render_failure_rolls_back_partial_fresh_install(self) -> None:
+        target_vault = self.temp_root / "BrokenVault"
+        with mock.patch.object(
+            self.installer.subprocess,
+            "run",
+            return_value=SimpleNamespace(returncode=7, stdout="", stderr="render failed"),
+        ):
+            code = self.installer.install_vault(
+                vault_path=target_vault,
+                user_name="Test",
+                user_bio="Bio",
+                companion="Comp",
+                os_name="TestOS",
+                summary_provider="auto",
+                quiet=True,
+            )
+
+        self.assertEqual(code, 7)
+        self.assertFalse(target_vault.exists(), "Başarısız temiz kurulum yarım vault bırakmamalı")
+
     def test_interactive_wizard_antigravity_priority_selection(self) -> None:
         target_vault = self.temp_root / "InteractiveVault"
         mock_inputs = [
@@ -115,7 +160,7 @@ class WizardTest(unittest.TestCase):
         self.assertEqual(config_data.get("summary_provider"), "auto")
         self.assertEqual(
             config_data.get("provider_priority"),
-            ["antigravity", "codex", "claude", "cursor"],
+            ["antigravity", "gemini", "codex", "claude", "cursor"],
         )
         self.assertEqual(config_data.get("environment"), "native")
 
@@ -144,6 +189,10 @@ class WizardTest(unittest.TestCase):
         self.assertEqual(config_data.get("summary_provider"), "auto")
         self.assertEqual(config_data.get("provider_priority"), ["antigravity", "codex"])
         self.assertEqual(config_data.get("environment"), "hybrid")
+        self.assertEqual(config_data.get("platform"), "windows-wsl" if os.name == "nt" else "portable")
+        if os.name == "nt":
+            rendered = (target_vault / ".claude/settings.json").read_text(encoding="utf-8")
+            self.assertIn("wsl.exe", rendered)
 
     def test_interactive_wizard_lock_single_provider_fail_fast(self) -> None:
         target_vault = self.temp_root / "LockedVault"
@@ -192,6 +241,20 @@ class WizardTest(unittest.TestCase):
         self.assertEqual(shortcut_file.name, expected_name)
         content = shortcut_file.read_text(encoding="utf-8")
         self.assertIn("obsidian://open?vault=ShortcutVault", content)
+
+    def test_macos_shortcut_is_native_webloc(self) -> None:
+        desktop_dir = self.temp_root / "MacDesktop"
+        desktop_dir.mkdir()
+        vault = self.temp_root / "Furkan Brain"
+        vault.mkdir()
+        with mock.patch.object(self.installer.sys, "platform", "darwin"):
+            shortcut = self.installer.create_desktop_shortcut(
+                "BrainOS", vault, desktop_dir_override=desktop_dir
+            )
+
+        self.assertEqual(shortcut.suffix, ".webloc")
+        document = plistlib.loads(shortcut.read_bytes())
+        self.assertEqual(document["URL"], "obsidian://open?vault=Furkan%20Brain")
 
     def test_interactive_wizard_with_mcp_registration(self) -> None:
         target_vault = self.temp_root / "McpVault"

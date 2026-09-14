@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -68,11 +69,24 @@ def main() -> int:
     print(f"Python: {sys.executable} ({sys.version.split()[0]})")
 
     results: list[tuple[str, str, bool, float]] = []
+    capabilities = {
+        "Windows Native fiziksel host": "NOT VERIFIED",
+        "Saf WSL fiziksel host": "NOT VERIFIED",
+        "Hibrit Windows+WSL fiziksel host": "NOT VERIFIED",
+        "Saf Linux fiziksel host": "NOT VERIFIED",
+        "macOS fiziksel host": "NOT VERIFIED",
+    }
 
     # 1. Python Test Paketi
     cmd = [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "*test*.py"]
-    ok, elapsed, _ = run_command("Python Birim ve Entegrasyon Testleri", cmd)
-    results.append(("Python Test Suite (*test*.py)", "Birim & Entegrasyon", ok, elapsed))
+    ok, elapsed, python_output = run_command("Python Birim ve Entegrasyon Testleri", cmd)
+    count_match = re.search(r"Ran (\d+) tests?", python_output)
+    count = count_match.group(1) if count_match else "?"
+    results.append((f"Python Test Suite ({count} test)", "Birim & Entegrasyon", ok, elapsed))
+
+    cmd = [sys.executable, "tests/smoke/platform_smoke.py"]
+    ok, elapsed, _ = run_command("Fiziksel Host Platform Smoke", cmd)
+    results.append(("platform_smoke.py", "Install/Turn/Update/Uninstall", ok, elapsed))
 
     # 2. Windows Native PowerShell Testleri
     if os.name == "nt":
@@ -81,10 +95,27 @@ def main() -> int:
             cmd = [pwsh, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tests/install_windows_test.ps1"]
             ok, elapsed, _ = run_command("PowerShell Kurulum Sözleşmesi", cmd, env={"PYTHONIOENCODING": "utf-8"})
             results.append(("PowerShell install_windows_test.ps1", "Windows Installer", ok, elapsed))
+            native_ok = ok
+
+            cmd = [pwsh, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tests/windows_launchers_test.ps1"]
+            ok, elapsed, _ = run_command("PowerShell Launcher Sözleşmesi", cmd, env={"PYTHONIOENCODING": "utf-8"})
+            results.append(("PowerShell windows_launchers_test.ps1", "Windows Launchers", ok, elapsed))
+            native_ok = native_ok and ok
 
             cmd = [pwsh, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tests/briefing_schedule_windows_test.ps1"]
             ok, elapsed, _ = run_command("PowerShell Zamanlayıcı Sözleşmesi", cmd, env={"PYTHONIOENCODING": "utf-8"})
             results.append(("PowerShell briefing_schedule_windows_test.ps1", "Task Scheduler", ok, elapsed))
+            native_ok = native_ok and ok
+            if native_ok:
+                capabilities["Windows Native fiziksel host"] = "VERIFIED"
+
+            wsl = shutil.which("wsl.exe") or shutil.which("wsl")
+            if wsl:
+                cmd = [pwsh, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "tests/hybrid_wsl_smoke.ps1"]
+                ok, elapsed, _ = run_command("Hibrit Windows+WSL Uçtan Uca Smoke", cmd)
+                results.append(("PowerShell hybrid_wsl_smoke.ps1", "Hybrid Turn Flush", ok, elapsed))
+                if ok:
+                    capabilities["Hibrit Windows+WSL fiziksel host"] = "VERIFIED"
         else:
             print("\n>> UYARI: PowerShell bulunamadı, Windows testleri atlandı.")
 
@@ -101,10 +132,22 @@ def main() -> int:
     else:
         print("\n>> BİLGİ: Bash bulunamadı (Windows saf ortam), .sh testleri atlandı.")
 
+    if sys.platform.startswith("linux"):
+        if os.environ.get("WSL_DISTRO_NAME"):
+            capabilities["Saf WSL fiziksel host"] = "VERIFIED"
+        else:
+            capabilities["Saf Linux fiziksel host"] = "VERIFIED"
+    elif sys.platform == "darwin":
+        capabilities["macOS fiziksel host"] = "VERIFIED"
+
     # Özet Rapor Tablosu
     print("\n" + "=" * 70)
     print("KALİTE VE DOĞRULAMA ÖZET RAPORU (Golden Standard)")
     print("=" * 70)
+
+    print("\nFİZİKSEL HOST KANIT DURUMU")
+    for capability, status in capabilities.items():
+        print(f"- {capability}: {status}")
     print(f"{'Test Paketi':<45} | {'Kapsam':<20} | {'Durum':<6} | {'Süre':<6}")
     print("-" * 70)
     all_passed = True
@@ -116,7 +159,8 @@ def main() -> int:
     print("=" * 70)
 
     if all_passed:
-        print("GENEL SONUÇ: TÜM TESTLER BAŞARIYLA GEÇTİ (Golden Standard Sağlandı)\n")
+        print("\nGENEL SONUÇ: BU HOSTTA ÇALIŞTIRILABİLEN TÜM GATE'LER GEÇTİ.")
+        print("NOT VERIFIED satırları harici fiziksel smoke yapılmadan PASS sayılmaz.\n")
         return 0
     else:
         print("GENEL SONUÇ: BAZI TESTLER BAŞARISIZ OLDU!\n")

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import datetime as dt
 import json
 import os
@@ -44,7 +45,7 @@ BEGIN = "<!-- RESPECTED-GLOBAL:BEGIN -->"
 END = "<!-- RESPECTED-GLOBAL:END -->"
 HOOK_NAME = "respected-brain"
 CURSOR_RULE = HOOK_NAME + ".mdc"
-SUPPORTED = ("antigravity", "codex", "cursor", "claude")
+SUPPORTED = ("antigravity", "gemini", "codex", "cursor", "claude")
 
 
 def write_text(path: Path, content: str) -> None:
@@ -129,13 +130,30 @@ def managed_rule(vault: Path) -> str:
     )
 
 
+def _vault_profile(vault: PurePath, platform: str) -> Profile:
+    command = DEFAULT_PYTHON_COMMANDS[platform]
+    try:
+        document = json.loads((Path(vault) / ".beyin/config.json").read_text(encoding="utf-8"))
+        candidate = document.get("python_command") if isinstance(document, dict) else None
+        if (
+            isinstance(candidate, list)
+            and candidate
+            and all(isinstance(item, str) and item for item in candidate)
+            and document.get("platform") == platform
+        ):
+            command = tuple(candidate)
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        pass
+    return Profile(platform, tuple(command))
+
+
 def bridge_command(vault: PurePath, provider: str, event: str, platform: str) -> str:
-    profile = Profile(platform, DEFAULT_PYTHON_COMMANDS[platform])
+    profile = _vault_profile(vault, platform)
     return command_text(profile, vault, provider, event, global_hook=True)
 
 
 def codex_notify_argv(vault: Path, platform: str) -> list[str]:
-    profile = Profile(platform, DEFAULT_PYTHON_COMMANDS[platform])
+    profile = _vault_profile(vault, platform)
     script = vault / ".beyin" / "hooks" / "codex_notify.py"
     if platform == "windows-native":
         win = windows_path(script) or str(script)
@@ -156,13 +174,76 @@ def codex_notify_argv(vault: Path, platform: str) -> list[str]:
     return [*profile.python_command, str(script)]
 
 
+def _codex_notify_assignment(content: str) -> tuple[int, int, str] | None:
+    match = re.search(r"(?m)^notify\s*=", content)
+    if not match:
+        return None
+    cursor = match.end()
+    while cursor < len(content) and content[cursor].isspace():
+        cursor += 1
+    if cursor >= len(content) or content[cursor] != "[":
+        return match.start(), cursor, ""
+    start_literal = cursor
+    depth = 0
+    quote = ""
+    escaped = False
+    while cursor < len(content):
+        char = content[cursor]
+        if quote:
+            if quote == '"' and escaped:
+                escaped = False
+            elif quote == '"' and char == "\\":
+                escaped = True
+            elif char == quote:
+                quote = ""
+        elif char in {'"', "'"}:
+            quote = char
+        elif char == "[":
+            depth += 1
+        elif char == "]":
+            depth -= 1
+            if depth == 0:
+                return match.start(), cursor + 1, content[start_literal:cursor + 1]
+        cursor += 1
+    return match.start(), cursor, ""
+
+
 def update_codex_config_toml(content: str, notify_argv: list[str]) -> str:
     escaped_items = ", ".join(json.dumps(item) for item in notify_argv)
     replacement = f"notify = [ {escaped_items} ]"
-    if re.search(r"(?m)^notify\s*=.*", content):
-        return re.sub(r"(?m)^notify\s*=.*", lambda _: replacement, content, count=1)
+    assignment = _codex_notify_assignment(content)
+    if assignment is not None:
+        start, end, _literal = assignment
+        return content[:start] + replacement + content[end:]
     prefix = f"{replacement}\n\n" if content.strip() else f"{replacement}\n"
     return prefix + content
+
+
+def parse_codex_notify_argv(content: str) -> list[str] | None:
+    """Read a Codex notify array without parsing or rewriting unrelated TOML."""
+    assignment = _codex_notify_assignment(content)
+    if assignment is None or not assignment[2]:
+        return None
+    try:
+        value = ast.literal_eval(assignment[2])
+    except (SyntaxError, ValueError):
+        return None
+    if not isinstance(value, list) or not value or not all(isinstance(item, str) for item in value):
+        return None
+    return value
+
+
+def _managed_codex_notify(argv: list[str] | None) -> bool:
+    return bool(argv and any("codex_notify.py" in item.replace("\\", "/") for item in argv))
+
+
+def _runtime_path(path: Path, platform: str) -> str:
+    if platform != "windows-wsl":
+        return str(path)
+    candidate = path.as_posix()
+    if len(candidate) >= 2 and candidate[1] == ":":
+        return f"/mnt/{candidate[0].lower()}/{candidate[2:].lstrip('/')}"
+    return candidate
 
 
 def managed_command(value: object, provider: str) -> bool:
@@ -181,7 +262,13 @@ def merge_simple_hooks(document: dict, provider: str, additions: dict[str, list[
     return document
 
 
-def merge_grouped_hooks(document: dict, provider: str, commands: dict[str, tuple[str, int]]) -> dict:
+def merge_grouped_hooks(
+    document: dict,
+    provider: str,
+    commands: dict[str, tuple[str, int]],
+    *,
+    async_events: frozenset[str] = frozenset(),
+) -> dict:
     hooks = document.setdefault("hooks", {})
     if not isinstance(hooks, dict):
         raise ValueError("hooks alanı bir JSON nesnesi değil")
@@ -199,7 +286,58 @@ def merge_grouped_hooks(document: dict, provider: str, commands: dict[str, tuple
                 updated = dict(group)
                 updated["hooks"] = handlers
                 cleaned.append(updated)
-        cleaned.append({"hooks": [{"type": "command", "command": command, "timeout": timeout, "statusMessage": f"Loading {provider} second-brain memory"}]})
+        handler = {
+            "type": "command",
+            "command": command,
+            "timeout": timeout,
+            "statusMessage": f"Loading {provider} second-brain memory",
+        }
+        if event in async_events:
+            handler["async"] = True
+        cleaned.append({"hooks": [handler]})
+        hooks[event] = cleaned
+    return document
+
+
+def merge_gemini_hooks(document: dict, commands: dict[str, tuple[str, int]]) -> dict:
+    """Merge Gemini CLI hooks using only fields in its public hook schema."""
+    hooks = document.setdefault("hooks", {})
+    if not isinstance(hooks, dict):
+        raise ValueError("hooks alanı bir JSON nesnesi değil")
+    for event, (command, timeout) in commands.items():
+        groups = hooks.get(event, [])
+        if not isinstance(groups, list):
+            raise ValueError(f"hooks.{event} bir liste değil")
+        cleaned = []
+        for group in groups:
+            if not isinstance(group, dict) or not isinstance(group.get("hooks"), list):
+                cleaned.append(group)
+                continue
+            handlers = [
+                handler
+                for handler in group["hooks"]
+                if not managed_command(
+                    handler.get("command") if isinstance(handler, dict) else None,
+                    "gemini",
+                )
+            ]
+            if handlers:
+                updated = dict(group)
+                updated["hooks"] = handlers
+                cleaned.append(updated)
+        cleaned.append(
+            {
+                "hooks": [
+                    {
+                        "name": f"respected-brain-{event.lower()}",
+                        "type": "command",
+                        "command": command,
+                        "timeout": timeout,
+                        "description": "Sync Respected Brain memory",
+                    }
+                ]
+            }
+        )
         hooks[event] = cleaned
     return document
 
@@ -227,12 +365,38 @@ def build(vault: Path, home: Path, providers: tuple[str, ...], platform: str) ->
         hooks.pop(LEGACY_HOOK_NAME, None)
         hooks[HOOK_NAME] = {
             "PreInvocation": [{"type": "command", "command": bridge_command(vault, "antigravity", "start", platform), "timeout": 15}],
-            "Stop": [{"type": "command", "command": bridge_command(vault, "antigravity", "end", platform), "timeout": 10}],
+            "Stop": [{"type": "command", "command": bridge_command(vault, "antigravity", "turn", platform), "timeout": 10}],
         }
         rule_path = home / ".gemini/GEMINI.md"
         writes += [(hooks_path, json.dumps(hooks, ensure_ascii=False, indent=2) + "\n"), (rule_path, merge_managed(rule_path.read_text(encoding="utf-8") if rule_path.exists() else "", rule))]
         writes += copy_skills(vault, [config / "skills"])
         touched += [hooks_path, rule_path]
+
+    if "gemini" in providers:
+        config = home / ".gemini"
+        settings_path = config / "settings.json"
+        settings = load_object(settings_path)
+        commands = {
+            "SessionStart": (bridge_command(vault, "gemini", "start", platform), 15000),
+            "BeforeAgent": (bridge_command(vault, "gemini", "prompt", platform), 5000),
+            "AfterAgent": (bridge_command(vault, "gemini", "turn", platform), 10000),
+            "SessionEnd": (bridge_command(vault, "gemini", "end", platform), 10000),
+            "PreCompress": (bridge_command(vault, "gemini", "precompact", platform), 10000),
+        }
+        merge_gemini_hooks(settings, commands)
+        rule_path = config / "GEMINI.md"
+        writes += [
+            (settings_path, json.dumps(settings, ensure_ascii=False, indent=2) + "\n"),
+            (
+                rule_path,
+                merge_managed(
+                    rule_path.read_text(encoding="utf-8") if rule_path.exists() else "",
+                    rule,
+                ),
+            ),
+        ]
+        writes += copy_skills(vault, [config / "skills"])
+        touched += [settings_path, rule_path]
 
     if "codex" in providers:
         config = home / ".codex"
@@ -242,7 +406,7 @@ def build(vault: Path, home: Path, providers: tuple[str, ...], platform: str) ->
             "SessionStart": (bridge_command(vault, "codex", "start", platform), 15),
             "UserPromptSubmit": (bridge_command(vault, "codex", "prompt", platform), 5),
             "SessionEnd": (bridge_command(vault, "codex", "end", platform), 3),
-            "Stop": (bridge_command(vault, "codex", "end", platform), 10),
+            "Stop": (bridge_command(vault, "codex", "turn", platform), 10),
             "PreCompact": (bridge_command(vault, "codex", "precompact", platform), 10),
         }
         merge_grouped_hooks(hooks, "codex", commands)
@@ -255,6 +419,23 @@ def build(vault: Path, home: Path, providers: tuple[str, ...], platform: str) ->
         config_toml_path = config / "config.toml"
         notify_cmd = codex_notify_argv(vault, platform)
         existing_toml = config_toml_path.read_text(encoding="utf-8") if config_toml_path.exists() else ""
+        existing_notify = parse_codex_notify_argv(existing_toml)
+        if re.search(r"(?m)^notify\s*=", existing_toml) and existing_notify is None:
+            raise ValueError(
+                "Codex notify ayarı güvenle ayrıştırılamadı; config.toml içindeki notify "
+                "dizisini tek satıra getirip yeniden deneyin"
+            )
+        chain_path = config / "respected-notify-chain.json"
+        if existing_notify and not _managed_codex_notify(existing_notify):
+            notify_cmd += ["--chain-file", _runtime_path(chain_path, platform)]
+            writes += [(chain_path, json.dumps({"argv": existing_notify}, ensure_ascii=False, indent=2) + "\n")]
+            touched += [chain_path]
+        elif chain_path.is_file():
+            chain = load_object(chain_path)
+            chain_argv = chain.get("argv")
+            if not isinstance(chain_argv, list) or not chain_argv or not all(isinstance(item, str) for item in chain_argv):
+                raise ValueError(f"geçersiz Codex notify zinciri: {chain_path}")
+            notify_cmd += ["--chain-file", _runtime_path(chain_path, platform)]
         updated_toml = update_codex_config_toml(existing_toml, notify_cmd)
         writes += [(config_toml_path, updated_toml)]
         touched += [config_toml_path]
@@ -269,6 +450,7 @@ def build(vault: Path, home: Path, providers: tuple[str, ...], platform: str) ->
             "beforeSubmitPrompt": [{"command": bridge_command(vault, "cursor", "prompt", platform), "timeout": 5}],
             "sessionEnd": [{"command": bridge_command(vault, "cursor", "end", platform), "timeout": 10}],
             "preCompact": [{"command": bridge_command(vault, "cursor", "precompact", platform), "timeout": 10}],
+            "afterAgentResponse": [{"command": bridge_command(vault, "cursor", "turn", platform), "timeout": 10}],
         }
         merge_simple_hooks(hooks, "cursor", additions)
         rule_path = config / "rules" / CURSOR_RULE
@@ -295,8 +477,9 @@ def build(vault: Path, home: Path, providers: tuple[str, ...], platform: str) ->
             "UserPromptSubmit": (bridge_command(vault, "claude", "prompt", platform), 5),
             "SessionEnd": (bridge_command(vault, "claude", "end", platform), 3),
             "PreCompact": (bridge_command(vault, "claude", "precompact", platform), 10),
+            "Stop": (bridge_command(vault, "claude", "turn", platform), 10),
         }
-        merge_grouped_hooks(settings, "claude", commands)
+        merge_grouped_hooks(settings, "claude", commands, async_events=frozenset({"Stop"}))
         rule_path = config / "CLAUDE.md"
         writes += [(settings_path, json.dumps(settings, ensure_ascii=False, indent=2) + "\n"), (rule_path, merge_managed(rule_path.read_text(encoding="utf-8") if rule_path.exists() else "", rule))]
         writes += copy_skills(vault, [config / "skills"])
@@ -408,7 +591,11 @@ def main() -> int:
             "ortak .agents/skills kopyası da buraya yazılır; birden fazla verilebilir"
         ),
     )
-    parser.add_argument("--providers", default="all", help="all veya virgülle: antigravity,codex,cursor,claude")
+    parser.add_argument(
+        "--providers",
+        default="all",
+        help="all veya virgülle: antigravity,gemini,codex,cursor,claude",
+    )
     parser.add_argument("--platform", choices=tuple(DEFAULT_PYTHON_COMMANDS), default="portable")
     parser.add_argument("--apply", action="store_true")
     args = parser.parse_args()

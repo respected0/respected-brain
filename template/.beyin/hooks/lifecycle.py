@@ -411,12 +411,18 @@ def _finish_session(
                     except OSError:
                         pass
 
+    launch_reason = {
+        "turn": "turn",
+        "end": None,
+        "precompact": "precompact",
+        "postcompact": "postcompact",
+    }.get(reason)
     launched = _launch_flush(
         vault_root,
         state_dir,
         provider,
         payload=payload,
-        reason="precompact" if reason == "precompact" else None,
+        reason=launch_reason,
     )
     if not launched:
         _record_health(state_dir, reason, "flush-launch-failed", now)
@@ -464,7 +470,7 @@ def handle(
             return context
         if event == "prompt":
             return count_prompt(state_dir, session_id)
-        if event in ("end", "precompact", "postcompact"):
+        if event in ("turn", "end", "precompact", "postcompact"):
             return _finish_session(vault, state_dir, payload, event, current, provider)
         _record_health(state_dir, event, "unknown-event", current)
     except Exception as error:
@@ -480,7 +486,9 @@ EVENT_NAME_MAP = {
     "postcompact": "postcompact",
     "beforesubmitprompt": "prompt",
     "preinvocation": "start",
-    "stop": "end",
+    "afteragent": "turn",
+    "afteragentresponse": "turn",
+    "stop": "turn",
 }
 
 
@@ -499,7 +507,11 @@ def handle_event(
 
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--event", choices=("start", "prompt", "end", "precompact", "postcompact"), required=True)
+    parser.add_argument(
+        "--event",
+        choices=("start", "prompt", "turn", "end", "precompact", "postcompact"),
+        required=True,
+    )
     parser.add_argument("--provider", default=os.environ.get("BEYIN_PROVIDER", "claude"))
     parser.add_argument("--vault-root", type=Path, default=Path(__file__).resolve().parents[2])
     args = parser.parse_args(argv)

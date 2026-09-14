@@ -147,11 +147,25 @@ def _clean_hooks_file(path: Path, label: str) -> str | None:
         if isinstance(data.get("hooks"), dict):
             for event, handlers in list(data["hooks"].items()):
                 if isinstance(handlers, list):
-                    filtered = [
-                        h for h in handlers
-                        if not any(k in str(h).lower() for k in keywords)
-                    ]
-                    if len(filtered) != len(handlers):
+                    filtered = []
+                    event_changed = False
+                    for handler in handlers:
+                        if isinstance(handler, dict) and isinstance(handler.get("hooks"), list):
+                            inner = [
+                                item
+                                for item in handler["hooks"]
+                                if not any(k in str(item).lower() for k in keywords)
+                            ]
+                            if len(inner) != len(handler["hooks"]):
+                                changed = True
+                                event_changed = True
+                            if inner:
+                                updated = dict(handler)
+                                updated["hooks"] = inner
+                                filtered.append(updated)
+                        elif not any(k in str(handler).lower() for k in keywords):
+                            filtered.append(handler)
+                    if len(filtered) != len(handlers) or event_changed:
                         data["hooks"][event] = filtered
                         changed = True
 
@@ -208,7 +222,7 @@ def _clean_wsl_integrations() -> list[str]:
 
 
 def remove_global_integrations(clean_wsl: bool | None = None) -> list[str]:
-    """Remove global rules, hooks, and skills across Antigravity, Cursor, Codex, and Claude."""
+    """Remove global rules, hooks, and skills across supported providers."""
     cleaned = []
     home = Path.home()
 
@@ -221,7 +235,16 @@ def remove_global_integrations(clean_wsl: bool | None = None) -> list[str]:
     if hook_msg:
         cleaned.append(hook_msg)
 
-    cleaned.extend(_clean_skills_from([home / ".gemini" / "config" / "skills"], "Antigravity"))
+    hook_msg = _clean_hooks_file(home / ".gemini" / "settings.json", "Gemini")
+    if hook_msg:
+        cleaned.append(hook_msg)
+
+    cleaned.extend(
+        _clean_skills_from(
+            [home / ".gemini" / "config" / "skills", home / ".gemini" / "skills"],
+            "Antigravity/Gemini",
+        )
+    )
 
     # 2. Cursor (~/.cursor)
     cursor_rule = home / ".cursor" / "rules" / "respected-brain.mdc"
@@ -252,6 +275,45 @@ def remove_global_integrations(clean_wsl: bool | None = None) -> list[str]:
     hook_msg = _clean_hooks_file(home / ".codex" / "hooks.json", "Codex")
     if hook_msg:
         cleaned.append(hook_msg)
+
+    codex_config = home / ".codex" / "config.toml"
+    notify_chain = home / ".codex" / "respected-notify-chain.json"
+    if codex_config.is_file():
+        try:
+            content = codex_config.read_text(encoding="utf-8")
+            managed = re.search(r"(?m)^notify\s*=.*codex_notify\.py.*(?:\r?\n)?", content)
+            if managed:
+                argv = None
+                if notify_chain.is_file():
+                    chain = json.loads(notify_chain.read_text(encoding="utf-8"))
+                    candidate = chain.get("argv") if isinstance(chain, dict) else None
+                    if (
+                        isinstance(candidate, list)
+                        and candidate
+                        and all(isinstance(item, str) for item in candidate)
+                    ):
+                        argv = candidate
+                replacement = (
+                    "notify = " + json.dumps(argv, ensure_ascii=False) + "\n"
+                    if argv is not None
+                    else ""
+                )
+                updated = re.sub(
+                    r"(?m)^notify\s*=.*codex_notify\.py.*(?:\r?\n)?",
+                    lambda _match: replacement,
+                    content,
+                    count=1,
+                )
+                temporary = codex_config.with_name(f".{codex_config.name}.{os.getpid()}.tmp")
+                temporary.write_text(updated, encoding="utf-8", newline="\n")
+                os.replace(temporary, codex_config)
+                if argv is not None:
+                    notify_chain.unlink()
+                    cleaned.append("Codex önceki notify komutu geri yüklendi")
+                else:
+                    cleaned.append("Codex Respected notify komutu kaldırıldı")
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            pass
 
     cleaned.extend(_clean_skills_from([home / ".agents" / "skills", home / ".codex" / "skills"], "Codex"))
 
@@ -334,6 +396,8 @@ def remove_desktop_shortcuts(vault_name: str = "RespectedOS") -> list[str]:
         "RespectedOS.lnk",
         f"{vault_name}.desktop",
         "RespectedOS.desktop",
+        f"{vault_name}.webloc",
+        "RespectedOS.webloc",
     ]
     for d in desktop_candidates:
         if d.is_dir():
@@ -434,7 +498,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     print(f"{Colors.CYAN}{Colors.BOLD}════════════════════════════════════════════════════════════════════{Colors.RESET}\n")
 
     print(f"{Colors.YELLOW}Bu işlem şu sistem bileşenlerini temizleyecektir:{Colors.RESET}")
-    print(" 1. Global AI Kancaları ve Kuralları (Antigravity, Cursor, Codex, Claude)")
+    print(" 1. Global AI Kancaları ve Kuralları (Antigravity, Gemini, Cursor, Codex, Claude)")
     print(" 2. Günlük Sabah Brifingi Görev Zamanlayıcı / Cron Kaydı")
     print(" 3. Masaüstü Başlatıcı Kısayolları")
     print(" 4. MCP Sunucu Kayıtları\n")

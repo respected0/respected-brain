@@ -612,7 +612,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     home = args.home.expanduser().resolve()
     if not (vault / ".beyin/morning_briefing.py").is_file():
         parser.error("vault içinde .beyin/morning_briefing.py bulunamadı")
-    return install(vault, args.platform, home, args.apply, time_str=args.time)
+    return install(
+        vault,
+        args.platform,
+        home,
+        args.apply,
+        python_executable=sys.executable,
+        time_str=args.time,
+    )
 
 
 if __name__ == "__main__":

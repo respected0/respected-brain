@@ -43,8 +43,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 .beyin/hooks/bridge.py --provider codex --event end",
-            "commandWindows": "wsl.exe --cd . python3 .beyin/hooks/bridge.py --provider codex --event end",
+            "command": "python3 .beyin/hooks/bridge.py --provider codex --event turn",
+            "commandWindows": "wsl.exe --cd . python3 .beyin/hooks/bridge.py --provider codex --event turn",
             "timeout": 10
           }
         ]

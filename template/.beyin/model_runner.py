@@ -22,7 +22,7 @@ import runtime_platform
 
 
 Mode = Literal["text", "workspace"]
-PROVIDERS = ("claude", "codex", "antigravity", "cursor")
+PROVIDERS = ("claude", "codex", "antigravity", "gemini", "cursor")
 
 
 @dataclass(frozen=True)
@@ -154,6 +154,14 @@ def _command(provider: str, prompt: str, mode: Mode) -> Invocation | None:
             argv.append("--force")
         argv.append(prompt)
         return Invocation(argv, None, _windows_executable(executable))
+    if provider == "gemini":
+        executable = shutil.which("gemini") or shutil.which("gemini.exe")
+        if executable is None:
+            return None
+        argv = [executable, "--output-format", "json", "-p", ""]
+        if mode == "workspace":
+            argv[1:1] = ["--approval-mode", "auto_edit"]
+        return Invocation(argv, prompt, _windows_executable(executable))
     return None
 
 
@@ -222,6 +230,20 @@ def _extract_response(stdout: str, provider: str) -> tuple[str, str | None]:
                     return result_obj.get("response", "").strip(), None
             except (json.JSONDecodeError, AttributeError):
                 continue
+    if provider == "gemini":
+        try:
+            data = json.loads(stdout)
+        except json.JSONDecodeError:
+            return stdout.strip(), None
+        if isinstance(data, dict):
+            error = data.get("error")
+            if error:
+                if isinstance(error, dict):
+                    message = error.get("message") or error.get("type")
+                    return "", str(message or "gemini-json-error")
+                return "", str(error)
+            response = data.get("response")
+            return (response.strip() if isinstance(response, str) else ""), None
     return stdout.strip(), None
 
 
@@ -306,6 +328,12 @@ def run_model(
                 last_error = (stream_error, provider)
                 continue
             return None, stream_error, provider
+        if not output_text.strip():
+            error = f"{provider}-empty-output"
+            if is_auto:
+                last_error = (error, provider)
+                continue
+            return None, error, provider
         return output_text, None, provider
     if last_error is not None:
         error, provider = last_error
