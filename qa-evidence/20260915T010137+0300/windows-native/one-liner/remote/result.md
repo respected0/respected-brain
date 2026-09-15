@@ -1,5 +1,5 @@
 # Result
 
-Status: FAILED
+Status: VERIFIED
 
-Executed the exact published `irm .../install.ps1 | iex` entry point. It exited 1 during parameter binding because the raw `main` script applies `ValidateSet` to an existing empty `Environment` variable. Local RED/GREEN regression passes, but the public script remains unchanged because no push/merge was authorized.
+Published `main` at product commit `b835c19` was downloaded from `raw.githubusercontent.com` and executed as a PowerShell script block, the parameterized equivalent of `irm .../install.ps1 | iex`. A clean isolated-profile Windows-native install, two same-version updates, and two data-preserving uninstalls returned exit 0. The Unicode/emoji/space vault was retained. Every observed remote clone directory from the fixed run was removed.

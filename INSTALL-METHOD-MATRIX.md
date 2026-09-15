@@ -2,10 +2,10 @@
 
 | Platform | AI-native / BOOTSTRAP | Published one-liner | Local repo + CLI | Evidence |
 |---|---|---|---|---|
-| Windows Native | VERIFIED | FAILED | VERIFIED | [Bootstrap](qa-evidence/20260915T010137+0300/windows-native/bootstrap/adapter/result.md); [local CLI](qa-evidence/20260915T010137+0300/windows-native/local-cli/adapter/result.md) |
-| Pure WSL2 | VERIFIED | FAILED | VERIFIED | [Bootstrap](qa-evidence/20260915T010137+0300/wsl/bootstrap/adapter/result.md); [local CLI](qa-evidence/20260915T010137+0300/wsl/local-cli/adapter/result.md) |
-| Hybrid Windows + WSL | VERIFIED | NOT VERIFIED | VERIFIED | [Bootstrap lifecycle and bridge](qa-evidence/20260915T010137+0300/hybrid/bootstrap/adapter/result.md); [local CLI matrix](qa-evidence/20260915T010137+0300/hybrid/local-cli/adapter/result.md) |
+| Windows Native | VERIFIED | VERIFIED | VERIFIED | [Bootstrap](qa-evidence/20260915T010137+0300/windows-native/bootstrap/adapter/result.md); [published one-liner](qa-evidence/20260915T010137+0300/windows-native/one-liner/remote/result.md); [local CLI](qa-evidence/20260915T010137+0300/windows-native/local-cli/adapter/result.md) |
+| Pure WSL2 | VERIFIED | VERIFIED | VERIFIED | [Bootstrap](qa-evidence/20260915T010137+0300/wsl/bootstrap/adapter/result.md); [published one-liner](qa-evidence/20260915T010137+0300/wsl/one-liner/remote/result.md); [local CLI](qa-evidence/20260915T010137+0300/wsl/local-cli/adapter/result.md) |
+| Hybrid Windows + WSL | VERIFIED | VERIFIED | VERIFIED | [Bootstrap lifecycle and bridge](qa-evidence/20260915T010137+0300/hybrid/bootstrap/adapter/result.md); [published one-liner](qa-evidence/20260915T010137+0300/hybrid/one-liner/adapter/result.md); [local CLI matrix](qa-evidence/20260915T010137+0300/hybrid/local-cli/adapter/result.md) |
 | True Linux VM | NOT VERIFIED | NOT VERIFIED | NOT VERIFIED | Host unavailable |
 | Physical macOS | NOT VERIFIED | NOT VERIFIED | NOT VERIFIED | Host unavailable |
 
-The canonical BOOTSTRAP route is now fail-closed on unknown non-empty targets and idempotent on recognized vaults. The local patched launcher contract is GREEN on Windows and WSL. The published raw scripts at source commit remain FAILED until the fixes are reviewed and pushed: Windows fails in pipe-to-`iex` parameter binding; POSIX fails because piped execution reads an unset `BASH_SOURCE[0]` and may resolve `install.py` from the caller's current directory.
+The canonical BOOTSTRAP route is fail-closed on unknown non-empty targets and idempotent on recognized vaults. Published Windows and POSIX launchers were exercised from `main` after push. Their prior IEX/stdin failures are fixed, repeated updates are successful no-ops, and temporary remote-clone staging is cleaned on both platforms.
