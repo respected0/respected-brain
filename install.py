@@ -195,6 +195,88 @@ def create_desktop_shortcut(
         return None
 
 
+def _apply_optional_integrations(
+    *,
+    vault_path: Path,
+    platform_name: str,
+    os_name: str,
+    install_global: bool,
+    install_schedule: bool,
+    schedule_time: str,
+    desktop_shortcut: bool,
+    desktop_dir_override: Path | None,
+    install_mcp: bool,
+    log,
+) -> tuple[int, Path | None]:
+    """Apply requested external integrations and preserve their failure code."""
+    target_scripts = vault_path / "scripts"
+
+    if install_global:
+        log(f"{Colors.DIM}• Global AI kural bağlantıları kuruluyor...{Colors.RESET}")
+        global_installer = target_scripts / "install_global.py"
+        if not global_installer.is_file():
+            print(f"{Colors.RED}HATA: Global entegrasyon betiği bulunamadı.{Colors.RESET}", file=sys.stderr)
+            return 1, None
+        result = subprocess.run(
+            [sys.executable, str(global_installer), str(vault_path), "--home", str(Path.home()), "--platform", platform_name, "--apply"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            print(f"{Colors.RED}HATA: Global bağlantı tamamlanamadı: {result.stderr.strip()}{Colors.RESET}", file=sys.stderr)
+            return result.returncode or 1, None
+        log(f"  {Colors.GREEN}✔ Global AI kural ve kanca bağlantıları başarıyla kuruldu.{Colors.RESET}")
+
+    created_shortcut = None
+    if desktop_shortcut:
+        log(f"{Colors.DIM}• Masaüstü Obsidian kısayolu oluşturuluyor...{Colors.RESET}")
+        created_shortcut = create_desktop_shortcut(os_name, vault_path, desktop_dir_override)
+        if created_shortcut is None:
+            print(f"{Colors.RED}HATA: İstenen masaüstü kısayolu oluşturulamadı.{Colors.RESET}", file=sys.stderr)
+            return 1, None
+
+    if install_schedule:
+        log(f"{Colors.DIM}• Sabah brifingi ve bilgi derlemesi zamanlayıcısı kuruluyor ({schedule_time})...{Colors.RESET}")
+        schedule_script = target_scripts / "install_briefing_schedule.py"
+        if not schedule_script.is_file():
+            print(f"{Colors.RED}HATA: Zamanlayıcı kurulum betiği bulunamadı.{Colors.RESET}", file=sys.stderr)
+            return 1, created_shortcut
+        result = subprocess.run(
+            [sys.executable, str(schedule_script), str(vault_path), "--home", str(Path.home()), "--platform", platform_name, "--time", schedule_time, "--apply"],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            print(f"{Colors.RED}HATA: Zamanlayıcı kurulamadı: {result.stderr.strip()}{Colors.RESET}", file=sys.stderr)
+            return result.returncode or 1, created_shortcut
+
+    if install_mcp:
+        log(f"{Colors.DIM}• Editörlere (Claude Desktop, Cursor, Antigravity, Windsurf vb.) MCP sunucusu kaydediliyor...{Colors.RESET}")
+        mcp_script = target_scripts / "vault_mcp_server.py"
+        if not mcp_script.is_file():
+            print(f"{Colors.RED}HATA: MCP kayıt betiği bulunamadı.{Colors.RESET}", file=sys.stderr)
+            return 1, created_shortcut
+        result = subprocess.run(
+            [sys.executable, str(mcp_script), "--vault", str(vault_path), "--register"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        if result.returncode != 0:
+            print(f"{Colors.RED}HATA: MCP kaydı tamamlanamadı: {result.stderr.strip()}{Colors.RESET}", file=sys.stderr)
+            return result.returncode or 1, created_shortcut
+        for line in result.stdout.splitlines():
+            clean_line = line.strip()
+            if clean_line.startswith("✓") or "kaydedildi" in clean_line.lower():
+                log(f"  {Colors.GREEN}{clean_line}{Colors.RESET}")
+
+    return 0, created_shortcut
+
+
 def install_vault(
     vault_path: Path,
     user_name: str,
@@ -285,6 +367,20 @@ def install_vault(
                         file=sys.stderr,
                     )
                     return rendered.returncode
+            integration_code, _created_shortcut = _apply_optional_integrations(
+                vault_path=vault_path,
+                platform_name=platform_name,
+                os_name=os_name,
+                install_global=install_global,
+                install_schedule=install_schedule,
+                schedule_time=schedule_time,
+                desktop_shortcut=desktop_shortcut,
+                desktop_dir_override=desktop_dir_override,
+                install_mcp=install_mcp,
+                log=log,
+            )
+            if integration_code != 0:
+                return integration_code
             log(f"{Colors.GREEN}✔ Mevcut kasa güncellendi; kullanıcı dosyaları korundu.{Colors.RESET}")
             return 0
     else:
@@ -417,79 +513,20 @@ def install_vault(
                     pass
             raise
         shutil.rmtree(stage_container, ignore_errors=True)
-        target_scripts = vault_path / "scripts"
-
-        # 7. Optional global install
-        if install_global:
-            log(f"{Colors.DIM}• Global AI kural bağlantıları kuruluyor...{Colors.RESET}")
-            global_installer = target_scripts / "install_global.py"
-            if global_installer.is_file():
-                global_cmd = [
-                    sys.executable,
-                    str(global_installer),
-                    str(vault_path),
-                    "--home",
-                    str(Path.home()),
-                    "--platform",
-                    platform_name,
-                    "--apply",
-                ]
-                res_global = subprocess.run(global_cmd, check=False, capture_output=True, text=True)
-                if res_global.returncode == 0:
-                    log(f"  {Colors.GREEN}✔ Global AI kural ve kanca bağlantıları başarıyla kuruldu.{Colors.RESET}")
-                else:
-                    log(f"  {Colors.YELLOW}Uyarı: Global bağlantı tamamlanamadı: {res_global.stderr.strip()}{Colors.RESET}")
-
-        # 8. Optional Desktop shortcut
-        created_shortcut = None
-        if desktop_shortcut:
-            log(f"{Colors.DIM}• Masaüstü Obsidian kısayolu oluşturuluyor...{Colors.RESET}")
-            created_shortcut = create_desktop_shortcut(
-                os_name=os_name,
-                vault_path=vault_path,
-                desktop_dir_override=desktop_dir_override,
-            )
-
-        # 9. Optional Morning Briefing Schedule
-        if install_schedule:
-            log(f"{Colors.DIM}• Sabah brifingi ve bilgi derlemesi zamanlayıcısı kuruluyor ({schedule_time})...{Colors.RESET}")
-            schedule_script = target_scripts / "install_briefing_schedule.py"
-            if schedule_script.is_file():
-                schedule_cmd = [
-                    sys.executable,
-                    str(schedule_script),
-                    str(vault_path),
-                    "--home",
-                    str(Path.home()),
-                    "--platform",
-                    platform_name,
-                    "--time",
-                    schedule_time,
-                    "--apply",
-                ]
-                subprocess.run(schedule_cmd, check=False, capture_output=True)
-
-        # 10. Optional MCP Server Registration
-        if install_mcp:
-            log(f"{Colors.DIM}• Editörlere (Claude Desktop, Cursor, Antigravity, Windsurf vb.) MCP sunucusu kaydediliyor...{Colors.RESET}")
-            mcp_script = target_scripts / "vault_mcp_server.py"
-            if mcp_script.is_file():
-                mcp_cmd = [sys.executable, str(mcp_script), "--vault", str(vault_path), "--register"]
-                mcp_res = subprocess.run(
-                    mcp_cmd,
-                    capture_output=True,
-                    text=True,
-                    encoding="utf-8",
-                    errors="replace",
-                    check=False,
-                )
-                if mcp_res.returncode == 0:
-                    for line in mcp_res.stdout.splitlines():
-                        clean_line = line.strip()
-                        if clean_line.startswith("✓") or "kaydedildi" in clean_line.lower():
-                            log(f"  {Colors.GREEN}{clean_line}{Colors.RESET}")
-                else:
-                    log(f"  {Colors.YELLOW}Uyarı: MCP kaydı tamamlanamadı: {mcp_res.stderr.strip()}{Colors.RESET}")
+        integration_code, created_shortcut = _apply_optional_integrations(
+            vault_path=vault_path,
+            platform_name=platform_name,
+            os_name=os_name,
+            install_global=install_global,
+            install_schedule=install_schedule,
+            schedule_time=schedule_time,
+            desktop_shortcut=desktop_shortcut,
+            desktop_dir_override=desktop_dir_override,
+            install_mcp=install_mcp,
+            log=log,
+        )
+        if integration_code != 0:
+            return integration_code
 
         # 11. Git Repository Initialization
         git_bin = shutil.which("git")

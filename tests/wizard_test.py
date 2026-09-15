@@ -121,6 +121,58 @@ class WizardTest(unittest.TestCase):
         self.assertEqual(config["summary_provider"], "codex")
         self.assertEqual(config["provider_priority"], ["codex", "gemini"])
 
+    def test_reinstall_reapplies_requested_shortcut(self) -> None:
+        target_vault = self.temp_root / "RepairableVault"
+        desktop = self.temp_root / "Desktop"
+        desktop.mkdir()
+        arguments = {
+            "vault_path": target_vault,
+            "user_name": "Ada",
+            "user_bio": "Engineer",
+            "companion": "Babbage",
+            "os_name": "RepairableOS",
+            "summary_provider": "auto",
+            "environment": "native",
+            "quiet": True,
+        }
+
+        first = self.installer.install_vault(**arguments)
+        second = self.installer.install_vault(
+            **arguments,
+            desktop_shortcut=True,
+            desktop_dir_override=desktop,
+        )
+
+        self.assertEqual(first, 0)
+        self.assertEqual(second, 0)
+        extension = ".webloc" if sys.platform == "darwin" else ".url" if os.name == "nt" else ".desktop"
+        self.assertTrue((desktop / f"RepairableVault{extension}").is_file())
+
+    def test_reinstall_returns_requested_global_integration_failure(self) -> None:
+        target_vault = self.temp_root / "FailedRepairVault"
+        arguments = {
+            "vault_path": target_vault,
+            "user_name": "Ada",
+            "user_bio": "Engineer",
+            "companion": "Babbage",
+            "os_name": "FailedRepairOS",
+            "summary_provider": "auto",
+            "environment": "native",
+            "quiet": True,
+        }
+        self.assertEqual(self.installer.install_vault(**arguments), 0)
+
+        def integration_failure(command, **_kwargs):
+            script = Path(command[1]).name if len(command) > 1 else ""
+            if script == "install_global.py":
+                return SimpleNamespace(returncode=9, stdout="", stderr="global repair failed")
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+        with mock.patch.object(self.installer.subprocess, "run", side_effect=integration_failure):
+            code = self.installer.install_vault(**arguments, install_global=True)
+
+        self.assertEqual(code, 9)
+
     @unittest.skipUnless(os.name == "nt", "native Windows interpreter propagation")
     def test_native_install_persists_discovered_python_executable_in_hooks(self) -> None:
         target_vault = self.temp_root / "RuntimeVault"
