@@ -14,6 +14,9 @@ $Commands = Join-Path $Root "commands"
 New-Item -ItemType Directory -Path $Commands | Out-Null
 $OriginalPath = $env:PATH
 $OriginalRealPython = $env:RESPECTED_REAL_PYTHON
+$OriginalGitLog = $env:RESPECTED_GIT_LOG
+$OriginalIexScript = $env:RESPECTED_IEX_SCRIPT
+$OriginalIexCwd = $env:RESPECTED_IEX_CWD
 try {
     [IO.File]::WriteAllText(
         (Join-Path $Commands "python.cmd"),
@@ -53,6 +56,45 @@ try {
             }
         }
     }
+
+    $IexCase = Join-Path $Root "install-iex"
+    New-Item -ItemType Directory -Path $IexCase | Out-Null
+    Copy-Item -LiteralPath (Join-Path $Repo "install.ps1") -Destination (Join-Path $IexCase "install.ps1")
+    [IO.File]::WriteAllText(
+        (Join-Path $IexCase "install.py"),
+        "print('LAUNCHER_OK')`n",
+        [Text.UTF8Encoding]::new($false)
+    )
+    $env:RESPECTED_IEX_SCRIPT = Join-Path $IexCase "install.ps1"
+    $env:RESPECTED_IEX_CWD = $IexCase
+    $IexCommand = 'Set-Location -LiteralPath $env:RESPECTED_IEX_CWD; Get-Content -LiteralPath $env:RESPECTED_IEX_SCRIPT -Raw | Invoke-Expression'
+    $IexOutput = (& $PowerShellHost -NoProfile -Command $IexCommand 2>&1 | Out-String)
+    $IexExit = $LASTEXITCODE
+    if ($IexExit -ne 0 -or -not $IexOutput.Contains("LAUNCHER_OK")) {
+        throw "install.ps1 pipe-to-IEX sözleşmesi başarısız: exit=$IexExit output=$IexOutput"
+    }
+
+    [IO.File]::WriteAllText(
+        (Join-Path $Commands "git.cmd"),
+        "@echo off`r`necho %*>`"%RESPECTED_GIT_LOG%`"`r`nexit /b 1`r`n",
+        [Text.UTF8Encoding]::new($false)
+    )
+    foreach ($Name in @("install", "update", "uninstall")) {
+        $Case = Join-Path $Root ("remote-" + $Name)
+        New-Item -ItemType Directory -Path $Case | Out-Null
+        Copy-Item -LiteralPath (Join-Path $Repo "$Name.ps1") -Destination (Join-Path $Case "$Name.ps1")
+        $GitLog = Join-Path $Case "git-argv.txt"
+        $env:RESPECTED_GIT_LOG = $GitLog
+        $ExpectedVault = Join-Path $Case "Remote Vault"
+        & $PowerShellHost -NoProfile -File (Join-Path $Case "$Name.ps1") -VaultPath $ExpectedVault *> $null
+        if (-not (Test-Path -LiteralPath $GitLog)) {
+            throw "$Name.ps1 uzak bootstrap sırasında git clone çalıştırmadı"
+        }
+        $GitArgv = Get-Content -LiteralPath $GitLog -Raw
+        if (-not $GitArgv.Contains("https://github.com/respected0/respectedbrain.git")) {
+            throw "$Name.ps1 yanlış kaynak repoyu çağırdı: $GitArgv"
+        }
+    }
 }
 finally {
     $env:PATH = $OriginalPath
@@ -61,6 +103,24 @@ finally {
     }
     else {
         $env:RESPECTED_REAL_PYTHON = $OriginalRealPython
+    }
+    if ($null -eq $OriginalGitLog) {
+        Remove-Item Env:RESPECTED_GIT_LOG -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:RESPECTED_GIT_LOG = $OriginalGitLog
+    }
+    if ($null -eq $OriginalIexScript) {
+        Remove-Item Env:RESPECTED_IEX_SCRIPT -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:RESPECTED_IEX_SCRIPT = $OriginalIexScript
+    }
+    if ($null -eq $OriginalIexCwd) {
+        Remove-Item Env:RESPECTED_IEX_CWD -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:RESPECTED_IEX_CWD = $OriginalIexCwd
     }
     Remove-Item -LiteralPath $Root -Recurse -Force -ErrorAction SilentlyContinue
 }

@@ -8,17 +8,22 @@ and desktop shortcuts. By default, user vault notes are strictly preserved.
 from __future__ import annotations
 
 import argparse
+import ast
+import csv
 import json
 import os
 from pathlib import Path
 import re
 import shutil
+import stat
 import subprocess
 import sys
 from typing import Sequence
 
 
 REPO_ROOT = Path(__file__).resolve().parent
+CURRENT_TASK_PREFIX = "respected-morning-briefing-"
+LEGACY_TASK_PREFIX = "res" + "pot-morning-briefing-"
 
 
 def _configure_console_output() -> None:
@@ -75,6 +80,35 @@ RESPECTED_SKILLS = {
 
 _LEGACY_BRAND = "res" + "pot"
 _LEGACY_BRAND_UPPER = "RES" + "POT"
+
+
+def _without_nested_respected_notify(content: str) -> str | None:
+    """Remove a managed --previous-notify pair while preserving its outer notifier."""
+    match = re.search(r"(?m)^notify[ \t]*=[ \t]*(\[[^\r\n]*\])[ \t]*$", content)
+    if not match:
+        return None
+    try:
+        argv = ast.literal_eval(match.group(1))
+    except (SyntaxError, ValueError):
+        return None
+    if not isinstance(argv, list) or not all(isinstance(item, str) for item in argv):
+        return None
+    for index in range(len(argv) - 1):
+        if argv[index] != "--previous-notify":
+            continue
+        try:
+            previous = json.loads(argv[index + 1])
+        except (json.JSONDecodeError, TypeError):
+            continue
+        if (
+            isinstance(previous, list)
+            and all(isinstance(item, str) for item in previous)
+            and any("codex_notify.py" in item.replace("\\", "/") for item in previous)
+        ):
+            preserved = argv[:index] + argv[index + 2 :]
+            replacement = "notify = " + json.dumps(preserved, ensure_ascii=False)
+            return content[: match.start()] + replacement + content[match.end() :]
+    return None
 
 
 def _clean_rule_file(path: Path, label: str) -> str | None:
@@ -298,18 +332,22 @@ def remove_global_integrations(clean_wsl: bool | None = None) -> list[str]:
                     if argv is not None
                     else ""
                 )
-                updated = re.sub(
-                    r"(?m)^notify\s*=.*codex_notify\.py.*(?:\r?\n)?",
-                    lambda _match: replacement,
-                    content,
-                    count=1,
-                )
+                updated = _without_nested_respected_notify(content) if argv is None else None
+                if updated is None:
+                    updated = re.sub(
+                        r"(?m)^notify\s*=.*codex_notify\.py.*(?:\r?\n)?",
+                        lambda _match: replacement,
+                        content,
+                        count=1,
+                    )
                 temporary = codex_config.with_name(f".{codex_config.name}.{os.getpid()}.tmp")
                 temporary.write_text(updated, encoding="utf-8", newline="\n")
                 os.replace(temporary, codex_config)
                 if argv is not None:
                     notify_chain.unlink()
                     cleaned.append("Codex önceki notify komutu geri yüklendi")
+                elif "notify =" in updated:
+                    cleaned.append("Codex dış notify komutu korunarak Respected zinciri kaldırıldı")
                 else:
                     cleaned.append("Codex Respected notify komutu kaldırıldı")
         except (OSError, UnicodeError, json.JSONDecodeError):
@@ -343,23 +381,31 @@ def remove_scheduled_tasks() -> list[str]:
     if os.name == "nt" or shutil.which("schtasks.exe"):
         try:
             out = subprocess.run(
-                ["schtasks.exe", "/Query", "/FO", "LIST"],
+                ["schtasks.exe", "/Query", "/FO", "CSV", "/NH"],
                 capture_output=True,
                 text=True,
                 check=False,
                 errors="replace",
             )
-            for line in out.stdout.splitlines():
-                if "RespectedDailyBriefing" in line or "AvenoxDailyBriefing" in line:
-                    parts = line.split(":", 1)
-                    if len(parts) == 2:
-                        task_name = parts[1].strip()
-                        subprocess.run(
-                            ["schtasks.exe", "/Delete", "/TN", task_name, "/F"],
-                            capture_output=True,
-                            check=False,
-                        )
-                        cleaned.append(f"Windows Görev Zamanlayıcı görevi silindi: {task_name}")
+            for row in csv.reader(out.stdout.splitlines()):
+                if not row:
+                    continue
+                task_name = row[0].strip()
+                leaf = task_name.rsplit("\\", 1)[-1].casefold()
+                managed = (
+                    leaf.startswith(CURRENT_TASK_PREFIX)
+                    or leaf.startswith(LEGACY_TASK_PREFIX)
+                    or leaf in {"respecteddailybriefing", "avenoxdailybriefing"}
+                )
+                if not managed:
+                    continue
+                deleted = subprocess.run(
+                    ["schtasks.exe", "/Delete", "/TN", task_name, "/F"],
+                    capture_output=True,
+                    check=False,
+                )
+                if deleted.returncode == 0:
+                    cleaned.append(f"Windows Görev Zamanlayıcı görevi silindi: {task_name}")
         except Exception:
             pass
     elif shutil.which("crontab"):
@@ -414,6 +460,18 @@ def remove_desktop_shortcuts(vault_name: str = "RespectedOS") -> list[str]:
         cleaned.append(f"macOS uygulama başlatıcı silindi: {app_launcher}")
 
     return cleaned
+
+
+def _remove_vault_tree(vault_path: Path) -> None:
+    """Remove an explicitly selected vault and fail if any entry survives."""
+
+    def make_writable_and_retry(function, path: str, _error_info) -> None:
+        os.chmod(path, stat.S_IREAD | stat.S_IWRITE)
+        function(path)
+
+    shutil.rmtree(vault_path, onerror=make_writable_and_retry)
+    if vault_path.exists():
+        raise OSError(f"kasa dizini silinemedi: {vault_path}")
 
 
 def remove_mcp_config() -> list[str]:
@@ -518,9 +576,11 @@ def main(argv: Sequence[str] | None = None) -> int:
     items = []
     items.extend(remove_global_integrations())
     items.extend(remove_scheduled_tasks())
-    items.extend(remove_desktop_shortcuts())
+    vault_name = Path(args.vault_path).expanduser().name if args.vault_path else "RespectedOS"
+    items.extend(remove_desktop_shortcuts(vault_name=vault_name))
     items.extend(remove_mcp_config())
 
+    purge_failed = False
     if args.purge_vault:
         vault_path = None
         if args.vault_path:
@@ -534,13 +594,21 @@ def main(argv: Sequence[str] | None = None) -> int:
             if not args.non_interactive:
                 confirm_purge = _prompt_user(f"'{vault_path}' kasası ve tüm notlar TAMAMEN SİLİNECEK. Emin misiniz? [evet/HAYIR]", "hayir")
                 if confirm_purge.lower() in ("evet", "yes"):
-                    shutil.rmtree(vault_path, ignore_errors=True)
-                    items.append(f"Kasa dizini tamamen silindi: {vault_path}")
+                    try:
+                        _remove_vault_tree(vault_path)
+                        items.append(f"Kasa dizini tamamen silindi: {vault_path}")
+                    except OSError as exc:
+                        print(f"{Colors.RED}HATA: Kasa dizini silinemedi: {exc}{Colors.RESET}", file=sys.stderr)
+                        purge_failed = True
                 else:
                     print(f"{Colors.YELLOW}Kasa silinmedi, korundu.{Colors.RESET}")
             else:
-                shutil.rmtree(vault_path, ignore_errors=True)
-                items.append(f"Kasa dizini tamamen silindi: {vault_path}")
+                try:
+                    _remove_vault_tree(vault_path)
+                    items.append(f"Kasa dizini tamamen silindi: {vault_path}")
+                except OSError as exc:
+                    print(f"{Colors.RED}HATA: Kasa dizini silinemedi: {exc}{Colors.RESET}", file=sys.stderr)
+                    purge_failed = True
 
     print("")
     if items:
@@ -549,6 +617,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     else:
         print(f"{Colors.DIM}Sistemde temizlenecek aktif bir global kayıt bulunamadı (zaten temiz).{Colors.RESET}")
 
+    if purge_failed:
+        print(f"\n{Colors.RED}{Colors.BOLD}Kaldırma tamamlanamadı; kasa dizini hâlâ mevcut.{Colors.RESET}\n")
+        return 1
     print(f"\n{Colors.GREEN}{Colors.BOLD}Respected Brain entegrasyonları sisteminizden başarıyla kaldırıldı.{Colors.RESET}\n")
     return 0
 

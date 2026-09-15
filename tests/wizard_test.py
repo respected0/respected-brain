@@ -93,6 +93,34 @@ class WizardTest(unittest.TestCase):
         )
         self.assertEqual(code, 1)
 
+    def test_reinstall_updates_managed_files_and_preserves_user_file_bytes(self) -> None:
+        target_vault = self.temp_root / "RepeatableVault"
+        arguments = {
+            "vault_path": target_vault,
+            "user_name": "Ada",
+            "user_bio": "Engineer",
+            "companion": "Babbage",
+            "os_name": "RepeatableOS",
+            "summary_provider": "codex",
+            "provider_priority": ["codex", "gemini"],
+            "python_command": [sys.executable] if os.name == "nt" else ["python3"],
+            "environment": "native",
+            "quiet": True,
+        }
+
+        first = self.installer.install_vault(**arguments)
+        human_note = target_vault / "knowledge" / "human-note.md"
+        expected = "İnsan notu byte-for-byte korunmalı.\n".encode("utf-8")
+        human_note.write_bytes(expected)
+        second = self.installer.install_vault(**arguments)
+
+        self.assertEqual(first, 0)
+        self.assertEqual(second, 0)
+        self.assertEqual(human_note.read_bytes(), expected)
+        config = json.loads((target_vault / ".beyin/config.json").read_text(encoding="utf-8"))
+        self.assertEqual(config["summary_provider"], "codex")
+        self.assertEqual(config["provider_priority"], ["codex", "gemini"])
+
     @unittest.skipUnless(os.name == "nt", "native Windows interpreter propagation")
     def test_native_install_persists_discovered_python_executable_in_hooks(self) -> None:
         target_vault = self.temp_root / "RuntimeVault"

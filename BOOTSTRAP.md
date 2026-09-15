@@ -21,7 +21,7 @@ Aşağıdaki gereksinimlerin sistemde mevcut olduğunu doğrula:
 ---
 
 ## 2. Kullanıcı Parametrelerini Belirleme
-Kullanıcı aksini belirtmediyse aşağıdaki akıllı varsayılanları kullan; özel tercihi varsa kullanıcıya sor:
+Kuruluma başlamadan önce kullanıcıdan en az kasa yolu, kullanıcı adı, kasa adı, çalışma ortamı ve model fallback sırasını açıkça al. Diğer seçenekleri de göster; kullanıcı varsayılanı kabul edebilir ancak yol veya ortam tahmin ederek kuruluma başlama.
 
 | Parametre | Varsayılan Değer | Açıklama |
 | :--- | :--- | :--- |
@@ -43,42 +43,33 @@ Kullanıcı aksini belirtmediyse aşağıdaki akıllı varsayılanları kullan; 
 
 Ajan olarak şu adımları terminal araçlarınla uygula:
 
-### Adım 3.1: Şablonu Kopyalama
-Hedef dizini oluştur ve `template/` klasörünün içeriğini hedef dizine eksiksiz kopyala:
+### Adım 3.1: Kaynak ve Hedef Güvenlik Kontrolü
+Kaynak repo yoksa yalnız `https://github.com/respected0/respectedbrain.git` adresinden temiz clone al. Hedefi mutlak yola çöz. Hedef doluysa şu ayrımı yap:
+
+- `.respectedbrain-version` (veya desteklenen eski sürüm damgası) ile `.beyin/instructions.md` varsa bu geçerli mevcut vault'tur; aynı installer güvenli update yoluna geçer.
+- Bu kimlik dosyaları yoksa hedef kullanıcıya ait bilinmeyen dolu klasördür; hiçbir dosya yazmadan dur ve açık hata raporla.
+
+### Adım 3.2: Kanonik Installer'ı Çalıştır
+Şablonu elle kopyalama, placeholder'ları elle değiştirme veya config JSON'unu kendin üretme. Bunların transactional ve rollback güvenli tek kaynak gerçekliği `install.py` dosyasıdır.
+
+Windows:
+```powershell
+python install.py --non-interactive --vault-path "<VAULT_PATH>" --user-name "<USER_NAME>" --user-bio "<USER_BIO>" --companion "<COMPANION>" --os-name "<OS_NAME>" --provider <SUMMARY_PROVIDER> --priority <PROVIDER_PRIORITY...> --environment <native|wsl|hybrid> <OPTION_FLAGS>
+```
+
+Linux / macOS / WSL:
 ```bash
-# Örnek (Python üzerinden güvenli kopyalama):
-python -c "import shutil, pathlib; shutil.copytree('template', '<VAULT_PATH>', dirs_exist_ok=False)"
+python3 install.py --non-interactive --vault-path "<VAULT_PATH>" --user-name "<USER_NAME>" --user-bio "<USER_BIO>" --companion "<COMPANION>" --os-name "<OS_NAME>" --provider <SUMMARY_PROVIDER> --priority <PROVIDER_PRIORITY...> --environment <native|wsl|hybrid> <OPTION_FLAGS>
 ```
 
-### Adım 3.2: Yardımcı Betikleri Kopyalama
-Repodaki `scripts/` klasörünün içeriğini `<VAULT_PATH>/scripts/` altına kopyala (kurulum ve senkronizasyon betikleri hariç: `install-windows.ps1`, `upstream_sync.sh` kopyalanmaz).
+İlk çalıştırma temiz vault'u staged/transactional kurar. Aynı komut geçerli mevcut vault üzerinde yeniden çalıştırıldığında yönetilen dosyaları güvenli update yoluyla yeniler ve kullanıcı dosyalarını korur.
 
-### Adım 3.3: Yer Tutucuları (Placeholders) Çözme
-Kasadaki tüm dosyalarda geçen şu etiketleri kullanıcının değerleriyle değiştir:
-- `{{OS_NAME}}` -> `$OS_NAME`
-- `{{USER_NAME}}` -> `$USER_NAME`
-- `{{USER_BIO}}` -> `$USER_BIO`
-- `{{COMPANION}}` -> `$COMPANION`
-- `{{VAULT_PATH}}` -> Hedef kasanın tam mutlak yolu
-- `{{TODAY}}` -> Bugünün tarihi (`YYYY-MM-DD`)
-
-### Adım 3.4: Yapılandırmayı Yazma
-`<VAULT_PATH>/.beyin/config.json` dosyasını oluştur veya güncelle:
-```json
-{
-  "summary_provider": "auto",
-  "platform": "windows-native", // veya "portable" (Linux/macOS için)
-  "python_command": ["python"],
-  "provider_priority": ["antigravity", "codex", "claude", "cursor"]
-}
-```
-
-### Adım 3.5: Entegrasyonları Derleme
-Kasa içindeki platform entegrasyonlarını derle:
+### Adım 3.3: Entegrasyon Drift Kontrolü
+Kurulumdan sonra vault içindeki renderer ile kontrol yap:
 ```bash
-python scripts/render_integrations.py --root "<VAULT_PATH>" --platform <windows-native | portable>
-python scripts/render_integrations.py --root "<VAULT_PATH>" --check
+python3 "<VAULT_PATH>/scripts/render_integrations.py" --root "<VAULT_PATH>" --check
 ```
+Windows'ta doğrulanmış Python executable'ını `python3` yerine kullan. Exit code sıfır değilse kurulumu başarılı raporlama.
 
 ### Adım 3.6: İsteğe Bağlı Global Bağlantı
 Kullanıcı global kurallara ve yeteneklere bağlanmak istiyorsa:

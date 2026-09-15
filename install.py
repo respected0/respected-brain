@@ -227,8 +227,66 @@ def install_vault(
             print(f"{Colors.RED}HATA: Hedef yol bir klasör değil: {vault_path}{Colors.RESET}", file=sys.stderr)
             return 1
         if any(vault_path.iterdir()):
-            print(f"{Colors.RED}HATA: Hedef klasör boş değil: {vault_path}{Colors.RESET}", file=sys.stderr)
-            return 1
+            version_files = (
+                vault_path / ".respectedbrain-version",
+                vault_path / ".beyin-version",
+                vault_path / ".beyin-multi-version",
+            )
+            recognized = (
+                any(path.is_file() for path in version_files)
+                and (vault_path / ".beyin/instructions.md").is_file()
+            )
+            if not recognized:
+                print(f"{Colors.RED}HATA: Hedef klasör boş değil: {vault_path}{Colors.RESET}", file=sys.stderr)
+                return 1
+
+            platform_name = (
+                "windows-wsl"
+                if os.name == "nt" and environment in {"wsl", "hybrid"}
+                else "windows-native"
+                if os.name == "nt"
+                else "portable"
+            )
+            log(f"{Colors.DIM}• Mevcut Respected Brain kasası güvenli güncelleme yoluyla yenileniyor...{Colors.RESET}")
+            update_cmd = [
+                sys.executable,
+                str(SCRIPTS_DIR / "update_respected.py"),
+                str(vault_path),
+                "--platform",
+                platform_name,
+                "--summary-provider",
+                summary_provider,
+                "--force",
+                "--apply",
+            ]
+            updated = subprocess.run(update_cmd, capture_output=True, text=True, check=False)
+            if updated.returncode != 0:
+                print(
+                    f"{Colors.RED}HATA: Mevcut kasa güncellenemedi: {updated.stderr.strip()}{Colors.RESET}",
+                    file=sys.stderr,
+                )
+                return updated.returncode
+
+            if python_command:
+                render_cmd = [
+                    sys.executable,
+                    str(vault_path / "scripts/render_integrations.py"),
+                    "--root",
+                    str(vault_path),
+                    "--platform",
+                    platform_name,
+                    "--python-command",
+                    *python_command,
+                ]
+                rendered = subprocess.run(render_cmd, capture_output=True, text=True, check=False)
+                if rendered.returncode != 0:
+                    print(
+                        f"{Colors.RED}HATA: Güncellenen entegrasyonlar render edilemedi: {rendered.stderr.strip()}{Colors.RESET}",
+                        file=sys.stderr,
+                    )
+                    return rendered.returncode
+            log(f"{Colors.GREEN}✔ Mevcut kasa güncellendi; kullanıcı dosyaları korundu.{Colors.RESET}")
+            return 0
     else:
         vault_path.parent.mkdir(parents=True, exist_ok=True)
 

@@ -58,16 +58,16 @@ if (-not (Test-Path -LiteralPath $UninstallScript)) {
     Write-Host "Kaldırma aracı indiriliyor..." -ForegroundColor Gray
     $HasGit = Get-Command git -ErrorAction SilentlyContinue
     if ($HasGit) {
-        git clone --depth 1 https://github.com/respected0/secondbrain.git $TempClone | Out-Null
+        git clone --depth 1 https://github.com/respected0/respectedbrain.git $TempClone | Out-Null
         $UninstallScript = Join-Path $TempClone "uninstall.py"
     }
     else {
         $ZipFile = Join-Path ([IO.Path]::GetTempPath()) ("respected-brain-" + [guid]::NewGuid().ToString("N") + ".zip")
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        Invoke-WebRequest -Uri "https://github.com/respected0/secondbrain/archive/refs/heads/main.zip" -OutFile $ZipFile
+        Invoke-WebRequest -Uri "https://github.com/respected0/respectedbrain/archive/refs/heads/main.zip" -OutFile $ZipFile
         Expand-Archive -LiteralPath $ZipFile -DestinationPath $TempClone -Force
         Remove-Item -LiteralPath $ZipFile -Force -ErrorAction SilentlyContinue
-        $UnzippedSub = Join-Path $TempClone "secondbrain-main"
+        $UnzippedSub = Join-Path $TempClone "respectedbrain-main"
         if (Test-Path -LiteralPath $UnzippedSub) {
             $UninstallScript = Join-Path $UnzippedSub "uninstall.py"
         } else {

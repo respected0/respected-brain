@@ -226,6 +226,67 @@ else
   fail "özel dal merge kontrolü başarısız (rc=$RC, out=$OUT)"
 fi
 
+# -----------------------------------------------------------------------------
+# Test 9: POSIX one-liner launchers clone the published source repository
+# -----------------------------------------------------------------------------
+FAKE_BIN="$TMP_BASE/fake-bin"
+mkdir -p "$FAKE_BIN"
+cat > "$FAKE_BIN/git" <<'SH'
+#!/bin/sh
+printf '%s\n' "$*" > "$RESPECTED_GIT_LOG"
+if [ -n "${RESPECTED_FAKE_ENTRYPOINT:-}" ]; then
+  for ARG do DESTINATION="$ARG"; done
+  mkdir -p "$DESTINATION"
+  printf '%s\n' "print('LAUNCHER_OK')" > "$DESTINATION/$RESPECTED_FAKE_ENTRYPOINT"
+  exit 0
+fi
+exit 1
+SH
+chmod +x "$FAKE_BIN/git"
+
+LAUNCHER_URLS_OK=1
+for NAME in install update uninstall; do
+  LAUNCHER_DIR="$TMP_BASE/launcher-$NAME"
+  mkdir -p "$LAUNCHER_DIR"
+  cp "$TEST_ROOT/$NAME.sh" "$LAUNCHER_DIR/$NAME.sh"
+  GIT_LOG="$LAUNCHER_DIR/git-argv.txt"
+  set +e
+  PATH="$FAKE_BIN:/usr/bin:/bin" RESPECTED_GIT_LOG="$GIT_LOG" \
+    bash "$LAUNCHER_DIR/$NAME.sh" >/dev/null 2>&1
+  set -e
+  if [ ! -f "$GIT_LOG" ] || ! grep -q 'https://github.com/respected0/respectedbrain.git' "$GIT_LOG"; then
+    LAUNCHER_URLS_OK=0
+    diag "$NAME.sh yanlış clone argv üretti: $(cat "$GIT_LOG" 2>/dev/null || printf missing)"
+  fi
+done
+
+if [ "$LAUNCHER_URLS_OK" -eq 1 ]; then
+  pass "POSIX one-liner launcherları doğru kaynak repoyu klonluyor"
+else
+  fail "POSIX one-liner launcher kaynak repo sözleşmesi başarısız"
+fi
+
+# -----------------------------------------------------------------------------
+# Test 10: install.sh works when supplied on stdin by curl | bash
+# -----------------------------------------------------------------------------
+PIPE_DIR="$TMP_BASE/pipe-install"
+mkdir -p "$PIPE_DIR"
+PIPE_GIT_LOG="$PIPE_DIR/git-argv.txt"
+set +e
+PIPE_OUT=$(cd "$PIPE_DIR" && \
+  PATH="$FAKE_BIN:/usr/bin:/bin" \
+  RESPECTED_GIT_LOG="$PIPE_GIT_LOG" \
+  RESPECTED_FAKE_ENTRYPOINT="install.py" \
+  bash -s < "$TEST_ROOT/install.sh" 2>&1)
+PIPE_RC=$?
+set -e
+
+if [ "$PIPE_RC" -eq 0 ] && echo "$PIPE_OUT" | grep -q 'LAUNCHER_OK' && ! echo "$PIPE_OUT" | grep -q 'BASH_SOURCE'; then
+  pass "install.sh stdin one-liner güvenle uzak entrypoint çalıştırıyor"
+else
+  fail "install.sh stdin one-liner başarısız (rc=$PIPE_RC, out=$PIPE_OUT)"
+fi
+
 if [ "$FAIL_COUNT" -gt 0 ]; then
   exit 1
 fi

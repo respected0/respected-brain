@@ -7,7 +7,6 @@ param(
     [string]$OsName = "RespectedOS",
     [string]$Provider = "auto",
     [string[]]$Priority,
-    [ValidateSet("native", "wsl", "hybrid")]
     [string]$Environment,
     [switch]$DesktopShortcut,
     [switch]$NoDesktopShortcut,
@@ -20,6 +19,10 @@ param(
     [switch]$NoInstallMcp,
     [switch]$Quiet
 )
+
+if ($Environment -and $Environment -notin @("native", "wsl", "hybrid")) {
+    throw "Environment must be one of: native, wsl, hybrid"
+}
 
 $ErrorActionPreference = "Stop"
 $RepoRoot = $PSScriptRoot
@@ -98,17 +101,17 @@ if (-not (Test-Path -LiteralPath $InstallScript)) {
     Write-Host "Repo indiriliyor..." -ForegroundColor Gray
     $HasGit = Get-Command git -ErrorAction SilentlyContinue
     if ($HasGit) {
-        git clone --depth 1 https://github.com/respected0/secondbrain.git $TempClone | Out-Null
+        git clone --depth 1 https://github.com/respected0/respectedbrain.git $TempClone | Out-Null
         $InstallScript = Join-Path $TempClone "install.py"
     }
     else {
         Write-Host "Git tespit edilemedi, GitHub arşivi indiriliyor..." -ForegroundColor Gray
         $ZipFile = Join-Path ([IO.Path]::GetTempPath()) ("respected-brain-" + [guid]::NewGuid().ToString("N") + ".zip")
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-        Invoke-WebRequest -Uri "https://github.com/respected0/secondbrain/archive/refs/heads/main.zip" -OutFile $ZipFile
+        Invoke-WebRequest -Uri "https://github.com/respected0/respectedbrain/archive/refs/heads/main.zip" -OutFile $ZipFile
         Expand-Archive -LiteralPath $ZipFile -DestinationPath $TempClone -Force
         Remove-Item -LiteralPath $ZipFile -Force -ErrorAction SilentlyContinue
-        $UnzippedSub = Join-Path $TempClone "secondbrain-main"
+        $UnzippedSub = Join-Path $TempClone "respectedbrain-main"
         if (Test-Path -LiteralPath $UnzippedSub) {
             $InstallScript = Join-Path $UnzippedSub "install.py"
         } else {

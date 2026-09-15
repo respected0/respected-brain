@@ -47,28 +47,32 @@ else
 fi
 
 # 2. install.py tespiti veya indirme
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || pwd)"
-INSTALL_PY="${SCRIPT_DIR}/install.py"
+SCRIPT_SOURCE="${BASH_SOURCE[0]:-}"
+SCRIPT_DIR=""
+if [ -n "${SCRIPT_SOURCE}" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "${SCRIPT_SOURCE}")" 2>/dev/null && pwd)"
+fi
+INSTALL_PY="${SCRIPT_DIR:+${SCRIPT_DIR}/}install.py"
 
-if [ ! -f "${INSTALL_PY}" ]; then
+if [ -z "${SCRIPT_DIR}" ] || [ ! -f "${INSTALL_PY}" ]; then
     TMP_DIR="$(mktemp -d -t respected-brain-install-XXXXXX)"
     echo "• Repo indiriliyor..."
     if command -v git >/dev/null 2>&1; then
-        git clone --depth 1 https://github.com/respected0/secondbrain.git "${TMP_DIR}" >/dev/null 2>&1
+        git clone --depth 1 https://github.com/respected0/respectedbrain.git "${TMP_DIR}" >/dev/null 2>&1
         INSTALL_PY="${TMP_DIR}/install.py"
     else
         echo "• Git tespit edilemedi, GitHub arşivi indiriliyor..."
         ZIP_FILE="${TMP_DIR}/repo.zip"
         if command -v curl >/dev/null 2>&1; then
-            curl -sSL "https://github.com/respected0/secondbrain/archive/refs/heads/main.zip" -o "${ZIP_FILE}"
+            curl -sSL "https://github.com/respected0/respectedbrain/archive/refs/heads/main.zip" -o "${ZIP_FILE}"
         elif command -v wget >/dev/null 2>&1; then
-            wget -q "https://github.com/respected0/secondbrain/archive/refs/heads/main.zip" -O "${ZIP_FILE}"
+            wget -q "https://github.com/respected0/respectedbrain/archive/refs/heads/main.zip" -O "${ZIP_FILE}"
         fi
         if command -v unzip >/dev/null 2>&1; then
             unzip -q "${ZIP_FILE}" -d "${TMP_DIR}"
             rm -f "${ZIP_FILE}"
-            if [ -d "${TMP_DIR}/secondbrain-main" ]; then
-                INSTALL_PY="${TMP_DIR}/secondbrain-main/install.py"
+            if [ -d "${TMP_DIR}/respectedbrain-main" ]; then
+                INSTALL_PY="${TMP_DIR}/respectedbrain-main/install.py"
             else
                 INSTALL_PY="${TMP_DIR}/install.py"
             fi

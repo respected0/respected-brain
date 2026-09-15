@@ -17,27 +17,31 @@ else
 fi
 
 # 2. uninstall.py tespiti veya indirme
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || pwd)"
-UNINSTALL_PY="${SCRIPT_DIR}/uninstall.py"
+SCRIPT_SOURCE="${BASH_SOURCE[0]:-}"
+SCRIPT_DIR=""
+if [ -n "${SCRIPT_SOURCE}" ]; then
+    SCRIPT_DIR="$(cd "$(dirname "${SCRIPT_SOURCE}")" 2>/dev/null && pwd)"
+fi
+UNINSTALL_PY="${SCRIPT_DIR:+${SCRIPT_DIR}/}uninstall.py"
 
-if [ ! -f "${UNINSTALL_PY}" ]; then
+if [ -z "${SCRIPT_DIR}" ] || [ ! -f "${UNINSTALL_PY}" ]; then
     TMP_DIR="$(mktemp -d -t respected-brain-uninstall-XXXXXX)"
     echo "• Kaldırma paketi indiriliyor..."
     if command -v git >/dev/null 2>&1; then
-        git clone --depth 1 https://github.com/respected0/secondbrain.git "${TMP_DIR}" >/dev/null 2>&1
+        git clone --depth 1 https://github.com/respected0/respectedbrain.git "${TMP_DIR}" >/dev/null 2>&1
         UNINSTALL_PY="${TMP_DIR}/uninstall.py"
     else
         ZIP_FILE="${TMP_DIR}/repo.zip"
         if command -v curl >/dev/null 2>&1; then
-            curl -sSL "https://github.com/respected0/secondbrain/archive/refs/heads/main.zip" -o "${ZIP_FILE}"
+            curl -sSL "https://github.com/respected0/respectedbrain/archive/refs/heads/main.zip" -o "${ZIP_FILE}"
         elif command -v wget >/dev/null 2>&1; then
-            wget -q "https://github.com/respected0/secondbrain/archive/refs/heads/main.zip" -O "${ZIP_FILE}"
+            wget -q "https://github.com/respected0/respectedbrain/archive/refs/heads/main.zip" -O "${ZIP_FILE}"
         fi
         if command -v unzip >/dev/null 2>&1; then
             unzip -q "${ZIP_FILE}" -d "${TMP_DIR}"
             rm -f "${ZIP_FILE}"
-            if [ -d "${TMP_DIR}/secondbrain-main" ]; then
-                UNINSTALL_PY="${TMP_DIR}/secondbrain-main/uninstall.py"
+            if [ -d "${TMP_DIR}/respectedbrain-main" ]; then
+                UNINSTALL_PY="${TMP_DIR}/respectedbrain-main/uninstall.py"
             else
                 UNINSTALL_PY="${TMP_DIR}/uninstall.py"
             fi

@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import ast
+import contextlib
+import io
 import json
 from pathlib import Path
 import shutil
@@ -134,6 +137,36 @@ class TestUninstall(unittest.TestCase):
         self.assertNotIn("notify =", content)
         self.assertIn('model = "gpt-test"', content)
 
+    def test_remove_global_integrations_preserves_outer_codex_notify_wrapper(self):
+        codex = self.fake_home / ".codex"
+        codex.mkdir(parents=True)
+        config = codex / "config.toml"
+        outer_notify = [
+            "codex-computer-use.exe",
+            "turn-ended",
+            "--previous-notify",
+            '["py.exe","-3","C:\\\\Vault\\\\.beyin\\\\hooks\\\\codex_notify.py"]',
+        ]
+        config.write_text(
+            "notify = " + json.dumps(outer_notify) + '\n\nmodel = "gpt-test"\n',
+            encoding="utf-8",
+        )
+
+        with patch("pathlib.Path.home", return_value=self.fake_home):
+            uninstall.remove_global_integrations(clean_wsl=False)
+
+        content = config.read_text(encoding="utf-8")
+        self.assertIn("notify = ", content)
+        notify_literal = content.split("notify = ", 1)[1].splitlines()[0]
+        self.assertEqual(
+            ast.literal_eval(notify_literal),
+            ["codex-computer-use.exe", "turn-ended"],
+        )
+        self.assertEqual(
+            content,
+            'notify = ["codex-computer-use.exe", "turn-ended"]\n\nmodel = "gpt-test"\n',
+        )
+
     def test_remove_desktop_shortcuts(self):
         desktop = self.fake_home / "Desktop"
         desktop.mkdir(parents=True, exist_ok=True)
@@ -151,6 +184,59 @@ class TestUninstall(unittest.TestCase):
         self.assertFalse(sc2.exists())
         self.assertFalse(sc3.exists())
         self.assertEqual(len(cleaned), 3)
+
+    def test_remove_scheduled_tasks_deletes_current_and_legacy_prefixed_tasks(self):
+        legacy_prefix = "res" + "pot-morning-briefing-"
+        query = type(
+            "Result",
+            (),
+            {
+                "stdout": (
+                    '"\\\\respected-morning-briefing-current","N/A","Ready"\n'
+                    f'"\\\\{legacy_prefix}legacy","N/A","Ready"\n'
+                    '"\\\\Unrelated User Task","N/A","Ready"\n'
+                ),
+                "returncode": 0,
+            },
+        )()
+        deleted = type("Result", (), {"stdout": b"", "stderr": b"", "returncode": 0})()
+
+        with (
+            patch("uninstall.os.name", "nt"),
+            patch("uninstall.subprocess.run", side_effect=[query, deleted, deleted]) as run,
+        ):
+            cleaned = uninstall.remove_scheduled_tasks()
+
+        self.assertEqual(len(cleaned), 2)
+        delete_calls = [call.args[0] for call in run.call_args_list[1:]]
+        self.assertEqual(
+            delete_calls,
+            [
+                ["schtasks.exe", "/Delete", "/TN", "\\\\respected-morning-briefing-current", "/F"],
+                ["schtasks.exe", "/Delete", "/TN", f"\\\\{legacy_prefix}legacy", "/F"],
+            ],
+        )
+
+    def test_main_uses_vault_name_for_shortcut_cleanup(self):
+        desktop = self.fake_home / "Desktop"
+        desktop.mkdir(parents=True)
+        shortcut = desktop / "CustomBrain.url"
+        shortcut.write_text("[InternetShortcut]\nURL=obsidian://open?vault=CustomBrain\n", encoding="utf-8")
+        vault = self.tmp_dir / "CustomBrain"
+        vault.mkdir()
+
+        with (
+            patch("pathlib.Path.home", return_value=self.fake_home),
+            patch("uninstall.remove_global_integrations", return_value=[]),
+            patch("uninstall.remove_scheduled_tasks", return_value=[]),
+            patch("uninstall.remove_mcp_config", return_value=[]),
+        ):
+            code = uninstall.main(
+                ["--non-interactive", "--vault-path", str(vault)]
+            )
+
+        self.assertEqual(code, 0)
+        self.assertFalse(shortcut.exists())
 
     def test_remove_mcp_config(self):
         claude_dir = self.fake_home / "AppData" / "Roaming" / "Claude"
@@ -185,6 +271,32 @@ class TestUninstall(unittest.TestCase):
 
         self.assertEqual(code, 0)
         self.assertFalse(vault_to_purge.exists())
+
+    def test_main_purge_fails_when_vault_still_exists_after_tree_removal(self):
+        vault_to_purge = self.tmp_dir / "StubbornVault"
+        vault_to_purge.mkdir(parents=True)
+        (vault_to_purge / "locked.txt").write_text("locked", encoding="utf-8")
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+
+        with (
+            patch("pathlib.Path.home", return_value=self.fake_home),
+            patch("uninstall.remove_global_integrations", return_value=[]),
+            patch("uninstall.remove_scheduled_tasks", return_value=[]),
+            patch("uninstall.remove_desktop_shortcuts", return_value=[]),
+            patch("uninstall.remove_mcp_config", return_value=[]),
+            patch("uninstall.shutil.rmtree", return_value=None),
+            contextlib.redirect_stdout(stdout),
+            contextlib.redirect_stderr(stderr),
+        ):
+            code = uninstall.main(
+                ["--non-interactive", "--purge-vault", "--vault-path", str(vault_to_purge)]
+            )
+
+        self.assertEqual(code, 1)
+        self.assertTrue(vault_to_purge.exists())
+        self.assertIn("silinemedi", stderr.getvalue().lower())
+        self.assertNotIn("tamamen silindi", stdout.getvalue().lower())
 
     def test_clean_hooks_formats(self):
         gemini_config = self.fake_home / ".gemini" / "config"
