@@ -1,0 +1,5 @@
+{
+  "operation": "preflight-only",
+  "mutationExpected": false,
+  "comparison": "Not applicable until lifecycle operation"
+}

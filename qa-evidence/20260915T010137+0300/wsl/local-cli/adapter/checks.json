@@ -1,0 +1,1 @@
+{"checks":[{"id":"ext4-root","status":"VERIFIED"},{"id":"python-suite-375","status":"VERIFIED"},{"id":"platform-smoke-9","status":"VERIFIED"},{"id":"bash-hooks","status":"VERIFIED"},{"id":"bash-upstream","status":"VERIFIED"}]}
