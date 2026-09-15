@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 import shutil
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 import sys
@@ -43,6 +44,22 @@ class TestUpdateCli(unittest.TestCase):
 
         self.assertEqual(exit_code, 0)
         self.assertEqual(mock_run.call_count, 2)  # preview + apply
+
+    @patch("subprocess.run")
+    def test_already_current_apply_is_successful_noop(self, mock_run):
+        mock_run.side_effect = [
+            SimpleNamespace(returncode=0),
+            SimpleNamespace(returncode=3),
+        ]
+
+        exit_code = update.main([
+            "--vault-path", str(self.fake_vault),
+            "--apply",
+            "--platform", "portable",
+        ])
+
+        self.assertEqual(exit_code, 0)
+        self.assertEqual(mock_run.call_count, 2)
 
 
 if __name__ == "__main__":

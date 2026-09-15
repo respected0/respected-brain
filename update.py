@@ -172,6 +172,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     if apply_res.returncode == 0:
         print(f"\n{Colors.GREEN}{Colors.BOLD}✔ Tebrikler! Respected Brain başarıyla güncellendi (v0.0.1).{Colors.RESET}")
         print(f"{Colors.DIM}Not: AI asistanınızda 'beyin doktor' çalıştırarak sistem sağlığını teyit edebilirsiniz.{Colors.RESET}\n")
+    elif apply_res.returncode == 3:
+        print(f"\n{Colors.GREEN}{Colors.BOLD}✔ Respected Brain zaten güncel; değişiklik gerekmedi.{Colors.RESET}\n")
+        return 0
     else:
         print(f"\n{Colors.RED}Güncelleme sırasında hata oluştu (önceki yedekten geri yüklendi).{Colors.RESET}")
 
