@@ -4,7 +4,7 @@
 |---|---|---|---|---|
 | Windows Native | VERIFIED | FAILED | VERIFIED | [Bootstrap](qa-evidence/20260915T010137+0300/windows-native/bootstrap/adapter/result.md); [local CLI](qa-evidence/20260915T010137+0300/windows-native/local-cli/adapter/result.md) |
 | Pure WSL2 | VERIFIED | FAILED | VERIFIED | [Bootstrap](qa-evidence/20260915T010137+0300/wsl/bootstrap/adapter/result.md); [local CLI](qa-evidence/20260915T010137+0300/wsl/local-cli/adapter/result.md) |
-| Hybrid Windows + WSL | VERIFIED | NOT VERIFIED | NOT VERIFIED | [Bootstrap lifecycle and bridge](qa-evidence/20260915T010137+0300/hybrid/bootstrap/adapter/result.md) |
+| Hybrid Windows + WSL | VERIFIED | NOT VERIFIED | VERIFIED | [Bootstrap lifecycle and bridge](qa-evidence/20260915T010137+0300/hybrid/bootstrap/adapter/result.md); [local CLI matrix](qa-evidence/20260915T010137+0300/hybrid/local-cli/adapter/result.md) |
 | True Linux VM | NOT VERIFIED | NOT VERIFIED | NOT VERIFIED | Host unavailable |
 | Physical macOS | NOT VERIFIED | NOT VERIFIED | NOT VERIFIED | Host unavailable |
 

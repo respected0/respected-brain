@@ -4,6 +4,7 @@ Run: `20260915T010137+0300`
 Source: `644f90b3fd555a451ea7806d793e0ca41dfb6d2b`  
 Branch: `codex/v001-release-acceptance`
 Fix commit: `7762df945109cc8d7921a2865f5bad81d01aa43b`
+Repair commit: `9625a3a8f6043379b28625e425c019ffd1b63663`
 
 ## Decision
 
@@ -11,10 +12,11 @@ Release acceptance is **FAILED**. Windows Native, pure WSL, and the hybrid bridg
 
 ## Executed gates
 
-- Windows: the 375-test Python package completed with 8 explicit platform-conditioned skips and no failures; physical lifecycle smoke, installer, launcher, scheduler, hybrid bridge, Bash hook, and upstream suites passed.
-- Pure WSL: the 375-test Python package completed under `/home/furkan` on the Linux filesystem with 8 explicit platform-conditioned skips and no failures; lifecycle smoke and both Bash suites passed.
+- Windows: the 377-test Python package completed with 8 explicit platform-conditioned skips and no failures; physical lifecycle smoke, installer, launcher, scheduler, hybrid bridge, Bash hook, and upstream suites passed.
+- Pure WSL: the 377-test Python package completed under `/home/furkan` on the Linux filesystem with 8 explicit platform-conditioned skips and no failures; lifecycle smoke and both Bash suites passed.
 - AI-native/BOOTSTRAP: clean Windows and pure-WSL installs plus exact repeats passed; user bytes stayed unchanged and renderer drift was zero.
 - Hybrid BOOTSTRAP: NTFS install, two updates, `/mnt/c` same-file hash, two isolated-profile uninstalls, and reinstall passed.
+- Hybrid local CLI: project-only and global+project cycles covered MCP/schedule/shortcut off and on, a 07:43 schedule, single-provider and custom fallback modes, repair, uninstall, and reinstall.
 - Windows disposable local CLI: Unicode/emoji/space path install, two updates, render check, and two uninstalls passed.
 - Live uninstall: two runs passed; all 419 archived files remained byte-identical after uninstall and unrelated global configuration survived.
 - Final live install: a clean canonical Windows-native bootstrap install plus idempotent repeat, exact persistent Python render, global integration, MCP registration, and `testOS.url` creation passed. Schedule remains intentionally off.

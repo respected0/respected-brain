@@ -16,5 +16,6 @@
 | AI-native/BOOTSTRAP idempotency | VERIFIED | VERIFIED | VERIFIED | NOT VERIFIED | NOT VERIFIED |
 | Update data preservation | VERIFIED | VERIFIED | VERIFIED | NOT VERIFIED | NOT VERIFIED |
 | Normal uninstall idempotency | VERIFIED | VERIFIED | VERIFIED (isolated profile) | NOT VERIFIED | NOT VERIFIED |
+| Reinstall repairs requested integrations | VERIFIED | VERIFIED | VERIFIED | NOT VERIFIED | NOT VERIFIED |
 
 “Contract” or “synthetic adapter” is deliberately not equivalent to a signed-in provider UI/CLI result.

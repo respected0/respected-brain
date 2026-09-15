@@ -2,7 +2,7 @@
 
 ## Fixed and regression-tested
 
-All eight product fixes below are contained in local commit `7762df945109cc8d7921a2865f5bad81d01aa43b` on `codex/v001-release-acceptance`.
+The first eight product fixes are in local commit `7762df945109cc8d7921a2865f5bad81d01aa43b`; the reinstall repair fix is in `9625a3a8f6043379b28625e425c019ffd1b63663`, both on `codex/v001-release-acceptance`.
 
 1. **Codex notify chain destruction.** Normal uninstall deleted an outer computer-use notifier when Respected appeared as nested `--previous-notify` JSON without a chain file. Added a RED regression, implemented nested-argv surgery, then GREEN; unrelated TOML bytes stayed exact.
 2. **Wrong shortcut cleanup name.** `uninstall.py main()` ignored `--vault-path` when choosing the shortcut name. Added RED/GREEN regression and passed two live uninstall runs.
@@ -12,6 +12,7 @@ All eight product fixes below are contained in local commit `7762df945109cc8d792
 6. **Current scheduler tasks survived uninstall.** The uninstaller searched only obsolete display strings and depended on localized LIST output. A CSV/no-header prefix regression was RED; current and legacy managed prefixes are now deleted independent of locale, unrelated tasks are retained, and the live residual count is zero.
 7. **BOOTSTRAP reinstall was not idempotent.** A second run used `copytree(..., dirs_exist_ok=False)` and raised `FileExistsError`. A RED regression now installs twice while hashing a user file; recognized vaults route through the safe updater, unknown non-empty targets still fail closed, and the test is GREEN on Windows and WSL.
 8. **Purge could report false success.** `shutil.rmtree(..., ignore_errors=True)` could leave a vault behind and still print that it was deleted. A RED no-op-removal regression now requires a nonzero exit and explicit error while the target exists; permission recovery and post-delete existence verification are GREEN. The exact live disposable purge was rerun and removed the residual tree.
+9. **Existing-vault reinstall skipped requested integrations and swallowed their failures.** The recognized-vault branch returned immediately after update/render, so removed global hooks, MCP, schedule, or shortcut state was not repaired. A real hybrid cycle reproduced the missing repair. Two RED regressions proved the skipped shortcut and lost global exit code. Optional integrations now share one fail-closed path for fresh and existing vaults; both tests are GREEN, deliberate hook/shortcut deletion was repaired, a failing global installer preserved exit code 9, and Windows plus WSL 377-test packages passed.
 
 ## Unresolved release failures
 
