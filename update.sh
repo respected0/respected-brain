@@ -54,4 +54,4 @@ if [ -z "${SCRIPT_DIR}" ] || [ ! -f "${UPDATE_PY}" ]; then
 fi
 
 # 3. update.py'ı argümanlarla çalıştır
-exec "${PYTHON_BIN}" "${UPDATE_PY}" "$@"
+"${PYTHON_BIN}" "${UPDATE_PY}" "$@"

@@ -85,4 +85,4 @@ if [ -z "${SCRIPT_DIR}" ] || [ ! -f "${INSTALL_PY}" ]; then
 fi
 
 # 3. install.py'ı argümanlarla çalıştır
-exec "${PYTHON_BIN}" "${INSTALL_PY}" "$@"
+"${PYTHON_BIN}" "${INSTALL_PY}" "$@"

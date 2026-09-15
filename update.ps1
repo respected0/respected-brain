@@ -54,6 +54,9 @@ if (-not $Python) {
 $PythonExe = $Python.Command
 $PythonPrefix = @($Python.Prefix)
 
+$TempClone = $null
+$ExitCode = 1
+try {
 # 2. update.py tespiti veya indirme
 $UpdateScript = Join-Path $RepoRoot "update.py"
 if (-not (Test-Path -LiteralPath $UpdateScript)) {
@@ -89,4 +92,11 @@ if ($SummaryProvider) { $Arguments += @("--summary-provider", $SummaryProvider) 
 
 # 4. Çalıştır
 & $PythonExe @Arguments
-exit $LASTEXITCODE
+$ExitCode = $LASTEXITCODE
+}
+finally {
+    if ($TempClone -and (Test-Path -LiteralPath $TempClone)) {
+        Remove-Item -LiteralPath $TempClone -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+exit $ExitCode

@@ -51,6 +51,9 @@ if (-not $Python) {
 $PythonExe = $Python.Command
 $PythonPrefix = @($Python.Prefix)
 
+$TempClone = $null
+$ExitCode = 1
+try {
 # 2. uninstall.py tespiti veya indirme
 $UninstallScript = Join-Path $RepoRoot "uninstall.py"
 if (-not (Test-Path -LiteralPath $UninstallScript)) {
@@ -84,4 +87,11 @@ if ($NonInteractive) { $Arguments += "--non-interactive" }
 
 # 4. Çalıştır
 & $PythonExe @Arguments
-exit $LASTEXITCODE
+$ExitCode = $LASTEXITCODE
+}
+finally {
+    if ($TempClone -and (Test-Path -LiteralPath $TempClone)) {
+        Remove-Item -LiteralPath $TempClone -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+exit $ExitCode

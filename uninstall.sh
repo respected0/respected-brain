@@ -54,4 +54,4 @@ if [ -z "${SCRIPT_DIR}" ] || [ ! -f "${UNINSTALL_PY}" ]; then
 fi
 
 # 3. uninstall.py'ı argümanlarla çalıştır
-exec "${PYTHON_BIN}" "${UNINSTALL_PY}" "$@"
+"${PYTHON_BIN}" "${UNINSTALL_PY}" "$@"

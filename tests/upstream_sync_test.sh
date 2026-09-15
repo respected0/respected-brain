@@ -245,18 +245,31 @@ SH
 chmod +x "$FAKE_BIN/git"
 
 LAUNCHER_URLS_OK=1
+LAUNCHER_CLEANUP_OK=1
+LAUNCHER_TMP="$TMP_BASE/launcher-temp"
+mkdir -p "$LAUNCHER_TMP"
 for NAME in install update uninstall; do
   LAUNCHER_DIR="$TMP_BASE/launcher-$NAME"
   mkdir -p "$LAUNCHER_DIR"
   cp "$TEST_ROOT/$NAME.sh" "$LAUNCHER_DIR/$NAME.sh"
   GIT_LOG="$LAUNCHER_DIR/git-argv.txt"
   set +e
-  PATH="$FAKE_BIN:/usr/bin:/bin" RESPECTED_GIT_LOG="$GIT_LOG" \
+  TMPDIR="$LAUNCHER_TMP" PATH="$FAKE_BIN:/usr/bin:/bin" RESPECTED_GIT_LOG="$GIT_LOG" \
+    RESPECTED_FAKE_ENTRYPOINT="$NAME.py" \
     bash "$LAUNCHER_DIR/$NAME.sh" >/dev/null 2>&1
+  LAUNCHER_RC=$?
   set -e
+  if [ "$LAUNCHER_RC" -ne 0 ]; then
+    LAUNCHER_URLS_OK=0
+    diag "$NAME.sh sahte uzak bootstrap başarıyla tamamlanmadı: rc=$LAUNCHER_RC"
+  fi
   if [ ! -f "$GIT_LOG" ] || ! grep -q 'https://github.com/respected0/respectedbrain.git' "$GIT_LOG"; then
     LAUNCHER_URLS_OK=0
     diag "$NAME.sh yanlış clone argv üretti: $(cat "$GIT_LOG" 2>/dev/null || printf missing)"
+  fi
+  if find "$LAUNCHER_TMP" -mindepth 1 -maxdepth 1 -type d -name "respected-brain-$NAME-*" | grep -q .; then
+    LAUNCHER_CLEANUP_OK=0
+    diag "$NAME.sh başarılı uzak bootstrap sonrasında geçici clone bıraktı"
   fi
 done
 
@@ -264,6 +277,12 @@ if [ "$LAUNCHER_URLS_OK" -eq 1 ]; then
   pass "POSIX one-liner launcherları doğru kaynak repoyu klonluyor"
 else
   fail "POSIX one-liner launcher kaynak repo sözleşmesi başarısız"
+fi
+
+if [ "$LAUNCHER_CLEANUP_OK" -eq 1 ]; then
+  pass "POSIX one-liner launcherları geçici clone dizinlerini temizliyor"
+else
+  fail "POSIX one-liner launcher geçici clone temizliği başarısız"
 fi
 
 # -----------------------------------------------------------------------------

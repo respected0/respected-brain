@@ -93,6 +93,9 @@ $PythonExe = $Python.Command
 $PythonPrefix = @($Python.Prefix)
 $PythonRuntime = $Python.RuntimeCommand
 
+$TempClone = $null
+$ExitCode = 1
+try {
 # 2. install.py konumu
 $InstallScript = Join-Path $RepoRoot "install.py"
 if (-not (Test-Path -LiteralPath $InstallScript)) {
@@ -145,4 +148,11 @@ if ($Quiet) { $Arguments += "--quiet" }
 
 # 4. Çalıştır
 & $PythonExe @Arguments
-exit $LASTEXITCODE
+$ExitCode = $LASTEXITCODE
+}
+finally {
+    if ($TempClone -and (Test-Path -LiteralPath $TempClone)) {
+        Remove-Item -LiteralPath $TempClone -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+exit $ExitCode

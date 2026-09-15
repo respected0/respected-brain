@@ -15,8 +15,11 @@ New-Item -ItemType Directory -Path $Commands | Out-Null
 $OriginalPath = $env:PATH
 $OriginalRealPython = $env:RESPECTED_REAL_PYTHON
 $OriginalGitLog = $env:RESPECTED_GIT_LOG
+$OriginalFakeEntrypoint = $env:RESPECTED_FAKE_ENTRYPOINT
 $OriginalIexScript = $env:RESPECTED_IEX_SCRIPT
 $OriginalIexCwd = $env:RESPECTED_IEX_CWD
+$OriginalTemp = $env:TEMP
+$OriginalTmp = $env:TMP
 try {
     [IO.File]::WriteAllText(
         (Join-Path $Commands "python.cmd"),
@@ -76,23 +79,36 @@ try {
 
     [IO.File]::WriteAllText(
         (Join-Path $Commands "git.cmd"),
-        "@echo off`r`necho %*>`"%RESPECTED_GIT_LOG%`"`r`nexit /b 1`r`n",
+        "@echo off`r`necho %*>`"%RESPECTED_GIT_LOG%`"`r`nset `"DEST=`"`r`nfor %%A in (%*) do set `"DEST=%%~A`"`r`nif not `"%RESPECTED_FAKE_ENTRYPOINT%`"==`"`" (`r`n  if not exist `"%DEST%`" mkdir `"%DEST%`"`r`n  >`"%DEST%\%RESPECTED_FAKE_ENTRYPOINT%`" echo print^('LAUNCHER_OK'^)`r`n  exit /b 0`r`n)`r`nexit /b 1`r`n",
         [Text.UTF8Encoding]::new($false)
     )
+    $LauncherTemp = Join-Path $Root "launcher-temp"
+    New-Item -ItemType Directory -Path $LauncherTemp | Out-Null
+    $env:TEMP = $LauncherTemp
+    $env:TMP = $LauncherTemp
     foreach ($Name in @("install", "update", "uninstall")) {
         $Case = Join-Path $Root ("remote-" + $Name)
         New-Item -ItemType Directory -Path $Case | Out-Null
         Copy-Item -LiteralPath (Join-Path $Repo "$Name.ps1") -Destination (Join-Path $Case "$Name.ps1")
         $GitLog = Join-Path $Case "git-argv.txt"
         $env:RESPECTED_GIT_LOG = $GitLog
+        $env:RESPECTED_FAKE_ENTRYPOINT = "$Name.py"
         $ExpectedVault = Join-Path $Case "Remote Vault"
-        & $PowerShellHost -NoProfile -File (Join-Path $Case "$Name.ps1") -VaultPath $ExpectedVault *> $null
+        $RemoteOutput = (& $PowerShellHost -NoProfile -File (Join-Path $Case "$Name.ps1") -VaultPath $ExpectedVault 2>&1 | Out-String)
+        $RemoteExit = $LASTEXITCODE
+        if ($RemoteExit -ne 0) {
+            throw "$Name.ps1 sahte uzak bootstrap başarıyla tamamlanmadı: exit=$RemoteExit output=$RemoteOutput"
+        }
         if (-not (Test-Path -LiteralPath $GitLog)) {
             throw "$Name.ps1 uzak bootstrap sırasında git clone çalıştırmadı"
         }
         $GitArgv = Get-Content -LiteralPath $GitLog -Raw
         if (-not $GitArgv.Contains("https://github.com/respected0/respectedbrain.git")) {
             throw "$Name.ps1 yanlış kaynak repoyu çağırdı: $GitArgv"
+        }
+        $Leaked = @(Get-ChildItem -LiteralPath $LauncherTemp -Directory -Filter "respected-brain-$Name-*" -ErrorAction SilentlyContinue)
+        if ($Leaked.Count -ne 0) {
+            throw "$Name.ps1 başarılı uzak bootstrap sonrasında geçici clone bıraktı: $($Leaked.FullName -join ', ')"
         }
     }
 }
@@ -110,6 +126,12 @@ finally {
     else {
         $env:RESPECTED_GIT_LOG = $OriginalGitLog
     }
+    if ($null -eq $OriginalFakeEntrypoint) {
+        Remove-Item Env:RESPECTED_FAKE_ENTRYPOINT -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:RESPECTED_FAKE_ENTRYPOINT = $OriginalFakeEntrypoint
+    }
     if ($null -eq $OriginalIexScript) {
         Remove-Item Env:RESPECTED_IEX_SCRIPT -ErrorAction SilentlyContinue
     }
@@ -122,6 +144,8 @@ finally {
     else {
         $env:RESPECTED_IEX_CWD = $OriginalIexCwd
     }
+    $env:TEMP = $OriginalTemp
+    $env:TMP = $OriginalTmp
     Remove-Item -LiteralPath $Root -Recurse -Force -ErrorAction SilentlyContinue
 }
 
