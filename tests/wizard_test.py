@@ -61,13 +61,13 @@ class WizardTest(unittest.TestCase):
         self.assertTrue(self.action(mode="modify").success)
         self.assertEqual(snapshot(self.vault),before)
 
-    def test_reinstall_applies_requested_dashboard_shortcut(self):
+    def test_reinstall_applies_requested_vault_shortcut(self):
         self.assertTrue(self.action().success)
         result=self.action(mode="modify",desired={**self.desired,"shortcut":True})
         self.assertTrue(result.success,result.conflicts)
         rows=[value for (kind,key),value in self.backend.records.items() if kind=="shortcut"]
         self.assertEqual(len(rows),1)
-        self.assertIn("dashboard --vault-id",json.loads(rows[0])["arguments"])
+        self.assertIn("open --vault-id",json.loads(rows[0])["arguments"])
 
     def test_requested_global_failure_is_reported_and_existing_notes_retained(self):
         self.assertTrue(self.action().success)

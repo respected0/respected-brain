@@ -29,10 +29,8 @@ DataRoot'ta `config.json`, `install-manifest.json`, log/işlem yedekleri ve `vau
 | `search/` | SQLite FTS5/BM25 tam metin arama ve indeks |
 | `integrations/` | Provider hook/adaptörleri, MCP, global bağlantı, scheduler ve backend |
 | `installation/` | Setup, update, repair, uninstall, migration, hash sahipliği, WAL/recovery |
-| `gateway/` | Loopback HTTP kontrol paneli |
-| `orchestration/` | Açık kod projesinde ajan/işçi ve worktree akışı |
 | `maintenance/` | Not bakım/onarım, ingestion, Restic ve Git snapshot yardımcıları |
-| `resources/` | Immutable defaults, instructions, skills, provider şablonları, panel UI, vault-template |
+| `resources/` | Immutable defaults, instructions, skills, provider şablonları, vault-template |
 
 Paket yolu `src/respectedbrain/` olur. `packaging/` OS kurulum tarifleri, `tools/` geliştirici araçları, `tests/` doğrulama, `docs/` belgelerdir. Her dosyanın tam işi [atlasın dosya kayıtlarında](REPOSITORY_MAP.md).
 
@@ -41,7 +39,7 @@ Paket yolu `src/respectedbrain/` olur. `packaging/` OS kurulum tarifleri, `tools
 ```mermaid
 flowchart TD
     CLI[CLI / Kurucu GUI] --> BOOT[bootstrap: Roots + UUID + AppContext]
-    BOOT --> FEAT[memory / briefing / search / gateway]
+    BOOT --> FEAT[memory / briefing / search]
     BOOT --> INT[integrations]
     INT --> TX[installation: WAL + sahiplik + backend]
     TX --> APP[AppRoot program dosyaları]
@@ -75,4 +73,4 @@ Kurulum işlemleri ortak installation hizmetlerini kullanır. İsim veya `.py` u
 
 **Template ayrı program mı?** Hayır. `resources/vault-template/` yeni not kasasının başlangıç içeriğidir.
 
-**Kod projesi ile kasa aynı mı?** Hayır. Orchestration açık kod projesini kullanır; kaynak checkout ve kişisel hafıza kasası birbirinden ayrılır.
+**Kod projesi ile kasa aynı mı?** Hayır. Kod orkestrasyonu SecondBrain'de değildir (ayrı ürün Respected Orchestrator, MCP/Hub ile); kaynak checkout ve kişisel hafıza kasası birbirinden ayrılır.

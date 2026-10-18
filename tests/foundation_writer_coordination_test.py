@@ -76,24 +76,3 @@ class FoundationWriterCoordinationTest(unittest.TestCase):
                 finally:
                     release.set()
                     thread.join(4)
-
-    def test_background_orchestration_holds_a_writer_lease(self):
-        import threading
-        from types import SimpleNamespace
-        from respectedbrain.orchestration.runner import execute_owned_worker
-        with tempfile.TemporaryDirectory() as temporary:
-            ctx = make_context(Path(temporary))
-            ready, release = threading.Event(), threading.Event()
-            backend = Backend()
-            backend.quiesce = lambda identity: quiesce_writers(ctx.paths.data_root, identity)
-            execution = SimpleNamespace(execute_worker=lambda: (ready.set(), release.wait(5)))
-            thread = threading.Thread(target=execute_owned_worker, args=(ctx, execution))
-            thread.start()
-            try:
-                self.assertTrue(ready.wait(5))
-                with self.assertRaises(BusyError):
-                    with Transaction(ctx.paths.data_root, backend):
-                        self.fail("Activation entered during background worker")
-            finally:
-                release.set()
-                thread.join(5)

@@ -13,7 +13,6 @@ from unittest.mock import patch
 from respectedbrain import cli
 from respectedbrain.core.locking import exclusive_lock
 from respectedbrain.maintenance.ingestion.mine_agent_history import AgentHistoryMiner
-from respectedbrain.orchestration import runner
 from tests.foundation_support import make_context, snapshot
 
 
@@ -109,36 +108,6 @@ class EntryReviewTest(unittest.TestCase):
         self.assertEqual(code, 0, err)
         self.assertIn('main.py', target.read_text(encoding='utf-8'))
         self.assertFalse(list(target.parent.glob('.architecture.md-*.tmp')))
-
-    def run_record(self, **extra):
-        directory = self.ctx.paths.state_dir / 'orchestration' / 'run-fixture'
-        directory.mkdir(parents=True, exist_ok=True)
-        (directory / 'metadata.json').write_text(json.dumps(dict(run_id='run-fixture', vault_id=self.ctx.paths.vault_id, **extra)), encoding='utf-8')
-        return directory
-
-    def test_listing_rejects_malformed_result_and_worktree_field(self):
-        directory = self.run_record()
-        (directory / 'result.json').write_text('[]', encoding='utf-8')
-        self.assertEqual(runner.list_runs(self.ctx)['runs'], [])
-        (directory / 'result.json').unlink()
-        self.run_record(worktree_path=['invalid'])
-        self.assertEqual(runner.list_runs(self.ctx)['runs'], [])
-
-    @unittest.skipUnless(os.name == 'nt', 'Windows junction fixture')
-    def test_listing_refuses_linked_evidence_even_when_it_is_not_a_file(self):
-        directory = self.run_record()
-        outside = self.root / 'outside'
-        outside.mkdir()
-        sentinel = outside / 'human.txt'
-        sentinel.write_bytes(b'human')
-        for name in ('worker.patch', 'result.json'):
-            link = directory / name
-            subprocess.run(['cmd', '/c', 'mklink', '/J', str(link), str(outside)], capture_output=True, check=True)
-            try:
-                self.assertEqual(runner.list_runs(self.ctx)['runs'], [])
-                self.assertEqual(sentinel.read_bytes(), b'human')
-            finally:
-                os.rmdir(link)
 
     @unittest.skipUnless(os.name == 'nt', 'Windows junction fixture')
     def test_history_discovery_prunes_provider_junctions(self):

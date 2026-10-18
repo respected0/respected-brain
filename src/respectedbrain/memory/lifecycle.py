@@ -237,6 +237,13 @@ def _launch_flush(ctx: AppContext, provider: str, *, payload: dict[str, Any] | N
     from ..bootstrap import launcher_argv
     command = [*launcher_argv(), "flush", "--vault-id", ctx.paths.vault_id]
     hook_input: Path | None = None
+    manual = ctx.config.get("preferences", {}).get("capture_mode", "auto") == "manual"
+    if manual:  # nothing is summarised until the user asks (memory.capture.run); the session is only remembered as pending
+        if payload and payload.get("session_id") and payload.get("transcript_path"):
+            _atomic_write(ctx.paths.state_dir / f"pending-capture-{session_key(str(payload['session_id']))}.json",
+                          json.dumps({"reason": reason or "sessionend", "payload": payload}, ensure_ascii=False) + "\n")
+        payload, reason, maybe_compile = None, None, False
+        command = [*launcher_argv(), "index-refresh", "--vault-id", ctx.paths.vault_id]
     if maybe_compile:
         command.append("--maybe-compile")
     if payload is not None:
@@ -339,6 +346,17 @@ def count_prompt(state_dir: Path, session_id: str) -> str:
     )
 
 
+def _purge_archive(directory: Path, days: int) -> None:
+    """Delete archived transcripts older than the retention period (default 14 days, 1-90)."""
+    cutoff = time.time() - max(1, min(days, 90)) * 86400
+    for old in directory.glob("*.jsonl") if directory.is_dir() else ():
+        try:
+            if old.stat().st_mtime < cutoff:
+                old.unlink()
+        except OSError:
+            pass
+
+
 def _finish_session(
     vault_root: Path,
     state_dir: Path,
@@ -363,23 +381,30 @@ def _finish_session(
         detail = f"Oturum hafıza güncellemeden bitti. Prompt: {prompts}. {now:%Y-%m-%d %H:%M}\n"
         _atomic_write(reflection_file, detail)
 
-    if reason == "precompact":
+    # manual capture = nothing is copied from the session until the user asks (audit P0 #6)
+    preferences = ctx.config.get("preferences", {})
+    manual = preferences.get("capture_mode", "auto") == "manual"
+    # a transcript copy is opt-in (archive_transcripts), redacted, kept outside the vault and purged after a retention period
+    store = preferences.get("archive_transcripts") is True
+    if reason == "precompact" and not manual:
         transcript_path_str = payload.get("transcript_path")
         if isinstance(transcript_path_str, str) and transcript_path_str:
             t_path = Path(transcript_path_str)
             if t_path.is_file():
-                logs_dir = vault_root / "🔮 850-Companion" / "Session-Logs"
-                if not runtime_platform.path_within_vault(logs_dir, vault_root):
+                logs_dir = ctx.paths.data_root / "session-archive"
+                if not runtime_platform.path_within_vault(logs_dir, ctx.paths.data_root):
                     raise ValueError("unsafe-session-log")
+                if store:
+                    _purge_archive(logs_dir, int(preferences.get("transcript_retention_days", 14)))
                 target_log = logs_dir / f"{now:%Y%m%d_%H%M%S}_{key[:8]}.jsonl"
-                if not runtime_platform.path_within_vault(target_log, vault_root):
+                if not runtime_platform.path_within_vault(target_log, ctx.paths.data_root):
                     raise ValueError("unsafe-session-log")
                 from .flush import _flush_session_transcript, _validate_flush_paths
                 _validate_flush_paths(ctx, now)
                 archived = _flush_session_transcript(
                     vault_root, state_dir, t_path, payload["session_id"], "precompact", now,
                     None, ctx.paths.cache_dir, ctx=ctx, provider=provider,
-                    hook_payload=payload, archive_path=target_log,
+                    hook_payload=payload, archive_path=target_log, archive_store=store,
                 )
                 if not archived:
                     raise ValueError("session-archive-rejected")

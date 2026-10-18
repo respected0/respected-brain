@@ -23,7 +23,6 @@ namespaces = false
 [tool.setuptools.package-data]
 "respectedbrain.resources" = [
   "defaults.json",
-  "gateway/web/index.html",
   "instructions/default.md",
   "integrations/.agents/hooks.json",
   "integrations/.agents/rules/beyin.md",

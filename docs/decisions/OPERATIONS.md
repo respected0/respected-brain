@@ -31,7 +31,7 @@ geçiş yapılmamıştır.
 respectedbrain setup --vault <path>
 respectedbrain configure
 respectedbrain vault register|list|discover
-respectedbrain dashboard --vault-id <id>
+respectedbrain open --vault-id <id>
 respectedbrain hook --provider <name> --event <event> --vault-id <id>
 respectedbrain mcp --vault-id <id>
 respectedbrain briefing --vault-id <id>
@@ -172,7 +172,7 @@ devreye alma adımıdır; geliştirme ve otomatik testler geçici kasalarda yür
 - Program salt okunur hedefte çalışır; AppRoot'a teknik veri yazmaz.
 - Yeni kasa `.beyin`, scripts, engine, kaldırıcı veya arama DB'si içermez.
 - Install/update/repair CLI ve platform kabuklarından aynı son yerleşimi üretir.
-- Hook/compile/briefing/search/MCP/gateway aynı AppPaths ve UUID'yi kullanır.
+- Hook/compile/briefing/search/MCP aynı AppPaths ve UUID'yi kullanır.
 - Farklı CWD, Türkçe/emoji/boşluklu yollar, seçilmiş kasa, iki kasa ve kasa
   yer değiştirme senaryolarında yanlış kasaya fallback olmaz.
 - Native Windows ve açık WSL profillerinde başlatıcı/yol sözleşmeleri test edilir.
@@ -196,3 +196,12 @@ yeni tasarımın başarı ölçütü değildir; kapsadığı davranışların ko
 Bu belgeyi ana mimari sözleşmeyle birlikte incele. Migration varsayılan olarak
 önizlemedir; bilinmeyen dosya veya kullanıcı notu temizleme. Gerçek kurulum
 öncesinde geçici kasalarda veri koruma ve rollback kanıtlarını tamamla.
+
+## Yedekten geri yükleme (restic, isteğe bağlı)
+`respectedbrain maintenance backup_restic --repo REPO --restore-to YENI_BOS_KLASOR [--snapshot ID] [--password-file DOSYA]`: anlık görüntüyü
+yeni veya boş, vault'un dışındaki bir klasöre geri yükler; vault'un üzerine hiçbir şey yazılmaz, gerekenleri siz geri kopyalarsınız. Yedekleme
+parola kaynağı ister, yeni depoyu başlatır ve yedeği geri yükleyip her dosyanın SHA-256 değerini karşılaştırarak doğrular. Ayrıntı:
+`PRIVACY_AND_CLIENT_CONFIG.md`.
+
+### Gerçek restic doğrulaması (2026-10-18, restic 0.19.1, Windows)
+Düz `restic restore <id>` Windows'ta `C:\Users\...` yolunu yeniden kurar ve salt-okunur sistem klasörlerinin zaman damgasını yazamayıp hata verir (hedef de silinemez hale gelir). Bu yüzden geri yükleme ve doğrulama `restic restore <id>:/C/yol/vault` biçimini kullanır; yalnızca vault içeriği hedefe iner. İlk yedek (init), parola dosyası, Türkçe dosya adı, içerik doğrulaması, boş olmayan/vault içi hedef reddi ve bozulmuş paket tespiti gerçek restic ile geçti.

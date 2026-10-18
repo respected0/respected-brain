@@ -6,6 +6,21 @@ scope: project; confidence: verified; supersedes: ["Önceki tarihli uygulama pla
 
 ## 1. Kaynak ve yayın durumu — 2026-10-09
 
+2026-10-09 ürün çıkarımı uygulaması başladı. Kardeş kaynaklar
+`../respected-orchestrator` ve `../respected-hub` oluşturuldu. Bağımsız Python
+Orchestrator Brain importu/vault/lease olmadan task create/start/inspect/cancel /
+verify/retry çalıştırır; 47/47 test ve wheel build geçti. Hub gerçek Tauri 2 +
+React + TypeScript kaynak/IPC içerir; frontend build ve 4/4 test geçti, native
+build **BLOCKED** (`cargo metadata: program not found`). Kullanılabilir engine
+geliştirici JSON yoludur; native Hub entry point kabulü henüz yoktur. Stage A ve
+Stage B'nin ilk runnable yolu vardır; Stage C native ve Stage D/E tamamlanmadı.
+Brain ürün/paket kodu başlangıç atlasıyla 142/142 eşit; odaklı Brain testleri
+77 vaka / 76 PASS / 1 skip. Eski dashboard/orchestration karşılıkları henüz tam
+doğrulanmadığından korunur. Kaynak Git/commit, canlı kurulum/kasa ve dış AI ayarı
+değişikliği yapılmadı. [Uygulama ve kesin sonraki görev](records/2026-10-product-extraction/IMPLEMENTATION.md),
+[özellik koruma/sahiplik](records/2026-10-product-extraction/FEATURE_PRESERVATION.md)
+ve [çıkarım kararı](decisions/PRODUCT_EXTRACTION.md) kapsamı ayırır.
+
 Modüler paket, kurulum seçimleri/hız düzeltmeleri ve kaynak temizliği ana checkout'a birleştirildi. Önceki çalışma dalı ve managed worktree kapatıldı; geliştirme kökü `Documents/ChatGPT/secondbrain` klasöründeki main'dir. Eski kaynak dönüşümünün ayrıntıları [uygulama kaydında](records/2026-10-modular-foundation/IMPLEMENTATION.md).
 
 Son doğrulanmış ürün kodu `631c37eda13f569072e0436984cbf19f6b709ba8` için [37318525236 CI koşusu](https://github.com/respected0/respectedbrain/actions/runs/37318525236) 12/12 işi geçti. Kaynak main'e normal push ile gönderildi; tag veya herkese açık yeni release bu kapanışta oluşturulmadı. Daha sonraki belge düzenlemesini bu ürün kodunun native test sonucu gibi sunmayın.
@@ -53,6 +68,7 @@ Eski README'nin Türkçe anlatımı, tabloları ve SSS tarzı yeni giriş ve reh
 
 | İş | Durum / Sınır |
 | --- | --- |
+| Ürün çıkarımı / native Hub kabulü | Independent engine 47/47; Hub TS build + 4/4. OPEN: Rust/Cargo + C++ toolchain, native IPC/UI gate, explicit recovery/cleanup/apply ve bellek yönetim yüzeyi; ardından eski dağıtım/dashboard ayrımı. [Çıkarım kaydı](records/2026-10-product-extraction/IMPLEMENTATION.md). |
 | DNS transport, provider containment, snapshot, secret tarama, provenance consumer | Önceki dört güvenlik bulgusu ve SessionBrain kilidi 2026-10-07 artifact'inde doğrulandı. Yeni Windows teslimindeki açık maddeler aşağıdaki satırdadır; [karar](decisions/SECURITY_HARDENING.md) genel kabul değildir. |
 | Dış kimlik ve yayın kanıtları | NOT VERIFIED: Authenticode sertifikası, gerçek GitHub Actions/Sigstore attestation ve tag yayını (commit/push yapılmadı) |
 | Windows yaşam döngüsü teslimi | Kaynak uninstall bulguları ve paket/kaynak farkı kapandı. OPEN: gerçek yayın attestation eksikliği; [takip kanıtı](records/2026-10-security-hardening/F7_TRANSCRIPT_REMEDIATION.md). |

@@ -48,6 +48,15 @@ Zamanı gelmiş günlük derleme/brifing; model/not yazımı olabilir.
 | `--vault` | isteğe bağlı | Path |
 | `--vault-id` | isteğe bağlı | metin/argv |
 
+### index-refresh
+
+Arama dizinini (FTS ve açıksa anlamsal vektörler) artımlı günceller; kasayı değiştirmez, yalnız önbelleği yazar. Oturum başı/sonu ve günlük görev bunu kendiliğinden çalıştırır.
+
+| Argüman | Gereklilik / varsayılan | Değerler |
+| --- | --- | --- |
+| `--vault` | isteğe bağlı | Path |
+| `--vault-id` | isteğe bağlı | metin/argv |
+
 ### maps
 
 Seçili kasanın haritalarını üretir; not yazar.
@@ -86,16 +95,14 @@ CLI, kendi state dizinindeki `hookin-*.json` girişini yalnız başarılı flush
 | `--reason` | isteğe bağlı; default: sessionend | metin/argv |
 | `--maybe-compile` | isteğe bağlı; default: False | flag |
 
-### dashboard
+### open
 
-Loopback HTTP paneli; process sunucu açıkken devam eder.
+Seçili kasa klasörünü dosya yöneticisinde açar (masaüstü kısayolu bunu çağırır). Yerel HTTP paneli kaldırıldı; not arama, hızlı yakalama ve brifing Hub'dadır. Eski `dashboard` adı (`--port/--open` yok sayılır) aynı işi yapar, böylece eski kısayollar çalışmaya devam eder.
 
 | Argüman | Gereklilik / varsayılan | Değerler |
 | --- | --- | --- |
 | `--vault` | isteğe bağlı | Path |
 | `--vault-id` | isteğe bağlı | metin/argv |
-| `--port` | isteğe bağlı; default: 8520 | int |
-| `--open` | isteğe bağlı; default: False | flag |
 
 ### search
 
@@ -110,17 +117,6 @@ FTS araması; teknik indeks/cache yazabilir.
 | `--category` | isteğe bağlı | metin/argv |
 | `--limit` | isteğe bağlı; default: 10 | int |
 | `--json` | isteğe bağlı; default: False | flag |
-
-### orchestrate
-
-Açık kod projesinde worker; komut/provider süreçleri çalıştırır.
-
-| Argüman | Gereklilik / varsayılan | Değerler |
-| --- | --- | --- |
-| `--vault` | isteğe bağlı | Path |
-| `--vault-id` | isteğe bağlı | metin/argv |
-| `--project-root` | zorunlu | Path |
-| `argv` | isteğe bağlı | metin/argv |
 
 ### maintenance
 
@@ -152,6 +148,8 @@ Doğrulanmış native paketi kurar, boş kasa seed ve bağlantıları yönetir.
 | `--mcp, --no-mcp` | isteğe bağlı | flag |
 | `--schedule, --no-schedule` | isteğe bağlı | flag |
 | `--shortcut, --no-shortcut` | isteğe bağlı | flag |
+| `--clients` | isteğe bağlı; `--global` için AI istemcileri (virgülle: claude,codex,gemini,antigravity,cursor,windsurf,claude-desktop,vscode-agents); default: hepsi | metin |
+| `--mcp-clients` | isteğe bağlı; `--mcp` için AI istemcileri; default: `--clients` | metin |
 
 ### update
 

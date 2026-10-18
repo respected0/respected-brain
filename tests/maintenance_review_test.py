@@ -156,9 +156,9 @@ class MaintenanceReviewTest(unittest.TestCase):
     def test_restic_does_not_verify_an_unidentified_latest_snapshot(self):
         completed = subprocess.CompletedProcess([], 0, stdout='[]\n', stderr='')
         with patch.object(backup_restic, 'check_prerequisites', return_value=(True, 'fixture-restic')), patch.object(backup_restic.subprocess, 'run', return_value=completed) as run:
-            result = backup_restic.run_backup(self.vault, str(self.root / 'backup'), apply=True)
+            result = backup_restic.run_backup(self.vault, str(self.root / 'backup'), apply=True, password='test')
         self.assertNotEqual(result['status'], 'ok')
-        self.assertEqual(run.call_count, 1)
+        self.assertEqual(run.call_count, 2)  # repository probe + backup; no restore for an unidentified snapshot
 
     def test_snapshot_failed_commit_never_pushes_or_writes_receipt(self):
         receipt = self.ctx.paths.state_dir / 'receipt.json'

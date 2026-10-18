@@ -48,6 +48,14 @@ def activate_package(roots, package, tx, previous, *, require_provenance=None, r
     return document, tuple(OwnedFile(path, digest(path), "application", stat.S_IMODE(path.stat().st_mode)) for path in sorted(next_paths))
 
 
+def _undo(prior, current):
+    """Our registration undone inside what the client/user has since written; refuses only when they changed our own entry."""
+    try:
+        return prior.undo(current)
+    except ValueError:
+        raise OwnershipConflict(f"User changed integration: {prior.kind}:{prior.key}") from None
+
+
 def plan_connections(ctx, backend, previous):
     config = ConfigStore(ctx.paths.data_root).read()
     fresh = replace(ctx, config=config)
@@ -68,11 +76,9 @@ def plan_connections(ctx, backend, previous):
         flag = "schedule" if prior.kind == "file" and prior.key in schedule_paths else flag_by_kind.get(prior.kind)
         if flag is not None and not desired.get(flag, False):
             current = backend.read(prior.kind, prior.key)
-            if current == prior.before:
+            if prior.restored(current):
                 continue
-            if current != prior.after:
-                raise OwnershipConflict(f"User changed integration: {prior.kind}:{prior.key}")
-            disabled.append(ExternalChange(prior.kind, prior.key, current, prior.before))
+            disabled.append(ExternalChange(prior.kind, prior.key, current, _undo(prior, current)))
         else:
             retained.append(prior)
     if not any(desired.get(key, False) for key in ("global", "mcp", "schedule", "shortcut")):
@@ -81,12 +87,20 @@ def plan_connections(ctx, backend, previous):
     roots = Roots(ctx.paths.app_root, ctx.paths.data_root, ctx.paths.vault_root)
     settings = config["vaults"][ctx.paths.vault_id].get("settings", {})
     changes = plan_integrations(fresh, installed_profile(roots, settings), desired, backend)
+    if "clients" in desired or "mcp_clients" in desired:  # a client that is no longer selected gets its previous registrations restored
+        planned = {(change.kind, change.key) for change in changes}
+        dropped = [prior for prior in retained if prior.kind in ("file", "mcp") and prior.key not in schedule_paths
+                   and not Path(prior.key).is_relative_to(ctx.paths.vault_root) and (prior.kind, prior.key) not in planned]
+        for prior in dropped:
+            current = backend.read(prior.kind, prior.key)
+            if prior.restored(current):
+                continue
+            disabled.append(ExternalChange(prior.kind, prior.key, current, _undo(prior, current)))
+        retained = [prior for prior in retained if prior not in dropped]
     owned = {(change.kind, change.key): change for change in retained}
     for change in changes:
         prior = owned.get((change.kind, change.key))
-        if prior is not None and change.before != prior.after:
-            raise OwnershipConflict(f"User changed integration: {change.kind}:{change.key}")
-        owned[(change.kind, change.key)] = ExternalChange(change.kind, change.key, prior.before if prior else change.before, change.after)
+        owned[(change.kind, change.key)] = ExternalChange(change.kind, change.key, _undo(prior, change.before) if prior else change.before, change.after)
     return (*disabled, *changes), tuple(owned.values())
 
 

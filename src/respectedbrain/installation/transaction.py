@@ -28,6 +28,34 @@ def _mode_matches(row: dict, name: str, actual: int | None) -> bool:
     return name not in row or row[name] == actual
 
 
+def _compact_external(document: dict) -> bool:
+    """Replace complete copies of client config files by a delta + fingerprints (minimal secret retention)."""
+    from respectedbrain.integrations import delta as delta_module
+    changed = False
+    for index, row in enumerate(document["external"]):
+        if row["kind"] in ("file", "mcp") and "delta" not in row:
+            before, after = decode_bytes(row["before"]), decode_bytes(row["after"])
+            document["external"][index] = {"kind": row["kind"], "key": row["key"], "delta": encode_bytes(delta_module.make_delta(before, after)),
+                                           "before_sha256": delta_module.sha256(before), "after_sha256": delta_module.sha256(after)}
+            changed = True
+    return changed
+
+
+def scrub_committed_journals(data_root: Path) -> int:
+    """Strip complete client-config copies from journals of finished transactions (also those written by older versions)."""
+    scrubbed = 0
+    backups = safe_path(Path(data_root) / "backups")
+    for journal in sorted(backups.glob("tx-*/journal.json")) if backups.is_dir() else ():
+        try:
+            document = json.loads(safe_path(journal).read_text(encoding="utf-8"))
+            if document.get("status") in ("committed", "rolled-back") and _compact_external(document):
+                atomic_write_bytes(safe_path(journal), (json.dumps(document, ensure_ascii=False, allow_nan=False) + "\n").encode("utf-8"))
+                scrubbed += 1
+        except (OSError, ValueError, KeyError):
+            continue
+    return scrubbed
+
+
 def _validate_journal(document: dict, directory: Path) -> None:
     """Reject malformed recovery evidence before restoring any target."""
     try:
@@ -60,6 +88,13 @@ def _validate_journal(document: dict, directory: Path) -> None:
             if (row["kind"] not in ("file", "mcp", "task", "shortcut", "registry")
                     or not isinstance(row["key"], str) or not row["key"] or "\0" in row["key"]):
                 raise ValueError("Invalid journal external record")
+            if "delta" in row:      # committed journals keep only the entries we changed + fingerprints, never a whole file
+                decode_bytes(row["delta"])
+                for field in ("before_sha256", "after_sha256"):
+                    value = row[field]
+                    if value is not None and not (isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value)):
+                        raise ValueError("Invalid external fingerprint")
+                continue
             for field in ("before", "after"):
                 value = row[field]
                 if value is not None and not isinstance(value, str):
@@ -265,6 +300,7 @@ class Transaction:
                 raise OwnershipConflict(f"External record changed before commit: {key[0]}:{key[1]}")
             checked.add(key)
         self.document["status"] = "committed"
+        _compact_external(self.document)     # the complete before/after copies were only needed to roll back
         self._save()
         self._committed = True
         self.result = OperationResult(True, self.tx_id, ())

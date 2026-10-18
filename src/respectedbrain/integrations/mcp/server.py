@@ -19,6 +19,10 @@ def _detect_vault_identity(ctx):
     return str(settings["OS_NAME"]), str(settings["COMPANION"])
 
 
+WRITE_TOOLS = {"respected_quick_capture", "respected_remember", "respected_revert_note"}
+WRITE_OFF = "Hata: Not yazma izni kapalı. Kullanıcı, SecondBrain ayarlarında 'MCP ile not kaydetmeye izin ver' (mcp_write) seçeneğini açmalıdır."
+
+
 class RespectedMcpServer:
     """Respected Brain Vault MCP stdio Sunucusu."""
 
@@ -78,8 +82,51 @@ class RespectedMcpServer:
             if arguments.get('scope') == 'project' and not arguments.get('project', '').strip():
                 raise ValueError('project is required for project scope')
 
+    def _write_enabled(self) -> bool:
+        """Saving notes through MCP is a user permission (setting `mcp_write`, default off), read fresh on every call."""
+        try:
+            from respectedbrain.core.config import ConfigStore
+            return (ConfigStore(self.ctx.paths.data_root).read().get("preferences") or {}).get("mcp_write") is True
+        except Exception:
+            return False
+
+    def _save_inbox_note(self, name: str, arguments: dict[str, Any]) -> str:
+        """Both write tools land in one fixed inbox (never Knowledge/Projects), with ownership front matter and a revert record."""
+        import uuid
+        from respectedbrain import rpp_memory_write as writes
+        title = str(arguments.get("title", "")).strip()
+        body = str(arguments.get("content", "")).strip()
+        tags = arguments.get("tags", [])
+        if not 1 <= len(title) <= 120 or not body or len(body) > 20000:
+            return "Hata: Başlık 1-120, içerik 1-20000 karakter olmalı."
+        if len(tags) > 8 or not all(re.fullmatch(r"[\w-]{1,32}", t) for t in tags):
+            return "Hata: En fazla 8 etiket; her biri 1-32 harf, rakam, _ veya -."
+        if name == "respected_remember":
+            confidence = arguments.get("confidence", "unverified")
+            if confidence == "verified":  # a model cannot vouch for its own note
+                confidence = "inferred"
+            supersedes = ", ".join(json.dumps(str(s)[:200], ensure_ascii=False) for s in arguments.get("supersedes", [])[:20])
+            extra = ["type: lesson", f"scope: {arguments.get('scope', 'general')}", f"confidence: {confidence}",
+                     f"project: {json.dumps(str(arguments.get('project', ''))[:100], ensure_ascii=False)}", f"supersedes: [{supersedes}]"]
+        else:
+            extra = ["type: capture", "status: inbox"]
+        extra.append("review: pending")
+        operation_id = "mcp-" + uuid.uuid4().hex[:24]
+        try:
+            result = writes.write_mcp(self.ctx, operation_id, title, body, tags, extra)
+        except writes.MemoryOpError as error:
+            return f"Hata: {error.message}"
+        return (f"Başarılı: Not '{result['path']}' gelen kutusuna kaydedildi (kullanıcı incelemesi bekliyor; kalıcı bilgiye kendiliğinden "
+                f"geçmez). Geri almak için respected_revert_note işlem kimliği: {operation_id}")
+
     def get_tools_manifest(self) -> list[dict[str, Any]]:
-        """Sunulan araçların tanımları."""
+        """Sunulan araçlar; not yazan araçlar yalnızca kullanıcı izin verdiyse görünür."""
+        tools = self._all_tools()
+        if self._write_enabled():
+            return tools
+        return [tool for tool in tools if tool["name"] not in WRITE_TOOLS]
+
+    def _all_tools(self) -> list[dict[str, Any]]:
         return [
             {
                 "name": "respected_search",
@@ -130,7 +177,7 @@ class RespectedMcpServer:
             },
             {
                 "name": "respected_quick_capture",
-                "description": "Dış bir projede çalışırken ikinci beyin vault'unun Inbox/Dump klasörüne yeni bir not, karar veya fikir bırakır.",
+                "description": "(Yalnızca kullanıcı izin verdiyse) Dış bir projede çalışırken ikinci beyin vault'unun MCP gelen kutusuna yeni bir not bırakır; kullanıcı incelemeden kalıcı bilgiye geçmez.",
                 "inputSchema": {
                     "type": "object",
                     "properties": {
@@ -144,8 +191,8 @@ class RespectedMcpServer:
             {
                 "name": "respected_remember",
                 "description": (
-                    "Dış projede çalışırken öğrenilen kalıcı bir kuralı, teknik kısıtı veya mimari gotcha'yı "
-                    "ikinci beyin vault'una epistemik sözleşmeyle (scope, confidence, supersedes) atomik olarak kaydeder."
+                    "(Yalnızca kullanıcı izin verdiyse) Dış projede öğrenilen kuralı, teknik kısıtı veya gotcha'yı epistemik "
+                    "sözleşmeyle (scope, confidence, supersedes) MCP gelen kutusuna öneri olarak kaydeder; kullanıcı onaylayana kadar kalıcı bilgi sayılmaz."
                 ),
                 "inputSchema": {
                     "type": "object",
@@ -162,7 +209,7 @@ class RespectedMcpServer:
                             "type": "string",
                             "enum": ["verified", "inferred", "unverified"],
                             "description": "Güvenilirlik: 'verified' (kodla test edildi), 'inferred' (çıkarım), 'unverified' (şüpheli)",
-                            "default": "verified",
+                            "default": "unverified",
                         },
                         "supersedes": {
                             "type": "array",
@@ -187,6 +234,15 @@ class RespectedMcpServer:
                         "title_or_path": {"type": "string", "description": "İncelenecek notun başlığı veya dosya yolu (örn: 'React Gotchas' veya '🧠 500-Knowledge/React.md')"},
                     },
                     "required": ["title_or_path"],
+                },
+            },
+            {
+                "name": "respected_revert_note",
+                "description": "respected_quick_capture / respected_remember ile kaydedilen bir notu (düzenlenmediyse) geri alır.",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {"operation_id": {"type": "string", "description": "Kayıt sırasında dönen işlem kimliği"}},
+                    "required": ["operation_id"],
                 },
             },
         ]
@@ -259,101 +315,20 @@ class RespectedMcpServer:
                     parts.append(f"### {label}\n(Mevcut değil)\n")
             return "\n".join(parts)
 
-        elif name == "respected_quick_capture":
-            title = arguments.get("title", "Hızlı Not").strip()
-            content = arguments.get("content", "").strip()
-            tags = arguments.get("tags", [])
+        elif name in ("respected_quick_capture", "respected_remember"):
+            if not self._write_enabled():
+                return WRITE_OFF
+            return self._save_inbox_note(name, arguments)
 
-            safe_slug = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in title)[:40].strip("._-") or "note"
-            now = dt.datetime.now()
-            timestamp = now.strftime("%Y%m%d_%H%M%S")
-            filename = f"{timestamp}_{safe_slug}.md"
-
-            inbox_dump = self.vault_root / "📥 000-Inbox" / "Dump"
-
-            tag_list_str = ", ".join(json.dumps(t, ensure_ascii=False) for t in tags)
-            date_str = now.strftime("%Y-%m-%d %H:%M:%S")
-
-            note_body = (
-                f"---\n"
-                f'title: {json.dumps(title, ensure_ascii=False)}\n'
-                f'created: "{date_str}"\n'
-                f'type: capture\n'
-                f'status: inbox\n'
-                f"tags: [{tag_list_str}]\n"
-                f"source: mcp_external\n"
-                f"---\n\n"
-                f"# {title}\n\n"
-                f"{content}\n"
-            )
-
+        elif name == "respected_revert_note":
+            if not self._write_enabled():
+                return WRITE_OFF
+            from respectedbrain import rpp_memory_write as writes
             try:
-                target_file, indexed = self._save_note(inbox_dump, filename, note_body)
-                suffix = 'arama indeksine eklendi.' if indexed else 'arama indeksi güncellenemedi; yeniden indeksleyin.'
-                return f"Başarılı: Not '{target_file.name}' olarak '📥 000-Inbox/Dump/' dizinine kaydedildi; {suffix}"
-            except Exception as e:
-                return f"Not yazılırken hata oluştu: {e}"
-
-        elif name == "respected_remember":
-            title = arguments.get("title", "Kalıcı Ders").strip()
-            content = arguments.get("content", "").strip()
-            scope = arguments.get("scope", "general")
-            confidence = arguments.get("confidence", "verified")
-            supersedes = arguments.get("supersedes", [])
-            project = arguments.get("project", "").strip()
-            tags = arguments.get("tags", [])
-
-            safe_slug = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in title)[:50].strip("._-") or "lesson"
-            now = dt.datetime.now()
-            timestamp = now.strftime("%Y%m%d")
-            filename = f"{timestamp}_{safe_slug}.md"
-
-            if scope == "project" and project:
-                clean_project = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in project).strip("._-")
-                if not clean_project:
-                    return "Hata: Geçersiz proje adı."
-                dest_dir = self.vault_root / "🏰 300-Projects" / clean_project
-                try:
-                    dest_dir.relative_to(self.vault_root)
-                except ValueError:
-                    return "Hata: Proje hedefi vault dışında olamaz."
-            else:
-                dest_dir = self.vault_root / "🧠 500-Knowledge"
-
-
-            tag_list_str = ", ".join(json.dumps(t, ensure_ascii=False) for t in tags)
-            sup_list_str = ", ".join(json.dumps(s, ensure_ascii=False) for s in supersedes)
-            date_str = now.strftime("%Y-%m-%d %H:%M:%S")
-
-            note_body = (
-                f"---\n"
-                f'title: {json.dumps(title, ensure_ascii=False)}\n'
-                f'created: "{date_str}"\n'
-                f'modified: "{date_str}"\n'
-                f'type: lesson\n'
-                f'scope: {scope}\n'
-                f'confidence: {confidence}\n'
-                f'supersedes: [{sup_list_str}]\n'
-                f'project: {json.dumps(project, ensure_ascii=False)}\n'
-                f'tags: [{tag_list_str}]\n'
-                f"source: mcp_remember\n"
-                f"---\n\n"
-                f"# {title}\n\n"
-                f"{content}\n"
-            )
-
-            try:
-                target_file, indexed = self._save_note(dest_dir, filename, note_body)
-                rel_path = target_file.relative_to(self.vault_root)
-                return (
-                    f"Başarılı: Ders '{title}' epistemik sözleşmeyle kaydedildi.\n"
-                    f"- Yol: `{rel_path}`\n"
-                    f"- Kapsam: `{scope}` | Güvenilirlik: `{confidence}`\n"
-                    f"- Geçersiz kıldığı: `{supersedes if supersedes else 'Yok'}`\n"
-                    + ('Arama indeksine eklendi.' if indexed else 'Arama indeksi güncellenemedi; yeniden indeksleyin.')
-                )
-            except Exception as e:
-                return f"Ders kaydedilirken hata oluştu: {e}"
+                outcome = writes.revert_mcp(self.ctx, str(arguments.get("operation_id", "")))
+            except writes.MemoryOpError as error:
+                return f"Hata: {error.message}"
+            return "Başarılı: Not geri alındı." if not outcome.get("already_gone") else "Başarılı: Not zaten yok."
 
         elif name == "respected_expand":
             target_str = arguments.get("title_or_path", "").strip()
@@ -455,6 +430,8 @@ class RespectedMcpServer:
                         raise ValueError('Invalid tool name')
                     self._validate_arguments(name, arguments)
                     text = self.call_tool(name, arguments)
+                    if text is None:  # the writer lease is held by an install/update/repair
+                        text = 'Hata: Hafıza şu anda bakımda (kurulum/güncelleme sürüyor); birazdan tekrar deneyin.'
                     result = {'content': [{'type': 'text', 'text': text}],
                               'isError': text.startswith(('Hata', 'Bilinmeyen', 'Not yazılırken', 'Ders kaydedilirken', 'Dosya okunurken', 'Not okunurken'))}
                 else:

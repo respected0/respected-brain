@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import contextlib
+import shutil
 import importlib
 import io
 import errno
@@ -54,43 +55,6 @@ class FoundationMaintenanceOrchestrationTest(unittest.TestCase):
             maintenance.run_tool(self.ctx, name='vault_linter', argv=['--vault', str(self.vault2), '--fix-dashes'])
         self.assertEqual(snapshot(self.root), before)
 
-    def test_orchestration_project_is_not_vault_and_logs_are_data(self):
-        runner = importlib.import_module('respectedbrain.orchestration.runner')
-        before_app, before_vault = snapshot(self.app), snapshot(self.vault)
-        def fake_subprocess(command, **kwargs):
-            if command[:2] == ['git', 'rev-parse']:
-                self.assertEqual(kwargs['cwd'], self.project)
-                return subprocess.CompletedProcess(command, 0, 'basecommit\n', '')
-            if command[:3] == ['git', 'worktree', 'add']:
-                worktree = Path(command[-2])
-                self.assertEqual(worktree.parent.parent, self.project)
-                worktree.mkdir(parents=True)
-                return subprocess.CompletedProcess(command, 0, '', '')
-            self.fail(f'unexpected subprocess: {command}')
-        with mock.patch.object(runner.subprocess, 'run', side_effect=fake_subprocess), mock.patch.object(runner.shutil, 'which', return_value=None):
-            code = runner.run(self.ctx, project_root=self.project, argv=['--task', 'a task', '--worker', 'codex'])
-        self.assertEqual(code, 1)
-        metadata_files = list((self.ctx.paths.state_dir / 'orchestration').glob('*/metadata.json'))
-        self.assertEqual(len(metadata_files), 1)
-        metadata = json.loads(metadata_files[0].read_text(encoding='utf-8'))
-        self.assertEqual(metadata['repo_root'], str(self.project))
-        self.assertEqual(metadata['status'], 'failed')
-        self.assertEqual(snapshot(self.app), before_app)
-        self.assertEqual(snapshot(self.vault), before_vault)
-
-    def test_orchestration_accepts_dispatcher_argument_separator(self):
-        runner = importlib.import_module('respectedbrain.orchestration.runner')
-        with mock.patch.object(runner.subprocess, 'run', return_value=subprocess.CompletedProcess([], 1, '', 'not git')), contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-            code = runner.run(self.ctx, project_root=self.project, argv=['--', '--task', 'a task'])
-        self.assertEqual(code, 1)
-
-    def test_orchestration_rejects_vault_as_code_project(self):
-        runner = importlib.import_module('respectedbrain.orchestration.runner')
-        before = snapshot(self.root)
-        with self.assertRaises(ValueError):
-            runner.run(self.ctx, project_root=self.vault, argv=['--task', 'a task'])
-        self.assertEqual(snapshot(self.root), before)
-
     def test_agent_history_idempotency_is_in_state_not_vault(self):
         miner_module = importlib.import_module('respectedbrain.maintenance.ingestion.mine_agent_history')
         miner = miner_module.AgentHistoryMiner(self.vault, state_file=self.ctx.paths.state_dir / 'imported_sessions.json')
@@ -124,60 +88,22 @@ class FoundationMaintenanceOrchestrationTest(unittest.TestCase):
         module = importlib.import_module('respectedbrain.maintenance.backup.backup_restic')
         restore_targets = []
         def fake_restic(command, **kwargs):
+            if command[1] in ('cat', 'init'):  # repository probe / first-run init
+                return subprocess.CompletedProcess(command, 0, '', '')
             if command[1] == 'backup':
                 return subprocess.CompletedProcess(command, 0, '{"message_type":"summary","snapshot_id":"snapshot-one"}', '')
             target = Path(command[-1])
             self.assertTrue(target.is_relative_to(self.ctx.paths.cache_dir))
             self.assertTrue(target.is_dir())
             restore_targets.append(target)
+            copy = target.joinpath(*[part.strip(':\\/') for part in self.vault.parts])    # restic restores the saved absolute path
+            shutil.copytree(self.vault, copy)
             return subprocess.CompletedProcess(command, 0, '', '')
         with mock.patch.object(module, 'check_prerequisites', return_value=(True, 'restic')), mock.patch.object(module.subprocess, 'run', side_effect=fake_restic):
-            result = module.run_backup(self.vault, str(self.root / 'backup-target'), apply=True, temp_dir=self.ctx.paths.cache_dir)
+            result = module.run_backup(self.vault, str(self.root / 'backup-target'), apply=True, password='test', temp_dir=self.ctx.paths.cache_dir)
         self.assertEqual(result, {'status': 'ok', 'snapshot_id': 'snapshot-one'})
         self.assertEqual(len(restore_targets), 1)
         self.assertFalse(restore_targets[0].exists())
-
-    def test_guarded_antigravity_records_failure_in_selected_data(self):
-        module = importlib.import_module('respectedbrain.orchestration.antigravity_orchestrator')
-        for argv in (['init'], ['config', 'user.name', 'Test'], ['config', 'user.email', 'test@example.invalid']):
-            subprocess.run(['git', *argv], cwd=self.project, check=True, capture_output=True)
-        (self.project / 'owned.txt').write_text('baseline', encoding='utf-8')
-        subprocess.run(['git', 'add', 'owned.txt'], cwd=self.project, check=True, capture_output=True)
-        subprocess.run(['git', 'commit', '-m', 'baseline'], cwd=self.project, check=True, capture_output=True)
-        policy = self.project / 'policy.json'
-        policy.write_text(json.dumps({'schema_version': 1, 'worker_executable_candidates': [str(self.root / 'missing-agy')], 'workspace_root': '.worktrees', 'max_active_write_workers': 1, 'read_timeout_seconds': 10, 'write_timeout_seconds': 10, 'dangerously_skip_permissions': False}), encoding='utf-8')
-        before_vault, before_app = snapshot(self.vault), snapshot(self.app)
-        with contextlib.redirect_stdout(io.StringIO()):
-            code = module.main(['run-read', '--slug', 'read-task', '--objective', 'inspect', '--owner', 'owned.txt', '--policy', str(policy), '--run-id', 'read-one'], ctx=self.ctx, project_root=self.project)
-        self.assertEqual(code, 20)
-        result = json.loads((self.ctx.paths.state_dir / 'orchestration' / 'read-one' / 'verification.json').read_text(encoding='utf-8'))
-        self.assertEqual(result['status'], 'WORKER_FAILED')
-        self.assertFalse((self.project / '.worktrees' / '.orchestration-state').exists())
-        self.assertEqual(snapshot(self.vault), before_vault)
-        self.assertEqual(snapshot(self.app), before_app)
-
-    def test_gateway_run_services_use_recorded_project_and_bound_rejection(self):
-        runner = importlib.import_module('respectedbrain.orchestration.runner')
-        run_root = self.ctx.paths.state_dir / 'orchestration' / 'run-owned'
-        run_root.mkdir(parents=True)
-        (run_root / 'metadata.json').write_text(json.dumps({'run_id': 'run-owned', 'vault_id': self.ctx.paths.vault_id, 'repo_root': str(self.project), 'status': 'completed'}), encoding='utf-8')
-        (run_root / 'worker.patch').write_text('diff --git a/owned.txt b/owned.txt\n--- a/owned.txt\n+++ b/owned.txt\n@@ -1 +1 @@\n-before\n+after\n', encoding='utf-8')
-        (self.project / 'owned.txt').write_text('before\n', encoding='utf-8')
-        subprocess.run(['git', 'init'], cwd=self.project, check=True, capture_output=True)
-        before_vault = snapshot(self.vault)
-        listing = runner.list_runs(self.ctx)
-        self.assertEqual(listing['runs'][0]['run_id'], 'run-owned')
-        self.assertTrue(listing['runs'][0]['has_patch'])
-        result = runner.apply_run(self.ctx, 'run-owned')
-        self.assertTrue(result['success'])
-        self.assertEqual((self.project / 'owned.txt').read_text(encoding='utf-8'), 'after\n')
-        with self.assertRaises(ValueError):
-            runner.reject_run(self.ctx, '../outside')
-        self.assertTrue(run_root.is_dir())
-        result = runner.reject_run(self.ctx, 'run-owned')
-        self.assertTrue(result['success'])
-        self.assertFalse(run_root.exists())
-        self.assertEqual(snapshot(self.vault), before_vault)
 
     def test_smart_merge_commits_safely_when_vault_is_on_another_volume(self):
         module = importlib.import_module('respectedbrain.maintenance.smart_merge')

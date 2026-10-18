@@ -61,7 +61,13 @@ def bridge_argv(ctx, profile, provider, event, *, global_hook=False):
     return launch_argv(ctx, profile, "hook", "--provider", provider, "--event", event, *(["--global-hook"] if global_hook else []))
 
 def command_text(profile, argv):
-    return subprocess.list2cmdline(argv) if profile.platform.startswith("windows") else shlex.join(argv)
+    if not profile.platform.startswith("windows"):
+        return shlex.join(argv)
+    # The program is always quoted: Claude Code runs hook commands through Git Bash when it exists, and an unquoted
+    # C:\pathpp.exe loses its backslashes there (the hook silently never runs). cmd.exe accepts the quoted form too.
+    head = subprocess.list2cmdline(argv[:1])
+    head = head if head.startswith('"') or "\\" not in head else '"' + head + '"'  # bare names such as wsl.exe stay as they are
+    return " ".join([head, *([subprocess.list2cmdline(argv[1:])] if len(argv) > 1 else [])])
 
 class _Planner:
     def __init__(self, backend):
@@ -135,7 +141,12 @@ def _recorded_or_legacy_owner(ctx, planner, path, current, kind="file"):
         document = json.loads(payload)
         if document.get("schema_version") != 3:
             raise ValueError("manifest schema")
-        return any(row.get("kind") == kind and row.get("key") == str(path) and row.get("after") is not None and base64.b64decode(row["after"], validate=True) == current for row in document.get("external", []))
+        import hashlib
+        fingerprint = hashlib.sha256(current).hexdigest() if current is not None else None
+        return any(row.get("kind") == kind and row.get("key") == str(path)
+                   and ((row.get("after") is not None and base64.b64decode(row["after"], validate=True) == current)
+                        or (row.get("after_sha256") is not None and row.get("after_sha256") == fingerprint))
+                   for row in document.get("external", []))
     except (ValueError, TypeError, AttributeError) as error:
         raise OwnershipConflict("Invalid integration ownership manifest") from error
 
@@ -357,19 +368,60 @@ def mcp_destinations(profile):
             paths.append(storage / extension / "settings" / filename)
     return tuple(paths)
 
+# AI client id -> hook/rule provider (None: MCP registration only). `desired["clients"]` (a list of ids) limits `global`
+# and `mcp` to those clients; without it every client is included (the pre-selection behaviour).
+CLIENTS = {"claude": "claude", "codex": "codex", "gemini": "gemini", "antigravity": "antigravity", "cursor": "cursor",
+           "windsurf": None, "claude-desktop": None, "vscode-agents": None}
+
+
+def selected_clients(desired, key="clients"):
+    """Clients chosen for hooks/rules ("clients") or MCP ("mcp_clients", defaulting to the hook selection)."""
+    chosen = desired.get(key, desired.get("clients")) if key == "mcp_clients" else desired.get(key)
+    return set(CLIENTS) if chosen is None else {client for client in chosen if client in CLIENTS}
+
+
+def mcp_client_of(path):
+    text = Path(path).as_posix().casefold()
+    if text.endswith("/.claude.json"):
+        return "claude"
+    if "/.cursor/" in text:
+        return "cursor"
+    if "windsurf" in text:
+        return "windsurf"
+    if text.endswith("claude_desktop_config.json"):
+        return "claude-desktop"
+    if "/.gemini/" in text:
+        return "antigravity"
+    return "vscode-agents"
+
+
+def detect_clients(profile):
+    """Which AI clients have a configuration folder/file on this computer (read-only)."""
+    home = profile.user_home
+    present = {path: Path(path).exists() for path in mcp_destinations(profile)}
+    storage_hit = any(mcp_client_of(path) == "vscode-agents" and ok for path, ok in present.items())
+    appdata = home / ("AppData/Roaming" if profile.platform.startswith("windows") else ".config")
+    return {"claude": (home / ".claude").is_dir() or (home / ".claude.json").is_file(), "codex": (home / ".codex").is_dir(),
+            "gemini": (home / ".gemini").is_dir(), "antigravity": (home / ".gemini").is_dir(), "cursor": (home / ".cursor").is_dir(),
+            "windsurf": (home / ".codeium").is_dir(), "claude-desktop": (appdata / "Claude").is_dir(), "vscode-agents": storage_hit}
+
+
 def plan_integrations(ctx, profile, desired, backend):
     if not any(desired.get(key, False) for key in ("global", "mcp", "schedule", "shortcut")):
         return ()
     validate_profile(ctx, profile)
     planner = _Planner(backend)
     if desired.get("global"):
-        writes, _ = _global_writes(ctx, profile, planner)
+        clients = selected_clients(desired)
+        writes, _ = _global_writes(ctx, profile, planner, tuple(p for p in SUPPORTED if p in {CLIENTS[c] for c in clients}))
         for key, content in writes:
             planner.put("file", key, content)
     if desired.get("mcp"):
         argv = launch_argv(ctx, profile, "mcp")
         entry = {"command": argv[0], "args": argv[1:]}
         for path in mcp_destinations(profile):
+            if mcp_client_of(path) not in selected_clients(desired, "mcp_clients"):
+                continue
             document = planner.object(path, "mcp")
             servers = document.setdefault("mcpServers", {})
             if not isinstance(servers, dict):
@@ -386,7 +438,7 @@ def plan_integrations(ctx, profile, desired, backend):
                 entry_for_path = entry
             servers["respected-vault"] = entry_for_path
             planner.put("mcp", path, json.dumps(document, ensure_ascii=False, indent=2) + "\n")
-    if desired.get("mcp") and (profile.user_home / ".gemini").is_dir():
+    if desired.get("mcp") and "antigravity" in selected_clients(desired, "mcp_clients") and (profile.user_home / ".gemini").is_dir():
         from .mcp.server import RespectedMcpServer, _detect_vault_identity
         server = RespectedMcpServer.__new__(RespectedMcpServer)
         server.os_name, server.companion_name = _detect_vault_identity(ctx)
@@ -407,13 +459,14 @@ def plan_integrations(ctx, profile, desired, backend):
         if profile.platform != "windows-native":
             raise FoundationError("Native shortcut registration is unavailable for this profile")
         key = profile.user_home / "Desktop/Respected Brain.lnk"
-        argv = launch_argv(ctx, profile, "dashboard")
+        argv = launch_argv(ctx, profile, "open")
+        earlier = subprocess.list2cmdline(launch_argv(ctx, profile, "dashboard")[1:])  # shortcuts made before the panel was removed stay ours
         previous = planner.read(key, "shortcut")
         if previous is not None:
             document = json.loads(previous)
             proofs = getattr(backend, "_legacy_proofs", {})
             proven_legacy = isinstance(proofs, dict) and proofs.get(("shortcut", str(key))) == previous
-            if not proven_legacy and (document.get("target") != argv[0] or document.get("arguments") != subprocess.list2cmdline(argv[1:]) or document.get("description") != "Respected Brain " + ctx.paths.vault_id):
+            if not proven_legacy and (document.get("target") != argv[0] or document.get("arguments") not in (subprocess.list2cmdline(argv[1:]), earlier) or document.get("description") != "Respected Brain " + ctx.paths.vault_id):
                 raise OwnershipConflict("Existing shortcut does not target the selected vault launcher")
         planner.put("shortcut", key, canonical_json({"target": argv[0], "arguments": subprocess.list2cmdline(argv[1:]), "working_directory": str(ctx.paths.app_root), "description": "Respected Brain " + ctx.paths.vault_id, "icon_location": "", "window_style": 1, "hotkey": ""}))
     return planner.changes()

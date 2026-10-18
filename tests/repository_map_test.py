@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 TOOL = Path(__file__).resolve().parents[1] / "tools" / "repository_map.py"
 
@@ -91,6 +92,33 @@ class RepositoryMapTests(unittest.TestCase):
         self.assertEqual(self.tool.main(["--root", str(self.root), "--check"]), 1)
         self.assertEqual(self.tool.main(["--root", str(self.root), "--write"]), 0)
         self.assertEqual(self.tool.main(["--root", str(self.root), "--check"]), 0)
+
+
+class FilesystemMapTests(unittest.TestCase):
+    def test_no_git_discovery_excludes_runtime_and_detects_new_source(self):
+        spec = importlib.util.spec_from_file_location("filesystem_map_under_test", TOOL)
+        tool = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(tool)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / ".gitignore").write_text("*.log\n*.egg-info/\n.env*\n", encoding="utf8")
+            for name in ["new.py", "trace.log", ".env", "pkg.egg-info/PKG-INFO", ".local/private.md", "node_modules/vendor.js"]:
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("fixture", encoding="utf8")
+            with patch.object(tool.subprocess, "run", side_effect=AssertionError("Git is forbidden")):
+                self.assertEqual(tool.project_files(root, filesystem_only=True), [".gitignore", "new.py"])
+
+    def test_no_git_mode_keeps_missing_reviewed_file_visible(self):
+        spec = importlib.util.spec_from_file_location("filesystem_map_under_test", TOOL)
+        tool = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(tool)
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "docs").mkdir()
+            data = {"schema": 1, "files": [{"path": "missing.py", "role": "Source", "purpose": "Reviewed missing source", "relationships": ["Caller"], "review_sha256": "x"}]}
+            (root / "docs/repository_inventory.json").write_text(json.dumps(data), encoding="utf8")
+            self.assertIn("MISSING_ON_DISK: missing.py", tool.validate_inventory(root, data, filesystem_only=True))
 
 
 if __name__ == "__main__":

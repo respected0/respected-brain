@@ -503,13 +503,13 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
             plan_integrations(self.ctx,self.profile,{"mcp":True},self.backend())
         self.assertEqual(snapshot(self.root),before)
 
-    def test_native_shortcut_uses_public_dashboard_command(self):
+    def test_native_shortcut_opens_the_vault_through_the_public_open_command(self):
         from respectedbrain.integrations.rendering import plan_integrations
         backend=mock.Mock()
         backend.read.return_value=None
         rows=plan_integrations(self.ctx,self.profile,{"shortcut":True},backend)
         descriptor=json.loads(rows[0].after)
-        self.assertEqual(descriptor["arguments"],"dashboard --vault-id " + self.ctx.paths.vault_id)
+        self.assertEqual(descriptor["arguments"],"open --vault-id " + self.ctx.paths.vault_id)
 
     def test_legacy_external_rollback_bytes_are_separate_from_uninstall_baseline(self):
         from respectedbrain.installation.ownership import OwnershipManifest,manifest_document,decode_bytes
@@ -531,7 +531,18 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertIn(b"User after",row.uninstall_before)
         self.assertNotIn(b"RESPECTED-GLOBAL",row.uninstall_before)
         document=manifest_document(OwnershipManifest(3,(),(row,)))
-        self.assertEqual(decode_bytes(document["external"][0]["before"]),row.uninstall_before)
+        import hashlib
+        stored=document["external"][0]
+        self.assertNotIn("before",stored)                      # minimal retention: no complete copy of the client's file
+        self.assertNotIn("after",stored)
+        self.assertEqual(stored["before_sha256"],hashlib.sha256(row.uninstall_before).hexdigest())
+        self.assertEqual(stored["after_sha256"],hashlib.sha256(row.after).hexdigest())
+        self.assertNotIn(b"User before",decode_bytes(stored["delta"]))     # unrelated user content is not in the delta
+        self.data.mkdir(parents=True,exist_ok=True)
+        persisted=self.data / "m.json"
+        persisted.write_text(__import__("json").dumps(document),encoding="utf-8")
+        from respectedbrain.installation.ownership import read_manifest
+        self.assertEqual(read_manifest(persisted).external[0].undo(row.after),row.uninstall_before)   # undo restores the baseline exactly
         fake=Backend()
         fake.records[(row.kind,row.key)]=original
         with self.assertRaisesRegex(RuntimeError,"fault"):
@@ -562,3 +573,23 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class HookCommandQuotingTest(unittest.TestCase):
+    """Claude Code runs hooks through Git Bash when present: an unquoted Windows path loses its backslashes and the hook never runs."""
+
+    def test_windows_hook_commands_quote_the_program_for_cmd_and_git_bash(self):
+        import shutil
+        import subprocess
+        from types import SimpleNamespace
+        from respectedbrain.integrations.rendering import command_text
+        profile = SimpleNamespace(platform="windows-native")
+        plain = command_text(profile, [r"C:\Apps\Respected\respectedbrain.exe", "hook", "--vault-id", "x"])
+        spaced = command_text(profile, [r"C:\Program Files\R\respectedbrain.exe", "hook"])
+        self.assertEqual(plain, r'"C:\Apps\Respected\respectedbrain.exe" hook --vault-id x')
+        self.assertEqual(spaced, r'"C:\Program Files\R\respectedbrain.exe" hook')
+        bash = shutil.which("bash")
+        if bash:  # the quoted form survives the shell that Claude Code uses on Windows
+            echoed = subprocess.run([bash, "-c", plain.replace("respectedbrain.exe", "x").replace('"C:', 'echo "C:', 1)], capture_output=True, text=True).stdout
+            self.assertIn(r"C:\Apps\Respected\x", echoed)
+        self.assertEqual(command_text(SimpleNamespace(platform="posix"), ["/a b/x", "hook"]), "'/a b/x' hook")

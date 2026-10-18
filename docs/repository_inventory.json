@@ -113,20 +113,20 @@
     {
       "path": "docs/ARCHITECTURE.md",
       "role": "Güncel belge / rehber",
-      "purpose": "Üç platformun AppRoot/DataRoot/VaultRoot konumlarını, modül/veri akışını, template/override ayrımını açıklar; compile tarih filtresi ile filtresiz briefing ve hata sonrası dosya varlığı sınırlarını belirtir.",
+      "purpose": "Üç platformun AppRoot/DataRoot/VaultRoot konumlarını, modül/veri akışını, template/override ayrımını açıklar; compile tarih filtresi ile filtresiz briefing ve hata sonrası dosya varlığı sınırlarını belirtir. Kod orkestrasyonu SecondBrain'den çıkarıldı (ayrı ürün Respected Orchestrator); modül tablosundan orchestration/ kaldırıldı. gateway/ satırı ve panel UI kaldırıldı (yerel panel Hub'a taşındı).",
       "relationships": [
         "Belge merkezi docs/README.md; aktif durum docs/PROJECT_STATUS.md. Gerçek dosya/komut davranışı src, packaging, tools ve tests kaynaklarıyla karşılaştırılır."
       ],
-      "review_sha256": "fe6992b758b135221a8cf568885f2947daf8c6614fba97121f139c4574607995"
+      "review_sha256": "e2572b66ce5712dc7015653b0039023908fa6e669389a15396af5f7c0a836775"
     },
     {
       "path": "docs/PROJECT_STATUS.md",
       "role": "Süreç otoritesi",
-      "purpose": "Projenin tek aktif durum kaynağıdır; kaynak düzeltmeleri, yerel doğrulama, native paket/rollout ve kalan dış kabul sınırlarını tarihli kayıt bağlantılarıyla ayırır.",
+      "purpose": "Projenin tek aktif durum kaynağıdır; Brain kaynak/native/rollout ve yeni Orchestrator/Hub çıkarımı, doğrulama ve engellerini tarihli kayıtlarla ayırır.",
       "relationships": [
-        "docs/SECURITY.md ve docs/decisions/SECURITY_HARDENING.md kararlarıyla doğrudan bağlantılıdır."
+        "SECURITY/hardening kararları ve PRODUCT_EXTRACTION kararı/kanıtına bağlanır; yeni ürün native Hub kabulünü frontend build'den ayırır."
       ],
-      "review_sha256": "fe15177f63f83b07f600a4ddbf342eae10f9085c262f75996d8c77c91373a7fe"
+      "review_sha256": "f7795f84482dc1ba19dc60d6971effb3b9af60c9e37b2c10099974f7ddbdbf17"
     },
     {
       "path": "docs/README.md",
@@ -185,11 +185,29 @@
     {
       "path": "docs/decisions/OPERATIONS.md",
       "role": "Tarihli karar kaydı",
-      "purpose": "Tek CLI/entegrasyon, template/kişisel override, setup/update/repair/uninstall ve eski kurulum migration güvenlik/kabul davranışını tanımlar. Bağlantıları 2026-10-05 düzenine uyarlanmıştır; bugünün yapılacaklar listesi değildir.",
+      "purpose": "Tek CLI/entegrasyon, template/kişisel override, setup/update/repair/uninstall ve eski kurulum migration güvenlik/kabul davranışını tanımlar. Bağlantıları 2026-10-05 düzenine uyarlanmıştır; bugünün yapılacaklar listesi değildir. dashboard komutu yerine open; gateway anımsatması çıkarıldı. Yedekten geri yükleme (restic --restore-to) bölümü eklendi.",
       "relationships": [
         "Aktif durum docs/PROJECT_STATUS.md; karar ve kayıt indeksleri bu dosyanın tarihsel bağlamına yönlendirir."
       ],
-      "review_sha256": "5b2bbd117ddd762da28703872b947909ae99e7309d8a29061be0b635b89f86a8"
+      "review_sha256": "0b31a895c6e79c558faa203d32acc438bd00a878e26c0678f9e908e2d395ab29"
+    },
+    {
+      "path": "docs/decisions/PRIVACY_AND_CLIENT_CONFIG.md",
+      "role": "Gizlilik ve istemci yapılandırması kararı",
+      "purpose": "MCP ile not yazmanın kullanıcı iznine (mcp_write) bağlanması ve tek bir gelen kutusuna yönlendirilmesi, oturum dökümünün varsayılan olarak kopyalanmaması (opt-in, maskelenmiş, kasa dışında, saklama süreli), gizli bilgi maskeleme, istemci yapılandırmalarında yalnızca kendi girdilerimizi geri alma (delta) ve tam dosya kopyası tutmama, ayrıca restic geri yükleme kararını ve sınırlarını kaydeder.",
+      "relationships": [
+        "integrations/delta.py, memory/redact.py, integrations/mcp/server.py, rpp_memory_write.py ve maintenance/backup/backup_restic.py ile birlikte okunur."
+      ],
+      "review_sha256": "4fd4ce4c10b08fbd6f3c0e24f60ce68e9e2ada89f3d6a81fa829790f569a2826"
+    },
+    {
+      "path": "docs/decisions/PRODUCT_EXTRACTION.md",
+      "role": "Ürün ayrımı kararı",
+      "purpose": "Kullanıcının üç ürün ayrımı talimatını, staged uygulama sırasını ve native/eşdeğerlik geçmeden eski dağıtımı kaldırmama kapısını kaydeder.",
+      "relationships": [
+        "PROJECT_STATUS aktif kapsamı; tarihli extraction kaydı uygulama/kanıtı açıklar. Canlı veri ve source Git sınırı korunur."
+      ],
+      "review_sha256": "bfb83bc43adc705a5201ccd4bef9c8b9eb4ab2d2bb4b2f2ad9f590147fe42954"
     },
     {
       "path": "docs/decisions/README.md",
@@ -199,6 +217,24 @@
         "Belge merkezi docs/README.md; aktif durum docs/PROJECT_STATUS.md. Gerçek dosya/komut davranışı src, packaging, tools ve tests kaynaklarıyla karşılaştırılır."
       ],
       "review_sha256": "5f30cf31f572300c2461e41866be0ee6c77a0c8b82afaac0b20727b233bc7644"
+    },
+    {
+      "path": "docs/decisions/RPP_MEMORY_RECALL.md",
+      "role": "Mimari karar",
+      "purpose": "RPP memory.* sözleşmesi: recall (salt okunur, hash doğrulamalı), dizin yenileme, yetkili yazma (memory.write/revert), opsiyonel yerel anlamsal arama ve otomatik dizin tazeliği; güvenlik kuralları ve bilinen sınırlar. memory.search/note.read/capture.note kullanıcı işlemleri ve bounded_recall'un bilinçli bağlanmama kararı eklendi.",
+      "relationships": [
+        "rpp_memory*.py, search/semantic.py ve search/freshness.py bu karara uyar; testleri tests/test_rpp_memory*.py. Hub paneli ve Orchestrator hafıza istemcisi bu sözleşmeyi tüketir."
+      ],
+      "review_sha256": "51b3840812208c9e4fe36de5f04ae2dff0d67f0bd969463592fc7f6f48d664c3"
+    },
+    {
+      "path": "docs/decisions/RPP_V1.md",
+      "role": "Mimari karar",
+      "purpose": "SecondBrain'in RPP v1.0/v1.1 çalışma sözleşmesi: manifest, health, ayar şeması/doğrulama/uygulama/geri okuma ve v1.1 yaşam döngüsü işlemleri.",
+      "relationships": [
+        "rpp.py ve rpp_lifecycle.py uygular; tools/rpp_conformance.py iki üründe doğrular."
+      ],
+      "review_sha256": "3d587b9d479b2a202456267bb594305e12524749a2d9ec83209c98c78143ca18"
     },
     {
       "path": "docs/decisions/SECURITY_HARDENING.md",
@@ -212,11 +248,11 @@
     {
       "path": "docs/development/CLI.md",
       "role": "Güncel belge / rehber",
-      "purpose": "Public/iç argparse komutları, dokuz bakım aracı ve yan etki/çıkış kodlarını açıklar. Flush yönetilen girdisinin başarı ve değişmemiş bayt koşuluyla temizlenmesini stale-input expiry kuralından ayırır.",
+      "purpose": "Public/iç argparse komutları, dokuz bakım aracı ve yan etki/çıkış kodlarını açıklar. Flush yönetilen girdisinin başarı ve değişmemiş bayt koşuluyla temizlenmesini stale-input expiry kuralından ayırır. index-refresh komutu ile setup --clients/--mcp-clients seçenekleri eklendi, orchestrate komutu kaldırıldı. dashboard bölümü open komutuyla değişti (eski ad takma ad olarak çalışır).",
       "relationships": [
         "src/respectedbrain/cli.py ve araç parserları sözleşme kaynağıdır; aktif durum PROJECT_STATUS ve çalışma sınırları AGENTS içinde kalır."
       ],
-      "review_sha256": "2a2a9d39c7765c3aaa65436120f44c6eb6bd06181aee3daa709ad5146b2e7fc1"
+      "review_sha256": "df68f004a65b6342644cf71e8bcc783621b88ac9dc86b765a0a10dba03ca2ea9"
     },
     {
       "path": "docs/development/README.md",
@@ -257,11 +293,11 @@
     {
       "path": "docs/guides/DAILY_USE.md",
       "role": "Güncel belge / rehber",
-      "purpose": "Kasa alanlarını, FTS/maps, compile tarih filtresini, teknik I/O yapabilen dry-run ve filtresiz briefing davranışını açıklar; hata sonrası yazılmış brifingin tekrar denemeyi atlatmasını ve panel/bakım/kod işçisi komutlarını belirtir.",
+      "purpose": "Kasa alanlarını, FTS/maps, compile tarih filtresini, teknik I/O yapabilen dry-run ve filtresiz briefing davranışını açıklar; hata sonrası yazılmış brifingin tekrar denemeyi atlatmasını ve panel/bakım/kod işçisi komutlarını belirtir. Orchestration anlatımı kaldırıldı; kod orkestrasyonu için Orchestrator ürününe yönlendirir. Yerel kontrol paneli anlatımı Hub hafıza çalışma alanına yönlendirmeyle değişti.",
       "relationships": [
         "Belge merkezi docs/README.md; aktif durum docs/PROJECT_STATUS.md. Gerçek dosya/komut davranışı src, packaging, tools ve tests kaynaklarıyla karşılaştırılır."
       ],
-      "review_sha256": "008dc33656aedac849aba1a389cc795a352e8aea5a90acadc68b2c46aaeea98f"
+      "review_sha256": "c6683d67467f51bc7b77c9a8457d867598ece70fadf9297e90e2a5359f2732cb"
     },
     {
       "path": "docs/guides/MULTI_AI.md",
@@ -372,6 +408,33 @@
       "review_sha256": "f08627a61d496b796fa5757a49919cf9cbfbc9a573ccaf12f6e0d8f93676a7c8"
     },
     {
+      "path": "docs/records/2026-10-product-extraction/BRAIN_BASELINE_INVENTORY.json",
+      "role": "Başlangıç envanter kanıtı",
+      "purpose": "Extraction öncesi 292 kaynak dosyasının rol/amaç/ilişki ve review hash kayıtlarını eksiksiz tarihsel snapshot olarak korur.",
+      "relationships": [
+        "FEATURE_PRESERVATION ürün sahiplerini bu başlangıca bağlar; güncel aktif atlas yerine geçmez."
+      ],
+      "review_sha256": "c2e9316feb0436779640b7a8dfdc14addd318fa2fdb7fa177a543db1da2bf53a"
+    },
+    {
+      "path": "docs/records/2026-10-product-extraction/FEATURE_PRESERVATION.md",
+      "role": "Özellik ve hardening sahipliği",
+      "purpose": "Bütün Brain özellik gruplarının korunma/taşıma durumunu, eksik eşdeğerliği ve kalan işlerin yeni ürün sahibini kaydeder.",
+      "relationships": [
+        "Başlangıç 292 dosyalık envantere ve uygulama kanıtına dayanır; elde olmayan F1–F15 metnini uydurmaz."
+      ],
+      "review_sha256": "70b540998989cab7d6f23ceeac2a86bfbbe3c9a2efb1db2a47baae6d92a5216d"
+    },
+    {
+      "path": "docs/records/2026-10-product-extraction/IMPLEMENTATION.md",
+      "role": "Extraction uygulama/kanıt kaydı",
+      "purpose": "Yeni ürün kaynakları, gerçekten çıkarılan motor, test/build kanıtları, native Hub engeli ve kesin sonraki uygulama işini açıklar.",
+      "relationships": [
+        "PROJECT_STATUS aktif durum, PRODUCT_EXTRACTION karar, FEATURE_PRESERVATION sahiplik kaydıdır; release kabulüyle geliştirme kanıtını ayırır."
+      ],
+      "review_sha256": "4dcb0f93810dcc36ab6d3ccbf85b657038c08e613a89229d5c4278efa1ee4679"
+    },
+    {
       "path": "docs/records/2026-10-security-hardening/F7_TRANSCRIPT_REMEDIATION.md",
       "role": "Tarihli uygulama/kanıt kaydı",
       "purpose": "F7 ilk uygulamanın tarihsel bildirimlerini bağımsız inceleme ve takip düzeltmelerinden ayırır. Ortak state/pending alan sözleşmesi, durable günlük bloğu, bozuk health JSON, native kimlik/snapshot/provenance ve uninstall tercih/yerel hook sahipliği düzeltmelerinin RED/GREEN kanıtını ve kabul matrisini kaydeder. Yeniden üretilen frozen kaynak eşitliği, genel gate ve gerçek dış yayın kabul sınırlarını ayırır; kişisel kayıtlar Git dışındaki rollout kaydına yönlendirilir.",
@@ -418,6 +481,15 @@
       "review_sha256": "bc05892f1bb60785e34d276f58a10e4da860aa783df072c4b6c520c7a922073b"
     },
     {
+      "path": "docs/records/2026-10-source-cleanup/LEGACY_USAGE_ANALYSIS.md",
+      "role": "Tarihli analiz kaydı",
+      "purpose": "Eski dashboard/orchestration kalıntılarının 2026-10-11 tarihli kullanım analizi. Sonradan Orchestrator ayrı ürün olarak tamamlanınca orchestration/ paketi, orchestrate komutu ve panel sekmesi ispatlı biçimde kaldırıldı (bkz. MASTER_HANDOFF bölüm 14).",
+      "relationships": [
+        "Kaldırılan dosyaların yedeği .campaign-data/master-plan/legacy-removal-backup/ içindedir; bu kayıt tarihsel kanıt olarak kalır."
+      ],
+      "review_sha256": "e6c24e91de81bdb6b3110a82a334c31a97f3ed9ac5203fce25b47f2b82f7890d"
+    },
+    {
       "path": "docs/records/2026-10-source-cleanup/SOURCE_ACCEPTANCE.md",
       "role": "Tarihli uygulama/kanıt kaydı",
       "purpose": "2026-10-06 tam kaynak kabul ve doğrulama sonuçlarını kaydeder: 815 test keşfi (800 geçen, 15 platform skip, 0 failure, 0 error), Tcl/Tk wizard bootstrap runtime teşhisi, izole wheel ve frozen yaşam döngüsü kabulü, arama motoru karşılaştırmalı benchmarkı ve güvenlik/hardening sınırları.",
@@ -447,11 +519,11 @@
     {
       "path": "docs/records/README.md",
       "role": "Tarihli uygulama/kanıt kaydı",
-      "purpose": "Tarihli modüler temel, kaynak temizliği, güvenlik sertleştirme, kurucu/yayın ve belge düzenleme kayıtlarını indeksler; geçmiş kanıtın yorumlanmasını açıklar.",
+      "purpose": "Tarihli modüler temel, kaynak temizliği, güvenlik, kurucu/yayın, belge ve ürün extraction kayıtlarını indeksler; geçmiş kanıtın yorumlanmasını açıklar.",
       "relationships": [
         "Aktif durum docs/PROJECT_STATUS.md; tarihli kayıtlar docs/records altındaki dosyalara yönlendirir."
       ],
-      "review_sha256": "c5dafb99d926677c58cf659e8fe7c8df5f99f0a1b8314e78d9a1485f2fdd5045"
+      "review_sha256": "93baf3053132e6c2e2a1bfd73e8a5b3aefd7b44904d7f0f71ec0ff5a14879989"
     },
     {
       "path": "docs/repository_inventory.json",
@@ -501,11 +573,11 @@
     {
       "path": "pyproject.toml",
       "role": "Depo sözleşmesi",
-      "purpose": "respectedbrain 0.0.1 paketini, Python >=3.10 sınırını, sıfır zorunlu üçüncü taraf bağımlılığını, build-system gereksinimleriyle eşleşen dev geliştirme araçlarını (setuptools>=69, build, wheel, pyinstaller, tomli) ve console script'i tanımlar; resources dosyalarını açıkça paketler.",
+      "purpose": "respectedbrain 0.0.1 paketini, Python >=3.10 sınırını, sıfır zorunlu üçüncü taraf bağımlılığını, build-system gereksinimleriyle eşleşen dev geliştirme araçlarını (setuptools>=69, build, wheel, pyinstaller, tomli) ve console script'i tanımlar; resources dosyalarını açıkça paketler. gateway/web/index.html paket verisi kaldırıldı.",
       "relationships": [
         "Setuptools src yerleşimini kurar; respectedbrain.cli:main kurulu giriş olur; build_installer sürümü buradan edinir."
       ],
-      "review_sha256": "a9150efea1aea4236811d3380f0a467761a0c5eaf63db15934906a4534a314d2"
+      "review_sha256": "f5718a61824337e63265702deb4004479e0c72465fdb459ff049559c45a4f90b"
     },
     {
       "path": "src/respectedbrain/__init__.py",
@@ -555,11 +627,11 @@
     {
       "path": "src/respectedbrain/cli.py",
       "role": "Uygulama giriş noktası",
-      "purpose": "Public komutlari ve ic kurulum protokollerini tek parser/dispatcherda toplar. `_inno-*` protokolleri receipt'i DataRoot/logs altina yazar; receipt yazimi timeout/subprocess ve diger beklenmeyen calisma zamani hatalarinda da uretilir, hata mesaji loga ve receipt'e duser ve receipt yazilamazsa cikis kodu sifir olmaz. `_inno-prepare` `--package` ve strict provenance gerektirir; `_inno-launch` canli Inno uninstaller'i tercih eder. `welcome` profil tamamsa sessizce cikar, eksikse gizli `--app-root`/`--data-root` ile personalizasyon sihirbazini acar. Flush hook-input'un available provider/workspace/session/transcript metadata'sini ortak dogrulamaya tasir; ret girdisini korur. Uninstall varsayilani, --keep-data ve uyumluluk --purge-data ayni tercihi dogrudan servis ve deferred helper'a tasir.",
+      "purpose": "Public komutlari ve ic kurulum protokollerini tek parser/dispatcherda toplar. `_inno-*` protokolleri receipt'i DataRoot/logs altina yazar; receipt yazimi timeout/subprocess ve diger beklenmeyen calisma zamani hatalarinda da uretilir, hata mesaji loga ve receipt'e duser ve receipt yazilamazsa cikis kodu sifir olmaz. `_inno-prepare` `--package` ve strict provenance gerektirir; `_inno-launch` canli Inno uninstaller'i tercih eder. `welcome` profil tamamsa sessizce cikar, eksikse gizli `--app-root`/`--data-root` ile personalizasyon sihirbazini acar. Flush hook-input'un available provider/workspace/session/transcript metadata'sini ortak dogrulamaya tasir; ret girdisini korur. Uninstall varsayilani, --keep-data ve uyumluluk --purge-data ayni tercihi dogrudan servis ve deferred helper'a tasir. index-refresh komutu, setup --clients/--mcp-clients ve flush sonunda dizin tazeleme eklendi; orchestrate komutu kaldırıldı. open komutu (dashboard eski adı aynı işi yapar: kasa klasörünü açar); yerel HTTP paneli kaldırıldı.",
       "relationships": [
         "bootstrap servis baglamini secer; Foundation/OS ve arguman hatalari cikis kodlarina cevrilir. Hook/MCP stdout protokolu korunur; stale-input expiry memory.flush sorumlulugundadir. tests/wizard_options_test.py, tests/uninstall_test.py ve tests/security_hardening_fifth_fix_test.py welcome/purge ve receipt sinirini sinar."
       ],
-      "review_sha256": "66c945eb2839d0bf025e541c90a402ab25e8b05e456703b1982c31cd8085caf0"
+      "review_sha256": "442d9c46c3b8a5e7deb388e9624cbbf868a844fe9e63cd2016945e70428ed478"
     },
     {
       "path": "src/respectedbrain/core/__init__.py",
@@ -652,24 +724,6 @@
       "review_sha256": "0a8e864da320fe93a8ce0079461a57f45228154093bc3ea41c894265aff34b7f"
     },
     {
-      "path": "src/respectedbrain/gateway/__init__.py",
-      "role": "Python paket sınırı",
-      "purpose": "gateway altındaki yerel HTTP kontrol merkezini tek import namespace altında toplar; kullanıcı dosyasına erişmeden paket import edilebilmesini sağlar.",
-      "relationships": [
-        "Alt modüller explicit AppContext/roots ile çalışır; initializer kurulum, süreç başlatma veya state yaratma işlemi yapmaz. Setuptools namespace=false paket keşfi için __init__.py gereklidir."
-      ],
-      "review_sha256": "3ad7d0038ac5342072b02cff5749b902aa6ae51504685e31522d999facd4a007"
-    },
-    {
-      "path": "src/respectedbrain/gateway/server.py",
-      "role": "Bağlamla çalışan ürün servisi",
-      "purpose": "127.0.0.1 üzerinde seçili AppContext için provider, hafıza, arama, not yakalama ve orkestrasyon HTTP uçlarını sunar. Yerel Host/Origin doğrulaması, sınırlı JSON gövdesi ve alan türleri; güvenli not/state okuması, çakışmasız capture ve indeksleme sonucu uygular. Gerçek güncelleme kontrolü bulunmadığında unavailable döndürür.",
-      "relationships": [
-        "CLI dashboard/serve bağlar; integrations.notes not erişimini, ConfigStore ayarları, SearchEngine indeksi ve orchestration runner açıkça seçilmiş kod projesi işlemlerini sağlar. Web UI aynı origin üzerinden çağırır; dış site/rebinding ve BusyError regresyonları foundation_services_test içindedir."
-      ],
-      "review_sha256": "e37b44753f9b24475c94f128e4dab3b947e0fc1f5b62de8d258daa5753d49bcc"
-    },
-    {
       "path": "src/respectedbrain/installation/__init__.py",
       "role": "Python paket sınırı",
       "purpose": "installation altındaki ownership-aware setup/update/repair/uninstall/migration servislerini tek import namespace altında toplar; kullanıcı dosyasına erişmeden paket import edilebilmesini sağlar.",
@@ -717,20 +771,20 @@
     {
       "path": "src/respectedbrain/installation/operations.py",
       "role": "Sahiplik kontrollü yaşam döngüsü",
-      "purpose": "Sahiplik ve entegrasyon ortak islemleri: manifest kok sinirlarini dogrular, paket uyelerini (attestation dahil) aktive eder, `repair_owned` ile hasarli sahipli dosyayi onarip kullanici degisikliklerini yine de reddeder, external plan kurar ve teknik sahiplik manifestini uretir. Vault icindeki sahipli yerel hook kayitlari istege bagli global entegrasyon bayragindan bagimsiz korunur; update/repair/repeated setup uninstall baseline'ini kaybetmez.",
+      "purpose": "Sahiplik ve entegrasyon ortak islemleri: manifest kok sinirlarini dogrular, paket uyelerini (attestation dahil) aktive eder, `repair_owned` ile hasarli sahipli dosyayi onarip kullanici degisikliklerini yine de reddeder, external plan kurar ve teknik sahiplik manifestini uretir. Vault icindeki sahipli yerel hook kayitlari istege bagli global entegrasyon bayragindan bagimsiz korunur; update/repair/repeated setup uninstall baseline'ini kaybetmez. İstemci seçimi (clients/mcp_clients) daraldığında seçimden çıkan istemcilerin önceki kayıtları geri yüklenir. Kapatılan/değişen dış kayıtlar tüm dosya bayt eşitliği yerine girdi düzeyinde geri alınır (_undo); istemci başka alanları yeniden yazsa da kaldırma/onarım bozulmaz. Dış kayıtların durumu parmak izi ve delta ile (restored/undo) değerlendirilir.",
       "relationships": [
         "setup/update/repair/migration bu fonksiyonlari cagirir; integrations.rendering ve ownership ile calisir."
       ],
-      "review_sha256": "5468bae769f7f840e42398a56faafec635f68e495c81b994b5d166402457e43a"
+      "review_sha256": "cd06952f52ab48d880955b8f99bb153fa487923262792a8ecbe7141828b8eb80"
     },
     {
       "path": "src/respectedbrain/installation/ownership.py",
       "role": "Sahiplik kontrollü yaşam döngüsü",
-      "purpose": "OwnedFile/OwnershipManifest kayıtlarını ve SHA256/mode sahipliğini tanımlar; schema 3 dosya/dış kayıt alanlarını, tekil hedefleri ve base64 before-image değerlerini yapısal olarak doğrular.",
+      "purpose": "OwnedFile/OwnershipManifest kayıtlarını ve SHA256/mode sahipliğini tanımlar; schema 3 dosya/dış kayıt alanlarını, tekil hedefleri ve base64 before-image değerlerini yapısal olarak doğrular. Manifest yapılandırma dosyaları için tam kopya yerine delta ve SHA-256 parmak izi yazar; eski tam kopyalı manifestleri de okur.",
       "relationships": [
         "setup/update/repair/uninstall/migration read_manifest kullanır; bozuk kayıtlar OwnershipConflict olur. safe_path link/reparse hedeflerini, prove_ownership kullanıcı değişikliklerini reddeder."
       ],
-      "review_sha256": "596e45e17a5793a81a68b121eef4a9a25d34090e75df6f7c1deae77d15d0a807"
+      "review_sha256": "6897cefdc3d567748882ea475da080780bc8c165f1dda9339dee2d0a94a2cc2c"
     },
     {
       "path": "src/respectedbrain/installation/payload.py",
@@ -762,29 +816,29 @@
     {
       "path": "src/respectedbrain/installation/setup.py",
       "role": "Sahiplik kontrollü yaşam döngüsü",
-      "purpose": "Doğrulanmış paketi ve seçilen bağlantıları transaction içinde kurar; yalnız yeni boş vault kişiselleştirilir. Beş yerel AI hook dosyası ExternalChange olarak journal ve uninstall sahiplik manifestine alınır; health/commit hatasında geri alınır. Tekrar kurulumda önceki manifest kökleri aktivasyon/silme öncesi doğrulanır ve teknik sahiplik kayıtları korunur.",
+      "purpose": "Doğrulanmış paketi ve seçilen bağlantıları transaction içinde kurar; yalnız yeni boş vault kişiselleştirilir. Beş yerel AI hook dosyası ExternalChange olarak journal ve uninstall sahiplik manifestine alınır; health/commit hatasında geri alınır. Tekrar kurulumda önceki manifest kökleri aktivasyon/silme öncesi doğrulanır ve teknik sahiplik kayıtları korunur. Seçilen AI istemci listeleri (clients/mcp_clients) config entegrasyonlarında saklanır.",
       "relationships": [
         "CLI ve wizard aynı setup servisini çağırır. operations.validate_manifest_roots ve operation_manifest ortak sınırları uygular; health/commit hatasında WAL geri alma insan notlarını veya sonradan değişen baytları ezmez."
       ],
-      "review_sha256": "67df30f444934ee1299a2209980719c5c9eb43ac3794b1686cfdcf094a17102a"
+      "review_sha256": "b595739adfb2e786038f90165430c3e6bf18c5ef1467f8fffd0e3de3d661c0de"
     },
     {
       "path": "src/respectedbrain/installation/transaction.py",
       "role": "Sahiplik kontrollü yaşam döngüsü",
-      "purpose": "Dosya/dış kayıt değişiklikleri için dayanıklı WAL, before-image ve hash/mode proof sağlar; commit öncesi son hedefleri karşılaştırır, geri almada kullanıcı düzenlemelerini korur ve restart sırasında açık çatışmaları tekrar denetler.",
+      "purpose": "Dosya/dış kayıt değişiklikleri için dayanıklı WAL, before-image ve hash/mode proof sağlar; commit öncesi son hedefleri karşılaştırır, geri almada kullanıcı düzenlemelerini korur ve restart sırasında açık çatışmaları tekrar denetler. İşlem işlenince günlükteki tam yapılandırma kopyaları delta ve parmak izine sıkıştırılır; scrub_committed_journals eski günlükleri temizler.",
       "relationships": [
         "setup/update/repair/uninstall/migration ortak Transaction kullanır. Kilit, backup ve journal yolları yazmadan önce safe_path ile denetlenir; bozuk journal bütünü geri almadan önce reddedilir. Dış FoundationError diğer dosyaların geri alınmasını kesmez; eski byte-only journal uyumluluğu korunur."
       ],
-      "review_sha256": "4e98013cce52fe7798b75db515747ddc0bb1baf9dae1f64c27d93656143f7978"
+      "review_sha256": "842a48caefc9473447bea3dbe621134100f960ed7cb411212c8fcdeb860509cb"
     },
     {
       "path": "src/respectedbrain/installation/uninstall.py",
       "role": "Sahiplik kontrollü yaşam döngüsü",
-      "purpose": "Yalniz degismemis sahipli dosya/kayitlari kaldirir. Varsayilan olarak kanitli teknik kayitlari (config/manifest) temizler, `purge_data=False`/`--keep-data` bunu atlar; backups, unknown kullanici dosyalari ve tum VaultRoot notlarini her zaman korur. Inno shell ciftini aktif uninstall sirasinda haric tutar.",
+      "purpose": "Yalniz degismemis sahipli dosya/kayitlari kaldirir. Varsayilan olarak kanitli teknik kayitlari (config/manifest) temizler, `purge_data=False`/`--keep-data` bunu atlar; backups, unknown kullanici dosyalari ve tum VaultRoot notlarini her zaman korur. Inno shell ciftini aktif uninstall sirasinda haric tutar. Dış kayıtlar revert_external ile girdi düzeyinde geri alınır; yalnızca Respected girdisi kullanıcı tarafından değiştirilmişse çatışma raporlanır. Kaldırma sonunda biten işlemlerin günlükleri temizlenir.",
       "relationships": [
         "ownership, operations ve transaction ile calisir; tests/uninstall_test.py ve foundation_operations_test.py sozlesmesini sinar."
       ],
-      "review_sha256": "af98b3074662b40534509cddfb05ab9ca2f5e8e2dfa6cbff2b439b6e34e4bcf1"
+      "review_sha256": "a994c3c054175c1f2db2d1d03aec98af09d2719ebcb9a7f5cba61cc0c366f5f5"
     },
     {
       "path": "src/respectedbrain/installation/update.py",
@@ -825,11 +879,20 @@
     {
       "path": "src/respectedbrain/integrations/backend.py",
       "role": "Ajan ve işletim sistemi bağlantısı",
-      "purpose": "ExternalChange/IntegrationProfile ve IntegrationBackend sözleşmesini tanımlar; NativeBackend dosya, registry, shortcut ve scheduler kayıtlarını snapshot/CAS ile uygular ve geri alır. Dış kayıt kilitleri DataRoot containment kontrolünden geçer; PowerShell çağrıları 30 saniye sınırı ve kontrollü hata taşır.",
+      "purpose": "ExternalChange/IntegrationProfile ve IntegrationBackend sözleşmesini tanımlar; NativeBackend dosya, registry, shortcut ve scheduler kayıtlarını snapshot/CAS ile uygular ve geri alır. Dış kayıt kilitleri DataRoot containment kontrolünden geçer; PowerShell çağrıları 30 saniye sınırı ve kontrollü hata taşır. revert_external: istemcinin yeniden yazdığı JSON yapılandırmasında yalnızca Respected'in kendi girdisini (kanca/MCP) geri alır; kullanıcı kendi girdimizi değiştirdiyse ValueError ile çatışma bildirir. ExternalChange delta, parmak izleri, restored/untouched_since/undo/compact yöntemlerini taşır; zamanlanmış görev, kısayol ve kayıt defteri değerleri tam eşleşme ister.",
       "relationships": [
         "Rendering/scheduling salt okunur plan üretir; Transaction apply_external işlemleri journal ile kaydeder. Canonical task XML sahiplik karşılaştırmalarını sağlar; foundation_integrations_test fixture CAS, override/kilit junction ve komut timeout davranışını sınar."
       ],
-      "review_sha256": "d283fb2bf6affae243d2dcaece0971f78c8beb3772112c3616e74c35d4ef3293"
+      "review_sha256": "ccf6150e954258ea3c1195e262ccb42370f0e0a94d48afebb7ee7da64365df88"
+    },
+    {
+      "path": "src/respectedbrain/integrations/delta.py",
+      "role": "İstemci yapılandırması delta ve geri alma",
+      "purpose": "Bir istemci dosyasında yalnızca bizim değiştirdiğimiz girdileri tarif eder: JSON için kısmi ağaçlar (değişen anahtarlar, eklenen/çıkan liste öğeleri), TOML/Markdown için satır işlemleri; revert bunu dosyanın bugünkü haline uygular, kullanıcının düzenlediği girdiyi DeltaConflict ile reddeder, zaten kaldırılmış bloğu atlar. Manifest ve işlem günlükleri tam dosya yerine bu delta ve SHA-256 parmak izlerini saklar.",
+      "relationships": [
+        "integrations/backend.py ExternalChange.compact/undo, installation/ownership.py, transaction.py ve uninstall.py tarafından kullanılır; tests/test_config_delta.py ile doğrulanır."
+      ],
+      "review_sha256": "2226319cb70638bb6cba4a480917213e72ccbd84c016cb18b169adb4be4ff17c"
     },
     {
       "path": "src/respectedbrain/integrations/global_config.py",
@@ -888,11 +951,11 @@
     {
       "path": "src/respectedbrain/integrations/mcp/server.py",
       "role": "Ajan ve işletim sistemi bağlantısı",
-      "purpose": "Seçili vault için yedi MCP aracını stdio JSON-RPC üzerinden sunar. Tür/enum/zorunlu alan doğrulaması, bozuk istekten sonra devam, bildirim sessizliği, sınırlı not okuması, metadata escaping ve çakışmasız capture/remember uygular; indeksleme hatasını kayıttan ayırır. Expand belirsiz başlıklarda açık yol ister.",
+      "purpose": "Seçili vault için yedi MCP aracını stdio JSON-RPC üzerinden sunar. Tür/enum/zorunlu alan doğrulaması, bozuk istekten sonra devam, bildirim sessizliği, sınırlı not okuması, metadata escaping ve çakışmasız capture/remember uygular; indeksleme hatasını kayıttan ayırır. Expand belirsiz başlıklarda açık yol ister. respected_remember kendi notunu verified olarak işaretleyemez (varsayılan unverified, verified isteği inferred olur); yazar kilidi tutulurken araç çağrısı açık bir bakım mesajı döndürür. Not yazan araçlar mcp_write izni yokken listelenmez ve reddedilir; izin varsa tek gelen kutusuna yazılır; respected_revert_note ile geri alınır.",
       "relationships": [
         "CLI mcp ve editor launcher kullanır; integrations.notes ortak not I/O sınırıdır; SearchEngine arama/backlink sağlar. mcp_and_features_test transport, metadata, dosya korunması ve gerçek Windows junction fixturelarını doğrular."
       ],
-      "review_sha256": "45716cb28cae72d3d1875e2920a81ac342b6b77991479c4b7fd9f09f816b1214"
+      "review_sha256": "d63619b0018f93fe95cb662df5ec4a649f1857556e3192345fc52d611442be4e"
     },
     {
       "path": "src/respectedbrain/integrations/notes.py",
@@ -906,11 +969,11 @@
     {
       "path": "src/respectedbrain/integrations/rendering.py",
       "role": "Ajan ve işletim sistemi bağlantısı",
-      "purpose": "Profile/launcher/UUID üzerinden native hook argv, talimat, skill ve MCP ayarlarını salt okunur planlar. Override önceliği DataRoot/reparse denetimi ile korunur; bilinmeyen kullanıcı içeriği sahiplik kanıtı olmadan değiştirilmez.",
+      "purpose": "Profile/launcher/UUID üzerinden native hook argv, talimat, skill ve MCP ayarlarını salt okunur planlar. Override önceliği DataRoot/reparse denetimi ile korunur; bilinmeyen kullanıcı içeriği sahiplik kanıtı olmadan değiştirilmez. CLIENTS eşlemesi, selected_clients, mcp_client_of ve detect_clients ile entegrasyon planı istemci başına sınırlanabilir; seçim yoksa önceki davranış (hepsi) korunur. Windows hook komutlarında program yolu daima tırnaklanır (Git Bash tırnaksız ters eğik çizgileri yutuyordu, hook sessizce çalışmıyordu); masaüstü kısayolu open komutunu çağırır, eski dashboard kısayolları sahiplik olarak tanınır. Sahiplik kanıtı, delta tabanlı manifestlerdeki after_sha256 parmak izini de kabul eder.",
       "relationships": [
         "ResourceCatalog seed içeriğidir; backend ExternalChange çıktısını Transaction uygular. Scheduling ortak sahiplik kontrolünü kullanır. foundation_integrations/profile_render/multiai/mcp_registration plan ve kullanıcı alanı korumasını sınar."
       ],
-      "review_sha256": "ad3320d24d12d9f904012cac4c6a407667298bda76b998252a12f78422d14145"
+      "review_sha256": "4e227163809f6882c2682b78c6000c39b1c5e0d219abc14c4d6d6ec1fa708a3f"
     },
     {
       "path": "src/respectedbrain/integrations/scheduling/__init__.py",
@@ -969,11 +1032,11 @@
     {
       "path": "src/respectedbrain/maintenance/backup/backup_restic.py",
       "role": "Kasa bakım ve içe alma aracı",
-      "purpose": "Opt-in Restic backup önizlemesi/uygulaması ve restore kontrolü sağlar; repo kasanın içinde olamaz. Backup summary kendi snapshot kimliğini vermediyse latest fallback ile yanlış snapshotı doğrulamaz.",
+      "purpose": "Opt-in Restic backup önizlemesi/uygulaması ve restore kontrolü sağlar; repo kasanın içinde olamaz. Backup summary kendi snapshot kimliğini vermediyse latest fallback ile yanlış snapshotı doğrulamaz. Parola kaynağı zorunludur (RESTIC_PASSWORD, RESTIC_PASSWORD_FILE veya --password-file), depo yoksa restic init çalışır. Yedek içerik karşılaştırmasıyla doğrulanır; --restore-to yeni/boş klasöre geri yükler, vault'a dokunmaz. Geri yükleme ve doğrulama snapshot:/vault-yolu ile yalnızca vault içeriğini geri getirir.",
       "relationships": [
         "main/run_tool selected_vault ve AppRoot yazma sınırıyla çalışır; restore yalnız teknik geçici dizine yapılır. Gerçek Restic/runtime kabulü fixture subprocess sözleşmesinden ayrıdır."
       ],
-      "review_sha256": "2e99f60302a1824b8a1a0467efa314ba3506718ab0d9f0baf902e4aa233fc187"
+      "review_sha256": "6d14dd9782e5c11fb66926168ad553dcb6ef48aa381bcf00cedec25e2a782ecd"
     },
     {
       "path": "src/respectedbrain/maintenance/backup/publish_git_snapshot.py",
@@ -1096,13 +1159,13 @@
     {
       "path": "src/respectedbrain/memory/flush.py",
       "role": "Bağlamla çalışan ürün servisi",
-      "purpose": "Direct CLI/API/hook, catch-up ve precompact arşivini session/provenance kilitleri altında doğrular. Native alanlar, nested metadata, available hook provenance, provider ve kanonik UUID sahipliği ortak sınırdan geçer; compatibility-only ve eksik owner reddedilir. Immutable snapshot byte'ı model, arşiv ve timestamp için kullanılır. Arşivden önce archived, günlükten önce pending checkpoint yazar. Ortak owner kontrolü finite timestamp, turns/attempts/hash türleri ve pending özet/tarih/reason/provider/daily_written sözleşmesini doğrular; günlük yazıldı iddiası tek geçerli kalıcı marker bloğunu gerektirir ve insan editleri korunur. FLUSH_REASONS yazıcı ve okuyucunun ortak işlem nedenidir; geçersiz giriş model/checkpoint öncesi reddedilir. Naive giriş zamanı timezone ile kaydedilir. Bozuk kayıt korunur; sağlıklı catch-up adayı devam eder. Ayrılmış session işaretçileri reddedilir; bozuk health JSON sayıları hata raporlamasını çökertmez.",
+      "purpose": "Direct CLI/API/hook, catch-up ve precompact arşivini session/provenance kilitleri altında doğrular. Native alanlar, nested metadata, available hook provenance, provider ve kanonik UUID sahipliği ortak sınırdan geçer; compatibility-only ve eksik owner reddedilir. Immutable snapshot byte'ı model, arşiv ve timestamp için kullanılır. Arşivden önce archived, günlükten önce pending checkpoint yazar. Ortak owner kontrolü finite timestamp, turns/attempts/hash türleri ve pending özet/tarih/reason/provider/daily_written sözleşmesini doğrular; günlük yazıldı iddiası tek geçerli kalıcı marker bloğunu gerektirir ve insan editleri korunur. FLUSH_REASONS yazıcı ve okuyucunun ortak işlem nedenidir; geçersiz giriş model/checkpoint öncesi reddedilir. Naive giriş zamanı timezone ile kaydedilir. Bozuk kayıt korunur; sağlıklı catch-up adayı devam eder. Ayrılmış session işaretçileri reddedilir; bozuk health JSON sayıları hata raporlamasını çökertmez. Özetleyici isteminde döküm sınırları her istek için rastgele kod taşır; döküm kendi kapanış işaretini taklit edemez. Özetleyiciye giden döküm ve yazılan özet maskelenir; opt-in arşiv veri kökünde maskelenmiş olarak tutulur.",
       "relationships": [
         "cli.py available hook payload'ını taşır; lifecycle.py precompact arşivini _flush_session_transcript'e verir. Catch-up provenance, timestamp ve tüketimde aynı snapshot'ı kullanır; ModelService yalnız doğrulanmış turn'leri özetler.",
         "core.platform dosya kilidi/containment ve core.config atomik JSON kullanılır. events projection pending checkpoint'ten günlük/model tekrarı olmadan sürer.",
         "f7_transcript_integrity_test kabul açıklarını, archive takeover, raw hook conflict, nested/null metadata, provider/UUID çakışması, provenance cleanup ve timestamp swap'ı byte koruması ve gerçek retry/revizyonla sınar."
       ],
-      "review_sha256": "881f55c9316561185e2380e59386e8bc9e0ddd5075e83fee142f56ce310dbcc3"
+      "review_sha256": "d3336f01c64c03ffb55c0cfb2de87553700b94401a19631db1e8c90cd79709fb"
     },
     {
       "path": "src/respectedbrain/memory/graph/__init__.py",
@@ -1135,11 +1198,20 @@
     {
       "path": "src/respectedbrain/memory/lifecycle.py",
       "role": "Bağlamla çalışan ürün servisi",
-      "purpose": "start/prompt/turn/end/precompact/postcompact olaylarında sınırlı Companion/maps/daily bağlamını oluşturur, prompt sayacı ve reflection debt'i yönetir, flush/compile child işlerini başlatır. Hook provenance kaydı otomatik temizlenmez; kalıcı çelişki korunur. Eski İngilizce ve üretilen Türkçe oturum başlıklarını okur. Precompact Session-Logs arşivini hedef containment kontrolünden sonra ortak flush kilit/doğrulama yolunda snapshot byte'ından üretir.",
+      "purpose": "start/prompt/turn/end/precompact/postcompact olaylarında sınırlı Companion/maps/daily bağlamını oluşturur, prompt sayacı ve reflection debt'i yönetir, flush/compile child işlerini başlatır. Hook provenance kaydı otomatik temizlenmez; kalıcı çelişki korunur. Eski İngilizce ve üretilen Türkçe oturum başlıklarını okur. Precompact Session-Logs arşivini hedef containment kontrolünden sonra ortak flush kilit/doğrulama yolunda snapshot byte'ından üretir. capture_mode=manual iken oturum özeti başlatılmaz; oturum pending-capture olarak saklanır ve yalnız index-refresh çalışır. Elle yakalama modunda PreCompact oturum dökümünü kasaya kopyalamaz. PreCompact dökümü yalnızca archive_transcripts açıksa, veri kökünde (kasada değil) ve saklama süresiyle tutulur; kapalıyken yalnızca oturum-döküm bağlantısı kaydedilir.",
       "relationships": [
         "integrations.hooks.bridge payload normalizasyonuyla handle_event çağırır. bootstrap.launcher_argv kaynak Python ve frozen executable komutlarını ayırır; core.coordination.guarded_writer UUID yazıcı lease sağlar; state DataRoot altındadır. reentrant hook guard döngüyü engeller; maps.refresh_maps başlangıç haritalarını üretir."
       ],
-      "review_sha256": "6b2b58d9f8d53ca52a0480796f0c401c289311c1dca8adc64ea8705ec61ef83f"
+      "review_sha256": "73f5b2cc9a3881df918a65e04a1fcbbedead721b76298468b3b5ac73ea55d467"
+    },
+    {
+      "path": "src/respectedbrain/memory/redact.py",
+      "role": "Gizli bilgi maskeleme",
+      "purpose": "Özel anahtar blokları, JWT, bearer/basic kimlik bilgileri, sağlayıcı belirteçleri, URL içindeki parolalar ve adı gizli bilgi bildiren ad=değer çiftlerini (Türkçe dahil) [REDACTED:...] ile değiştirir. Özetleyiciye giden döküm, yazılan özet ve opt-in arşiv için kullanılır; en iyi çaba yöntemidir.",
+      "relationships": [
+        "memory/flush.py (build_flush_prompt, özet yazımı, arşiv) çağırır; tests/test_redact.py ve f7_transcript_integrity_test.py ile doğrulanır."
+      ],
+      "review_sha256": "9dbc394b7ec30852548394c3dfdf1674a75ece1fb80e84ac3bc7818b9033b3ca"
     },
     {
       "path": "src/respectedbrain/memory/session_brain.py",
@@ -1159,42 +1231,6 @@
         "session_brain.load_session_index ve core atomik byte yazıcısını kullanır; explicit input/output yolunda reparse kontrolü yapar. HTML harici vis-network scripti kullanır; JavaScript davranışı testte Node + DOM/vis double ile sınanır; bu checkout içinde CLI çağrısı yok."
       ],
       "review_sha256": "8d3b4bfaa3a521c7d04ae90292521e4a4107347b7281480f567d974a6765edfb"
-    },
-    {
-      "path": "src/respectedbrain/orchestration/__init__.py",
-      "role": "Python paket sınırı",
-      "purpose": "orchestration altındaki isolated code worktree worker servislerini tek import namespace altında toplar; kullanıcı dosyasına erişmeden paket import edilebilmesini sağlar.",
-      "relationships": [
-        "Alt modüller explicit AppContext/roots ile çalışır; initializer kurulum, süreç başlatma veya state yaratma işlemi yapmaz. Setuptools namespace=false paket keşfi için __init__.py gereklidir."
-      ],
-      "review_sha256": "9ad1eb314397adfb8e6b3e888f2c51651e829e2ca3cc592439dba6ba8871bd5c"
-    },
-    {
-      "path": "src/respectedbrain/orchestration/antigravity_orchestrator.py",
-      "role": "Bağlamla çalışan ürün servisi",
-      "purpose": "Guarded Antigravity read/write lane, dirty-input baseline, worker sınıflandırma, acceptance, scope ve patch kanıtını yönetir. Policy permission-bypass booleanı worker komutuna aktarılır; acceptance sonrası kapsam tekrar doğrulanır, değişen dosyanın junction ancestorı reddedilir.",
-      "relationships": [
-        "runner explicit proje sınırını sağlar; Policy/RunRequest/Lane/WriterLock kaynak ve teknik state ayrımını korur. Production run CLI politikayı açıkça iletir; direct run_worker eski default sözleşmesini korur. Run kimliği aynı saniye çakışmasını UUID ekiyle önler."
-      ],
-      "review_sha256": "1ba94e88e5a77e53fb71aedc7fed39d85e3bfadc9991ed70ee5ae5dccb4728ff"
-    },
-    {
-      "path": "src/respectedbrain/orchestration/orchestrate.py",
-      "role": "Bağlamla çalışan ürün servisi",
-      "purpose": "Any-to-Any runner.run fonksiyonunu programatik kullanım için dışa açan ince uyumluluk girişidir.",
-      "relationships": [
-        "CLI ve gateway esas davranış için runner'a gider; ayrı worker yaşam döngüsü uygulamaz."
-      ],
-      "review_sha256": "1a67dec94b9e6245fcbe7a1641ca1ebb2ed0b41579a980d149edf3e317409ed7"
-    },
-    {
-      "path": "src/respectedbrain/orchestration/runner.py",
-      "role": "Bağlamla çalışan ürün servisi",
-      "purpose": "Explicit projede UUID ekli run/worktree ve DataRoot metadata/spec oluşturur. Baseline binary/full-index patch committed/unstaged/yeni dosyaları taşır; acceptance hatası nonzero döner. Listeleme güvenli patch/result yollarını ve alan türlerini denetler, önizleme 60.000 karakter okur.",
-      "relationships": [
-        "CLI/gateway run/list/apply/reject girişlerini kullanır; run kökü, metadata, listeleme kanıtı ve cleanup hedeflerindeki link/reparse bileşenleri reddedilir. Metadata atomik, worker spec run state dizinindedir; gerçek provider çağrısı kullanıcı operasyonudur."
-      ],
-      "review_sha256": "a932577825961cc267b04ca5469418d491ce932b951ddba54e081ba643702326"
     },
     {
       "path": "src/respectedbrain/providers/__init__.py",
@@ -1231,15 +1267,6 @@
         "ConfigStore eksik user config alanlarını buradan tamamlar; wizard explicit false'u default üzerine korur."
       ],
       "review_sha256": "5f3d511ef367c9402a13ed1098ed0ec62283062c284e56cf5341a93cfec56f58"
-    },
-    {
-      "path": "src/respectedbrain/resources/gateway/web/index.html",
-      "role": "Değişmez paket kaynağı",
-      "purpose": "Yerel kontrol merkezinin HTML/CSS/JavaScript arayüzüdür: provider ayarları, memory/health, arama ve worktree diff sunar. Güncelleme uç noktası unavailable verdiğinde yeni sürüm bulunduğunu iddia etmez.",
-      "relationships": [
-        "gateway.server ResourceCatalog ile servis eder; UI aynı origin /api uçlarını kullanır. foundation_services_test güncelleme mesajını Node içinde fetch/toast doubles ile gerçek checkUpdates fonksiyonunda doğrular."
-      ],
-      "review_sha256": "236e54bdf9b69d8ac357166510d8aa8f901938a5b3b11bba91e12589a17e98be"
     },
     {
       "path": "src/respectedbrain/resources/instructions/default.md",
@@ -1433,11 +1460,11 @@
     {
       "path": "src/respectedbrain/resources/skills/kod-orkestrasyon/SKILL.md",
       "role": "Kurulabilir ajan becerisi",
-      "purpose": "Any-to-Any worker'ı explicit code project/worktree ownership ile çalıştırma, patch/acceptance inceleme ve açık apply sırasını verir.",
+      "purpose": "Any-to-Any worker'ı explicit code project/worktree ownership ile çalıştırma, patch/acceptance inceleme ve açık apply sırasını verir. İçerik Orchestrator MCP araçlarına (orchestrator_task_start/progress/evidence/apply/memory_note) yönlendirir; beceri adı ve dağıtımı korunur.",
       "relationships": [
         "ResourceCatalog ve rendering.skill_writes kaynak metni kişisel UUID override önceliğiyle ajan skill hedefine planlar; public native launcher komutları ayrı sistem Python/kaynak checkout gerektirmez."
       ],
-      "review_sha256": "f0111bf4c5ddc56f7f4f16f5fe4159944340c0ebfb4a49c3a9f21cb5a05f49a9"
+      "review_sha256": "480bc987ee9aea8a3f60adfff16717cede16e1da28e4f97072199518c2bee50f"
     },
     {
       "path": "src/respectedbrain/resources/skills/obsidian-layout/SKILL.md",
@@ -1710,6 +1737,96 @@
       "review_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
+      "path": "src/respectedbrain/rpp.py",
+      "role": "RPP sunucusu",
+      "purpose": "SecondBrain'in RPP v1.0/v1.1 sunucusu: manifest/health/settings.* ve v1.1 işlemleri (lifecycle.*, integrations.plan, memory.grant/revoke/recall/write/index/semantic/capture). Tek JSON isteği alır, tek JSON yanıt döndürür; hiçbir işlem çağıran tarafından yol, vault veya kimlik kabul etmez. memory.search, memory.note.read, memory.capture.note ve memory.briefing.run işlemleri ile memory_workspace kapasitesi eklendi. mcp_write, archive_transcripts ve transcript_retention_days ayarları eklendi.",
+      "relationships": [
+        "Hub rpp.rs allow-list'iyle çağırır; Orchestrator memory.recall/write için kullanır. Kapasiteler CAPABILITY_DETAILS ile 1.0 manifestinden gizlenir; testleri tests/test_rpp*.py."
+      ],
+      "review_sha256": "eb6736847238d5c996e74378067595edb1502b629bd2a748b286d86bc8b330c4"
+    },
+    {
+      "path": "src/respectedbrain/rpp_integrations.py",
+      "role": "RPP işlemi",
+      "purpose": "integrations.plan: istenen AI istemci entegrasyonlarının (global kural/hook, MCP, zamanlama, kısayol) hangi dosyaları tam olarak değiştireceğini, hangi istemcilerin bulunduğunu ve hangi kayıtların eski haline döneceğini YAZMADAN hesaplar. İstemci başına seçim (clients/mcp_clients) ve geri yükleme önizlemesi içerir. Önizleme geri alma satırları da girdi düzeyindeki geri almayı kullanır. Önizleme geri alma satırları delta tabanlı sahiplik kaydını kullanır.",
+      "relationships": [
+        "Uygulama yine kurucudur (setup/update/repair); plan aynı rendering.plan_integrations ve ownership manifest'ini kullanır. Hub sihirbazı önizlemeyi gösterir; testleri tests/test_rpp_integrations.py."
+      ],
+      "review_sha256": "d503f59be952bedacc3d85bfceab83fdf7c2b8ded0175d5edc01810680171a12"
+    },
+    {
+      "path": "src/respectedbrain/rpp_lifecycle.py",
+      "role": "RPP işlemi",
+      "purpose": "lifecycle.plan/apply/status/rollback ve operation.receipt: kurulum motorunu (Transaction, ownership manifest) RPP üzerinden sunar; ilk kasa kurulumu (create_vault) AI istemci yapılandırmasına yazmadan şablonu açar. Kurulum durumunu sahiplik manifestinden raporlar.",
+      "relationships": [
+        "Hub brain.rs ve lifecycle köprüsü kullanır; installation/* motorunu çağırır, yeni yaşam döngüsü kodu yazmaz. Testleri tests/test_rpp_lifecycle.py, tests/test_rpp_vault.py."
+      ],
+      "review_sha256": "59136430d8fb7fae0774ab231b69e2900a86fc7ae258421dce7fd5978c7fa46b"
+    },
+    {
+      "path": "src/respectedbrain/rpp_memory.py",
+      "role": "RPP işlemi",
+      "purpose": "memory.grant/revoke/recall: kullanıcı onaylı gizli jeton (yalnız SHA-256 saklanır) ile sınırlı, salt okunur, kısa snippet'li hafıza erişimi. Recall dizinde yalnız dosyanın güncel sha256'sı indekslenenle aynıysa sonuç döndürür; mode (auto/fts/semantic/hybrid) ile anlamsal arama birleştirilir. Sorgu hattı run_query olarak ayrıldı; jetonlu recall ve kullanıcının kendi aramaları aynı doğrulamalı hattı kullanır.",
+      "relationships": [
+        "rpp_memory_grants jeton deposunu, search/engine ve search/semantic dizinleri kullanır; Orchestrator memory.py tüketir. Testleri tests/test_rpp_memory.py, test_rpp_memory_op.py."
+      ],
+      "review_sha256": "7eabefa27e35ff9dd7e84e9b2226c9d9851702d3a864bb6634a0e283b311bd13"
+    },
+    {
+      "path": "src/respectedbrain/rpp_memory_capture.py",
+      "role": "RPP işlemi",
+      "purpose": "memory.capture.run: capture_mode=manual iken bekleyen AI oturumlarını (hook yükleri) ve Codex/Antigravity transkriptlerini kullanıcı isteğiyle hafızaya özetler, değişen günleri derler.",
+      "relationships": [
+        "memory.lifecycle manuel modda oturumu pending-capture-*.json olarak saklar; bu işlem memory.flush.flush_transcript ile işler. Hub 'Bekleyen oturumları şimdi yakala' düğmesi çağırır; testi tests/test_index_freshness.py."
+      ],
+      "review_sha256": "e47063b3d96b77c3a21cc9858a29a7d3e492a321d42039da3ac302d53ef8970b"
+    },
+    {
+      "path": "src/respectedbrain/rpp_memory_grants.py",
+      "role": "RPP işlemi",
+      "purpose": "Hafıza erişim izinleri: jeton oluşturma (yalnız hash saklanır), iptal, doğrulama; her izin bir kasaya bağlıdır ve isteğe bağlı write bayrağı taşır (yazma ayrı izindir).",
+      "relationships": [
+        "rpp_memory ve rpp_memory_write doğrular; Hub memory_access izni oluşturup Orchestrator ayarına verir. Testleri tests/test_rpp_memory_grants.py."
+      ],
+      "review_sha256": "a1a4bb47ecff146a57a0136a1e3c53face246ebacda56f95a6d8badc4a578bfa"
+    },
+    {
+      "path": "src/respectedbrain/rpp_memory_index.py",
+      "role": "RPP işlemi",
+      "purpose": "memory.index.status/refresh: arama dizininin tazeliğini okur ve onaylı biçimde artımlı yeniler (FTS ve açıksa anlamsal vektörler); operasyon kimliğiyle idempotent.",
+      "relationships": [
+        "search/engine ve search/freshness kullanır; Hub hafıza dizini paneli çağırır. Testleri tests/test_rpp_memory_index*.py."
+      ],
+      "review_sha256": "744b75f6c4a5e27f24054059ac1937c8e1a5fb2d9a3c036d779acc0dba358c53"
+    },
+    {
+      "path": "src/respectedbrain/rpp_memory_semantic.py",
+      "role": "RPP işlemi",
+      "purpose": "memory.semantic.status/configure/pull: opsiyonel yerel anlamsal aramanın durumunu okur, açıp kapatır ve (yalnız açık onayla) sabitlenmiş çalışma zamanı ve modeli indirir. Yazdığı tek yapılandırma semantic.json'dur.",
+      "relationships": [
+        "search/semantic.py'yi çağırır; Hub MemoryIndex paneli kullanır. Testleri tests/test_rpp_memory_semantic.py."
+      ],
+      "review_sha256": "3f31a49b0988e8f386ca9c5680696269930fb9cc751c95dc26149fd09f583a2e"
+    },
+    {
+      "path": "src/respectedbrain/rpp_memory_workspace.py",
+      "role": "RPP işlemi",
+      "purpose": "Hub'ın kullanıcıya dönük hafıza işlemleri: memory.search (jetonsuz, recall ile aynı salt okunur ve hash doğrulamalı hat), memory.note.read (yalnız kasa içindeki .md notları, sınırlı), memory.capture.note (Dump gelen kutusuna yeni not, üzerine yazmaz, operasyon kimliğiyle idempotent, yazımdan sonra dizin tazelenir) ve memory.briefing.run (zamanı gelmişse brifing). Yol/kimlik kabul etmez.",
+      "relationships": [
+        "Hub brain komutları (webview köprüsü memory.* işlemlerini engeller) çağırır; rpp_memory.run_query, integrations/notes ve search/freshness kullanır. Eski yerel panelin arama/okuma/yakalama işlevlerinin yerine geçer. Testi tests/test_rpp_memory_workspace.py."
+      ],
+      "review_sha256": "22d5fbe0b4b199a33b4f03a797b865faa866bd2253906e42e674d2e1d3e82557"
+    },
+    {
+      "path": "src/respectedbrain/rpp_memory_write.py",
+      "role": "RPP işlemi",
+      "purpose": "memory.write/revert: write izinli jetonla vault'ta yalnız sabit gelen kutusu klasörüne YENİ not oluşturur (üzerine yazmaz, atomik, idempotent, sahiplik front matter'ı); düzenlenmemiş notu geri alır. Not oluşturma ve geri alma ortak _create/_revert işlevlerine ayrıldı; MCP için write_mcp/revert_mcp (mcp gelen kutusu, sahiplik kaydı) eklendi.",
+      "relationships": [
+        "rpp_memory_grants doğrular, search/freshness yazımdan sonra dizini tazeler; Orchestrator orchestrator_memory_note aracı çağırır. Testleri tests/test_rpp_memory_write.py."
+      ],
+      "review_sha256": "c99d7aa75681be28dcf41bdf2b64a03088f001758722ca4511915d55d4c9a0e5"
+    },
+    {
       "path": "src/respectedbrain/search/__init__.py",
       "role": "Python paket sınırı",
       "purpose": "search altındaki SQLite FTS5 indeks/search servisini tek import namespace altında toplar; kullanıcı dosyasına erişmeden paket import edilebilmesini sağlar.",
@@ -1721,12 +1838,30 @@
     {
       "path": "src/respectedbrain/search/engine.py",
       "role": "Bağlamla çalışan ürün servisi",
-      "purpose": "SQLite FTS5/BM25 indeksi, kategori araması ve path/alias/anchor backlink sorgusu sağlar. Artımlı indeks kararını gerçek dosya bayt hash'iyle verir; yalnız mtime'a güvenmez. Değişmeyen dosyalarda metin çözümleme ve no-op SQL güncellemeleri ötelenir. Frontmatter yalnız baştaki delimiter satırları arasında ayrıştırılır.",
+      "purpose": "SQLite FTS5/BM25 indeksi, kategori araması ve path/alias/anchor backlink sorgusu sağlar. Artımlı indeks kararını gerçek dosya bayt hash'iyle verir; yalnız mtime'a güvenmez. Değişmeyen dosyalarda metin çözümleme ve no-op SQL güncellemeleri ötelenir. Frontmatter yalnız baştaki delimiter satırları arasında ayrıştırılır. open_read_only ve index_state ile salt okunur açılış ve bayatlık raporu eklendi; recall bu garantiye dayanır.",
       "relationships": [
         "CLI search, MCP, gateway ve bounded_recall aynı UUID cache veritabanını kullanır. Constructor ve her connection DB/journal/WAL/SHM yollarını DataRoot sınırında doğrular; writer lease indeks yazımını koordine eder.",
         "Vault taraması link/junction ve nested excluded dizinleri geçmez; sorgu sonuçlarında da güncel yol sınırı kontrol edilir. FTS fallback kategori koşulunu korur; nonpositive search/backlink limit boş sonuç üretir. read_head/parse_frontmatter_head API yardımcıları korunur."
       ],
-      "review_sha256": "95dacbdc61f276397ced2fac36d23fe1a9d7bc12a80641163ed99d093602ef24"
+      "review_sha256": "1b29f048ca2e18232e165a49881ac08e4ca581b5609628b12cc5e36a874a3ff7"
+    },
+    {
+      "path": "src/respectedbrain/search/freshness.py",
+      "role": "Bağlamla çalışan ürün servisi",
+      "purpose": "Arama dizinini ürünün kendi süreçlerinde (oturum başı, flush sonu, günlük görev, memory.write sonrası, index-refresh) artımlı tazeleyen en-iyi-çaba yardımcı; Hub veya sürekli çalışan süreç gerektirmez. Anlamsal vektörleri de günceller.",
+      "relationships": [
+        "cli.py, rpp_memory_index.py ve rpp_memory_write.py çağırır; search/engine ve search/semantic kullanır. Testi tests/test_index_freshness.py."
+      ],
+      "review_sha256": "3c4452bad95a94ac981d31556ed4fb6eea64a3da7a13657f10b77eceecb725c7"
+    },
+    {
+      "path": "src/respectedbrain/search/semantic.py",
+      "role": "Bağlamla çalışan ürün servisi",
+      "purpose": "Opsiyonel yerel anlamsal arama: sabitlenmiş llama.cpp çalışma zamanı + bge-m3 modeli (veya kullanıcının Ollama'sı) ile not başına vektör üretir, ayrı SQLite dosyasında saklar, kosinüs ile sıralar. Uç nokta yalnız loopback; çalışma zamanı işlem başına açılıp kapanır; indirmeler sha256 doğrulamalıdır. Çalışma zamanı arşivi .part klasörüne açılır ve tamamlanınca yerine taşınır; yarım açılmış çalışma zamanı kalmaz.",
+      "relationships": [
+        "rpp_memory (recall mode), rpp_memory_semantic ve search/freshness kullanır; FTS motoruna dokunmaz, kapalıyken hiçbir şey yapmaz. Testi tests/test_rpp_memory_semantic.py."
+      ],
+      "review_sha256": "3f21b0d765e7439ddb81e6ce553c2314ac53401421f8bc24eab47a72b389c5f5"
     },
     {
       "path": "src/respectedbrain/vault/__init__.py",
@@ -1773,26 +1908,6 @@
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.providers`, `respectedbrain.memory`, `respectedbrain.core`."
       ],
       "review_sha256": "3d3da4f9750db432acf57b5e605321b19f70932e718d391adb2f30b588fdb810"
-    },
-    {
-      "path": "tests/antigravity_orchestrator_test.py",
-      "role": "Davranış/regresyon testi",
-      "purpose": "Worker lane izolasyonu, sahiplik kapsamı, kilit, tek süreç çalıştırma, hata/redaction, acceptance timeout ve ana checkout'a dokunmadan patch export sözleşmesini sınar. Odak örnekleri: `test_policy_defines_guarded_single_writer_defaults`, `test_worker_templates_define_bounded_handoff_sections`, `test_load_policy_and_resolve_expanded_executable_candidate`.",
-      "relationships": [
-        "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
-        "Doğrudan sınadığı ürün import noktaları: `respectedbrain.orchestration`, `respectedbrain.core.context`, `respectedbrain.core.paths`, `respectedbrain.core.resources`."
-      ],
-      "review_sha256": "2ff076d1e4e5a466aebc41d056e47d676a907db284a312bcfebb94494c079c8d"
-    },
-    {
-      "path": "tests/any_to_any_orchestrator_test.py",
-      "role": "Davranış/regresyon testi",
-      "purpose": "Any-to-Any run slug'ını, gerçek Git worktree izolasyonunu ve worker patch toplama davranışını sınar. Odak örnekleri: `test_slugify`, `test_worktree_isolation_setup`, `test_patch_collection`. Worker spesifikasyonunun kaynak dosyalarını ezmeden run state dizininde tutulduğunu doğrular.",
-      "relationships": [
-        "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
-        "Doğrudan sınadığı ürün import noktaları: `respectedbrain.orchestration.runner`."
-      ],
-      "review_sha256": "197a1f764ac546e0f68b73fea342ff32485ed551f9e6c80376e9958fdb68b7e6"
     },
     {
       "path": "tests/auto_updater_test.py",
@@ -1865,11 +1980,11 @@
     {
       "path": "tests/entry_review_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "CLI flush başarısızlık/cleanup/late-edit, parsed writer admission ve abbreviation, güvenli evidence listing, provider log junction budama/normal keşif ve frozen bootstrap kök sözleşmelerini geçici fixturelerle sınar.",
+      "purpose": "CLI flush başarısızlık/cleanup/late-edit, parsed writer admission ve abbreviation, güvenli evidence listing, provider log junction budama/normal keşif ve frozen bootstrap kök sözleşmelerini geçici fixturelerle sınar. Kaldırılan orchestration listeleme testleri çıkarıldı.",
       "relationships": [
         "13 davranış kontrolü; CLI/bootstrap ile bakım/history/orchestration gerçek servisleri kullanılır. Gereken dış servis sonucuna dar stub uygulanır; gerçek provider veya kişisel kasa taraması yapılmaz."
       ],
-      "review_sha256": "fa0177ae238440ad66b94f04d053f0cb609a2eca062226d0315644d8649f6ebd"
+      "review_sha256": "f4cff5538acbcc73ce5f175ae7ea1e9a80c38ed291b35db69695150297a0931f"
     },
     {
       "path": "tests/event_log_test.py",
@@ -1884,12 +1999,12 @@
     {
       "path": "tests/f7_transcript_integrity_test.py",
       "role": "Güvenlik ve veri bütünlüğü regresyon testi",
-      "purpose": "F7 davranış regresyonları: gerçek lock timeout/byte koruması, direct/raw hook provenance, foreign precompact archive/owner, compatibility/orphan retleri, nested/null metadata, provider/UUID kimliği, immutable gövde/timestamp, Antigravity invocation ve native hata protokolü. Pending kaydın her alanı ve top-level timestamp/turns/hash/attempts için bozuk tür/değer tablosu; ret halinde checkpoint/compatibility byte koruması, sıfır model çağrısı ve sağlıklı catch-up adayının devamı doğrulanır. Geçersiz işlem nedeni yeni checkpoint/model çağrısı oluşturmadan reddedilir. daily_written=True için eksik/insanla değiştirilmiş/çift/bozuk marker günlükleri başarı sayılmaz. Bozuk health NaN hata raporlamasını çökertmez; model/doğrudan günlük işaretçisi enjeksiyonu reddedilir.",
+      "purpose": "F7 davranış regresyonları: gerçek lock timeout/byte koruması, direct/raw hook provenance, foreign precompact archive/owner, compatibility/orphan retleri, nested/null metadata, provider/UUID kimliği, immutable gövde/timestamp, Antigravity invocation ve native hata protokolü. Pending kaydın her alanı ve top-level timestamp/turns/hash/attempts için bozuk tür/değer tablosu; ret halinde checkpoint/compatibility byte koruması, sıfır model çağrısı ve sağlıklı catch-up adayının devamı doğrulanır. Geçersiz işlem nedeni yeni checkpoint/model çağrısı oluşturmadan reddedilir. daily_written=True için eksik/insanla değiştirilmiş/çift/bozuk marker günlükleri başarı sayılmaz. Bozuk health NaN hata raporlamasını çökertmez; model/doğrudan günlük işaretçisi enjeksiyonu reddedilir. Arşivin opt-in, maskeli, kasa dışı ve saklama süreli olduğu; özetteki kimlik bilgisinin notlara girmediği test edilir.",
       "relationships": [
         "memory.flush üretim parser, model staging, OS kilidi ve persistence yollarını izole make_context fixture'larında çalıştırır; canlı kasa/provider kullanılmaz. Bridge → CLI olumlu akışlarında CLI saati NOW ile sabittir; gerçek gün/gece yarısı fixture günlük yolunu değiştirmez.",
         "core.context.ModelResult ve foundation_support.make_context deterministic model ve iki test kasası sağlar; yarış takvimi ve disk/model hataları kontrollü enjekte edilir."
       ],
-      "review_sha256": "c37af25bce1ae6354c8b397a8d8d4f1c4e25ea12a1205dcd2301405541b87ae6"
+      "review_sha256": "d98b196218db2e46708719ce82a51f3028787722ee49e13c643819da700e384d"
     },
     {
       "path": "tests/foundation_cli_test.py",
@@ -1953,12 +2068,12 @@
     {
       "path": "tests/foundation_integrations_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Provider hooks/notify/MCP/task/shortcut/registry plan ve CAS davranışlarında bilinmeyen kullanıcı alanları/notify zinciri/skill sahipliğinin korunmasını sınar. Odak örnekleri: `test_disabled_options_produce_no_new_registration`, `test_native_hooks_and_notify_preserve_existing_user_data`, `test_native_mcp_preserves_unknown_servers_and_settings`. Ayrıca geçici junction fixturelarıyla DataRoot dış kayıt kilitleri ve talimat/skill override sınırlarını; stub PowerShell timeout davranışını sınar. İki native Windows kayıt testi gerçek OS kaydı gerektirir; kaynak incelemesindeki güvenli seçkide çalıştırılmaz.",
+      "purpose": "Provider hooks/notify/MCP/task/shortcut/registry plan ve CAS davranışlarında bilinmeyen kullanıcı alanları/notify zinciri/skill sahipliğinin korunmasını sınar. Odak örnekleri: `test_disabled_options_produce_no_new_registration`, `test_native_hooks_and_notify_preserve_existing_user_data`, `test_native_mcp_preserves_unknown_servers_and_settings`. Ayrıca geçici junction fixturelarıyla DataRoot dış kayıt kilitleri ve talimat/skill override sınırlarını; stub PowerShell timeout davranışını sınar. İki native Windows kayıt testi gerçek OS kaydı gerektirir; kaynak incelemesindeki güvenli seçkide çalıştırılmaz. Kısayol open komutunu çağırır; hook komutu tırnaklama testi (Git Bash dahil) eklendi. Manifestin tam dosya kopyası yerine delta ve parmak izi sakladığı test edilir.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.core.context`, `respectedbrain.core.paths`, `respectedbrain.core.resources`, `respectedbrain.core.errors`, `respectedbrain.integrations.backend`, `respectedbrain.integrations.rendering`, `respectedbrain.integrations.scheduling.service`, `respectedbrain.integrations.hooks.codex_notify`, `respectedbrain.integrations.hooks.bridge`, `respectedbrain.installation.ownership`, `respectedbrain.installation.transaction`."
       ],
-      "review_sha256": "a589431b1a7bf5c4f68226fdab00c461e55f0757ce1ec6904eeb78215c9bbfcc"
+      "review_sha256": "fc07986df730fe9b173786e936b38947faf3d08513e42d12743ad0e863306ef3"
     },
     {
       "path": "tests/foundation_locking_test.py",
@@ -1973,12 +2088,12 @@
     {
       "path": "tests/foundation_maintenance_orchestration_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Bakım ve kod worktree servislerinin seçilmiş context sınırını, cross-volume note replace'i, DataRoot receipt ve code-project/vault ayrımını sınar. Odak örnekleri: `test_tools_use_selected_vault_without_app_or_other_vault_writes`, `test_explicit_tool_vault_mismatch_fails_before_mutation`, `test_orchestration_project_is_not_vault_and_logs_are_data`.",
+      "purpose": "Bakım ve kod worktree servislerinin seçilmiş context sınırını, cross-volume note replace'i, DataRoot receipt ve code-project/vault ayrımını sınar. Odak örnekleri: `test_tools_use_selected_vault_without_app_or_other_vault_writes`, `test_explicit_tool_vault_mismatch_fails_before_mutation`, `test_orchestration_project_is_not_vault_and_logs_are_data`. Kaldırılan orchestration/antigravity/gateway-run testleri çıkarıldı; bakım araçları testleri kalır. Restic sahte süreçleri depo yoklaması/init çağrılarını da karşılar. Restic taklidi geri yüklenen vault kopyasını üretir (içerik doğrulaması için).",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.core.context`, `respectedbrain.core.paths`, `respectedbrain.core.resources`."
       ],
-      "review_sha256": "7a618d434abc0c3c515d08fc36f24361c75bda064a3b159ab3ef845d8ea682fc"
+      "review_sha256": "d93437d7ecbbf2b0aae4807b4fd1d5d10b8e58bbef20576b5ffc5a78d9822375"
     },
     {
       "path": "tests/foundation_memory_test.py",
@@ -2032,12 +2147,12 @@
     {
       "path": "tests/foundation_packaged_commands_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Paket içindeki kullanıcı rehberlerinin emekli engine yollarını çalıştırmamasını, public CLI komut örneklerini ve UUID/state teşhis sözleşmesini sınar. Odak örnekleri: `test_installed_guides_do_not_execute_retired_vault_or_checkout_engines`, `test_native_examples_parse_against_public_cli_and_known_maintenance_tools`, `test_instructions_explain_registered_identity_and_separate_state`.",
+      "purpose": "Paket içindeki kullanıcı rehberlerinin emekli engine yollarını çalıştırmamasını, public CLI komut örneklerini ve UUID/state teşhis sözleşmesini sınar. Odak örnekleri: `test_installed_guides_do_not_execute_retired_vault_or_checkout_engines`, `test_native_examples_parse_against_public_cli_and_known_maintenance_tools`, `test_instructions_explain_registered_identity_and_separate_state`. orchestrate komutu beklentisi kaldırıldı. open komutu beklentisi eklendi.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.cli`, `respectedbrain.core.resources`, `respectedbrain.maintenance`."
       ],
-      "review_sha256": "ccceb9ab5acae0a3f2bb310fd3913f82fcd92732660f6b3cbcfa969dea10ebb4"
+      "review_sha256": "49a83fd576e73a3efeb11b4c6f805ce8467b92480ce95051b26e0dab2e528aec"
     },
     {
       "path": "tests/foundation_paths_test.py",
@@ -2070,24 +2185,14 @@
       "review_sha256": "254c9f8d727ad9d97b68ee38d2e69fbfcc385b8add922fc59ccd9615cfa1c8e2"
     },
     {
-      "path": "tests/foundation_services_test.py",
-      "role": "Davranış/regresyon testi",
-      "purpose": "Gateway ayar değişikliklerinin legacy tree olmadan kullanıcı ConfigStore'una kaydolmasını sınar. Odak örnekleri: `test_gateway_config_is_user_config_even_without_legacy_tree`. Ayrıca gerçek geçici HTTP sunucusunda Host/Origin/Sec-Fetch-Site cross-site reddi, hatalı JSON/gövde boyutu, BusyError 503, traversal/junction, çakışmasız capture, kısmi indeksleme başarısı ve dürüst sağlık/güncelleme durumunu sınar; Node ile güncelleme UI fonksiyonunu çalıştırır.",
-      "relationships": [
-        "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
-        "Doğrudan sınadığı ürün import noktaları: `respectedbrain.gateway.server`, `respectedbrain.core.config`."
-      ],
-      "review_sha256": "4a0d18c9b4e9046ad6750e8f75334c5289030fcca15694ce612892575af818d6"
-    },
-    {
       "path": "tests/foundation_setup_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Pure yeni vault, dolu unregistered hedef reddi, tekrar kurulum/insan notu koruması ve health/busy gate sınanır. Gerçek NativeBackend geçici kökleriyle beş yerel hook'un setup/update/repair boyunca sahipli kalması, purge/keep-data uninstall'da temizlenmesi ve not hash'lerinin korunması doğrulanır. Kullanıcı değiştirdiği hook conflict ile korunur; health hatasında yerel hook kayıtları rollback edilir.",
+      "purpose": "Pure yeni vault, dolu unregistered hedef reddi, tekrar kurulum/insan notu koruması ve health/busy gate sınanır. Gerçek NativeBackend geçici kökleriyle beş yerel hook'un setup/update/repair boyunca sahipli kalması, purge/keep-data uninstall'da temizlenmesi ve not hash'lerinin korunması doğrulanır. Kullanıcı değiştirdiği hook conflict ile korunur; health hatasında yerel hook kayıtları rollback edilir. Kullanıcı ayarı eklenmiş istemci yapılandırmasında kaldırmanın başarılı olduğu ve yabancı anahtarın korunduğu test edilir.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.core.paths`, `respectedbrain.core.config`, `respectedbrain.installation.setup`, `respectedbrain.installation.ownership`, `respectedbrain.installation`, `respectedbrain.installation.transaction`."
       ],
-      "review_sha256": "8a25209b9662a2cec146464febadb727cab8bf7367bfb689bb04144e1c71d694"
+      "review_sha256": "a36191ff87c3f63211a99803b10409fbdc2f3072be08b9b791efa310db1a0881"
     },
     {
       "path": "tests/foundation_support.py",
@@ -2122,12 +2227,12 @@
     {
       "path": "tests/foundation_writer_coordination_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Maps/background orchestration dahil yazıcı lease'lerinin overlap yaparken activation'ı dışlamasını ve nested servislerin aynı lease'i paylaşmasını sınar. Odak örnekleri: `test_standalone_maps_obeys_operation_admission`, `test_live_writer_blocks_installation_and_operation_blocks_new_writer`, `test_nested_services_share_one_lease`.",
+      "purpose": "Maps/background orchestration dahil yazıcı lease'lerinin overlap yaparken activation'ı dışlamasını ve nested servislerin aynı lease'i paylaşmasını sınar. Odak örnekleri: `test_standalone_maps_obeys_operation_admission`, `test_live_writer_blocks_installation_and_operation_blocks_new_writer`, `test_nested_services_share_one_lease`. Kaldırılan arka plan orchestration writer-lease testi çıkarıldı.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.core.coordination`, `respectedbrain.core.errors`, `respectedbrain.installation.transaction`, `respectedbrain.core.locking`, `respectedbrain.vault.maps`, `respectedbrain.orchestration.runner`."
       ],
-      "review_sha256": "d4b6ec602b7398d47854e862a264f622fa4be5de6a324f2c6f70b8d40d100b33"
+      "review_sha256": "68aebdf2dc29065af22e9db604c156b337d4246b49333f15d358634f167228eb"
     },
     {
       "path": "tests/global_brand_migration_test.py",
@@ -2189,21 +2294,21 @@
     {
       "path": "tests/lifecycle_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Start context sırası/bütçesi, her 15 prompt'taki hatırlatma, concurrent sayaç, reflection end ve precompact davranışını sınar. Odak örnekleri: `test_atomic_write_retries_a_transient_replace_denial`, `test_start_builds_ordered_context_and_initializes_only_its_session`, `test_start_caps_large_context_without_losing_protected_sections`. Event projeksiyonu sonrası oturum başlangıcına bağlam ve açık konuların aktarılmasını, frozen launcher argv sözleşmesini ve gerçek Windows Session-Logs junction üzerinden dışarı yazmadan reddetmeyi doğrular.",
+      "purpose": "Start context sırası/bütçesi, her 15 prompt'taki hatırlatma, concurrent sayaç, reflection end ve precompact davranışını sınar. Odak örnekleri: `test_atomic_write_retries_a_transient_replace_denial`, `test_start_builds_ordered_context_and_initializes_only_its_session`, `test_start_caps_large_context_without_losing_protected_sections`. Event projeksiyonu sonrası oturum başlangıcına bağlam ve açık konuların aktarılmasını, frozen launcher argv sözleşmesini ve gerçek Windows Session-Logs junction üzerinden dışarı yazmadan reddetmeyi doğrular. Varsayılanda PreCompact'ın hiçbir döküm içeriği kopyalamadığı test edilir.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.memory`."
       ],
-      "review_sha256": "2bde8c459f12cc555d04a605e35c9f2628c87cbc1da467af3b7e651dee748c9e"
+      "review_sha256": "9111e892fc8f01ccc3969ff5bb0b0161468900da4b31c1b2313b0c51750e607b"
     },
     {
       "path": "tests/maintenance_review_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Bakım veri koruma regresyonları: kasa dışı merge, I/O rollback baytları, geç kullanıcı düzenlemesi, opaque timeline, volume commit hatası, date traversal, eşsiz yedek, writer gate, history collision/retry/state hatası, nested Codex kaydı ve backup/publish yanlış başarı sonuçları.",
+      "purpose": "Bakım veri koruma regresyonları: kasa dışı merge, I/O rollback baytları, geç kullanıcı düzenlemesi, opaque timeline, volume commit hatası, date traversal, eşsiz yedek, writer gate, history collision/retry/state hatası, nested Codex kaydı ve backup/publish yanlış başarı sonuçları. Restic yedeği için parola ve depo yoklaması çağrı sayısı beklentisi güncellendi.",
       "relationships": [
         "Geçici AppContext/dosya kökleri ve gerçek Windows junction kullanılır; dış Restic/Git yayın çağrıları stubbedir. unittest/CI keşfiyle çalışır, kişisel kasa taramaz."
       ],
-      "review_sha256": "a42d03d80c046c8c72c748a1ecc2a9d422ad836179143616c259f491d65b9886"
+      "review_sha256": "4ce1027d200193a2b2e3d8f99a369f8e5efd39b4087ed8489c50624b4934aa55"
     },
     {
       "path": "tests/maps_test.py",
@@ -2218,12 +2323,12 @@
     {
       "path": "tests/mcp_and_features_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "FTS index/query/category ve MCP context/capture/remember/expand araçlarının traversal/epistemik sözleşmesini; history/template/skill özelliklerini sınar. Odak örnekleri: `test_indexing_and_search`, `test_incremental_skip`, `test_category_filter`. Ayrıca MCP JSON-RPC hata sonrası devam, bildirim sessizliği, invalid args, not adı çakışması, metadata escaping, kaydedilmiş notta indeks hatası, belirsiz başlık ve junction sınırlarını doğrular.",
+      "purpose": "FTS index/query/category ve MCP context/capture/remember/expand araçlarının traversal/epistemik sözleşmesini; history/template/skill özelliklerini sınar. Odak örnekleri: `test_indexing_and_search`, `test_incremental_skip`, `test_category_filter`. Ayrıca MCP JSON-RPC hata sonrası devam, bildirim sessizliği, invalid args, not adı çakışması, metadata escaping, kaydedilmiş notta indeks hatası, belirsiz başlık ve junction sınırlarını doğrular. respected_remember güven düzeyi (inferred) beklentisi güncellendi. MCP not yazma izni, tek gelen kutusu, geri alma ve sınırlar test edilir.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.integrations.mcp.server`, `respectedbrain.maintenance.ingestion.mine_agent_history`, `respectedbrain.search.engine`, `respectedbrain.briefing.service`, `respectedbrain.memory`."
       ],
-      "review_sha256": "125498cbee26780fb387efa6f7a1afcd391912a88cf0a569b7ff4c5a4cc93e27"
+      "review_sha256": "5a0ffd9f575877ec3e7021ebd140ecc7cd96cef2407770f329977b5c0ae47d75"
     },
     {
       "path": "tests/mcp_registration_test.py",
@@ -2248,12 +2353,12 @@
     {
       "path": "tests/multiai_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Beş provider render output ve bridge normalization/transcript seçimini, WSL context/notify/fallback uyarlamalarını ve generated drift'i sınar. Odak örnekleri: `test_generated_files_have_no_drift`, `test_all_provider_configs_point_to_bridge`, `test_fresh_generated_adapters_expose_only_the_current_product_identity`. Ayrıca eksik hook workspace'in vault varsayılmadığını, Codex transcript kimliğinin alt dizisiyle yanlış oturum seçilmesini ve junction notify chain dosyasının forwarding öncesi reddini doğrular.",
+      "purpose": "Beş provider render output ve bridge normalization/transcript seçimini, WSL context/notify/fallback uyarlamalarını ve generated drift'i sınar. Odak örnekleri: `test_generated_files_have_no_drift`, `test_all_provider_configs_point_to_bridge`, `test_fresh_generated_adapters_expose_only_the_current_product_identity`. Ayrıca eksik hook workspace'in vault varsayılmadığını, Codex transcript kimliğinin alt dizisiyle yanlış oturum seçilmesini ve junction notify chain dosyasının forwarding öncesi reddini doğrular. Hook komutundaki program yolunun tırnaklı olduğu doğrulanır.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.integrations.backend`, `respectedbrain.integrations`, `respectedbrain.integrations.hooks`, `respectedbrain.providers`, `respectedbrain.core.config`."
       ],
-      "review_sha256": "7e030ae4251c5a79672335d4cc7beb2991b16f7325658518f2164a19326c9709"
+      "review_sha256": "5da5ccd69955b0d51b5f6dee2a7efea4dde554ba762e69f67b2db1caf7c49cbe"
     },
     {
       "path": "tests/naming_contract_test.py",
@@ -2264,25 +2369,6 @@
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.core`, `respectedbrain`."
       ],
       "review_sha256": "56cb252db09db95feb48041425a4da65e0c49df312e76f64b5759e8fa9e61542"
-    },
-    {
-      "path": "tests/orchestration_recovery_test.py",
-      "role": "Davranış/regresyon testi",
-      "purpose": "Provider success prose/error ayrımı, öldürmeyen PID probe, parent çıktıktan sonra tamamlanan detached worker süreçleri ve boş dosya açılış yarışı/zaman aşımı dayanıklılığını sınar. Odak örnekleri: `test_detached_process_finishes_after_parent_exits`, `test_wait_for_detached_completion_survives_empty_file_window`, `test_wait_for_detached_completion_times_out_on_unwritten_empty_file`.",
-      "relationships": [
-        "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
-        "Doğrudan sınadığı ürün import noktaları: `respectedbrain.orchestration.antigravity_orchestrator`."
-      ],
-      "review_sha256": "c68867328325ff2ba68dd0c8e85ca96a9981ba5ee5df1d3fa87e0985d3863e99"
-    },
-    {
-      "path": "tests/orchestration_review_test.py",
-      "role": "Davranış/regresyon testi",
-      "purpose": "Eşsiz run kimliği, tüm değişikliklerin binary patchte roundtrip edilmesi, insan TASK_SPEC koruması, permission policy false, acceptance sonrası scope, başarısız test çıkışı ve junction ancestor/reject sınırlarını sınar.",
-      "relationships": [
-        "Yalnız geçici Git depolarında init/commit/worktree ve yerel patch apply çalışır; gerçek AI worker başlatılmaz. Fixture core.autocrlf=false ile bayt kontrolleri host newline politikasından ayrılır."
-      ],
-      "review_sha256": "bd250456f2f7a479e547c7273aa1588a74701baa6debc3534bc5234268e3a308"
     },
     {
       "path": "tests/output_normalization_test.py",
@@ -2385,11 +2471,11 @@
     {
       "path": "tests/repository_map_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Gerçek geçici Git index ile missing/ghost/duplicate/stale hash/CRLF/new NEEDS_REVIEW/staged deletion ve Markdown drift kapılarını sınar. Odak örnekleri: `test_new_nonignored_file_is_missing_but_build_output_is_excluded`, `test_ghost_entry_is_rejected`, `test_duplicate_entry_is_rejected`.",
+      "purpose": "Geçici Git index ile missing/ghost/duplicate/stale hash/CRLF/new NEEDS_REVIEW/staged deletion/render drift; Git yasak mock'u ile filesystem source discovery ve missing-known kapılarını sınar.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz."
       ],
-      "review_sha256": "aba88473c36fbed490f3d5063f4fd7aa41760f8de1af3eff93623966075ebd50"
+      "review_sha256": "dc762384a06e77c4d332020e961d7202944584aaa961b76928150c7d856cce6c"
     },
     {
       "path": "tests/run_all.py",
@@ -2403,12 +2489,12 @@
     {
       "path": "tests/runtime_layout_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Emekli source girişlerinin yerine public CLI dispatch/UUID/exit ve pure-vault render sınırını; import yan etkisizliğini sınar. Odak örnekleri: `test_public_commands_preserve_selected_uuid_and_exit_status`, `test_setup_accepts_explicit_vault_and_gui_mode`, `test_importing_package_services_has_no_home_io_or_process_side_effect`.",
+      "purpose": "Emekli source girişlerinin yerine public CLI dispatch/UUID/exit ve pure-vault render sınırını; import yan etkisizliğini sınar. Odak örnekleri: `test_public_commands_preserve_selected_uuid_and_exit_status`, `test_setup_accepts_explicit_vault_and_gui_mode`, `test_importing_package_services_has_no_home_io_or_process_side_effect`. open komutu UUID/çıkış durumu sözleşmesine dahil edildi.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain`, `respectedbrain.integrations.rendering`, `respectedbrain.core.resources`."
       ],
-      "review_sha256": "e03f1b76236303b5fccd6513c13462ca9a6be5e9b9b7a98944c0faffc43fcb68"
+      "review_sha256": "a6c2aef484f29e9f76d229681684b9928428c4bfead53aa8a2031c5a641de6ec"
     },
     {
       "path": "tests/runtime_platform_test.py",
@@ -2438,6 +2524,15 @@
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.memory`, `respectedbrain.providers.runner`, `respectedbrain.core.config`, `respectedbrain.core.context`."
       ],
       "review_sha256": "203095cc3e35b1a771cfba3548752480ca20b36e01ec3acfe153d515f20182e9"
+    },
+    {
+      "path": "tests/search_readonly_test.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "SearchEngine.open_read_only ve index_state: dizin yokken/geçersizken kod, salt okunur açılışta dosya/dizin oluşmaması, mtime tabanlı bayatlık.",
+      "relationships": [
+        "rpp_memory ve rpp_memory_index bu garantilere dayanır; geçici dizinlerle çalışır."
+      ],
+      "review_sha256": "898240e3396463b2d01655eb869e20079ca4bc6dbf6475387fd097f0696a80c6"
     },
     {
       "path": "tests/secret_scanner_test.py",
@@ -2571,6 +2666,150 @@
       "review_sha256": "ea5621cfd675bb3d1faf7f4fca9ab9f7178f5a440b33cf3f50e223e43cff137c"
     },
     {
+      "path": "tests/test_backup_restore.py",
+      "role": "Yedek doğrulama ve geri yükleme testleri",
+      "purpose": "İşlevsel bir restic taklidiyle ilk yedekte depo başlatma, içerik karşılaştırmalı doğrulama (bozuk/eksik geri yükleme reddi), parolasız çalışmama, yeni klasöre geri yükleme (vault'a dokunulmaması) ve güvensiz hedeflerin/snapshot kimliklerinin reddini doğrular; Gerçek restic 0.19.1 ile ayrıca denendi: geri yükleme snapshot:/alt-klasör biçimini kullanır (düz geri yükleme Windows'ta C:/Users zincirini yeniden kurup hata verir).",
+      "relationships": [
+        "maintenance/backup/backup_restic.py ile çalışır."
+      ],
+      "review_sha256": "e3ee3c0550d70919d0b10f01042ee7fe86b1957715468d78c01900cfeee7eb0e"
+    },
+    {
+      "path": "tests/test_config_delta.py",
+      "role": "Delta ve minimum saklama testleri",
+      "purpose": "JSON, TOML ve Markdown istemci yapılandırmalarında istemci yeniden yazımından sonra yalnızca kendi girdilerimizin geri alındığını, kullanıcı düzenlemesinin çatışma sayıldığını, delta ve manifest/günlüklerde başkalarının gizli bilgisinin bulunmadığını ve eski günlüklerin temizlendiğini kanıtlar.",
+      "relationships": [
+        "integrations/delta.py, backend.py, ownership.py ve transaction.py ile çalışır."
+      ],
+      "review_sha256": "db179378b132a67c22d7e7258ddb9c238724f65fa082ae20b971433bbdfbf88d"
+    },
+    {
+      "path": "tests/test_index_freshness.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "refresh_now artımlılığı, capture_mode=manual kancası (yalnız index-refresh başlar, oturum pending olarak saklanır) ve memory.capture.run catch-up akışı. open/dashboard komutlarının yalnız kasa klasörünü açtığı testi eklendi.",
+      "relationships": [
+        "search/freshness, memory/lifecycle ve rpp_memory_capture sınanır; geçici veri/kasa kökleri kullanır."
+      ],
+      "review_sha256": "bd52814e842a8f5b65fc0eb2863263722129b9dee1685fa84f5c3851086e1e4d"
+    },
+    {
+      "path": "tests/test_redact.py",
+      "role": "Maskeleme testleri",
+      "purpose": "Her kimlik bilgisi biçiminin kaldırıldığını, sıradan metnin değişmediğini ve maskelemenin idempotent olduğunu, özetleyici isteminde kimlik bilgisi bulunmadığını doğrular.",
+      "relationships": [
+        "memory/redact.py ve memory/flush.py ile çalışır."
+      ],
+      "review_sha256": "9116d187f5f1a1b535f1c7e3168cf11689744e3e61a9b8f3794907235f023ca9"
+    },
+    {
+      "path": "tests/test_rpp.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "RPP v1.0/v1.1 sunucu sözleşmesi: manifest, kapasite gizleme, ayar şeması/doğrulama/uygulama/geri okuma, hata tipleri.",
+      "relationships": [
+        "rpp.py sınanır; tools/rpp_conformance.py canlı karşılığıdır."
+      ],
+      "review_sha256": "6600e04f22806b22b9b67673614ce8b61fd175b07d120e870c1ffbc43705a699"
+    },
+    {
+      "path": "tests/test_rpp_integrations.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "integrations.plan: yazmayan önizleme, çakışma raporu, geri yükleme planı, istemci başına seçim ve seçimden çıkarılan istemcinin geri yüklenmesi. İstemcinin başka alanları yeniden yazması çatışma sayılmaz, Respected girdisinin değiştirilmesi sayılır.",
+      "relationships": [
+        "rpp_integrations ve integrations/rendering sınanır; geçici HOME kullanır, gerçek yapılandırmaya dokunmaz."
+      ],
+      "review_sha256": "5262315217dd864800e483cbd6e7eead63ebceb4bc742942603fb73f51828aa7"
+    },
+    {
+      "path": "tests/test_rpp_lifecycle.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "lifecycle.plan/apply/status/rollback sözleşmesi ve receipt davranışı.",
+      "relationships": [
+        "rpp_lifecycle ve kurulum motoru sınanır; geçici kök dizinler."
+      ],
+      "review_sha256": "e4ee3f073ed01514de2be16f80d6aca3ac0090ad65a93388003e8b40139fe360"
+    },
+    {
+      "path": "tests/test_rpp_memory.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "memory.recall: salt okunurluk (snapshot karşılaştırma), sha256 doğrulamalı bayat sonuç düşürme, sınırlar, kategori ve geçersiz yol/kimlik reddi.",
+      "relationships": [
+        "rpp_memory sınanır."
+      ],
+      "review_sha256": "c573e2d990752b47e0df2a3e5216d674f3ed65435815296e3cfe76398c894c09"
+    },
+    {
+      "path": "tests/test_rpp_memory_grants.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "Hafıza izni deposu: jeton yalnız hash olarak saklanır, iptal, sınır, bozuk dosya ve write bayrağı.",
+      "relationships": [
+        "rpp_memory_grants sınanır."
+      ],
+      "review_sha256": "adb51814bfbc3fa5710cb00afb8e5a25637a18119ad6682b156f4c454f60fab0"
+    },
+    {
+      "path": "tests/test_rpp_memory_index.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "memory.index modülü: durum, yenileme, idempotent operasyon kayıtları ve budama.",
+      "relationships": [
+        "rpp_memory_index sınanır."
+      ],
+      "review_sha256": "d8b722201dfbbd52192fee5d2325245fc75d535c73b81d516b6f78d3717e4a0c"
+    },
+    {
+      "path": "tests/test_rpp_memory_index_op.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "memory.index.status/refresh işlemlerinin rpp.serve üzerinden uçtan uca davranışı.",
+      "relationships": [
+        "rpp ve rpp_memory_index birlikte sınanır."
+      ],
+      "review_sha256": "71874e4b65d9b622592515932f483c8ef0c1d347717ad2fe851176db5ab236a0"
+    },
+    {
+      "path": "tests/test_rpp_memory_op.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "memory.grant/revoke/recall işlemlerinin rpp.serve üzerinden uçtan uca davranışı ve v1.0 gizleme.",
+      "relationships": [
+        "rpp ve rpp_memory birlikte sınanır."
+      ],
+      "review_sha256": "305aa702773ed10132ee489a5241ce7036c7e90c7f3f563e00418e6af2f932d4"
+    },
+    {
+      "path": "tests/test_rpp_memory_semantic.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "Opsiyonel anlamsal arama: sahte loopback gömme servisiyle açma/indirme/vektör kurma, hibrit recall, servis yokken FTS'e düşme, bayat sonucu düşürme, indirme sha256 ve arşiv yol güvenliği.",
+      "relationships": [
+        "search/semantic ve rpp_memory_semantic sınanır; gerçek model doğrulaması ayrı kanıt kaydındadır."
+      ],
+      "review_sha256": "51b31573a9308bb162b1d26293f15cce109e8d5f494baf73ce2cac71be3c4ee1"
+    },
+    {
+      "path": "tests/test_rpp_memory_workspace.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "Hub hafıza çalışma alanı işlemleri: jetonsuz arama, notu yalnız kasa içi .md olarak okuma (traversal, mutlak yol, junction reddi), hızlı yakalamanın tek yeni not üretmesi ve idempotency, geçersiz girdi reddi, brifing onayı, 1.0 manifest gizleme.",
+      "relationships": [
+        "rpp_memory_workspace sınanır; geçici veri/kasa kökleri kullanır."
+      ],
+      "review_sha256": "f9dec105ac03cef855096020bbe8ed097e1a92875140419a3292f4384895c275"
+    },
+    {
+      "path": "tests/test_rpp_memory_write.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "memory.write/revert: yalnız gelen kutusuna yeni not, izinsiz jeton reddi, idempotency, boyut/yol reddi, düzenlenmiş notun geri alınmaması.",
+      "relationships": [
+        "rpp_memory_write sınanır."
+      ],
+      "review_sha256": "9b655bc01918899e8718ce0203dff45101b6a907b99dcf796d892c2ee7a7307a"
+    },
+    {
+      "path": "tests/test_rpp_vault.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "RPP ile ilk kasa kurulumu: şablon açılır, dolu klasör ve ikinci kasa reddedilir, AI istemci yapılandırmasına yazılmaz.",
+      "relationships": [
+        "rpp_lifecycle.create_vault sınanır."
+      ],
+      "review_sha256": "6803d4646b69f5f0978c87a60223142c83cde6af174223598393ee177dca28f8"
+    },
+    {
       "path": "tests/transaction_performance_test.py",
       "role": "Davranış/regresyon testi",
       "purpose": "Transaction throughput regresyonunda çok dosyalı write-ahead kayıtların gereksiz tam journal snapshot sayısını sınırlar; durable recovery ve aynı byte/mode davranışını korur. Odak örnekleri: `test_write_uses_one_durable_snapshot_per_file_with_existing_parent`, `test_before_image_and_expected_output_are_durable_before_mutation`, `test_nested_directory_creation_uses_one_durable_directory_plan`. OS geçici klasör takma adında fixture kökü kanonikleştirilir; ürünün link/reparse reddi korunur.",
@@ -2602,12 +2841,12 @@
     {
       "path": "tests/update_cli_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Update için explicit verified package, tek seçilmiş UUID dispatch ve hata exit durumunun başarıya çevrilmemesini sınar. Odak örnekleri: `test_update_requires_explicit_verified_package_without_vault_discovery`, `test_update_main_dispatches_selected_uuid_and_package_once`, `test_update_failure_exit_status_is_not_rewritten_to_success`.",
+      "purpose": "Update için explicit verified package, tek seçilmiş UUID dispatch ve hata exit durumunun başarıya çevrilmemesini sınar. Odak örnekleri: `test_update_requires_explicit_verified_package_without_vault_discovery`, `test_update_main_dispatches_selected_uuid_and_package_once`, `test_update_failure_exit_status_is_not_rewritten_to_success`. update() çağrısındaki require_provenance bağımsız değişkeni ve --allow-unattested davranışı da sınanır.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.installation.transaction`, `respectedbrain`."
       ],
-      "review_sha256": "1e23f2f40ad769dceeec153c535823fab47bba4eede017297373aaeca9f12d37"
+      "review_sha256": "628adf0e76ed92ecf7dc061f55335f9cfacfbd370c930185a5e0fb0388557a31"
     },
     {
       "path": "tests/update_respected_test.py",
@@ -2679,12 +2918,12 @@
     {
       "path": "tests/wizard_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Wizard ve source launcher'ın shared setup kullanmasını; genesis placeholders, repeat/vault koruması, provider priority/failfast ve native MCP bağlantılarını sınar. Native yerel hook kontrolleri ExternalChange kayıtlarını gerçek geçici dosyalara yazan NativeBackend kullanır; son UUID ve stable launcher içerikleri diskte doğrulanır.",
+      "purpose": "Wizard ve source launcher'ın shared setup kullanmasını; genesis placeholders, repeat/vault koruması, provider priority/failfast ve native MCP bağlantılarını sınar. Native yerel hook kontrolleri ExternalChange kayıtlarını gerçek geçici dosyalara yazan NativeBackend kullanır; son UUID ve stable launcher içerikleri diskte doğrulanır. Kısayol testi open komutuna göre güncellendi.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.core.config`, `respectedbrain.vault.registry`, `respectedbrain.installation`, `respectedbrain.installation.setup`, `respectedbrain.installation.transaction`, `respectedbrain`."
       ],
-      "review_sha256": "4e851677dfa26f4485b15d4712981d66b0f4c941a69dfdf33181c353585d5098"
+      "review_sha256": "256e4403ce82b0a5e3b675f5cdb931c668f01f7cb6f8d8eb93216e880a493cf7"
     },
     {
       "path": "tests/zero_trust_security_test.py",
@@ -2708,11 +2947,11 @@
     {
       "path": "tools/repository_map.py",
       "role": "Depo sözleşmesi",
-      "purpose": "Git indeksini ve ignore edilmeyen yeni dosyaları keşfeder; açıklamaların rol/amaç/ilişkiler alanlarını ve inceleme hash'ini kontrol edip tek Türkçe atlas üretir. Nötr .local yerel kanıt dizini kapsam dışıdır; docs katmanları kaynak envanterine dahildir.",
+      "purpose": "Git veya explicit filesystem-only ile kaynak keşfi, rol/amaç/ilişki ve review hash kapısı; ürün adıyla JSON'dan Türkçe atlas üretimi sağlar. No-Git modu root ignore/known source kullanır; staged/nested-ignore eşdeğerliği iddia etmez.",
       "relationships": [
-        "repository_inventory.json anlamsal kaynak, REPOSITORY_MAP.md çıktıdır; repository_map_test ve CI eksik/ghost/çift/eski açıklama/render drift kapılarını doğrular."
+        "repository_inventory.json anlamsal kaynak, REPOSITORY_MAP.md çıktıdır; test/CI drift kapıları korunur. Yeni sibling ürünler bağımsız kopyalarını kullanır; .local/build/dependency dışarıda kalır."
       ],
-      "review_sha256": "23511e74797cb5664e3159f3f8c9737c0b146d3133d2fd1939f2e7a82fb290ba"
+      "review_sha256": "e65607a6639b5c66c84d79882e0cc7880536723a6b9eaee4dbd0e8937220074c"
     },
     {
       "path": "tools/upstream_sync.sh",

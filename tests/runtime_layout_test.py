@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class RuntimeLayoutTest(IntegrationFixture, unittest.TestCase):
     def test_public_commands_preserve_selected_uuid_and_exit_status(self):
-        for command in ("repair", "uninstall", "dashboard"):
+        for command in ("repair", "uninstall", "dashboard", "open"):
             with self.subTest(command=command), mock.patch.object(cli, "_dispatch", return_value=7) as dispatch:
                 self.assertEqual(cli.main([command, "--vault-id", self.ctx.paths.vault_id]), 7)
                 args = dispatch.call_args.args[0]

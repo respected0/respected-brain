@@ -193,24 +193,12 @@ class LifecycleTest(unittest.TestCase):
         self.assertIn("OPEN-PROJECT", threads_block)
         self.assertNotIn("CLOSED-PROJECT", threads_block)
 
-    @unittest.skipUnless(os.name == "nt", "Windows junction")
-    def test_precompact_rejects_external_session_logs_junction(self):
-        outside = Path(self.temporary.name) / "outside-logs"
-        outside.mkdir()
-        logs = self.memory / "Session-Logs"
-        with mock.patch.object(subprocess, "Popen", self.real_popen):
-            result = subprocess.run(["cmd.exe", "/c", "mklink", "/J", str(logs), str(outside)],
-                                    capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
-        self.assertEqual(result.returncode, 0, result.stderr)
+    def test_precompact_copies_no_transcript_content_by_default(self):
         transcript = self.vault / "transcript.jsonl"
-        transcript.write_text('{"role":"user","content":"private"}\n', encoding="utf-8")
-        try:
-            self.handle("precompact", {"session_id": "linked", "transcript_path": str(transcript)}, self.vault, "codex")
-            self.assertEqual(list(outside.iterdir()), [])
-            health = json.loads((self.state / "health.json").read_text(encoding="utf-8"))
-            self.assertIn("unsafe-session-log", health["error"])
-        finally:
-            logs.rmdir()
+        transcript.write_text('{"role":"user","content":"private sk-ABCDEFGHIJKLMNOPQRSTUVWX"}\n', encoding="utf-8")
+        self.handle("precompact", {"session_id": "nocopy", "transcript_path": str(transcript)}, self.vault, "codex")
+        self.assertFalse((self.memory / "Session-Logs").exists())
+        self.assertFalse((self.state.parent / "session-archive").exists())
 
     def test_concurrent_prompts_are_not_lost(self):
         payload = {"session_id": "parallel"}

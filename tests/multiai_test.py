@@ -60,7 +60,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
     def test_all_provider_configs_point_to_bridge(self):
         artifacts = RENDER.render_project_integrations(self.ctx, self.profile)
         for content in artifacts.values():
-            self.assertIn("respectedbrain.exe hook", content.decode())
+            self.assertIn('respectedbrain.exe\\" hook', content.decode())  # the program path is quoted (Git Bash eats bare backslashes)
             self.assertIn(self.ctx.paths.vault_id, content.decode())
             self.assertNotIn("bridge.py", content.decode())
 

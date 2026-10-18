@@ -61,14 +61,25 @@ def decode_bytes(value: str | None) -> bytes | None:
 def baseline_change(change):
     """Separate committed uninstall baseline from the rollback before-image."""
     from respectedbrain.integrations.backend import ExternalChange
+    if getattr(change, "delta", None) is not None:
+        return change
     before = change.uninstall_before if getattr(change, "has_uninstall_baseline", False) else change.before
     return ExternalChange(change.kind, change.key, before, change.after)
+
+
+def _external_row(item) -> dict:
+    """Config files are persisted as a delta + fingerprints (no complete copy); other kinds are small and ours, kept whole."""
+    compact = baseline_change(item).compact()
+    if compact.delta is not None:
+        return {"kind": compact.kind, "key": compact.key, "delta": encode_bytes(compact.delta),
+                "before_sha256": compact.before_sha256, "after_sha256": compact.after_sha256}
+    return {"kind": item.kind, "key": item.key, "before": encode_bytes(baseline_change(item).before), "after": encode_bytes(item.after)}
 
 
 def manifest_document(manifest: OwnershipManifest) -> dict:
     return {"schema_version": manifest.schema_version,
             "files": [{"path": str(item.path), "sha256": item.sha256, "role": item.role, **({"mode": item.mode} if item.mode is not None else {})} for item in manifest.files],
-            "external": [{"kind": item.kind, "key": item.key, "before": encode_bytes(baseline_change(item).before), "after": encode_bytes(item.after)} for item in manifest.external]}
+            "external": [_external_row(item) for item in manifest.external]}
 
 
 def read_manifest(path: Path) -> OwnershipManifest:
@@ -96,10 +107,19 @@ def read_manifest(path: Path) -> OwnershipManifest:
         for row in document["external"]:
             if (row["kind"] not in ("file", "mcp", "task", "shortcut", "registry")
                     or not isinstance(row["key"], str) or not row["key"] or "\0" in row["key"]
-                    or (row["kind"], row["key"]) in external_keys
-                    or any(value is not None and not isinstance(value, str) for value in (row["before"], row["after"]))):
+                    or (row["kind"], row["key"]) in external_keys):
                 raise ValueError("Invalid or duplicate external ownership")
             external_keys.add((row["kind"], row["key"]))
+            if "delta" in row:
+                if (row["kind"] not in ("file", "mcp") or not isinstance(row["delta"], str)
+                        or any(value is not None and not (isinstance(value, str) and re.fullmatch(r"[0-9a-f]{64}", value))
+                               for value in (row["before_sha256"], row["after_sha256"]))):
+                    raise ValueError("Invalid external delta")
+                external.append(ExternalChange(row["kind"], row["key"], None, None, False, None, decode_bytes(row["delta"]),
+                                               row["before_sha256"], row["after_sha256"]))
+                continue
+            if any(value is not None and not isinstance(value, str) for value in (row["before"], row["after"])):
+                raise ValueError("Invalid or duplicate external ownership")
             external.append(ExternalChange(row["kind"], row["key"], decode_bytes(row["before"]), decode_bytes(row["after"])))
         return OwnershipManifest(3, tuple(files), tuple(external))
     except (KeyError, TypeError, ValueError) as error:

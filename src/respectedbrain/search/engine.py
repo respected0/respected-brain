@@ -13,6 +13,7 @@ from pathlib import Path
 import re
 import sqlite3
 from typing import Any
+from urllib.parse import quote
 
 from respectedbrain.core.context import AppContext
 from respectedbrain.core.coordination import guarded_writer
@@ -61,6 +62,15 @@ def parse_markdown_meta(content: str) -> tuple[dict[str, Any], str]:
 
 from contextlib import contextmanager
 
+
+class IndexUnavailable(ValueError):
+    """Okuma-modu indeksi kullanılamıyor: code INDEX_MISSING veya INDEX_INVALID."""
+
+    def __init__(self, code: str) -> None:
+        super().__init__(code)
+        self.code = code
+
+
 class SearchEngine:
     """SQLite FTS5 tabanlı yerel arama motoru."""
 
@@ -86,15 +96,90 @@ class SearchEngine:
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
             self._init_db()
 
+    @classmethod
+    def open_read_only(cls, ctx: AppContext) -> "SearchEngine":
+        """Mevcut indeksi yalnızca okuma modunda açar; hiçbir dosya/dizin oluşturmaz, kilit almaz."""
+        self = cls.__new__(cls)
+        self.ctx = ctx
+        self.vault_root = ctx.paths.vault_root
+        self.db_path = ctx.paths.cache_dir / "search_index.db"
+        self._read_only = True
+        self._validate_db_path()
+        if not self.db_path.is_file():
+            raise IndexUnavailable("INDEX_MISSING")
+        try:
+            with self._get_connection() as con:
+                names = {row[0] for row in con.execute("SELECT name FROM sqlite_master WHERE type = 'table'")}
+        except sqlite3.Error:
+            raise IndexUnavailable("INDEX_INVALID") from None
+        if not {"files_meta", "vault_fts"} <= names:
+            raise IndexUnavailable("INDEX_INVALID")
+        return self
+
     @contextmanager
     def _get_connection(self):
         self._validate_db_path()
-        con = sqlite3.connect(str(self.db_path))
+        if getattr(self, "_read_only", False):
+            uri = "file:" + quote(self.db_path.as_posix(), safe="/:") + "?mode=ro"
+            con = sqlite3.connect(uri, uri=True)
+            con.execute("PRAGMA query_only=ON")
+        else:
+            con = sqlite3.connect(str(self.db_path))
         con.row_factory = sqlite3.Row
         try:
             yield con
         finally:
             con.close()
+
+    def index_state(self, max_files: int = 5000) -> dict[str, Any]:
+        """Diske yazmadan ve hash almadan indeksin güncel olup olmadığını (yalnızca mtime) tahmin eder."""
+        with self._get_connection() as con:
+            meta = {row["rel_path"]: row["mtime"] for row in con.execute("SELECT rel_path, mtime FROM files_meta")}
+        checked = changed = 0
+        seen: set[str] = set()
+        truncated = False
+        for root, dirs, files in os.walk(self.vault_root):
+            rel_root = Path(root).relative_to(self.vault_root).as_posix()
+            if self._excluded(rel_root) or not path_within_vault(Path(root), self.vault_root):
+                dirs.clear()
+                continue
+            dirs[:] = [directory for directory in dirs if self._visible_path((Path(rel_root) / directory).as_posix())]
+            for name in files:
+                if not name.endswith(".md"):
+                    continue
+                full_path = Path(root) / name
+                rel_path = full_path.relative_to(self.vault_root).as_posix()
+                if not self._visible_path(rel_path):
+                    continue
+                if checked >= max_files:
+                    truncated = True
+                    break
+                try:
+                    mtime = full_path.stat().st_mtime
+                except OSError:
+                    continue
+                checked += 1
+                seen.add(rel_path)
+                if meta.get(rel_path) != mtime:
+                    changed += 1
+            if truncated:
+                break
+        if not truncated:
+            changed += len(set(meta) - seen)
+        state = "unknown" if truncated else ("stale" if changed else "fresh")
+        return {"state": state, "indexed_files": len(meta), "checked_files": checked, "changed_files": changed}
+
+    def indexed_fingerprints(self, paths: list[str]) -> dict[str, tuple[float, str]]:
+        """İndekslenmiş (mtime, sha256) değerlerini verilen göreli yollar için okur; bilinmeyen yollar atlanır."""
+        found: dict[str, tuple[float, str]] = {}
+        names = list(dict.fromkeys(paths))
+        with self._get_connection() as con:
+            for start in range(0, len(names), 200):
+                chunk = names[start:start + 200]
+                marks = ",".join("?" * len(chunk))
+                for row in con.execute(f"SELECT rel_path, mtime, sha256 FROM files_meta WHERE rel_path IN ({marks})", chunk):
+                    found[row["rel_path"]] = (row["mtime"], row["sha256"])
+        return found
 
     def _validate_db_path(self) -> None:
         for path in (self.db_path, *(self.db_path.with_name(self.db_path.name + suffix) for suffix in ('-journal', '-wal', '-shm'))):

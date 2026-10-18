@@ -361,16 +361,42 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         self.assertFalse(F._session_state_path(self.state, SID).exists())
         self.assertFalse(self.daily.exists())
 
-    def test_precompact_archives_valid_snapshot(self):
+    def test_precompact_archive_is_opt_in_redacted_and_outside_the_vault(self):
+        import dataclasses
         from respectedbrain.memory import lifecycle as L
-        path = self.transcript({'id': SID, 'cwd': str(self.vault)})
-        before = path.read_bytes()
-        with mock.patch.object(L, '_launch_flush', return_value=True):
-            L.handle_event(self.ctx, event='precompact', session_id=SID, transcript=path,
-                           payload={'provider': 'codex', 'cwd': str(self.vault)}, now=NOW)
-        logs = list((self.vault / '🔮 850-Companion/Session-Logs').glob('*.jsonl'))
+        path = self.transcript({'id': SID, 'cwd': str(self.vault), 'note': 'key sk-' + 'a1B2c3D4e5F6g7H8i9J0k1L2'})
+        archive = self.ctx.paths.data_root / 'session-archive'
+        def precompact(ctx):
+            with mock.patch.object(L, '_launch_flush', return_value=True):
+                L.handle_event(ctx, event='precompact', session_id=SID, transcript=path,
+                               payload={'provider': 'codex', 'cwd': str(self.vault)}, now=NOW)
+        precompact(self.ctx)                                    # default: nothing is copied anywhere
+        self.assertFalse(archive.exists())
+        self.assertEqual(list((self.vault / '🔮 850-Companion/Session-Logs').glob('*.jsonl')), [])
+        enabled = dataclasses.replace(self.ctx, config={**self.ctx.config, 'preferences': {'archive_transcripts': True}})
+        precompact(enabled)
+        logs = list(archive.glob('*.jsonl'))
         self.assertEqual(len(logs), 1)
-        self.assertEqual(logs[0].read_bytes(), before)
+        text = logs[0].read_text(encoding='utf-8')
+        self.assertIn('[REDACTED:provider-token]', text)
+        self.assertNotIn('a1B2c3D4e5F6g7H8i9J0k1L2', text)     # the stored copy never contains the credential
+        self.assertFalse((self.vault / '🔮 850-Companion/Session-Logs').exists())
+        old = logs[0]
+        os.utime(old, (1, 1))                                   # retention: an expired copy is purged by the next run
+        precompact(dataclasses.replace(self.ctx, config={**self.ctx.config, 'preferences': {'archive_transcripts': True, 'transcript_retention_days': 1}}))
+        self.assertFalse(old.exists() and old.stat().st_mtime < 100)
+
+    def test_a_credential_in_the_model_summary_never_reaches_the_notes(self):
+        leaking = SUMMARY.replace('ORIGINAL', 'bulgu: ghp_' + 'Ab12Cd34Ef56Gh78Ij90Kl12Mn' + ' ve parola=' + 'hunter2hunter2')
+        class Leaky:
+            def run(self, prompt, **kwargs):
+                return ModelResult(leaking, 'codex', None)
+        path = self.transcript({'id': SID, 'cwd': str(self.vault)})
+        self.assertEqual(self.run_flush(path, Leaky()), 0)
+        stored = self.daily.read_text(encoding='utf-8')
+        self.assertNotIn('Ab12Cd34Ef56Gh78Ij90Kl12Mn', stored)
+        self.assertNotIn('hunter2hunter2', stored)
+        self.assertIn('[REDACTED', stored)
 
     def test_archived_session_cannot_be_taken_over_by_another_path(self):
         from respectedbrain.memory import lifecycle as L

@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import re
 from pathlib import Path
 import sys
 import tempfile
@@ -98,57 +99,162 @@ class SearchEngineTest(unittest.TestCase):
 
 
 class McpServerTest(unittest.TestCase):
+    def enable_writes(self, enabled: bool = True) -> None:
+        """The user's explicit permission (setting mcp_write); the server reads it fresh on every call."""
+        from respectedbrain.core.config import ConfigStore
+        ConfigStore(self.server.ctx.paths.data_root).update(lambda document: document.setdefault("preferences", {}).__setitem__("mcp_write", enabled))
+
+    def mcp_notes(self):
+        return sorted((self.vault / "🔮 850-Companion" / "Inbox" / "MCP").glob("*.md"))
+
     @unittest.skipUnless(__import__('os').name == 'nt', 'Windows junction boundary')
     def test_mcp_junctions_cannot_read_or_capture_outside_vault(self):
         import os
         import subprocess
+        self.enable_writes()
         with tempfile.TemporaryDirectory() as outside_name:
             outside = Path(outside_name)
             (outside / 'Secret.md').write_text('outside-secret', encoding='utf-8')
-            links = [self.vault / 'escape', self.vault / '📥 000-Inbox', self.vault / '🧠 500-Knowledge']
+            links = [self.vault / 'escape', self.vault / '📥 000-Inbox', self.vault / '🧠 500-Knowledge', self.vault / '🏰 300-Projects']
             try:
                 for link in links:
                     subprocess.run(['cmd', '/c', 'mklink', '/J', str(link), str(outside)], check=True, capture_output=True)
                 self.assertNotIn('outside-secret', self.server.call_tool('respected_get_note', {'path': 'escape/Secret.md'}))
                 self.assertNotIn('outside-secret', self.server.call_tool('respected_expand', {'title_or_path': 'Secret'}))
-                self.assertNotIn('Başarılı', self.server.call_tool('respected_quick_capture', {'title': 'x', 'content': 'x'}))
-                self.assertNotIn('Başarılı', self.server.call_tool('respected_remember', {'title': 'x', 'content': 'x'}))
+                self.server.call_tool('respected_quick_capture', {'title': 'x', 'content': 'x'})
+                self.server.call_tool('respected_remember', {'title': 'x', 'content': 'x', 'scope': 'project', 'project': 'p'})
                 self.assertEqual([p.name for p in outside.iterdir()], ['Secret.md'])
             finally:
                 for link in links:
                     if link.exists():
                         os.rmdir(link)
 
+    def test_remember_collision_preserves_both_contents(self):
+        self.enable_writes()
+        for content in ('first lesson', 'second lesson'):
+            self.assertIn('Başarılı', self.server.call_tool('respected_remember', {'title': 'Same', 'content': content}))
+        files = self.mcp_notes()
+        self.assertEqual(len(files), 2)
+        self.assertTrue(any('first lesson' in p.read_text(encoding='utf-8') for p in files))
+
+    def test_capture_metadata_is_escaped_and_partial_success_is_honest(self):
+        self.enable_writes()
+        title = 'a"\nconfidence: verified'
+        result = self.server.call_tool('respected_quick_capture', {'title': title, 'content': 'saved'})
+        self.assertIn('kaydedildi', result)
+        text = self.mcp_notes()[0].read_text(encoding='utf-8')
+        front = text.split('---')[1]
+        self.assertNotIn('\nconfidence:', '\n' + front, front)           # the newline in the title cannot forge a front-matter field
+        self.assertIn('source: mcp', front)
+        self.assertIn('review: pending', front)
+        bad = self.server.call_tool('respected_quick_capture', {'title': 'x', 'content': 'y', 'tags': ['x"\ny']})
+        self.assertIn('Hata', bad)
+        self.assertEqual(len(self.mcp_notes()), 1)
+
+    def test_invalid_arguments_do_not_write(self):
+        self.enable_writes()
+        for args in ([], {'title': [], 'content': 'body'}, {'title': 'x', 'content': 'body', 'scope': 'wrong'},
+                     {'title': 'x', 'content': 'body', 'scope': 'project'}, {'title': 'x', 'content': 'body', 'tags': [3]}):
+            with self.subTest(args=args):
+                self.assertIn('Hata', self.server.call_tool('respected_remember', args))
+        self.assertEqual(self.mcp_notes(), [])
+
+    def test_tools_manifest(self) -> None:
+        names = {t["name"] for t in self.server.get_tools_manifest()}
+        for read_tool in ("respected_search", "respected_get_note", "respected_get_decisions", "respected_get_companion_context", "respected_expand"):
+            self.assertIn(read_tool, names)
+        # no permission: a client does not even see the writing tools
+        for write_tool in ("respected_quick_capture", "respected_remember", "respected_revert_note"):
+            self.assertNotIn(write_tool, names)
+        self.enable_writes()
+        names = {t["name"] for t in self.server.get_tools_manifest()}
+        for write_tool in ("respected_quick_capture", "respected_remember", "respected_revert_note"):
+            self.assertIn(write_tool, names)
+
+    def test_writes_are_refused_without_the_users_permission_and_leave_no_trace(self) -> None:
+        for name, args in (("respected_quick_capture", {"title": "t", "content": "c"}), ("respected_remember", {"title": "t", "content": "c"}),
+                           ("respected_revert_note", {"operation_id": "mcp-" + "0" * 24})):
+            out = self.server.call_tool(name, args)
+            self.assertTrue(out.startswith("Hata"), out)
+            self.assertIn("mcp_write", out)
+        self.assertFalse((self.vault / "🔮 850-Companion" / "Inbox").exists())
+        self.assertFalse((self.vault / "🧠 500-Knowledge").exists())
+        self.assertFalse((self.vault / "📥 000-Inbox").exists())
+        self.enable_writes()
+        self.enable_writes(False)                       # switching it off again closes the door immediately
+        self.assertTrue(self.server.call_tool("respected_quick_capture", {"title": "t", "content": "c"}).startswith("Hata"))
+
+    def test_quick_capture_tool(self) -> None:
+        self.enable_writes()
+        out = self.server.call_tool(
+            "respected_quick_capture",
+            {"title": "Yeni Fikir", "content": "Harika bir test fikri", "tags": ["fikir", "test"]},
+        )
+        self.assertIn("Başarılı", out)
+        files = self.mcp_notes()
+        self.assertEqual(len(files), 1)
+        text = files[0].read_text(encoding="utf-8")
+        self.assertIn("Harika bir test fikri", text)
+        for field in ("source: mcp", "grant: mcp", "review: pending", "type: capture"):
+            self.assertIn(field, text)
+        self.assertFalse((self.vault / "📥 000-Inbox" / "Dump").exists())
+
+    def test_remember_tool_epistemic(self) -> None:
+        self.enable_writes()
+        out = self.server.call_tool(
+            "respected_remember",
+            {
+                "title": "React Render Gotcha",
+                "content": "useEffect içinde setState yaparken dependency array'e dikkat et.",
+                "scope": "platform",
+                "confidence": "verified",
+                "supersedes": ["Eski React Kuralı"],
+                "tags": ["react", "frontend"],
+            },
+        )
+        self.assertIn("Başarılı", out)
+        content = self.mcp_notes()[0].read_text(encoding="utf-8")
+        self.assertIn("scope: platform", content)
+        self.assertIn("confidence: inferred", content)          # a model cannot vouch for its own note
+        self.assertNotIn("confidence: verified", content)
+        self.assertIn('supersedes: ["Eski React Kuralı"]', content)
+        self.assertFalse((self.vault / "🧠 500-Knowledge").exists())   # never straight into curated knowledge
+
+    def test_remember_tool_cannot_target_projects_or_leave_the_inbox(self) -> None:
+        self.enable_writes()
+        out = self.server.call_tool("respected_remember", {"title": "../../Malicious Traversal", "content": "Malicious content",
+                                                           "scope": "project", "project": "../../malicious_dir"})
+        self.assertIn("Başarılı", out)
+        self.assertFalse((self.vault.parent / "malicious_dir").exists())
+        self.assertFalse((self.vault / "🏰 300-Projects").exists())
+        for note in self.mcp_notes():
+            self.assertEqual(note.parent, self.vault / "🔮 850-Companion" / "Inbox" / "MCP")
+
+    def test_a_written_note_can_be_reverted_until_the_user_edits_it(self) -> None:
+        self.enable_writes()
+        first = self.server.call_tool("respected_quick_capture", {"title": "one", "content": "c1"})
+        second = self.server.call_tool("respected_quick_capture", {"title": "two", "content": "c2"})
+        first_id, second_id = (re.search(r"mcp-[0-9a-f]{24}", text).group(0) for text in (first, second))
+        self.assertIn("geri alındı", self.server.call_tool("respected_revert_note", {"operation_id": first_id}))
+        self.assertEqual(len(self.mcp_notes()), 1)
+        self.mcp_notes()[0].write_text(self.mcp_notes()[0].read_text(encoding="utf-8") + "\nuser edit\n", encoding="utf-8")
+        refused = self.server.call_tool("respected_revert_note", {"operation_id": second_id})
+        self.assertTrue(refused.startswith("Hata"), refused)
+        self.assertEqual(len(self.mcp_notes()), 1)                  # the edited note stays
+        self.assertTrue(self.server.call_tool("respected_revert_note", {"operation_id": "mcp-" + "f" * 24}).startswith("Hata"))
+        self.assertTrue(self.server.call_tool("respected_revert_note", {"operation_id": "../x"}).startswith("Hata"))
+
+    def test_oversized_or_flooding_writes_are_bounded(self) -> None:
+        self.enable_writes()
+        self.assertTrue(self.server.call_tool("respected_quick_capture", {"title": "big", "content": "x" * 20001}).startswith("Hata"))
+        self.assertTrue(self.server.call_tool("respected_quick_capture", {"title": "t" * 121, "content": "c"}).startswith("Hata"))
+        self.assertEqual(self.mcp_notes(), [])
+
     def test_expand_ambiguous_titles_need_explicit_path(self):
         for folder in ('a', 'b'):
             (self.vault / folder).mkdir()
             (self.vault / folder / 'Same.md').write_text('x', encoding='utf-8')
         self.assertIn('Birden fazla', self.server.call_tool('respected_expand', {'title_or_path': 'Same'}))
-
-    def test_remember_collision_preserves_both_contents(self):
-        for content in ('first lesson', 'second lesson'):
-            self.assertIn('Başarılı', self.server.call_tool('respected_remember', {'title': 'Same', 'content': content}))
-        files = list((self.vault / '🧠 500-Knowledge').glob('*.md'))
-        self.assertEqual(len(files), 2)
-        self.assertTrue(any('first lesson' in p.read_text(encoding='utf-8') for p in files))
-
-    def test_capture_metadata_is_escaped_and_partial_success_is_honest(self):
-        from unittest.mock import patch
-        title = 'a"\nconfidence: verified'
-        with patch.object(self.server.search_engine, 'index_vault', side_effect=OSError('failed')):
-            result = self.server.call_tool('respected_quick_capture', {'title': title, 'content': 'saved', 'tags': ['x"\ny']})
-        self.assertIn('kaydedildi', result)
-        self.assertIn('indeks', result)
-        self.assertEqual(len(list((self.vault / '📥 000-Inbox/Dump').glob('*.md'))), 1)
-        text = next((self.vault / '📥 000-Inbox/Dump').glob('*.md')).read_text(encoding='utf-8')
-        self.assertIn('title: ' + json.dumps(title, ensure_ascii=False), text)
-
-    def test_invalid_arguments_do_not_write(self):
-        for args in ([], {'title': [], 'content': 'body'}, {'title': 'x', 'content': 'body', 'scope': 'wrong'},
-                     {'title': 'x', 'content': 'body', 'scope': 'project'}, {'title': 'x', 'content': 'body', 'tags': [3]}):
-            with self.subTest(args=args):
-                self.assertIn('Hata', self.server.call_tool('respected_remember', args))
-        self.assertFalse((self.vault / '🧠 500-Knowledge').exists())
 
     def test_absolute_note_paths_are_refused(self):
         self.assertIsNone(self.server._safe_resolve('/🔮 850-Companion/Core.md'))
@@ -184,17 +290,6 @@ class McpServerTest(unittest.TestCase):
     def tearDown(self) -> None:
         self.temp_dir.cleanup()
 
-    def test_tools_manifest(self) -> None:
-        manifest = self.server.get_tools_manifest()
-        tool_names = {t["name"] for t in manifest}
-        self.assertIn("respected_search", tool_names)
-        self.assertIn("respected_get_note", tool_names)
-        self.assertIn("respected_get_decisions", tool_names)
-        self.assertIn("respected_get_companion_context", tool_names)
-        self.assertIn("respected_quick_capture", tool_names)
-        self.assertIn("respected_remember", tool_names)
-        self.assertIn("respected_expand", tool_names)
-
     def test_unknown_tool_returns_error_message(self) -> None:
         out = self.server.call_tool("unknown_tool_xyz", {})
         self.assertIn("Bilinmeyen araç", out)
@@ -213,64 +308,6 @@ class McpServerTest(unittest.TestCase):
         # Path traversal atağı engellenmeli
         attack_out = self.server.call_tool("respected_get_note", {"path": "../../etc/passwd"})
         self.assertIn("bulunamadı", attack_out)
-
-    def test_quick_capture_tool(self) -> None:
-        out = self.server.call_tool(
-            "respected_quick_capture",
-            {"title": "Yeni Fikir", "content": "Harika bir test fikri", "tags": ["fikir", "test"]},
-        )
-        self.assertIn("Başarılı", out)
-
-        dump_dir = self.vault / "📥 000-Inbox" / "Dump"
-        dump_files = list(dump_dir.glob("*.md"))
-        self.assertEqual(len(dump_files), 1)
-        captured_text = dump_files[0].read_text(encoding="utf-8")
-        self.assertIn("Harika bir test fikri", captured_text)
-        self.assertIn("fikir", captured_text)
-
-    def test_remember_tool_epistemic(self) -> None:
-        out = self.server.call_tool(
-            "respected_remember",
-            {
-                "title": "React Render Gotcha",
-                "content": "useEffect içinde setState yaparken dependency array'e dikkat et.",
-                "scope": "platform",
-                "confidence": "verified",
-                "supersedes": ["Eski React Kuralı"],
-                "tags": ["react", "frontend"],
-            },
-        )
-        self.assertIn("Başarılı", out)
-        self.assertIn("platform", out)
-        self.assertIn("verified", out)
-
-        knowledge_dir = self.vault / "🧠 500-Knowledge"
-        k_files = list(knowledge_dir.glob("*_React_Render_Gotcha.md"))
-        self.assertEqual(len(k_files), 1)
-        content = k_files[0].read_text(encoding="utf-8")
-        self.assertIn("scope: platform", content)
-        self.assertIn("confidence: verified", content)
-        self.assertIn('supersedes: ["Eski React Kuralı"]', content)
-
-    def test_remember_tool_blocks_path_traversal(self) -> None:
-        """respected_remember must not allow writing outside the vault via project path traversal."""
-        out = self.server.call_tool(
-            "respected_remember",
-            {
-                "title": "Malicious Traversal",
-                "content": "Malicious content",
-                "scope": "project",
-                "project": "../../malicious_dir",
-            },
-        )
-        # Slashes and dots are sanitized into safe chars, staying strictly inside 🏰 300-Projects
-        self.assertIn("Başarılı", out)
-        # Must strictly be inside vault
-        malicious_outside = self.vault.parent / "malicious_dir"
-        self.assertFalse(malicious_outside.exists())
-        # Cleaned project folder must be inside 300-Projects
-        project_dir = self.vault / "🏰 300-Projects"
-        self.assertTrue(any("malicious_dir" in p.name for p in project_dir.iterdir()))
 
     def test_expand_tool(self) -> None:
         # Test için birbirine bağlı iki not oluşturalım
@@ -451,12 +488,14 @@ class TemplateAndSkillsTest(unittest.TestCase):
                 "transcript_path": str(fake_transcript),
             }
             from unittest.mock import patch
+            import dataclasses
             ctx = make_context(Path(td) / "runtime", v_root / "vault")
-            # The transcript lives outside the selected vault; only its backup is written.
+            ctx = dataclasses.replace(ctx, config={**ctx.config, "preferences": {"archive_transcripts": True}})  # the opt-in
+            # The transcript lives outside the selected vault; only its (redacted) backup is written, in the data root.
             with patch.object(lifecycle, "_launch_flush"):
                 lifecycle._finish_session(ctx.paths.vault_root, ctx.paths.state_dir, payload, "precompact", dt.datetime.now(), "antigravity", ctx)
 
-            logs_dir = ctx.paths.vault_root / "🔮 850-Companion" / "Session-Logs"
+            logs_dir = ctx.paths.data_root / "session-archive"
             self.assertTrue(logs_dir.is_dir())
             backed_files = list(logs_dir.glob("*.jsonl"))
             self.assertEqual(len(backed_files), 1)

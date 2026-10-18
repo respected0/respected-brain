@@ -44,18 +44,11 @@ class FoundationPackagedCommandsTest(unittest.TestCase):
                         for value in args.argv:
                             if value.startswith("--"):
                                 self.assertIn(value.split("=",1)[0],flags)
-                    if args.command=="orchestrate":
-                        source=Path(__file__).resolve().parents[1]/"src/respectedbrain/orchestration/runner.py"
-                        syntax=ast.parse(source.read_text(encoding="utf-8"))
-                        flags={item.value for node in ast.walk(syntax) if isinstance(node,ast.Call) and isinstance(node.func,ast.Attribute) and node.func.attr=="add_argument" for item in node.args if isinstance(item,ast.Constant) and isinstance(item.value,str)}
-                        for value in args.argv:
-                            if value.startswith("--") and value!="--":
-                                self.assertIn(value.split("=",1)[0],flags)
-                    if args.command in ("maps","compile","search","maintenance","orchestrate","repair","dashboard"):
+                    if args.command in ("maps","compile","search","maintenance","repair","dashboard","open"):
                         self.assertIsNotNone(args.vault_id,"Installed examples must select the registered UUID")
                     found.append((name,args.command))
         self.assertGreaterEqual(len(found),12,"Installed workflows need actionable native CLI examples")
-        self.assertTrue({"compile","maps","search","maintenance","orchestrate","configure","vault"}.issubset({command for name,command in found}))
+        self.assertTrue({"compile","maps","search","maintenance","configure","vault"}.issubset({command for name,command in found}))
     def test_instructions_explain_registered_identity_and_separate_state(self):
         text=self.documents()["instructions/default.md"]
         for token in ("DataRoot", "VaultRoot", "AppRoot", "--vault-id", "RESPECTED_DATA_DIR", "vaults/<UUID>/state", "vaults/<UUID>/cache"):

@@ -5,6 +5,17 @@ from pathlib import Path
 from typing import ContextManager, Literal, Protocol
 
 
+def revert_external(current: bytes | None, before: bytes | None, after: bytes | None) -> bytes | None:
+    """What `current` becomes when only our registration is undone; ValueError when the user changed the same entry too."""
+    if current == after:
+        return before
+    from . import delta
+    try:
+        return delta.revert(current, delta.make_delta(before, after))
+    except delta.DeltaConflict as error:
+        raise ValueError("conflict") from error
+
+
 @dataclass(frozen=True)
 class ExternalChange:
     kind: str
@@ -13,6 +24,48 @@ class ExternalChange:
     after: bytes | None
     has_uninstall_baseline: bool = False
     uninstall_before: bytes | None = None
+    # Persisted form for client config files: only the entries we changed (integrations/delta.py) + fingerprints of the full
+    # files, so no complete copy of a client's config (and the secrets other tools keep in it) is retained.
+    delta: bytes | None = None
+    before_sha256: str | None = None
+    after_sha256: str | None = None
+
+    def restored(self, current: bytes | None) -> bool:
+        """Is `current` already the state before our change (nothing of ours left to undo)?"""
+        if self.delta is None:
+            return current == self.before
+        from .delta import sha256
+        return sha256(current) == self.before_sha256
+
+    def untouched_since(self, current: bytes | None) -> bool:
+        """Is `current` exactly what we wrote?"""
+        if self.delta is None:
+            return current == self.after
+        from .delta import sha256
+        return sha256(current) == self.after_sha256
+
+    def undo(self, current: bytes | None) -> bytes | None:
+        """`current` with only our entries undone; ValueError when someone changed the same entry."""
+        from . import delta
+        if self.kind not in ("file", "mcp"):      # scheduled tasks, shortcuts, registry values: exact bytes or a conflict
+            if current == self.after:
+                return self.before
+            raise ValueError("conflict")
+        if self.delta is None:
+            return revert_external(current, self.before, self.after)
+        try:
+            return delta.revert(current, self.delta)
+        except delta.DeltaConflict as error:
+            raise ValueError("conflict") from error
+
+    def compact(self) -> "ExternalChange":
+        """The persisted form (config files only): drops the full before/after copies, keeps the delta and fingerprints."""
+        if self.delta is not None or self.kind not in ("file", "mcp"):
+            return self
+        from . import delta
+        return ExternalChange(self.kind, self.key, None, None, self.has_uninstall_baseline, None, delta.make_delta(
+            self.uninstall_before if self.has_uninstall_baseline else self.before, self.after),
+            delta.sha256(self.uninstall_before if self.has_uninstall_baseline else self.before), delta.sha256(self.after))
 
 
 @dataclass(frozen=True)

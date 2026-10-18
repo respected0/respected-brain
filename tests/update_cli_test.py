@@ -17,7 +17,15 @@ class TestUpdateCli(IntegrationFixture,unittest.TestCase):
         with mock.patch.object(cli,"bootstrap",return_value=self.ctx),mock.patch("respectedbrain.integrations.backend.NativeBackend",return_value=backend),mock.patch("respectedbrain.installation.deferred.defer_operation",return_value=None),mock.patch("respectedbrain.installation.update.update",return_value=OperationResult(True,"test",())) as update:
             code=cli.main(["update","--vault-id",self.ctx.paths.vault_id,"--package",str(self.root / "package")])
         self.assertEqual(code,0)
-        update.assert_called_once_with(self.ctx,package=(self.root / "package").resolve(),backend=backend)
+        update.assert_called_once_with(self.ctx,package=(self.root / "package").resolve(),backend=backend,require_provenance=None)
+
+    def test_allow_unattested_is_explicit_and_only_then_relaxes_provenance(self):
+        from respectedbrain import cli
+        backend=mock.Mock()
+        with mock.patch.object(cli,"bootstrap",return_value=self.ctx),mock.patch("respectedbrain.integrations.backend.NativeBackend",return_value=backend),mock.patch("respectedbrain.installation.deferred.defer_operation",return_value=None) as defer,mock.patch("respectedbrain.installation.update.update",return_value=OperationResult(True,"test",())) as update:
+            cli.main(["update","--vault-id",self.ctx.paths.vault_id,"--package",str(self.root / "package"),"--allow-unattested"])
+        self.assertIs(update.call_args.kwargs["require_provenance"],False)
+        self.assertIs(defer.call_args.kwargs["require_provenance"],False)
 
     def test_update_failure_exit_status_is_not_rewritten_to_success(self):
         from respectedbrain import cli
