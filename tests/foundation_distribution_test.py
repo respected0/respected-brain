@@ -27,7 +27,7 @@ class FoundationDistributionTest(unittest.TestCase):
     def test_inno_does_not_reuse_old_vault_as_app_dir(self):
         source = (ROOT / "packaging/windows/respected_setup.iss").read_text(encoding="utf-8")
         self.assertIn("UsePreviousAppDir=no", source)
-        self.assertIn("DefaultDirName={localappdata}\\Programs\\RespectedBrain", source)
+        self.assertIn("DefaultDirName={localappdata}\\Respected\\RespectedBrain\\app", source)
         self.assertIn("UninstallFilesDir={app}\\uninstall", source)
         self.assertIn('DestDir: "{tmp}\\payload"', source)
         self.assertNotIn('DestDir: "{app}', source)

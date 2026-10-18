@@ -71,6 +71,9 @@ def setup(roots: Roots, vault: Path, *, profile: Mapping[str, str], desired: Map
             resolved_profile = installed_profile(roots, profile)
             def edit(value):
                 value["integrations"].update({key: bool(desired[key]) for key in ("global", "mcp", "schedule", "shortcut") if key in desired})
+                for list_key in ("clients", "mcp_clients"):
+                    if desired.get(list_key) is not None:
+                        value["integrations"][list_key] = sorted(desired[list_key])
                 value["vaults"][identity]["settings"].update({key: val for key, val in profile.items() if key in ("OS_NAME", "USER_NAME", "USER_BIO", "COMPANION", "platform", "user_home")})
                 value["vaults"][identity]["settings"].setdefault("platform", resolved_profile.platform)
                 value["vaults"][identity]["settings"].setdefault("user_home", str(resolved_profile.user_home))
@@ -82,13 +85,7 @@ def setup(roots: Roots, vault: Path, *, profile: Mapping[str, str], desired: Map
             profile_object = installed_profile(roots, profile)
             launchers = ensure_linux_launcher(ctx, profile_object, tx, previous)
             project_connections = []
-            if registered is None:
-                from respectedbrain.integrations.rendering import render_project_integrations
-                for name, content in render_project_integrations(ctx, profile_object).items():
-                    target = vault / name
-                    change = ExternalChange("file", str(target), backend.read("file", str(target)), content)
-                    tx.apply_external(change)
-                    project_connections.append(change)
+            # Hooks are global only (home-level, via plan_connections); the vault keeps just its notes and .obsidian (no .claude/.cursor/.agents/...).
             from .operations import plan_connections, operation_manifest
             changes, external = plan_connections(ctx, backend, previous)
             external = (*external, *project_connections)

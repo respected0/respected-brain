@@ -114,7 +114,7 @@ class FoundationSetupTest(unittest.TestCase):
         self.assertEqual(service.call_args.args, (self.roots, self.vault))
         self.assertEqual(service.call_args.kwargs["package"], self.package)
 
-    def test_local_hooks_are_owned_through_maintenance_and_removed_without_notes(self):
+    def test_vault_gets_no_local_hook_folders_and_notes_survive_maintenance(self):
         from respectedbrain.integrations.backend import NativeBackend
         from respectedbrain.installation.update import update
         from respectedbrain.installation.repair import repair
@@ -135,39 +135,17 @@ class FoundationSetupTest(unittest.TestCase):
                 self.assertTrue(result.success, result.conflicts)
                 ctx = build_context(roots, ConfigStore(roots.data_root), vault=roots.default_vault, vault_id=None, env={})
                 notes = note_hashes(roots.default_vault)
-                expected = {str(roots.default_vault / name) for name in names}
+                self.assertTrue(all(not (roots.default_vault / name).exists() for name in names))
                 for operation in (lambda: update(ctx, package=self.package, backend=backend, require_provenance=False),
                                   lambda: repair(ctx, backend=backend, require_provenance=False)):
                     result = operation()
                     self.assertTrue(result.success, result.conflicts)
-                    manifest = read_manifest(roots.data_root / 'install-manifest.json')
-                    self.assertTrue(expected.issubset({item.key for item in manifest.external}))
-                    self.assertTrue(all((roots.default_vault / name).exists() for name in names))
+                    self.assertTrue(all(not (roots.default_vault / name).exists() for name in names))
                 result = uninstall(ctx, backend=backend, purge_data=purge)
                 self.assertTrue(result.success, result.conflicts)
-                self.assertTrue(all(not (roots.default_vault / name).exists() for name in names))
                 self.assertEqual(note_hashes(roots.default_vault), notes)
 
-    def test_uninstall_preserves_changed_local_hook_and_reports_conflict(self):
-        from respectedbrain.integrations.backend import NativeBackend
-        from respectedbrain.installation.uninstall import uninstall
-        from respectedbrain.vault.registry import build_context
-        self.backend = NativeBackend(self.roots.data_root)
-        self.assertTrue(self.install().success)
-        ctx = build_context(self.roots, ConfigStore(self.roots.data_root), vault=self.vault, vault_id=None, env={})
-        path = self.vault / '.claude/settings.json'
-        document = json.loads(path.read_text(encoding='utf-8'))
-        document['user-setting'] = 'preserve this'
-        path.write_text(json.dumps(document), encoding='utf-8')
-        before = path.read_bytes()
-        notes = note_hashes(self.vault)
-        result = uninstall(ctx, backend=self.backend)
-        self.assertFalse(result.success)
-        self.assertIn('file:' + str(path), result.conflicts)
-        self.assertEqual(path.read_bytes(), before)
-        self.assertEqual(note_hashes(self.vault), notes)
-
-    def test_local_hook_registration_rolls_back_when_install_health_fails(self):
+    def test_install_rolls_back_when_install_health_fails(self):
         from respectedbrain.integrations.backend import NativeBackend
         self.backend = NativeBackend(self.roots.data_root)
         with patch('respectedbrain.installation.payload.validate_installed_health', side_effect=OSError('health failure')):

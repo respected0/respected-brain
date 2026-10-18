@@ -15,7 +15,7 @@
 AppId={{#MyAppId}
 AppName=Respected Brain
 AppVersion={#MyAppVersion}
-DefaultDirName={localappdata}\Programs\RespectedBrain
+DefaultDirName={localappdata}\Respected\RespectedBrain\app
 UsePreviousAppDir=no
 PrivilegesRequired=lowest
 UninstallFilesDir={app}\uninstall
@@ -49,7 +49,7 @@ end;
 
 function DataDir: String;
 begin
-  Result := ExpandConstant('{param:DATA|{localappdata}\RespectedBrain}');
+  Result := ExpandConstant('{param:DATA|{localappdata}\Respected\RespectedBrain\data}');
 end;
 
 function RootArgs: String;
@@ -127,5 +127,5 @@ begin
   if ExpandConstant('{param:PURGEDATA|1}') = '0' then PurgeArg := '--no-purge-data';
   Result := Exec(ExpandConstant('{app}\respectedbrain.exe'), '_inno-copy-helper --app-root "' + ExpandConstant('{app}') + '" --output "' + ExpandConstant('{tmp}\helper') + '"', '', SW_HIDE, ewWaitUntilTerminated, Code) and (Code = 0);
   if Result then
-    Result := Exec(ExpandConstant('{tmp}\helper\respectedbrain.exe'), '_inno-uninstall --app-root "' + ExpandConstant('{app}') + '" --data-root "' + ExpandConstant('{param:DATA|{localappdata}\RespectedBrain}') + '" --vault "' + ExpandConstant('{param:VAULT|{userdocs}\RespectedOS}') + '" ' + PurgeArg + ' --proof "' + ExpandConstant('{param:PROOF|}') + '" --proof-hash "' + ExpandConstant('{param:PROOFHASH|}') + '"', '', SW_HIDE, ewWaitUntilTerminated, Code) and (Code = 0);
+    Result := Exec(ExpandConstant('{tmp}\helper\respectedbrain.exe'), '_inno-uninstall --app-root "' + ExpandConstant('{app}') + '" --data-root "' + ExpandConstant('{param:DATA|{localappdata}\Respected\RespectedBrain\data}') + '" --vault "' + ExpandConstant('{param:VAULT|{userdocs}\RespectedOS}') + '" ' + PurgeArg + ' --proof "' + ExpandConstant('{param:PROOF|}') + '" --proof-hash "' + ExpandConstant('{param:PROOFHASH|}') + '"', '', SW_HIDE, ewWaitUntilTerminated, Code) and (Code = 0);
 end;

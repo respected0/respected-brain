@@ -30,8 +30,8 @@ class FoundationPathsTest(unittest.TestCase):
         before = snapshot(self.root)
         roots = paths.resolve_roots(platform='win32', home=self.home, env={},
             known_folder={'LocalAppData': self.local, 'Documents': self.docs}.__getitem__)
-        self.assertEqual(roots.app_root, self.local / 'Programs/RespectedBrain')
-        self.assertEqual(roots.data_root, self.local / 'RespectedBrain')
+        self.assertEqual(roots.app_root, self.local / 'Respected/RespectedBrain/app')
+        self.assertEqual(roots.data_root, self.local / 'Respected/RespectedBrain/data')
         self.assertEqual(roots.default_vault, self.docs / 'RespectedOS')
         bound = paths.AppPaths(roots.app_root, roots.data_root, roots.default_vault, UUID)
         self.assertEqual(bound.state_dir, roots.data_root / 'vaults' / UUID / 'state')
