@@ -189,7 +189,7 @@
       "relationships": [
         "Aktif durum docs/PROJECT_STATUS.md; karar ve kayıt indeksleri bu dosyanın tarihsel bağlamına yönlendirir."
       ],
-      "review_sha256": "0b31a895c6e79c558faa203d32acc438bd00a878e26c0678f9e908e2d395ab29"
+      "review_sha256": "04c67b692c7588164a098a4313dbc7b489b0a6c05a8020f6ac17f3ef02f533e7"
     },
     {
       "path": "docs/decisions/PRIVACY_AND_CLIENT_CONFIG.md",
@@ -564,20 +564,20 @@
     {
       "path": "packaging/windows/respected_setup.iss",
       "role": "Depo sözleşmesi",
-      "purpose": "Inno Setup kabugudur: staged payload'dan `_inno-prepare --package` ile strict provenance on denetimini AppRoot/DataRoot/VaultRoot yazimindan once calistirir, `_inno-deploy`/`_inno-seal` ile ortak servisi surer, her adimin receipt'ini DataRoot/logs/inno-*-result.json altinda birakir, `GetCustomSetupExitCode` ile hata sonrasi nonzero doner ve basarisiz deploy'da ssDone'i yinelemez. Uninstaller'a `--purge-data`/`--no-purge-data` gecirir; gorunur setup kisisel bilgi toplamaz, ilk kullanim personalizasyonunu `welcome`'a birakir.",
+      "purpose": "Inno Setup kabugudur: staged payload'dan `_inno-prepare --package` ile strict provenance on denetimini AppRoot/DataRoot/VaultRoot yazimindan once calistirir, `_inno-deploy`/`_inno-seal` ile ortak servisi surer, her adimin receipt'ini DataRoot/logs/inno-*-result.json altinda birakir, `GetCustomSetupExitCode` ile hata sonrasi nonzero doner ve basarisiz deploy'da ssDone'i yinelemez. Uninstaller'a `--purge-data`/`--no-purge-data` gecirir; gorunur setup kisisel bilgi toplamaz, ilk kullanim personalizasyonunu `welcome`'a birakir. Varsayılan AppRoot `{localappdata}\\Respected\\RespectedBrain\\app`, DataRoot `{localappdata}\\Respected\\RespectedBrain\\data` (ekosistemin tek Respected klasörü).",
       "relationships": [
         "installation.windows shell sahipligini muhurler; installation.setup/update/uninstall transaction ve kayit islemlerini yonetir. tests/foundation_native_install_test.py gercek Setup zincirini ve unsigned fail-closed sonucunu dogrular."
       ],
-      "review_sha256": "8008c6875813640be1e48ded6ca411abdca44b37197d48dadb0e4fc07fb06547"
+      "review_sha256": "b953adb1efd820dcd89c0a94630ac06056ac2e1d7275356dc6334a60eafb0f44"
     },
     {
       "path": "pyproject.toml",
       "role": "Depo sözleşmesi",
-      "purpose": "respectedbrain 0.0.1 paketini, Python >=3.10 sınırını, sıfır zorunlu üçüncü taraf bağımlılığını, build-system gereksinimleriyle eşleşen dev geliştirme araçlarını (setuptools>=69, build, wheel, pyinstaller, tomli) ve console script'i tanımlar; resources dosyalarını açıkça paketler. gateway/web/index.html paket verisi kaldırıldı.",
+      "purpose": "respectedbrain 0.1.0 paketini, Python >=3.10 sınırını, sıfır zorunlu üçüncü taraf bağımlılığını, build-system gereksinimleriyle eşleşen dev geliştirme araçlarını (setuptools>=69, build, wheel, pyinstaller, tomli) ve console script'i tanımlar; resources dosyalarını açıkça paketler. gateway/web/index.html paket verisi kaldırıldı.",
       "relationships": [
         "Setuptools src yerleşimini kurar; respectedbrain.cli:main kurulu giriş olur; build_installer sürümü buradan edinir."
       ],
-      "review_sha256": "f5718a61824337e63265702deb4004479e0c72465fdb459ff049559c45a4f90b"
+      "review_sha256": "5a5ab7305723c0c4156fa2ce508a4d1030d0b351d4d1f83e7350fe56ad68299a"
     },
     {
       "path": "src/respectedbrain/__init__.py",
@@ -699,11 +699,11 @@
     {
       "path": "src/respectedbrain/core/paths.py",
       "role": "Paylaşılan çekirdek sözleşme",
-      "purpose": "Roots ve AppPaths ile AppRoot/DataRoot/VaultRoot ayrışmasını, mutlak yolları ve geçerli UUID'yi doğrular; state/cache/overrides/log/backup yollarını türetir.",
+      "purpose": "Roots ve AppPaths ile AppRoot/DataRoot/VaultRoot ayrışmasını, mutlak yolları ve geçerli UUID'yi doğrular; state/cache/overrides/log/backup yollarını türetir. Windows varsayılanları tek Respected klasöründedir: `%LOCALAPPDATA%/Respected/RespectedBrain/app` ve `.../data`.",
       "relationships": [
         "bootstrap kökleri burada çözer; vault.registry kasa kaydını bağlar; diğer servislerin teknik verisi vault dışında UUID'ye bağlanır."
       ],
-      "review_sha256": "5f7ac37e5d5c512210d55353eab4f5a66d885d3633bdc7612e5fbae4bc7cc4d4"
+      "review_sha256": "82b79b24a6fec3e9a8f7dfde4198ca5d2e7cefafc6b98824c0bca31b25b20185"
     },
     {
       "path": "src/respectedbrain/core/platform.py",
@@ -816,11 +816,11 @@
     {
       "path": "src/respectedbrain/installation/setup.py",
       "role": "Sahiplik kontrollü yaşam döngüsü",
-      "purpose": "Doğrulanmış paketi ve seçilen bağlantıları transaction içinde kurar; yalnız yeni boş vault kişiselleştirilir. Beş yerel AI hook dosyası ExternalChange olarak journal ve uninstall sahiplik manifestine alınır; health/commit hatasında geri alınır. Tekrar kurulumda önceki manifest kökleri aktivasyon/silme öncesi doğrulanır ve teknik sahiplik kayıtları korunur. Seçilen AI istemci listeleri (clients/mcp_clients) config entegrasyonlarında saklanır.",
+      "purpose": "Doğrulanmış paketi ve seçilen bağlantıları transaction içinde kurar; yalnız yeni boş vault kişiselleştirilir. Vault'a yerel AI hook dosyası yazılmaz (yalnız notlar ve .obsidian); hook'lar yalnız seçilen global istemci kayıtları olarak ExternalChange ile journal ve uninstall sahiplik manifestine alınır; health/commit hatasında geri alınır. Tekrar kurulumda önceki manifest kökleri aktivasyon/silme öncesi doğrulanır ve teknik sahiplik kayıtları korunur. Seçilen AI istemci listeleri (clients/mcp_clients) config entegrasyonlarında saklanır.",
       "relationships": [
         "CLI ve wizard aynı setup servisini çağırır. operations.validate_manifest_roots ve operation_manifest ortak sınırları uygular; health/commit hatasında WAL geri alma insan notlarını veya sonradan değişen baytları ezmez."
       ],
-      "review_sha256": "b595739adfb2e786038f90165430c3e6bf18c5ef1467f8fffd0e3de3d661c0de"
+      "review_sha256": "9f696d1da86726e5f8add894e05d41e53761fba023219150f88763822380fb94"
     },
     {
       "path": "src/respectedbrain/installation/transaction.py",
@@ -834,11 +834,11 @@
     {
       "path": "src/respectedbrain/installation/uninstall.py",
       "role": "Sahiplik kontrollü yaşam döngüsü",
-      "purpose": "Yalniz degismemis sahipli dosya/kayitlari kaldirir. Varsayilan olarak kanitli teknik kayitlari (config/manifest) temizler, `purge_data=False`/`--keep-data` bunu atlar; backups, unknown kullanici dosyalari ve tum VaultRoot notlarini her zaman korur. Inno shell ciftini aktif uninstall sirasinda haric tutar. Dış kayıtlar revert_external ile girdi düzeyinde geri alınır; yalnızca Respected girdisi kullanıcı tarafından değiştirilmişse çatışma raporlanır. Kaldırma sonunda biten işlemlerin günlükleri temizlenir.",
+      "purpose": "Yalniz degismemis sahipli dosya/kayitlari kaldirir. Varsayilan olarak kanitli teknik kayitlari (config/manifest) temizler, `purge_data=False`/`--keep-data` bunu atlar; backups, unknown kullanici dosyalari ve tum VaultRoot notlarini her zaman korur. Inno shell ciftini aktif uninstall sirasinda haric tutar. Dış kayıtlar revert_external ile girdi düzeyinde geri alınır; yalnızca Respected girdisi kullanıcı tarafından değiştirilmişse çatışma raporlanır. Kaldırma sonunda biten işlemlerin günlükleri temizlenir. `prune_empty_client_dirs` kaldırılan dosyalardan sonra istemci klasörleri altında yalnız boş kalan skill/rule klasörlerini siler; istemci kökleri (.agents hariç) ve yabancı dosyalar korunur.",
       "relationships": [
         "ownership, operations ve transaction ile calisir; tests/uninstall_test.py ve foundation_operations_test.py sozlesmesini sinar."
       ],
-      "review_sha256": "a994c3c054175c1f2db2d1d03aec98af09d2719ebcb9a7f5cba61cc0c366f5f5"
+      "review_sha256": "6f984ce1d480a020174cb54eda2a8281c382ca6fb236246a38a240d1933b5968"
     },
     {
       "path": "src/respectedbrain/installation/update.py",
@@ -2029,12 +2029,12 @@
     {
       "path": "tests/foundation_distribution_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Üretilmiş native payload'un checkout/Python olmadan çalışmasını, Inno AppRoot/vault ayrımını ve değişmiş dağıtım hash reddini sınar. Odak örnekleri: `test_frozen_runs_without_checkout_or_python`, `test_inno_does_not_reuse_old_vault_as_app_dir`, `test_distribution_tampering_fails_before_launcher`.",
+      "purpose": "Üretilmiş native payload'un checkout/Python olmadan çalışmasını, Inno AppRoot/vault ayrımını ve değişmiş dağıtım hash reddini sınar. Odak örnekleri: `test_frozen_runs_without_checkout_or_python`, `test_inno_does_not_reuse_old_vault_as_app_dir`, `test_distribution_tampering_fails_before_launcher`. Inno varsayılan AppRoot'unun `Respected\\RespectedBrain\\app` olduğu doğrulanır.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.installation.payload`, `respectedbrain.core.errors`."
       ],
-      "review_sha256": "40e864b76bbe63e45f0b77cb75c59ccf019928fac52ed9b90443b2437aafee2c"
+      "review_sha256": "7d32e3489187752193a54d0ad03e52a565ef79e5b04e36d38edba64756da2630"
     },
     {
       "path": "tests/foundation_features_test.py",
@@ -2157,12 +2157,12 @@
     {
       "path": "tests/foundation_paths_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Windows redirected Documents ve diğer OS root default'larını, explicit override önceliğini, ayrık AppRoot/DataRoot/VaultRoot ve UUID doğrulamasını sınar. Odak örnekleri: `test_redirected_documents_and_separate_roots`, `test_other_platform_roots`, `test_overrides_do_not_use_legacy_runtime_dir`. Fixture kökleri kanonik yollarla kurulur; macOS /var ve Windows kısa temp adları gerçek yol kimliğiyle karşılaştırılır.",
+      "purpose": "Windows redirected Documents ve diğer OS root default'larını, explicit override önceliğini, ayrık AppRoot/DataRoot/VaultRoot ve UUID doğrulamasını sınar. Odak örnekleri: `test_redirected_documents_and_separate_roots`, `test_other_platform_roots`, `test_overrides_do_not_use_legacy_runtime_dir`. Fixture kökleri kanonik yollarla kurulur; macOS /var ve Windows kısa temp adları gerçek yol kimliğiyle karşılaştırılır. Windows varsayılan AppRoot/DataRoot'u tek Respected klasörü altında doğrulanır.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.core`, `respectedbrain.core.errors`."
       ],
-      "review_sha256": "474f9471e3b3dbe50127a1bafdd1f771a111f62aa88b75ff6628aff9494dd764"
+      "review_sha256": "58098a73c71775a83b8e209723189a9585d024545b0b2b501bcb920cb2de6d18"
     },
     {
       "path": "tests/foundation_posix_distribution_test.py",
@@ -2187,12 +2187,12 @@
     {
       "path": "tests/foundation_setup_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Pure yeni vault, dolu unregistered hedef reddi, tekrar kurulum/insan notu koruması ve health/busy gate sınanır. Gerçek NativeBackend geçici kökleriyle beş yerel hook'un setup/update/repair boyunca sahipli kalması, purge/keep-data uninstall'da temizlenmesi ve not hash'lerinin korunması doğrulanır. Kullanıcı değiştirdiği hook conflict ile korunur; health hatasında yerel hook kayıtları rollback edilir. Kullanıcı ayarı eklenmiş istemci yapılandırmasında kaldırmanın başarılı olduğu ve yabancı anahtarın korunduğu test edilir.",
+      "purpose": "Pure yeni vault, dolu unregistered hedef reddi, tekrar kurulum/insan notu koruması ve health/busy gate sınanır. Gerçek NativeBackend geçici kökleriyle setup/update/repair/uninstall (purge ve keep-data) boyunca vault'ta hiçbir yerel hook dosyasının oluşmadığı ve not hash'lerinin korunduğu doğrulanır. Kullanıcı değiştirdiği hook conflict ile korunur; health hatasında yerel hook kayıtları rollback edilir. Kullanıcı ayarı eklenmiş istemci yapılandırmasında kaldırmanın başarılı olduğu ve yabancı anahtarın korunduğu test edilir.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.core.paths`, `respectedbrain.core.config`, `respectedbrain.installation.setup`, `respectedbrain.installation.ownership`, `respectedbrain.installation`, `respectedbrain.installation.transaction`."
       ],
-      "review_sha256": "a36191ff87c3f63211a99803b10409fbdc2f3072be08b9b791efa310db1a0881"
+      "review_sha256": "48fc236964bc097be7dad1eb04ad7cc3e2c932a3f89aa4b8644fb55b22d18053"
     },
     {
       "path": "tests/foundation_support.py",
@@ -2383,12 +2383,12 @@
     {
       "path": "tests/package_contract_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Paket kaynaklarının checkout olmadan erişilmesini, dev bağımlılıklarının build-system gereksinimlerini (setuptools>=69, wheel) eksiksiz karşıladığını, import yan etkisizliğini, resource path escape reddini ve temporary materialization'ı sınar. Odak örnekleri: `test_dev_dependencies_satisfy_build_system_requirements`, `test_resources_and_import_are_independent_of_checkout`, `test_resource_names_cannot_escape_package`, `test_materialized_template_is_temporary_and_complete`. Resource geçici tahsisinin gerçek directory junction/symlink altında kanonik ve safe_path uyumlu olduğunu doğrular; owned_temp_alias fixture helper'ını paylaşır. Başarısız wheel/venv/import/CLI subprocess adımında yalnız sabit whitelist stage etiketini CI annotation'ına taşır; tam exception/çıktı normal assert logunda kalır. Gerçek başarısız subprocess regresyonu özel mesajın bildirime sızmadığını doğrular.",
+      "purpose": "Paket kaynaklarının checkout olmadan erişilmesini, dev bağımlılıklarının build-system gereksinimlerini (setuptools>=69, wheel) eksiksiz karşıladığını, import yan etkisizliğini, resource path escape reddini ve temporary materialization'ı sınar. Odak örnekleri: `test_dev_dependencies_satisfy_build_system_requirements`, `test_resources_and_import_are_independent_of_checkout`, `test_resource_names_cannot_escape_package`, `test_materialized_template_is_temporary_and_complete`. Resource geçici tahsisinin gerçek directory junction/symlink altında kanonik ve safe_path uyumlu olduğunu doğrular; owned_temp_alias fixture helper'ını paylaşır. Başarısız wheel/venv/import/CLI subprocess adımında yalnız sabit whitelist stage etiketini CI annotation'ına taşır; tam exception/çıktı normal assert logunda kalır. Gerçek başarısız subprocess regresyonu özel mesajın bildirime sızmadığını doğrular. Kurulu paket ve CLI sürüm çıktısı 0.1.0 olarak doğrulanır.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.core.resources`."
       ],
-      "review_sha256": "eff59d49408533be3ba7cd61648059ff950803f7551e2f31db6e886c04644d2f"
+      "review_sha256": "efd77addf3733a8092070d2e63ac16384ba5c87e0334528a1137659d646cc6ec"
     },
     {
       "path": "tests/profile_render_test.py",
@@ -2418,6 +2418,16 @@
         "src/respectedbrain/providers/runner.py modülünü doğrular."
       ],
       "review_sha256": "6d0183efe6844a58ebc96191d6da347b9a5fb2ba40270341b53a58e7d00be3d4"
+    },
+    {
+      "path": "tests/prune_client_dirs_test.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "Kaldırma sonrası istemci klasörlerinde boş kalan skill/rule klasörlerinin silindiğini; istemci köklerinin (.agents hariç), yabancı dosyaların ve Desktop gibi istemci dışı klasörlerin korunduğunu sınar. Odak örneği: `test_removes_empty_skill_folders_but_keeps_client_roots_and_foreign_files`.",
+      "relationships": [
+        "src/respectedbrain/installation/uninstall.py içindeki prune_empty_client_dirs'i sınar",
+        "unittest keşfi tests/run_all.py ve CI tarafından yürütülür"
+      ],
+      "review_sha256": "317650997883936fa167abbe1b02ce30420a6722965a11c5edaee47928db7d4e"
     },
     {
       "path": "tests/regression_matrix_test.py",
@@ -2659,11 +2669,11 @@
     {
       "path": "tests/source_cleanup_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Emekli runtime/installer/template kaynak girişlerinin yokluğunu ve release workflow'un native build/verify sınırını korur. Odak örnekleri: `test_retired_source_entrypoints_are_absent`, `test_release_builds_and_verifies_native_distributions`. macOS smoke kaynak/hedef .app isim sözleşmesini de doğrular.",
+      "purpose": "Emekli runtime/installer/template kaynak girişlerinin yokluğunu ve release workflow'un native build/verify sınırını korur. Odak örnekleri: `test_retired_source_entrypoints_are_absent`, `test_release_builds_and_verifies_native_distributions`. macOS smoke kaynak/hedef .app isim sözleşmesini de doğrular. Native doğrulayıcı testindeki sahte `--version` yanıtı paket sürümünden (`__version__`) alınır.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz."
       ],
-      "review_sha256": "ea5621cfd675bb3d1faf7f4fca9ab9f7178f5a440b33cf3f50e223e43cff137c"
+      "review_sha256": "9dc93e335cd8b721e90cc5ce7fc02eb603b70d11dc8ae39818599d6126371e54"
     },
     {
       "path": "tests/test_backup_restore.py",
@@ -2870,12 +2880,12 @@
     {
       "path": "tests/vault_hygiene_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "SSRF host/port/scheme, HTML cleanup/redirect, wiki lint/tiling, native kaynak-skill-template ve fail-closed fetch hijyenini sınar. Odak örnekleri: `test_safe_public_urls`, `test_blocks_localhost_and_loopback`, `test_blocks_private_subnets`.",
+      "purpose": "SSRF host/port/scheme, HTML cleanup/redirect, wiki lint/tiling, native kaynak-skill-template ve fail-closed fetch hijyenini sınar. Odak örnekleri: `test_safe_public_urls`, `test_blocks_localhost_and_loopback`, `test_blocks_private_subnets`. Paket `__version__` değeri pyproject.toml sürümüyle karşılaştırılır.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.maintenance.ingestion.url_safety`, `respectedbrain.maintenance.ingestion.defuddle`, `respectedbrain.maintenance.vault_linter`, `respectedbrain.maintenance.tiling_check`, `respectedbrain`, `respectedbrain.core.resources`, `respectedbrain.integrations.scheduling.service`, `respectedbrain.maintenance.ingestion`."
       ],
-      "review_sha256": "5388bd30838ea5f8e90863f1740eededf0b36d69f6b53b650531ae994a6470d3"
+      "review_sha256": "103c461eb4b4326c7173a32f86bcecafe059e69ea9703234d71969ab0fb676d1"
     },
     {
       "path": "tests/vault_registry_test.py",
@@ -2918,12 +2928,12 @@
     {
       "path": "tests/wizard_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Wizard ve source launcher'ın shared setup kullanmasını; genesis placeholders, repeat/vault koruması, provider priority/failfast ve native MCP bağlantılarını sınar. Native yerel hook kontrolleri ExternalChange kayıtlarını gerçek geçici dosyalara yazan NativeBackend kullanır; son UUID ve stable launcher içerikleri diskte doğrulanır. Kısayol testi open komutuna göre güncellendi.",
+      "purpose": "Wizard ve source launcher'ın shared setup kullanmasını; genesis placeholders, repeat/vault koruması, provider priority/failfast ve native MCP bağlantılarını sınar. Native hook kontrolleri NativeBackend ile sahte home altındaki global `.claude/settings.json` dosyasında son UUID ve stable launcher içeriğini doğrular; vault'ta `.claude` oluşmaz. Global entegrasyon hatasında yarım yeni kurulumun tamamen geri alındığı sınanır. Kısayol testi open komutuna göre güncellendi.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.core.config`, `respectedbrain.vault.registry`, `respectedbrain.installation`, `respectedbrain.installation.setup`, `respectedbrain.installation.transaction`, `respectedbrain`."
       ],
-      "review_sha256": "256e4403ce82b0a5e3b675f5cdb931c668f01f7cb6f8d8eb93216e880a493cf7"
+      "review_sha256": "6a7f349dcc4f5344447bb77371c3fb18407eed9144857ff47503167d61c28960"
     },
     {
       "path": "tests/zero_trust_security_test.py",

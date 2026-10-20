@@ -33,12 +33,17 @@ class WizardTest(unittest.TestCase):
         self.assertEqual(config["preferences"]["provider_priority"],["antigravity","codex"])
         self.assertFalse((self.vault / ".beyin").exists())
 
-    def test_fresh_native_install_renders_hooks_for_final_registered_uuid(self):
+    def global_hooks(self):
+        # hooks are global only (vault keeps notes + .obsidian), so they are read from the fake home
+        self.assertFalse((self.vault / ".claude").exists())
+        return (self.root / "home/.claude/settings.json").read_text(encoding="utf-8")
+
+    def test_fresh_native_install_renders_global_hooks_for_final_registered_uuid(self):
         from respectedbrain.integrations.backend import NativeBackend
         self.backend = NativeBackend(self.roots.data_root)
-        self.assertTrue(self.action().success)
+        self.assertTrue(self.action(desired={**self.desired,"global":True}).success)
         identity=json.loads((self.vault / ".respected.json").read_text())["vault_id"]
-        content=(self.vault / ".claude/settings.json").read_text(encoding="utf-8")
+        content=self.global_hooks()
         self.assertIn(identity,content)
         self.assertIn(str(self.roots.app_root / "respectedbrain.exe").replace("\\","\\\\"),content)
         self.assertNotIn(".respected-stage",content)
@@ -56,6 +61,7 @@ class WizardTest(unittest.TestCase):
         path=self.vault / "knowledge/human-note.md"
         path.write_bytes("İnsan notu.\n".encode())
         settings=self.vault / ".claude/settings.json"
+        settings.parent.mkdir()
         settings.write_bytes(b'{"myProjectSetting":true}')
         before=snapshot(self.vault)
         self.assertTrue(self.action(mode="modify").success)
@@ -80,15 +86,15 @@ class WizardTest(unittest.TestCase):
     def test_native_install_persists_only_stable_application_launcher(self):
         from respectedbrain.integrations.backend import NativeBackend
         self.backend = NativeBackend(self.roots.data_root)
-        self.assertTrue(self.action().success)
-        content=(self.vault / ".claude/settings.json").read_text(encoding="utf-8")
+        self.assertTrue(self.action(desired={**self.desired,"global":True}).success)
+        content=self.global_hooks()
         self.assertIn("respectedbrain.exe",content)
         self.assertNotIn("python",content)
         self.assertNotIn(".py",content)
 
-    def test_render_failure_rolls_back_partial_fresh_install(self):
-        with mock.patch("respectedbrain.integrations.rendering.render_project_integrations",side_effect=OSError("render failed")):
-            result=self.action()
+    def test_integration_failure_rolls_back_partial_fresh_install(self):
+        with mock.patch.object(self.backend,"apply",side_effect=OSError("integration failed")):
+            result=self.action(desired={**self.desired,"global":True})
         self.assertFalse(result.success)
         self.assertFalse(self.vault.exists())
         self.assertFalse((self.roots.app_root / "respectedbrain.exe").exists())

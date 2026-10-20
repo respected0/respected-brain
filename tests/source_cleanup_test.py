@@ -26,6 +26,7 @@ class SourceCleanupTest(unittest.TestCase):
 
     def test_native_verification_stage_labels_handle_single_argument_version(self):
         from tests.foundation_install_support import seed_package
+        from respectedbrain import __version__
         spec = importlib.util.spec_from_file_location('native_verifier', ROOT / 'tools/verify_distribution.py')
         tool = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(tool)
@@ -33,7 +34,7 @@ class SourceCleanupTest(unittest.TestCase):
             package = seed_package(Path(temporary) / 'package')
             def reply(argv, **kwargs):
                 command = argv[1:]
-                output = '0.0.1\n' if command == ['--version'] else 'identity\n' if command[:2] == ['vault', 'register'] else '{"identity": {}}' if command == ['vault', 'list'] else '{"id": 1}' if command[0] == 'mcp' else ''
+                output = f'{__version__}\n' if command == ['--version'] else 'identity\n' if command[:2] == ['vault', 'register'] else '{"identity": {}}' if command == ['vault', 'list'] else '{"id": 1}' if command[0] == 'mcp' else ''
                 return subprocess.CompletedProcess(argv, 0, output, '')
             with mock.patch.object(tool.subprocess, 'run', side_effect=reply):
                 self.assertEqual(tool.verify(package, platform='windows'), 0)

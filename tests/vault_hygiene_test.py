@@ -12,6 +12,7 @@ from pathlib import Path
 import shutil
 import sys
 import tempfile
+import tomllib
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -265,7 +266,7 @@ class TestManifestAndTemplates(unittest.TestCase):
 
         # Sürüm dosyası
         from respectedbrain import __version__
-        self.assertEqual(__version__, "0.0.1")
+        self.assertEqual(__version__, tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"])
         self.assertFalse((ROOT / "src/respectedbrain/resources/vault-template" / ".respectedbrain-version").exists())
         self.assertFalse((ROOT / "src/respectedbrain/resources/vault-template" / ".beyin-version").exists())
         self.assertFalse((ROOT / "src/respectedbrain/resources/vault-template" / ".beyin-multi-version").exists())
