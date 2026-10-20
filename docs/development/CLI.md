@@ -180,63 +180,6 @@ Sahipli program/bağlantıları kaldırır; not kasasını hedeflemez.
 | `--vault-id` | isteğe bağlı | metin/argv |
 | `--purge-data` | isteğe bağlı; default: False | flag |
 
-### migrate
-
-Legacy varsayılan salt okunur plan; --apply mutasyon.
-
-| Argüman | Gereklilik / varsayılan | Değerler |
-| --- | --- | --- |
-| `--legacy-root` | zorunlu | Path |
-| `--vault` | zorunlu | Path |
-| `--package` | isteğe bağlı | Path |
-| `--apply` | isteğe bağlı; default: False | flag |
-| `--platform` | isteğe bağlı | windows-native, posix, windows-wsl |
-
-### recover
-
-Yarım transaction recovery; conflict varsa exit 1. Ek argüman yoktur.
-
-### hook
-
-Provider olay protokolü. Üretilmiş hook kayıtları içindir.
-
-| Argüman | Gereklilik / varsayılan | Değerler |
-| --- | --- | --- |
-| `--vault` | isteğe bağlı | Path |
-| `--vault-id` | isteğe bağlı | metin/argv |
-| `--provider` | zorunlu | claude, codex, cursor, antigravity, gemini |
-| `--event` | zorunlu | start, prompt, precompact, postcompact, turn, end, notify |
-| `--global-hook` | isteğe bağlı; default: False | flag |
-| `--chain-file` | isteğe bağlı | Path |
-| `payload` | isteğe bağlı | metin/argv |
-
-### mcp
-
-Stdio JSON-RPC sunucusu; çağrılan araçlar okuma/yazma yapabilir.
-
-| Argüman | Gereklilik / varsayılan | Değerler |
-| --- | --- | --- |
-| `--vault` | isteğe bağlı | Path |
-| `--vault-id` | isteğe bağlı | metin/argv |
-
-## 3. Bakım araçları
-
-İsimler `maintenance._TOOLS` kaynağıyla karşılaştırılmıştır. Kasa selector tool isminden önce yazılır; araç seçenekleri sonradan aktarılır. Bilinmeyen araç açık hata verir.
-
-| İsim | İş / yan etki |
-| --- | --- |
-| repair_daily | Daily kayıt düzeltmesi; not yazabilir |
-| vault_linter | Not metadata/yapı denetimi |
-| architect_scan | Vault mimari/yapı analizi |
-| smart_merge | Not birleştirme; hedef dosya değişebilir |
-| tiling_check | Not/yerleşim denetimi |
-| backup_restic | Harici Restic; --repo zorunlu, --apply gerçek yedek, --skip-verify restore kontrolünü kapatır |
-| publish_git_snapshot | --remote/--branch; --apply gerçek Git yayını; preview fetch yapabilir |
-| mine_agent_history | Yerel ajan geçmişini işleme; not yazabilir |
-| defuddle | URL ingestion; ağ ve not yazımı; SSRF transport sınırı var |
-
-Her araç kendi parser help çıktısını sunar; kapsamı uygulamadan önce `respectedbrain maintenance --vault-id <UUID> <araç> --help` ile kontrol edin. Tool argümanına başka kasa vererek seçili context dışına çıkılamaz.
-
 ## 4. İç OS protokol komutları
 
-Alt çizgiyle başlayan `_resume-operation` ve `_inno-*` komutları hash doğrulanmış shell/helper protokolüdür. Kullanıcı bakım komutu gibi elle çağrılmaz; request/proof doğrulama sözleşmesini atlamak için kullanılamaz. Kesin arayüz `cli.py`, `installation/windows.py`, `deferred.py` içindedir.
+Alt çizgiyle başlayan `_resume-operation` komutu hash doğrulanmış ertelenmiş işlem protokolüdür. Kullanıcı bakım komutu gibi elle çağrılmaz; request/proof doğrulama sözleşmesini atlamak için kullanılamaz. Kesin arayüz `cli.py` ve `deferred.py` içindedir.

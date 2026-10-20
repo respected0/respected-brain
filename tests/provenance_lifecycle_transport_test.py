@@ -38,7 +38,7 @@ def attach_attestation(package: Path) -> Path:
         }],
         "predicateType": "https://slsa.dev/provenance/v1",
         "predicate": {"buildDefinition": {"externalParameters": {"workflow": {
-            "repository": "https://github.com/respected0/respectedbrain",
+            "repository": "https://github.com/respected0/respected-secondbrain",
             "path": ".github/workflows/release.yml",
             "ref": f"refs/tags/v{__version__}",
         }}}},

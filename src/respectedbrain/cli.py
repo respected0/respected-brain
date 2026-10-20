@@ -23,47 +23,6 @@ def _selector(parser):
     group.add_argument("--vault-id")
 
 
-def _inno_receipt(roots, operation, action):
-    import subprocess
-    from dataclasses import asdict, is_dataclass
-    from .core.config import atomic_write_json
-
-    receipt = roots.data_root / "logs" / f"inno-{operation}-result.json"
-    try:
-        result = action()
-        if result is None:
-            document = {"schema_version": 1, "operation": operation, "success": True, "conflicts": [], "errors": []}
-        else:
-            values = asdict(result) if is_dataclass(result) else dict(result)
-            document = {"schema_version": 1, "operation": operation, **values, "errors": []}
-    except (subprocess.TimeoutExpired, subprocess.SubprocessError) as error:
-        message = f"Process failure: {error}"
-        document = {"schema_version": 1, "operation": operation, "success": False, "pending": False,
-                    "conflicts": [], "errors": [message]}
-        print(message, file=sys.stderr)
-    except (FoundationError, OSError, ValueError) as error:
-        document = {"schema_version": 1, "operation": operation, "success": False, "pending": False,
-                    "conflicts": [], "errors": [str(error)]}
-        print(str(error), file=sys.stderr)
-    except Exception as error:
-        # Any unexpected runtime failure must still produce a receipt and a
-        # nonzero exit, never a silent success.
-        message = f"Unexpected {type(error).__name__}: {error}"
-        document = {"schema_version": 1, "operation": operation, "success": False, "pending": False,
-                    "conflicts": [], "errors": [message]}
-        print(message, file=sys.stderr)
-    try:
-        atomic_write_json(receipt, document)
-    except Exception as error:
-        # A missing receipt is still a hard failure: never report success when
-        # the audit record could not be persisted.
-        print(f"{operation}: could not write install receipt: {error}", file=sys.stderr)
-        print(json.dumps(document, ensure_ascii=False, indent=2), file=sys.stderr)
-        return 1
-    print(json.dumps(document, ensure_ascii=False, indent=2))
-    return 0 if document.get("success") or document.get("pending") else 1
-
-
 def _parser():
     parser = argparse.ArgumentParser(prog="respectedbrain", description="Respected Brain")
     parser.add_argument("--version", action="version", version=__version__)
@@ -94,10 +53,6 @@ def _parser():
     flush.add_argument("--reason", default="sessionend")
     flush.add_argument("--maybe-compile", action="store_true")
     _selector(commands.add_parser("open", help="Not kasası klasörünü dosya yöneticisinde aç"))
-    dashboard = commands.add_parser("dashboard", help="Eski ad; 'open' ile aynı (yerel panel kaldırıldı, Hub kullanılır)")
-    _selector(dashboard)
-    dashboard.add_argument("--port", type=int, default=8520)
-    dashboard.add_argument("--open", action="store_true")
     search = commands.add_parser("search")
     _selector(search)
     search.add_argument("query", nargs="?", default="")
@@ -134,12 +89,6 @@ def _parser():
             operation.add_argument("--keep-data", action="store_true")
             operation.add_argument("--purge-data", dest="keep_data", action="store_false", help=argparse.SUPPRESS)
             operation.set_defaults(keep_data=False)
-    migrate = commands.add_parser("migrate")
-    migrate.add_argument("--legacy-root", type=Path, required=True)
-    migrate.add_argument("--vault", type=Path, required=True)
-    migrate.add_argument("--package", type=Path)
-    migrate.add_argument("--apply", action="store_true")
-    migrate.add_argument("--platform", choices=("windows-native", "posix", "windows-wsl"))
     commands.add_parser("recover")
     rpp_parser = commands.add_parser("rpp", help=argparse.SUPPRESS)
     rpp_parser.add_argument("--data-root", type=Path)
@@ -158,26 +107,6 @@ def _parser():
     resume = commands.add_parser("_resume-operation", help=argparse.SUPPRESS)
     resume.add_argument("--request", type=Path, required=True)
     resume.add_argument("--request-hash", required=True)
-    for name in ("_inno-prepare", "_inno-deploy", "_inno-uninstall", "_inno-seal", "_inno-launch"):
-        shell = commands.add_parser(name, help=argparse.SUPPRESS)
-        shell.add_argument("--app-root", type=Path, required=True)
-        shell.add_argument("--data-root", type=Path, required=True)
-        shell.add_argument("--vault", type=Path, required=True)
-        if name in ("_inno-prepare", "_inno-deploy"):
-            shell.add_argument("--request", type=Path, required=True)
-        if name == "_inno-prepare":
-            shell.add_argument("--registry-key")
-            shell.add_argument("--package", type=Path, required=True)
-        if name == "_inno-deploy":
-            shell.add_argument("--package", type=Path, required=True)
-        if name == "_inno-uninstall":
-            shell.add_argument("--proof", type=Path, required=True)
-            shell.add_argument("--proof-hash", required=True)
-        if name in ("_inno-uninstall", "_inno-launch"):
-            shell.add_argument("--purge-data", action=argparse.BooleanOptionalAction, default=True)
-    copy = commands.add_parser("_inno-copy-helper", help=argparse.SUPPRESS)
-    copy.add_argument("--app-root", type=Path, required=True)
-    copy.add_argument("--output", type=Path, required=True)
     return parser
 
 
@@ -185,63 +114,6 @@ def _dispatch(args) -> int:
     if args.command == "rpp":
         from .rpp import main as rpp_main
         return rpp_main(data_root=args.data_root)
-    if args.command == "_inno-copy-helper":
-        from .installation.windows import copy_helper
-        copy_helper(args.app_root, args.output)
-        return 0
-    if args.command.startswith("_inno-"):
-        from .core.paths import Roots
-        from .integrations.backend import NativeBackend, INNO_UNINSTALL_KEY
-        from .installation.windows import prepare_shell, deploy_shell, seal_shell
-        roots = Roots(args.app_root.resolve(), args.data_root.resolve(), args.vault.resolve())
-        backend = NativeBackend(roots.data_root)
-        if args.command == "_inno-seal":
-            return _inno_receipt(roots, "seal", lambda: seal_shell(roots, backend=backend))
-        if args.command == "_inno-prepare":
-            return _inno_receipt(roots, "prepare", lambda: prepare_shell(
-                roots,
-                request=args.request,
-                registry_key=args.registry_key or INNO_UNINSTALL_KEY,
-                package=args.package.resolve(),
-                require_provenance=True,
-                backend=backend,
-            ))
-        if args.command == "_inno-deploy":
-            return _inno_receipt(roots, "deploy", lambda: deploy_shell(
-                roots, package=args.package.resolve(), request=args.request, backend=backend
-            ))
-        from .vault.registry import build_context
-        from .installation.uninstall import uninstall
-        ctx = build_context(roots, ConfigStore(roots.data_root), vault=None, vault_id=None, env={})
-        if args.command == "_inno-launch":
-            def launch_uninstall():
-                from .installation.deferred import defer_operation
-                pending = defer_operation(ctx, mode="uninstall", purge_data=args.purge_data)
-                if pending is not None:
-                    return pending
-                # A live Inno uninstaller owns its own shell pair; always let it
-                # run the removal instead of deleting it behind its back.
-                if (ctx.paths.app_root / "uninstall/unins000.exe").is_file():
-                    import tempfile
-                    from .installation.windows import launch_uninstaller
-                    request = Path(tempfile.mkdtemp(prefix="respected-uninstall-")) / "uninstall-proof.json"
-                    return launch_uninstaller(ctx, request=request, purge_data=args.purge_data)
-                return uninstall(ctx, backend=backend, purge_data=args.purge_data)
-            return _inno_receipt(roots, "launch", launch_uninstall)
-        def run_uninstall():
-            from dataclasses import asdict
-            from .core.config import atomic_write_json
-            from .installation.windows import validate_uninstall_proof
-            result = uninstall(
-                ctx,
-                backend=backend,
-                purge_data=args.purge_data,
-                shell_active=True,
-                shell_proof=lambda: validate_uninstall_proof(roots, request=args.proof, expected_hash=args.proof_hash),
-            )
-            atomic_write_json(roots.data_root / "logs/uninstall-result.json", asdict(result))
-            return result
-        return _inno_receipt(roots, "uninstall", run_uninstall)
     if args.command in ("compile", "flush"):
         from .memory.lifecycle import _is_reentrant
         if _is_reentrant():
@@ -249,7 +121,7 @@ def _dispatch(args) -> int:
     if args.command == "_resume-operation":
         from .installation.deferred import resume_operation
         return resume_operation(args.request, expected_hash=args.request_hash)
-    if args.command in ("setup", "migrate", "recover", "welcome"):
+    if args.command in ("setup", "recover", "welcome"):
         roots = application_roots()
         from .integrations.backend import NativeBackend
         backend = NativeBackend(roots.data_root)
@@ -281,17 +153,6 @@ def _dispatch(args) -> int:
             from .installation.wizard import main as wizard_main
             vault = Path(entry["path"]) if entry is not None else (args.vault.resolve() if args.vault is not None else roots.default_vault)
             return wizard_main(roots=roots, backend=backend, vault=vault, package=None, profile=settings, desired={})
-        if args.command == "migrate":
-            from .installation.common import installed_profile
-            from .installation.migration import plan_migration, plan_document
-            profile = {"platform": args.platform} if args.platform else {}
-            plan = plan_migration(args.legacy_root.resolve(), args.vault.resolve(), roots=roots, backend=backend, profile=installed_profile(roots, profile))
-            if not args.apply:
-                print(json.dumps(plan_document(plan), ensure_ascii=False, indent=2))
-                return 1 if plan.conflicts else 0
-            from .installation.migration import apply_migration
-            result = apply_migration(plan, roots=roots, package=args.package or roots.app_root, backend=backend)
-            return _operation_output(result)
         desired_overrides = {key: getattr(args, "desired_" + key) for key in ("global", "mcp", "schedule", "shortcut") if getattr(args, "desired_" + key) is not None}
         profile = {key: value for key, value in {"USER_NAME": args.user_name, "USER_BIO": args.user_bio, "COMPANION": args.companion, "OS_NAME": args.os_name, "summary_provider": args.summary_provider, "platform": args.platform}.items() if value is not None}
         vault = args.vault.resolve() if args.vault is not None else None
@@ -417,7 +278,7 @@ def _dispatch(args) -> int:
         from .vault.maps import rebuild_maps
         rebuild_maps(ctx)
         return 0
-    if args.command in ("open", "dashboard"):  # "dashboard" keeps shortcuts created before the local panel was removed working
+    if args.command == "open":
         vault = ctx.paths.vault_root
         print(vault)
         if sys.platform == "win32":

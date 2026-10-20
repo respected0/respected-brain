@@ -95,11 +95,6 @@ def resume_operation(request: Path, *, expected_hash: str, require_provenance=No
         result = update(ctx, package=Path(document["package"]), backend=backend, require_provenance=require_provenance)
     else:
         from .uninstall import uninstall
-        purge_data = bool(document.get("purge_data", True))
-        if (ctx.paths.app_root / "uninstall/unins000.exe").is_file():
-            from .windows import launch_uninstaller
-            result = launch_uninstaller(ctx, request=request.parent / "uninstall-proof.json", purge_data=purge_data)
-        else:
-            result = uninstall(ctx, backend=backend, purge_data=purge_data)
+        result = uninstall(ctx, backend=backend, purge_data=bool(document.get("purge_data", True)))
     atomic_write_json(receipt, asdict(result))
     return 0 if result.success else 1

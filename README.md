@@ -10,7 +10,7 @@ Claude Code · Codex · Cursor · Antigravity · Gemini CLI
 
 Respected Brain, yerel bir Markdown not kasasını AI araçlarına bağlayan açık kaynak bir hafıza programıdır. Desteklenen hook olayları sohbetlerden günlük özet üretir; bilgi derleyicisi bunları bağlantılı notlara dönüştürür. [Obsidian](https://obsidian.md) kasayı okumak ve düzenlemek için kullanılabilir.
 
-Kaynak kod ve proje geçmişi: [respected0/respectedbrain](https://github.com/respected0/respectedbrain).
+Kaynak kod ve proje geçmişi: [respected0/respected-secondbrain](https://github.com/respected0/respected-secondbrain).
 
 **Taşınan şey iş bağlamıdır:** kararlar, kurallar, günlük özetleri ve notlar. Sağlayıcıların özel sohbet ekranları, hesapları ve bütün ham geçmişleri birbiriyle birleştirilmez. Model çağrıları yerel CLI üzerinden sağlayıcıya gider; “yerel kasa” bütün AI işlemlerinin çevrimdışı olduğu anlamına gelmez.
 
@@ -35,18 +35,18 @@ flowchart LR
 
 | Alan | Windows varsayılanı | İçerik |
 | --- | --- | --- |
-| **Program — AppRoot** | `%LOCALAPPDATA%\Programs\RespectedBrain` | `respectedbrain.exe`, `app/` içindeki paket/çalışma ortamı, hazır içerikler, `uninstall/` |
-| **Teknik veri — DataRoot** | `%LOCALAPPDATA%\RespectedBrain` | `config.json`, sahiplik manifesti, log, işlem yedekleri, kasa UUID'sine bağlı state/cache/overrides |
+| **Program — AppRoot** | `%LOCALAPPDATA%\Respected\RespectedBrain\app` | `respectedbrain.exe`, `app/` içindeki paket/çalışma ortamı, hazır içerikler |
+| **Teknik veri — DataRoot** | `%LOCALAPPDATA%\Respected\RespectedBrain\data` | `config.json`, sahiplik manifesti, log, işlem yedekleri, kasa UUID'sine bağlı state/cache/overrides |
 | **Not kasası — VaultRoot** | Kurulumda seçtiğiniz yol | İnsan notları, daily, knowledge, Companion, projeler, Templates, `.obsidian`, `.respected.json` |
 
 ```text
 Program klasörü                  Teknik veri klasörü          Seçtiğiniz not kasası
-RespectedBrain/                  RespectedBrain/              BenimBeynim/
+RespectedBrain/app/              RespectedBrain/data/         BenimBeynim/
 ├── respectedbrain.exe           ├── config.json              ├── daily/
 ├── app/                         ├── logs/                    ├── knowledge/
 │   └── respectedbrain/          ├── backups/                 ├── 🔮 850-Companion/
 │       └── resources/           └── vaults/<UUID>/           ├── 🏰 300-Projects/
-└── uninstall/                       ├── state/               └── .respected.json
+                                     ├── state/               └── .respected.json
                                     ├── cache/
                                     └── overrides/
 ```
@@ -55,7 +55,7 @@ RespectedBrain/                  RespectedBrain/              BenimBeynim/
 
 ## 3. Kurulum ve ilk kullanım
 
-Windows native kurucu adı `RespectedBrain-Windows-Setup.exe`; macOS dağıtımı DMG, Linux dağıtımı `.run` olarak üretilir. Native program kendi çalışma ortamını içerir; son kullanıcı ayrıca Python kurmak zorunda değildir. AI özetleme için kullanmak istediğiniz yerel sağlayıcı CLI'ında oturum açmanız gerekir.
+Windows'ta SecondBrain bağımsız bir kurucuyla değil, **Respected Hub** üzerinden kurulur, güncellenir, onarılır ve kaldırılır. macOS/Linux kodu repoda durur ama şu an derlenmez ve CI'da test edilmez. Native program kendi çalışma ortamını içerir; son kullanıcı ayrıca Python kurmak zorunda değildir. AI özetleme için kullanmak istediğiniz yerel sağlayıcı CLI'ında oturum açmanız gerekir.
 
 | Yapacağınız iş | Rehber |
 | --- | --- |
@@ -108,7 +108,7 @@ python tools/build_installer.py --platform windows --output dist
 python tools/verify_distribution.py --distribution dist/RespectedBrain --platform windows
 ```
 
-Bu build komutlarını uygun Windows geliştirme ortamında çalıştırın; Inno Setup gerekir. Diğer platformların native paketi o platformda üretilir. Geliştirme ayrıntıları [geliştirici rehberinde](docs/development/README.md).
+Bu build komutlarını uygun Windows geliştirme ortamında çalıştırın; çıktı Hub kataloğunun kullandığı native dağıtımdır. Diğer platformların native paketi o platformda üretilir. Geliştirme ayrıntıları [geliştirici rehberinde](docs/development/README.md).
 
 [📚 Belge merkezi](docs/README.md) · [🗺️ Eksiksiz dosya atlası](docs/REPOSITORY_MAP.md) · [🔐 Güvenlik sınırları](docs/SECURITY.md)
 

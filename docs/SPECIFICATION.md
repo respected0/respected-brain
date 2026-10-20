@@ -30,7 +30,6 @@ Config dosyası yoksa paket defaults okunur; update kilit altında tekrar okuyar
 | repair | Sahipli program/bağlantı alanları; insan notlarını yeniden başlatmaz |
 | uninstall | Yalnız kanıtlı sahiplik ve değişmemiş hash; kasa ve `.obsidian` hedef değildir |
 | purge-data / keep-data | Varsayılan (ve açık --purge-data) yalnız kanıtlı sahipli teknik dosyaları temizler; --keep-data teknik veriyi korur; not kasası hiçbir zaman silinmez |
-| migrate | Varsayılan salt okunur plan; conflict varsa apply yapılmaz; değişiklik açık `--apply` ister |
 | recover | Yarım transaction'lar hash karşılaştırmasıyla geri alınır; eşzamanlı kullanıcı değişikliği korunur |
 
 Transaction journal/byte yedeği, kilit, compare-and-swap ve faz kontrolleri kullanılır. Eski geniş silme yapan uninstaller çalıştırılmaz. Pending Windows sonucu son receipt doğrulanmadan tamamlandı sayılmaz; exit 0 işlem kuyruğa alındığında da gelebilir.

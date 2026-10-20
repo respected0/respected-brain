@@ -80,14 +80,14 @@ class CaptureModeTest(unittest.TestCase):
 
 
 class OpenCommandTest(unittest.TestCase):
-    """`open` (and the old `dashboard` name that existing desktop shortcuts still call) opens the vault folder; no local server exists any more."""
+    """`open` opens the vault folder; no local server exists any more."""
 
-    def test_both_names_open_the_vault_folder_and_nothing_else(self):
+    def test_open_opens_the_vault_folder_and_nothing_else(self):
         import io
         from contextlib import redirect_stdout
         from unittest.mock import patch
         from respectedbrain import cli
-        for name in ("open", "dashboard"):
+        for name in ("open",):
             with patch.object(cli.os, "startfile", create=True) as startfile, patch.object(cli.subprocess, "Popen") as popen, \
                     patch.object(cli, "bootstrap") as boot, redirect_stdout(io.StringIO()) as out:
                 boot.return_value.paths.vault_root = Path("C:/vault-x") if os.name == "nt" else Path("/vault-x")

@@ -540,7 +540,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
 
     def test_maintenance_skills_are_canonical_and_discoverable(self):
         names = self.ctx.resources.iter_files("skills")
-        for name in ("beyin-doktor", "gecmis-import", "kod-orkestrasyon"):
+        for name in ("beyin-doktor", "gecmis-import"):
             self.assertIn(name + "/SKILL.md", names)
 
     def test_global_antigravity_installer_preserves_config_and_is_idempotent(self):

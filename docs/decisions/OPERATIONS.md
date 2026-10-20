@@ -38,7 +38,6 @@ respectedbrain briefing --vault-id <id>
 respectedbrain compile --vault-id <id>
 respectedbrain update --package <path>
 respectedbrain repair --vault-id <id>
-respectedbrain migrate --legacy-root <path> --vault <path> [--apply]
 respectedbrain uninstall
 ```
 

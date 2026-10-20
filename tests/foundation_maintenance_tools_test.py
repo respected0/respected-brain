@@ -1,4 +1,4 @@
-"""Context-bound maintenance and explicit code-project orchestration contracts."""
+"""Context-bound vault maintenance tools: selected-vault writes, idempotency state, snapshots, backup/restore and merge boundaries."""
 from __future__ import annotations
 
 import contextlib
@@ -20,7 +20,7 @@ from respectedbrain.core.resources import ResourceCatalog
 from tests.foundation_support import snapshot
 
 
-class FoundationMaintenanceOrchestrationTest(unittest.TestCase):
+class FoundationMaintenanceToolsTest(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.addCleanup(self.temporary.cleanup)

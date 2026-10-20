@@ -57,14 +57,6 @@ class SourceCleanupTest(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertFalse((ROOT / name).exists(), f"Retired source remains: {name}")
 
-    def test_release_builds_and_verifies_native_distributions(self):
-        text = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
-        self.assertIn("python tools/build_installer.py", text)
-        self.assertIn("python tools/verify_distribution.py", text)
-        self.assertNotIn("cp -r template", text)
-        self.assertNotIn("installer\\respected_setup.iss", text)
-        self.assertNotIn("Move-Item setup.exe", text)
-
 
 if __name__ == "__main__":
     unittest.main()

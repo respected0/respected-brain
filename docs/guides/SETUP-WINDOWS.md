@@ -5,12 +5,11 @@
 ## 1. Tam olarak ne nereye kurulur?
 
 ```text
-%LOCALAPPDATA%/Programs/RespectedBrain/
+%LOCALAPPDATA%/Respected/RespectedBrain/app/
 ├── respectedbrain.exe
-├── app/                         Paket, runtime bağımlılıkları ve resources
-└── uninstall/                   Windows kaldırıcı araçları
+└── app/                         Paket, runtime bağımlılıkları ve resources
 
-%LOCALAPPDATA%/RespectedBrain/
+%LOCALAPPDATA%/Respected/RespectedBrain/data/
 ├── config.json
 ├── install-manifest.json
 ├── logs/
@@ -23,17 +22,11 @@
 
 Not kasası bunlardan ayrıdır; örneğin `C:/Users/<kullanıcı>/Documents/BenimBeynim`. Windows Documents yönlendirilmiş olabilir. Native program runtime'ı paketle gelir; DataRoot'a ayrı `runtime/` veya `scripts/` motoru kurulmaz.
 
-## 2. Kurucu penceresi
+## 2. Hub üzerinden kurulum
 
-`RespectedBrain-Windows-Setup.exe` program ve kasa yollarını ayrı alır. Program klasörünü mevcut not kasasına eşitlemeyin. Ortak kurulum hizmeti payload hash'lerini/sahipliği doğrular; Inno kabuğu Windows kayıt ve kaldırıcı görevlerini tamamlar. Programı ayrıca kaynak repodan eski `setup.py` ile kurma yolu yoktur.
+Windows'ta SecondBrain bağımsız bir kurucuyla değil, **Respected Hub** üzerinden kurulur, güncellenir, onarılır ve kaldırılır. Hub imzalı native dağıtımı doğrular, kasa yolunu ve AI istemci seçimlerini sorar, ardından ürünün kendi `setup` hizmetini çalıştırır; program, veri ve kasa yolları ayrı tutulur. Bağımsız Inno kurucusu ve `_inno-*` kabuk komutları kaldırıldı. Geliştirme sırasında aynı hizmet `respectedbrain setup --gui --vault ... --package ...` ile çağrılabilir.
 
-Inno penceresi program ve kasa dizinlerini toplar; kişisel ad/provider ve dört bağlantı için ayrı checkbox sayfası içermez. Bu alanlar ortak Python wizard'ında (`setup --gui`) veya CLI seçenekleriyle düzenlenir. Inno deploy kayıtlı tercihleri kullanır; yeni defaults global/MCP/schedule/shortcut kapalıdır. Mevcut tercihler ve açık kapalı seçimler korunur. Kullanıcı profilini Native Windows ve WSL arasında karıştırmayın; [MULTI_AI](MULTI_AI.md) sınırları açıklar.
-
-## 3. Silent kurulum
-
-Kurucu silent arayüzünde `/DIR="<program yolu>"` ve `/VAULT="<kasa yolu>"` ayrı parametrelerdir; `/DATA="<teknik veri yolu>"` DataRoot seçer. Ortak CLI GUI'sinde `setup --gui --vault ... --package ...` kullanılır. Bunlar farklı arayüzlerdir; Inno seçeneklerini Python CLI argümanı sanmayın. Kesin shell seçenekleri `packaging/windows/respected_setup.iss` içinde tanımlıdır.
-
-## 4. Kullanımda executable ve son makbuz
+## 3. Kullanımda executable ve son makbuz
 
 Frozen launcher kendi çalışan dosyasını yerinde değiştirmek/silmek için Windows exit sonrası helper kullanabilir. `pending` sonuç son başarı değildir. Çıktıdaki `tx_id` ile son makbuz yolunu çözün; deferred sonuç DataRoot `backups/deferred-<kimlik>/result.json` altında yazılır. Bazı işlemlerde CLI exit 0 kuyruğa alma başarısını gösterir; receipt/health doğrulaması ayrıca gerekir.
 

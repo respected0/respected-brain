@@ -94,26 +94,6 @@ class FoundationPosixInstallTest(unittest.TestCase):
         self.assertEqual(changes, ())
         self.assertEqual(owned, rows)
 
-    def test_migration_preview_uses_planned_personalized_resources(self):
-        from tests.foundation_migration_preview_test import seed_legacy
-        from respectedbrain.integrations.backend import IntegrationProfile
-        from respectedbrain.installation.migration import plan_migration
-        legacy = self.root / "legacy"
-        seed_legacy(legacy, layout="flat")
-        self.vault.mkdir()
-        original = (legacy / "instructions.md").read_text()
-        class PreviewBackend(Backend):
-            def preview(self, ctx, *, desired, profile):
-                self.selected = ctx.resources.read_text("instructions/default.md")
-                self.skills = ctx.resources.iter_files("skills")
-                return ()
-        backend = PreviewBackend()
-        plan = plan_migration(legacy, self.vault, roots=self.roots, backend=backend, profile=IntegrationProfile("posix", (str(self.roots.app_root / "respectedbrain"),), self.home))
-        self.assertEqual(plan.conflicts, ())
-        self.assertEqual(backend.selected, original)
-        self.assertIn("custom/SKILL.md", backend.skills)
-        self.assertFalse(self.roots.data_root.exists())
-
     def test_required_launcher_is_owned_independent_of_all_disabled_integrations(self):
         ctx = self.install()
         self.assertTrue(self.launcher.is_file(), "Linux install must create the required PATH launcher")
@@ -205,41 +185,3 @@ class PosixPackagingEntrypointsTest(unittest.TestCase):
             self.assertIn("--package", text)
             self.assertIn('"$@"', text)
             self.assertNotIn("python", text.lower())
-
-
-import tests.foundation_migration_apply_test as migration_fixtures
-
-class MigrationFinalBoundaryTest(unittest.TestCase):
-    setUp = migration_fixtures.FoundationMigrationApplyTest.setUp
-    module = migration_fixtures.FoundationMigrationApplyTest.module
-    plan = migration_fixtures.FoundationMigrationApplyTest.plan
-    apply = migration_fixtures.FoundationMigrationApplyTest.apply
-    def test_legacy_state_modified_after_copy_cannot_commit(self):
-        for phase in ("health", "cleanup"):
-            with self.subTest(phase=phase):
-                plan = self.plan()
-                row = next(item for item in plan.entries if item.action == "copy-state")
-                original = row.source.read_bytes()
-                def fault(name):
-                    if name == phase:
-                        row.source.write_bytes(b"concurrent legacy writer")
-                try:
-                    result = self.apply(plan, fault=fault)
-                    self.assertFalse(result.success)
-                    self.assertEqual(row.source.read_bytes(), b"concurrent legacy writer")
-                    self.assertFalse(row.target.exists())
-                finally:
-                    row.source.write_bytes(original)
-    def test_retired_legacy_registration_is_not_resurrected_on_uninstall(self):
-        from dataclasses import replace
-        from respectedbrain.integrations.backend import ExternalChange
-        self.backend.records[("task", "legacy-task")] = b"legacy task"
-        plan = replace(self.plan(), external=(ExternalChange("task", "legacy-task", b"legacy task", None, True, None),))
-        result = self.apply(plan)
-        self.assertTrue(result.success, result.conflicts)
-        manifest = read_manifest(self.roots.data_root / "install-manifest.json")
-        task = next(row for row in manifest.external if row.key == "legacy-task")
-        self.assertIsNone(task.before)
-        ctx = build_context(self.roots, ConfigStore(self.roots.data_root), vault=self.vault, vault_id=None, env={})
-        self.assertTrue(uninstall(ctx, backend=self.backend).success)
-        self.assertIsNone(self.backend.read("task", "legacy-task"))

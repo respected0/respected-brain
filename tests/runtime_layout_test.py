@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class RuntimeLayoutTest(IntegrationFixture, unittest.TestCase):
     def test_public_commands_preserve_selected_uuid_and_exit_status(self):
-        for command in ("repair", "uninstall", "dashboard", "open"):
+        for command in ("repair", "uninstall", "open"):
             with self.subTest(command=command), mock.patch.object(cli, "_dispatch", return_value=7) as dispatch:
                 self.assertEqual(cli.main([command, "--vault-id", self.ctx.paths.vault_id]), 7)
                 args = dispatch.call_args.args[0]
@@ -59,13 +59,6 @@ assert sys.path == before
             self.assertEqual(cli.main(["configure", "--summary-provider", "cursor"]), 0)
         self.assertEqual(dispatch.call_args.args[0].summary_provider, "cursor")
         self.assertFalse((self.vault / ".beyin").exists())
-
-    def test_migration_is_preview_unless_apply_is_explicit(self):
-        argv = ["migrate", "--legacy-root", str(self.root / "old"), "--vault", str(self.vault)]
-        for apply in (False, True):
-            with self.subTest(apply=apply), mock.patch.object(cli, "_dispatch", return_value=2) as dispatch:
-                self.assertEqual(cli.main(argv + (["--apply"] if apply else [])), 2)
-                self.assertEqual(dispatch.call_args.args[0].apply, apply)
 
     def test_instruction_resources_point_to_canonical_instructions(self):
         from respectedbrain.core.resources import ResourceCatalog

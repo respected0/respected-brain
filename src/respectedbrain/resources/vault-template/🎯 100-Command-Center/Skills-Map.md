@@ -12,7 +12,6 @@ Kanonik kaynak: `skills/`
 | `beyin-oruntu` | Örtük sürtünme ve darboğaz örüntülerini çıkarır. "örüntü", "trend", "nerede takılıyoruz" için kullan. |
 | `gecmis-import` | Eski sohbetleri (ChatGPT, Claude) daily/ altına aktarır. "geçmiş import", "chatgpt geçmişi" dendiğinde kullan. |
 | `inbox-duzenle` | Gelen kutusu ve Dump notlarını tasnif edip düzenler. "inbox düzenle", "dump temizle", "triyaj" dendiğinde kullan. |
-| `kod-orkestrasyon` | Çoklu AI model orkestrasyonu (Worktree izolasyonu). "orkestrasyon", "modeli işçi olarak çalıştır", "worktree'de dene" için kullan. |
 | `obsidian-layout` | Obsidian görsel temasını ve CSS snippetlarını düzenler. "obsidian tema", "css düzenle", "görünüm" için kullan. |
 | `otonom-arastirma` | Webde derin araştırma yapar, kalıcı bilgiyi işler. "araştır", "derin araştırma" için kullan. |
 | `yazilim-kalite` | Kod kalitesi, adversarial review ve verification gate uygular. "kalite kontrol", "yazılım kalite" için kullan. |

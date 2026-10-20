@@ -77,7 +77,7 @@ kullanıcı alanında kalır. Kullanıcı live index/HEAD semantiği değiştiri
 `validate_package` varsayılanı `require_provenance=True`'dir. `RESPECTED_ALLOW_UNSIGNED`
 ürün bypass'ı değildir ve ürün yolunda yok sayılır. Manifest `distribution.json`
 SHA-256'sı SLSA subject digest'ine bağlanır; repo, `.github/workflows/release.yml`
-ve exact `refs/tags/vX.Y.Z` politikayla eşleştirilir.
+ve exact `refs/tags/vX.Y.Z` politikayla eşleştirilir. Bu SLSA yolu, yayınlar CI'dan üretildiğinde yeniden açılacak; şu an `release.yml` yoktur ve Hub kendi Ed25519 imzasını doğrulayıp `--allow-unattested` geçer.
 
 Normal doğrulayıcı checksum-pinlenmiş `gh 2.102.0`'dır. Kullanılan doğru sözleşme:
 `--cert-identity`, `--cert-oidc-issuer`, `--source-ref`, `--predicate-type`,

@@ -24,16 +24,6 @@ class FoundationDistributionTest(unittest.TestCase):
         resources = [name for name in document["files"] if name.endswith("respectedbrain/resources/defaults.json")]
         self.assertEqual(len(resources), 1)
 
-    def test_inno_does_not_reuse_old_vault_as_app_dir(self):
-        source = (ROOT / "packaging/windows/respected_setup.iss").read_text(encoding="utf-8")
-        self.assertIn("UsePreviousAppDir=no", source)
-        self.assertIn("DefaultDirName={localappdata}\\Respected\\RespectedBrain\\app", source)
-        self.assertIn("UninstallFilesDir={app}\\uninstall", source)
-        self.assertIn('DestDir: "{tmp}\\payload"', source)
-        self.assertNotIn('DestDir: "{app}', source)
-        self.assertNotIn("[UninstallDelete]", source)
-        self.assertNotIn("DelTree", source)
-
     def test_distribution_tampering_fails_before_launcher(self):
         from respectedbrain.installation.payload import validate_package
         from respectedbrain.core.errors import OwnershipConflict

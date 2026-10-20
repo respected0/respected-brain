@@ -86,7 +86,7 @@ def assemble_macos_bundle(source: Path, bundle: Path) -> None:
             raise
 
 
-def build(*, platform: str, output: Path, installer: bool = True) -> Path:
+def build(*, platform: str, output: Path) -> Path:
     native = "windows" if sys.platform == "win32" else "macos" if sys.platform == "darwin" else "linux"
     if platform != native:
         raise ValueError("Frozen distributions must be built on their native platform")
@@ -130,17 +130,6 @@ def build(*, platform: str, output: Path, installer: bool = True) -> Path:
         wrapper = output / entry.name
         wrapper.write_bytes(entry.read_text(encoding="utf-8").encode("utf-8"))
         wrapper.chmod(0o755)
-    if platform == "windows" and installer:
-        compiler = os.environ.get("INNO_COMPILER") or shutil.which("ISCC.exe")
-        if compiler is None:
-            candidate = Path(os.environ.get("LOCALAPPDATA", "")) / "Programs/Inno Setup 6/ISCC.exe"
-            try:
-                compiler = str(candidate) if candidate.is_file() else None
-            except OSError:
-                compiler = None
-        if compiler is None:
-            raise RuntimeError("Inno compiler is required for the Windows installer")
-        subprocess.run([compiler, "/DMyAppVersion=" + document["version"], "/DPayloadDir=" + str(app), "/DOutputDir=" + str(output), str(ROOT / "packaging/windows/respected_setup.iss")], check=True)
     return app
 
 
@@ -148,6 +137,5 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--platform", required=True, choices=("windows", "macos", "linux"))
     parser.add_argument("--output", type=Path, default=ROOT / "dist")
-    parser.add_argument("--no-installer", action="store_true")
     args = parser.parse_args()
-    print(build(platform=args.platform, output=args.output, installer=not args.no_installer))
+    print(build(platform=args.platform, output=args.output))

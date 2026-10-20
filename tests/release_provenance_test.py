@@ -25,7 +25,7 @@ def _synthetic_slsa_bundle(
     *,
     subject_name: str,
     subject_sha256: str,
-    repo: str = "https://github.com/respected0/respectedbrain",
+    repo: str = "https://github.com/respected0/respected-secondbrain",
     workflow: str = ".github/workflows/release.yml",
     ref: str = "refs/tags/v0.0.1",
     signature_str: str = "test_trusted_crypto_signature",
@@ -46,7 +46,7 @@ def _synthetic_slsa_bundle(
             "runDetails": {
                 "builder": {"id": "https://github.com/actions/runner"},
                 "metadata": {
-                    "invocationId": "https://github.com/respected0/respectedbrain/actions/runs/123456",
+                    "invocationId": "https://github.com/respected0/respected-secondbrain/actions/runs/123456",
                 },
             },
         },
@@ -80,7 +80,7 @@ class ReleaseProvenanceVerificationTest(unittest.TestCase):
 
         self.offline_verifier = offline_verifier
         self.policy = TrustedProvenancePolicy(
-            expected_repo="respected0/respectedbrain",
+            expected_repo="respected0/respected-secondbrain",
             expected_workflow=".github/workflows/release.yml",
             expected_ref_prefix="refs/tags/v",
             verifier_callable=self.offline_verifier,
@@ -126,7 +126,7 @@ class ReleaseProvenanceVerificationTest(unittest.TestCase):
             bundle_data = _synthetic_slsa_bundle(
                 subject_name=pkg.name,
                 subject_sha256=pkg_hash,
-                repo="https://github.com/respected0/respectedbrain",
+                repo="https://github.com/respected0/respected-secondbrain",
                 workflow=".github/workflows/release.yml",
                 ref="refs/tags/v0.0.1",
                 signature_str="test_trusted_crypto_signature",
@@ -136,7 +136,7 @@ class ReleaseProvenanceVerificationTest(unittest.TestCase):
 
             ok, reason, details = verify_release_provenance(pkg, bundle_file, policy=self.policy)
             self.assertTrue(ok, f"Verification should pass: {reason}")
-            self.assertEqual(details.get("repo"), "respected0/respectedbrain")
+            self.assertEqual(details.get("repo"), "respected0/respected-secondbrain")
             self.assertEqual(details.get("ref"), "refs/tags/v0.0.1")
 
     def test_unsigned_statement_is_rejected(self):
@@ -152,7 +152,7 @@ class ReleaseProvenanceVerificationTest(unittest.TestCase):
                 "subject": [{"name": pkg.name, "digest": {"sha256": pkg_hash}}],
                 "predicateType": "https://slsa.dev/provenance/v1",
                 "predicate": {"buildDefinition": {"externalParameters": {"workflow": {
-                    "repository": "https://github.com/respected0/respectedbrain",
+                    "repository": "https://github.com/respected0/respected-secondbrain",
                     "path": ".github/workflows/release.yml",
                     "ref": "refs/tags/v0.0.1",
                 }}}},
@@ -185,7 +185,7 @@ class ReleaseProvenanceVerificationTest(unittest.TestCase):
             self.assertIn("signature", reason.lower())
 
     def test_foreign_origin_or_domain_is_rejected(self):
-        """Provenance from an attacker domain (e.g. attacker.example/.../respected0/respectedbrain) is rejected."""
+        """Provenance from an attacker domain (e.g. attacker.example/.../respected0/respected-secondbrain) is rejected."""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             pkg = root / "artifact.bin"
@@ -195,7 +195,7 @@ class ReleaseProvenanceVerificationTest(unittest.TestCase):
             bundle_data = _synthetic_slsa_bundle(
                 subject_name=pkg.name,
                 subject_sha256=pkg_hash,
-                repo="https://attacker.example/unrelated/respected0/respectedbrain",
+                repo="https://attacker.example/unrelated/respected0/respected-secondbrain",
             )
             bundle = root / "attestation.json"
             bundle.write_text(json.dumps(bundle_data), encoding="utf-8")
@@ -207,7 +207,7 @@ class ReleaseProvenanceVerificationTest(unittest.TestCase):
     def test_missing_host_verifier_fails_closed(self):
         """When no cryptographic verifier is available on the host, verification must fail-closed."""
         default_policy = TrustedProvenancePolicy(
-            expected_repo="respected0/respectedbrain",
+            expected_repo="respected0/respected-secondbrain",
             expected_workflow=".github/workflows/release.yml",
             verifier_callable=None,
         )

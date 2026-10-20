@@ -6,8 +6,8 @@
 
 | Alan | Windows | macOS | Linux |
 | --- | --- | --- | --- |
-| AppRoot | `%LOCALAPPDATA%/Programs/RespectedBrain` | `~/Applications/RespectedBrain.app` | `~/.local/lib/respectedbrain` |
-| DataRoot | `%LOCALAPPDATA%/RespectedBrain` | `~/Library/Application Support/RespectedBrain` | `$XDG_DATA_HOME/respectedbrain`, yoksa `~/.local/share/respectedbrain` |
+| AppRoot | `%LOCALAPPDATA%/Respected/RespectedBrain/app` | `~/Applications/RespectedBrain.app` | `~/.local/lib/respectedbrain` |
+| DataRoot | `%LOCALAPPDATA%/Respected/RespectedBrain/data` | `~/Library/Application Support/RespectedBrain` | `$XDG_DATA_HOME/respectedbrain`, yoksa `~/.local/share/respectedbrain` |
 | VaultRoot | Kullanıcının seçtiği mutlak yol | Kullanıcının seçtiği yol | Kullanıcının seçtiği yol |
 
 Windows Known Folders, yönlendirilmiş Documents/LocalAppData konumlarını çözmek için kullanılır. Varsayılan kasa adı `RespectedOS`; macOS/Linux'ta Documents yoksa kullanıcı kökü baz alınır. Kasa adı değişebilir. AppRoot/DataRoot/VaultRoot birbirini içermemelidir. Linux kurulumunda kullanıcı launcher'ı `~/.local/bin/respectedbrain` olur.
@@ -28,7 +28,7 @@ DataRoot'ta `config.json`, `install-manifest.json`, log/işlem yedekleri ve `vau
 | `briefing/` | Zamanı gelmiş günlük sabah brifingi |
 | `search/` | SQLite FTS5/BM25 tam metin arama ve indeks |
 | `integrations/` | Provider hook/adaptörleri, MCP, global bağlantı, scheduler ve backend |
-| `installation/` | Setup, update, repair, uninstall, migration, hash sahipliği, WAL/recovery |
+| `installation/` | Setup, update, repair, uninstall, hash sahipliği, WAL/recovery |
 | `maintenance/` | Not bakım/onarım, ingestion, Restic ve Git snapshot yardımcıları |
 | `resources/` | Immutable defaults, instructions, skills, provider şablonları, vault-template |
 

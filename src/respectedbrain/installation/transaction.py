@@ -213,20 +213,6 @@ class Transaction:
             self._save()
         return row
 
-    def adopt_before(self, path: Path, before: bytes | None):
-        """Journal an Inno artifact whose pre-install bytes were captured earlier."""
-        safe_path(path)
-        if any(row["path"] == str(path) for row in self.document["files"]):
-            raise OwnershipConflict("Shell artifact already journaled")
-        backup = None
-        if before is not None:
-            backup = f"file-{len(self.document['files'])}.bin"
-            atomic_write_bytes(safe_path(self.directory / backup), before)
-        self.document["files"].append({"path": str(path), "backup": backup,
-                                       "before": hashlib.sha256(before).hexdigest() if before is not None else None,
-                                       "after": digest(path) if path.exists() else None})
-        self._save()
-
     def write(self, target: Path, payload: bytes, *, mode: int | None = None) -> None:
         # The before-image is fsynced first; its record and expected output
         # share one durable snapshot before target mutation.

@@ -117,65 +117,9 @@ class ProvenanceFailClosedTest(unittest.TestCase):
                 with self.assertRaises(OwnershipConflict):
                     defer_operation(ctx, mode="update", package=bad, require_provenance=True)
 
-    def test_prepare_shell_requires_a_package_argument(self):
-        from respectedbrain.installation.windows import prepare_shell
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary).resolve()
-            roots = Roots(root / "app", root / "data", root / "vault")
-            with self.assertRaises(TypeError):
-                prepare_shell(roots, request=root / "prepare.json", backend=Backend())
-
-    def test_prepare_shell_rejects_missing_attestation_without_writes(self):
-        from respectedbrain.installation.windows import prepare_shell
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary).resolve()
-            roots = Roots(root / "app", root / "data", root / "vault")
-            package = seed_package(root / "package")
-            drop_attestation(package)
-            request = root / "prepare.json"
-            with self.assertRaises(OwnershipConflict):
-                prepare_shell(roots, request=request, package=package, backend=Backend())
-            self.assertFalse(request.exists())
-            self.assertFalse(roots.data_root.exists())
-
 
 class CopyHelperProvenanceTest(unittest.TestCase):
     """The helper must be derived only from a provenance-verified source."""
-
-    def test_copy_helper_requires_source_attestation(self):
-        from respectedbrain.installation.windows import copy_helper
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary).resolve()
-            source = seed_package(root / "source")
-            drop_attestation(source)
-            output = Path(tempfile.gettempdir()) / "respected-helper-missing-attestation"
-            with self.assertRaises(OwnershipConflict):
-                copy_helper(source, output)
-
-    def test_copy_helper_rejects_tampered_source_file(self):
-        from respectedbrain.installation.windows import copy_helper
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary).resolve()
-            source = seed_package(root / "source")
-            (source / "respectedbrain.exe").write_bytes(b"MZ-tampered-after-manifest")
-            output = root / "helper"
-            with self.assertRaises(OwnershipConflict):
-                copy_helper(source, output)
-            self.assertFalse((output / "distribution.json").exists())
-
-    def test_copy_helper_derives_helper_from_verified_source(self):
-        from respectedbrain.installation.windows import copy_helper
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary).resolve()
-            source = seed_package(root / "source")
-            output = root / "helper"
-            with fixture_gh(root):
-                copy_helper(source, output)
-            document = validate_package(output, require_provenance=False)
-            self.assertEqual(document["version"], __version__)
-            self.assertTrue((output / "respectedbrain.exe").is_file())
-            # The derived helper intentionally carries no attestation bundle.
-            self.assertFalse((output / ATTESTATION).exists())
 
 
 class InnoPrepareReceiptGatewayTest(unittest.TestCase):
@@ -214,7 +158,7 @@ class ReleaseSignatureSeparationTest(unittest.TestCase):
                 "subject": [{"name": "distribution.json", "digest": {"sha256": hashlib.sha256(b"x").hexdigest()}}],
                 "predicateType": "https://slsa.dev/provenance/v1",
                 "predicate": {"buildDefinition": {"externalParameters": {"workflow": {
-                    "repository": "https://github.com/respected0/respectedbrain",
+                    "repository": "https://github.com/respected0/respected-secondbrain",
                     "path": ".github/workflows/release.yml",
                     "ref": f"refs/tags/v{__version__}",
                 }}}},
@@ -290,47 +234,6 @@ class InnoReceiptRobustnessTest(unittest.TestCase):
 
     def _roots(self, root: Path):
         return Roots(root / "app", root / "data", root / "vault")
-
-    def test_timeout_error_is_recorded_in_receipt(self):
-        import subprocess
-        from respectedbrain import cli
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary).resolve()
-            roots = self._roots(root)
-
-            def action():
-                raise subprocess.TimeoutExpired(cmd="gh attestation verify", timeout=30)
-
-            status = cli._inno_receipt(roots, "prepare", action)
-            self.assertEqual(status, 1)
-            receipt = root / "data/logs/inno-prepare-result.json"
-            document = json.loads(receipt.read_text(encoding="utf-8"))
-            self.assertFalse(document["success"])
-            self.assertTrue(any("Process failure" in item for item in document["errors"]))
-
-    def test_unexpected_runtime_error_is_recorded_in_receipt(self):
-        from respectedbrain import cli
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary).resolve()
-            roots = self._roots(root)
-
-            def action():
-                raise RuntimeError("verifier crashed unexpectedly")
-
-            status = cli._inno_receipt(roots, "prepare", action)
-            self.assertEqual(status, 1)
-            document = json.loads((root / "data/logs/inno-prepare-result.json").read_text(encoding="utf-8"))
-            self.assertFalse(document["success"])
-            self.assertTrue(any("Unexpected RuntimeError" in item for item in document["errors"]))
-
-    def test_unwritable_receipt_still_fails_the_operation(self):
-        from respectedbrain import cli
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary).resolve()
-            roots = self._roots(root)
-            with mock.patch("respectedbrain.core.config.atomic_write_json", side_effect=OSError("disk full")):
-                status = cli._inno_receipt(roots, "prepare", lambda: None)
-            self.assertEqual(status, 1)
 
 
 if __name__ == "__main__":

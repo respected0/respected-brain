@@ -222,41 +222,6 @@ class FoundationOperationsTest(unittest.TestCase):
         self.assertEqual(self.backend.read("mcp", "test"), b"user")
         self.assertIn("mcp:test", result.conflicts)
 
-    def test_active_inno_shell_handles_only_unchanged_own_uninstaller(self):
-        from dataclasses import replace
-        from respectedbrain.installation.ownership import OwnedFile, digest
-        path = self.roots.app_root / "uninstall/unins000.exe"
-        path.parent.mkdir()
-        path.write_bytes(b"running-shell")
-        log = path.with_suffix(".dat")
-        log.write_bytes(b"Inno log")
-        manifest_path = self.roots.data_root / "install-manifest.json"
-        previous = read_manifest(manifest_path)
-        items = tuple(OwnedFile(item, digest(item), "uninstaller") for item in (path, log))
-        manifest_path.write_text(json.dumps(manifest_document(replace(previous, files=previous.files + items))), encoding="utf-8")
-        # This case isolates shell ownership. purge_data=False keeps the technical
-        # config/manifest files (deliberately edited to summary_provider=codex in
-        # setUp) out of scope so only the Inno shell pair is asserted here.
-        result = uninstall(self.ctx, backend=self.backend, shell_active=True, purge_data=False)
-        self.assertTrue(result.success, result.conflicts)
-        self.assertFalse((self.roots.app_root / "respectedbrain.exe").exists())
-        self.assertEqual(path.read_bytes(), b"running-shell")
-        self.assertEqual(log.read_bytes(), b"Inno log")
-
-    def test_active_shell_refuses_changed_uninstaller(self):
-        from dataclasses import replace
-        from respectedbrain.installation.ownership import OwnedFile, digest
-        path = self.roots.app_root / "uninstall/unins000.dat"
-        path.parent.mkdir()
-        path.write_bytes(b"owned")
-        manifest_path = self.roots.data_root / "install-manifest.json"
-        previous = read_manifest(manifest_path)
-        manifest_path.write_text(json.dumps(manifest_document(replace(previous, files=previous.files + (OwnedFile(path, digest(path), "uninstaller"),)))), encoding="utf-8")
-        path.write_bytes(b"user-edited")
-        result = uninstall(self.ctx, backend=self.backend, shell_active=True)
-        self.assertFalse(result.success)
-        self.assertEqual(path.read_bytes(), b"user-edited")
-
     def test_changed_owned_application_stops_update_before_activation(self):
         target = self.roots.app_root / "respectedbrain.exe"
         target.write_bytes(b"user-edited")

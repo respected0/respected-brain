@@ -18,7 +18,7 @@ from . import payload
 
 
 def setup(roots: Roots, vault: Path, *, profile: Mapping[str, str], desired: Mapping[str, bool],
-          backend, package: Path | None = None, shell=None, require_provenance=None) -> OperationResult:
+          backend, package: Path | None = None, require_provenance=None) -> OperationResult:
     tx = None
     try:
         safe_path(vault)
@@ -28,7 +28,7 @@ def setup(roots: Roots, vault: Path, *, profile: Mapping[str, str], desired: Map
         config = store.read()
         registered = next((identity for identity, entry in config["vaults"].items() if Path(entry["path"]).resolve() == vault.resolve()), None)
         if registered is None and vault.exists() and any(vault.iterdir()):
-            return OperationResult(False, "", ("Nonempty target is not registered; use migration or vault register",))
+            return OperationResult(False, "", ("Nonempty target is not registered; use vault register",))
         if registered is not None:
             VaultRegistry(store).select(vault=vault, vault_id=None, env={})
         source = package if package is not None else roots.app_root
@@ -37,8 +37,6 @@ def setup(roots: Roots, vault: Path, *, profile: Mapping[str, str], desired: Map
         if any(item.conflicts for item in recovery):
             raise OwnershipConflict("Unfinished operation has rollback conflicts")
         with Transaction(roots.data_root, backend) as tx:
-            if shell is not None:
-                shell.prepare(tx)
             tx.checkpoint("backup")
             manifest_path = roots.data_root / "install-manifest.json"
             previous = read_manifest(manifest_path) if manifest_path.is_file() else OwnershipManifest(3, (), ())
@@ -91,13 +89,9 @@ def setup(roots: Roots, vault: Path, *, profile: Mapping[str, str], desired: Map
             external = (*external, *project_connections)
             for change in changes:
                 tx.apply_external(change)
-            if shell is not None:
-                tx.apply_external(shell.registration)
-                external = tuple(item for item in external if (item.kind, item.key) != (shell.registration.kind, shell.registration.key)) + (shell.owned_registration(previous),)
             tx.checkpoint("integrations")
             owned = tuple(OwnedFile(roots.app_root / name, digest(roots.app_root / name), "application", stat.S_IMODE((roots.app_root / name).stat().st_mode)) for name in payload.package_members(roots.app_root, document))
             owned += (OwnedFile(store.path, digest(store.path), "technical"),) + launchers
-            owned += shell.files if shell is not None else tuple(item for item in previous.files if item.role == "uninstaller")
             tx.write_json(manifest_path, manifest_document(operation_manifest(ctx, owned, external, previous=previous)))
             tx.checkpoint("health")
             payload.validate_package(roots.app_root, require_provenance=require_provenance)

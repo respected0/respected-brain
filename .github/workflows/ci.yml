@@ -20,13 +20,10 @@ env:
 
 jobs:
   compatibility:
-    name: early compatibility (${{ matrix.os }}, Python 3.10)
-    runs-on: ${{ matrix.os }}
+    # Windows only for now; macOS/Linux code stays in the repository but is not built or tested in CI.
+    name: early compatibility (windows, Python 3.10)
+    runs-on: windows-latest
     timeout-minutes: 10
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -38,23 +35,10 @@ jobs:
         run: python -m unittest tests.package_contract_test tests.runtime_platform_test tests.turn_log_pipeline_test tests.scenario_matrix_test -v
 
   native:
-    name: native (${{ matrix.os }}, Python 3.13)
-    runs-on: ${{ matrix.os }}
+    name: native (windows, Python 3.13)
+    runs-on: windows-latest
     timeout-minutes: 35
     needs: compatibility
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            platform: linux
-            distribution: dist/RespectedBrain
-          - os: macos-latest
-            platform: macos
-            distribution: dist/RespectedBrain.app
-          - os: windows-latest
-            platform: windows
-            distribution: dist/RespectedBrain
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -64,93 +48,40 @@ jobs:
         run: python -m pip install -e ".[dev]"
       - name: Verify repository atlas coverage and descriptions
         run: python tools/repository_map.py --check
-      - name: Install required Inno compiler
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          choco install innosetup --yes --no-progress
-          if ($LASTEXITCODE -ne 0) { throw "Inno installation failed" }
-          $Compiler = Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6/ISCC.exe"
-          if (-not (Test-Path -LiteralPath $Compiler)) { throw "Inno compiler missing" }
-          "INNO_COMPILER=$Compiler" >> $env:GITHUB_ENV
-      - name: Build required native distribution and installer
-        run: python tools/build_installer.py --platform ${{ matrix.platform }} --output dist
+      - name: Build required native distribution
+        run: python tools/build_installer.py --platform windows --output dist
       - name: Verify frozen launcher without system Python
-        run: python tools/verify_distribution.py --platform ${{ matrix.platform }} --distribution "${{ matrix.distribution }}"
+        run: python tools/verify_distribution.py --platform windows --distribution dist/RespectedBrain
       - name: Physical host package smoke
-        run: python tests/smoke/platform_smoke.py --package "${{ matrix.distribution }}" --output native-smoke.json
+        run: python tests/smoke/platform_smoke.py --package dist/RespectedBrain --output native-smoke.json
       - name: Required Windows install and launcher acceptance
-        if: runner.os == 'Windows'
         shell: pwsh
         run: |
           ./tests/install_windows_test.ps1
           ./tests/windows_launchers_test.ps1
           ./tests/briefing_schedule_windows_test.ps1
-      - name: Stage Windows release installer
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path release-assets -Force | Out-Null
-          Copy-Item -LiteralPath dist/RespectedBrain-Windows-Setup.exe -Destination release-assets/
-      - name: Build and verify macOS release disk image
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          mkdir -p release-assets release-stage
-          cp -R dist/RespectedBrain.app release-stage/
-          cp dist/setup.command release-stage/
-          chmod +x release-stage/setup.command
-          hdiutil create -volname "Respected Brain" -srcfolder release-stage -ov -format UDZO release-assets/RespectedBrain-macOS-Setup.dmg
-          hdiutil verify release-assets/RespectedBrain-macOS-Setup.dmg
-          MOUNT_POINT="$RUNNER_TEMP/respected-dmg-check"
-          mkdir -p "$MOUNT_POINT"
-          hdiutil attach -readonly -nobrowse -mountpoint "$MOUNT_POINT" release-assets/RespectedBrain-macOS-Setup.dmg
-          trap 'hdiutil detach "$MOUNT_POINT"' EXIT
-          python tools/verify_distribution.py --platform macos --distribution "$MOUNT_POINT/RespectedBrain.app"
-          test -x "$MOUNT_POINT/setup.command"
-      - name: Build and verify Linux release archive
-        if: runner.os == 'Linux'
-        shell: bash
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y makeself
-          mkdir -p release-assets release-stage
-          cp -R dist/RespectedBrain release-stage/
-          cp dist/setup.sh release-stage/
-          chmod +x release-stage/setup.sh
-          makeself ./release-stage release-assets/RespectedBrain-Linux-Setup.run "Respected Brain" ./setup.sh
-          ./release-assets/RespectedBrain-Linux-Setup.run --check
-          ./release-assets/RespectedBrain-Linux-Setup.run --noexec --nochown --target "$RUNNER_TEMP/respected-archive-check"
-          python tools/verify_distribution.py --platform linux --distribution "$RUNNER_TEMP/respected-archive-check/RespectedBrain"
-          test -x "$RUNNER_TEMP/respected-archive-check/setup.sh"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: installer-${{ matrix.os }}
-          path: release-assets/*
-          if-no-files-found: error
       - name: Preserve native executable permissions for source matrix
         run: python -c "import shutil; shutil.make_archive('native-payload','gztar',root_dir='dist')"
       - uses: actions/upload-artifact@v4
         with:
-          name: native-${{ matrix.os }}
+          name: native-windows
           path: native-payload.tar.gz
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: smoke-${{ matrix.os }}
+          name: smoke-windows
           path: native-smoke.json
           if-no-files-found: warn
 
   source:
-    name: source (${{ matrix.os }}, Python ${{ matrix.python }})
+    name: source (windows, Python ${{ matrix.python }})
     needs: native
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
     timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
         python: ["3.10", "3.13"]
     steps:
       - uses: actions/checkout@v7
@@ -161,18 +92,12 @@ jobs:
         run: python -m pip install -e ".[dev]"
       - uses: actions/download-artifact@v4
         with:
-          name: native-${{ matrix.os }}
+          name: native-windows
       - name: Extract required Python-independent native payload
         shell: bash
         run: |
           mkdir -p dist
           tar -xzf native-payload.tar.gz -C dist
-      - name: Install required Inno compiler
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: |
-          choco install innosetup --yes --no-progress
-          if ($LASTEXITCODE -ne 0) { throw "Inno installation failed" }
       - name: Run Python unit and integration tests
         run: python tests/run_all.py --python-only
       - name: Shell package hooks and repository sync

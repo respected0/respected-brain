@@ -14,7 +14,7 @@ from tests.foundation_install_support import seed_package
 def _bundle(name, sha):
     statement = {'_type':'https://in-toto.io/Statement/v1','subject':[{'name':name,'digest':{'sha256':sha}}],
       'predicateType':'https://slsa.dev/provenance/v1','predicate':{'buildDefinition':{'externalParameters':{'workflow':{
-      'repository':'https://github.com/respected0/respectedbrain','path':'.github/workflows/release.yml','ref':'refs/tags/v0.0.1'}}}}}
+      'repository':'https://github.com/respected0/respected-secondbrain','path':'.github/workflows/release.yml','ref':'refs/tags/v0.0.1'}}}}}
     return {'mediaType':'application/vnd.dev.sigstore.bundle+json;version=0.2','dsseEnvelope':{
       'payload':base64.b64encode(json.dumps(statement).encode()).decode(),'payloadType':'application/vnd.in-toto+json',
       'signatures':[{'sig':'synthetic'}]}}
@@ -48,7 +48,7 @@ class ProvenanceTest(unittest.TestCase):
             self.assertIn('--cert-oidc-issuer',argv); self.assertNotIn('--cert-identity-issuer',argv)
             self.assertNotIn('--signer-workflow',argv)
             self.assertEqual(argv[argv.index('--source-ref')+1],'refs/tags/v0.0.1')
-            self.assertEqual(argv[argv.index('--cert-identity')+1],'https://github.com/respected0/respectedbrain/.github/workflows/release.yml@refs/tags/v0.0.1')
+            self.assertEqual(argv[argv.index('--cert-identity')+1],'https://github.com/respected0/respected-secondbrain/.github/workflows/release.yml@refs/tags/v0.0.1')
 
     def test_jsonl_bundle_and_unsigned_env(self):
         with tempfile.TemporaryDirectory() as tmp:

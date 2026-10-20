@@ -235,7 +235,7 @@ class FrozenGuiPackagingTest(unittest.TestCase):
 
         with mock.patch('subprocess.run', side_effect=BuildStopped()) as run:
             with self.assertRaises(BuildStopped):
-                build(platform='windows' if sys.platform == 'win32' else 'linux', output=Path('unused'), installer=False)
+                build(platform='windows' if sys.platform == 'win32' else 'linux', output=Path('unused'))
 
         command = run.call_args.args[0]
         self.assertIn('--collect-all', command)

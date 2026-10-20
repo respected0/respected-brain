@@ -61,6 +61,6 @@ Markdown elle düzenlenmez. İnceleme hash'i açıklamanın matematiksel doğrul
 
 ## 6. Yayın ve canlı veri
 
-Kaynak push, CI artifact ve release tag farklıdır. `.github/workflows/release.yml` sürüm/tag, build, verify, tests ve host smoke kapılarını tanımlar; kurulmuş imza/notarization varsayılmaz. Bu projede push sonrası sonuç sürekli poll edilmez; kullanıcı sonuç çıktığında yeniden çağırır. Aktif kararlar [PROJECT_STATUS](../PROJECT_STATUS.md).
+Kaynak push, CI artifact ve release tag farklıdır. Windows yayın paketleri şimdilik Hub reposundaki `release/tools` ile yerelde üretilip Hub'ın Ed25519 anahtarıyla imzalanır; ayrı bir `release.yml` yoktur. CI (`ci.yml`) yalnızca Windows'ta build, verify ve testleri çalıştırır. Bu projede push sonrası sonuç sürekli poll edilmez; kullanıcı sonuç çıktığında yeniden çağırır. Aktif kararlar [PROJECT_STATUS](../PROJECT_STATUS.md).
 
-Testler geçici kasa/OS kayıtlarıyla çalışmalıdır. Kaynak düzenlemesini canlı AppData kurulumuna veya kişisel kasaya otomatik uygulamayın. Legacy okuma kodu eski kurulumlar için kullanılır; isimlerinin geçmesi ölü kaynak kanıtı değildir.
+Testler geçici kasa/OS kayıtlarıyla çalışmalıdır. Kaynak düzenlemesini canlı AppData kurulumuna veya kişisel kasaya otomatik uygulamayın. Eski Beyin global blok adları (`core/legacy_names.py`) istemci ayarlarını temizlemek için hâlâ okunur.

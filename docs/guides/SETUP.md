@@ -14,13 +14,13 @@ Kaynak repo clone etmek, wheel kurmak veya kasa kaydetmek, AppRoot'a native dağ
 ## 2. Kurulumdan önce
 
 1. Programı koyacağınız AppRoot, teknik veri DataRoot ve not kasası VaultRoot ayrı yollar olmalı; birbirini içermemeli.
-2. Yeni kasa için boş hedef seçin. Mevcut dolu kasaya fresh template uygulanmaz; kayıtlı modern kasa veya [migration/kayıt sözleşmesi](UPDATE.md) ile korunur. Bilinmeyen dolu hedefe kurulum zorlamayın.
+2. Yeni kasa için boş hedef seçin. Mevcut dolu kasaya fresh template uygulanmaz; kayıtlı modern kasa veya `vault register` ile korunur. Bilinmeyen dolu hedefe kurulum zorlamayın.
 3. AI işler için kullanacağınız sağlayıcı CLI'ını kurup oturum açın. Programın dosya/arama işlemleri için her sağlayıcıya giriş yapmak gerekmez.
 4. Eski kişisel kasanız varsa [yedekleme](BACKUP.md) rehberini uygulayın. Yeni boş kasa açmak eski notları aktarmayı zorunlu kılmaz.
 
 ## 3. Native kurulum
 
-Windows: kurucuda program ve kasa ayrı seçilir. macOS: platform dağıtımındaki `setup.command`; Linux: platform dağıtımındaki `setup.sh`/`.run` kabuğu ortak setup komutuna bağlanır. Paket kabuğu ve OS konum ayrıntıları [macOS/Linux rehberinde](SETUP-POSIX.md) açıklanır; doğrulama ilgili platform üzerinde yapılır.
+Windows: Respected Hub ürünü kurar; kasa yolu Hub'ın kurulum sihirbazında seçilir. macOS: platform dağıtımındaki `setup.command`; Linux: platform dağıtımındaki `setup.sh`/`.run` kabuğu ortak setup komutuna bağlanır. Paket kabuğu ve OS konum ayrıntıları [macOS/Linux rehberinde](SETUP-POSIX.md) açıklanır; doğrulama ilgili platform üzerinde yapılır.
 
 Kurulu/dağıtım launcher'ıyla CLI örneği:
 

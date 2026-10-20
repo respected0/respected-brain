@@ -78,13 +78,11 @@ class NamingContractTest(unittest.TestCase):
         for profile in ("windows-wsl", "windows-native"):
             self.assertIn(profile, combined)
         self.assertIn("Respected Brain", guides["README.md"])
-        self.assertIn("https://github.com/respected0/respectedbrain", guides["README.md"])
+        self.assertIn("https://github.com/respected0/respected-secondbrain", guides["README.md"])
         for current in ("respectedbrain", "--vault-id", "DataRoot", "AppRoot"):
             self.assertIn(current, combined)
         for retired in ("scripts/update_respected.py", ".respected/schedule-backups", ".respected/update-backups"):
             self.assertNotIn(retired, combined)
-        self.assertIn("önizleme", combined.casefold())
-        self.assertIn("--apply", combined)
         self.assertIn("MIT", guides["README.md"])
 
         for fragment in FORBIDDEN_BRAND_FRAGMENTS:

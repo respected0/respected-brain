@@ -47,7 +47,7 @@ def _load_bundle_entries(text: str) -> list[dict[str, Any]]:
 
 class TrustedProvenancePolicy:
     """Official release verification policy constraints."""
-    expected_repo: str = "respected0/respectedbrain"
+    expected_repo: str = "respected0/respected-secondbrain"
     expected_workflow: str = ".github/workflows/release.yml"
     expected_ref_prefix: str = "refs/tags/v"
     expected_ref: str | None = None

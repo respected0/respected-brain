@@ -9,7 +9,7 @@ from . import payload
 from .common import ensure_linux_launcher, installed_profile
 
 
-def update(ctx, *, package, backend, shell=None, require_provenance=None) -> OperationResult:
+def update(ctx, *, package, backend, require_provenance=None) -> OperationResult:
     tx = None
     try:
         payload.validate_package(package, require_provenance=require_provenance)
@@ -18,8 +18,6 @@ def update(ctx, *, package, backend, shell=None, require_provenance=None) -> Ope
         with Transaction(ctx.paths.data_root, backend) as tx:
             previous = read_manifest(ctx.paths.data_root / "install-manifest.json")
             validate_manifest_roots(ctx, previous)
-            if shell is not None:
-                shell.prepare(tx)
             tx.checkpoint("backup")
             for item in previous.files:
                 if item.path.exists():
@@ -36,12 +34,8 @@ def update(ctx, *, package, backend, shell=None, require_provenance=None) -> Ope
             changes, external = plan_connections(ctx, backend, previous)
             for change in changes:
                 tx.apply_external(change)
-            if shell is not None:
-                tx.apply_external(shell.registration)
-                external = tuple(item for item in external if (item.kind, item.key) != (shell.registration.kind, shell.registration.key)) + (shell.owned_registration(previous),)
             tx.checkpoint("integrations")
-            uninstallers = shell.files if shell is not None else tuple(item for item in previous.files if item.role == "uninstaller")
-            tx.write_json(ctx.paths.data_root / "install-manifest.json", manifest_document(operation_manifest(ctx, (*files, *uninstallers, *launchers), external, previous=previous)))
+            tx.write_json(ctx.paths.data_root / "install-manifest.json", manifest_document(operation_manifest(ctx, (*files, *launchers), external, previous=previous)))
             tx.checkpoint("health")
             payload.validate_package(ctx.paths.app_root, require_provenance=require_provenance)
             payload.validate_installed_health(ctx.paths.app_root, document, ctx.paths.data_root)

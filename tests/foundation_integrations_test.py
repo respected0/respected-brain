@@ -38,7 +38,6 @@ class IntegrationFixture:
         return module.NativeBackend(self.data, user_home=self.home)
 
 
-
 class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
     @unittest.skipUnless(__import__('os').name == 'nt', 'Windows junction boundary')
     def test_external_lock_and_override_junctions_are_refused(self):
@@ -215,15 +214,6 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertIn("respected_search.json", names)
         self.assertEqual(snapshot(self.root), before)
 
-    def test_legacy_inspection_never_claims_unknown_mcp_command(self):
-        path = self.home / ".cursor/mcp.json"
-        path.parent.mkdir()
-        path.write_text(json.dumps({"mcpServers": {"respected-vault": {"command": "third-party.exe"}}}), encoding="utf-8")
-        backend = self.backend()
-        self.assertTrue(hasattr(backend, "inspect_legacy_registrations"))
-        with self.assertRaises(OwnershipConflict):
-            backend.inspect_legacy_registrations(self.root / "legacy", self.vault, self.ctx.paths, self.profile)
-
     def test_wsl_profile_validates_launcher_inside_wsl(self):
         from respectedbrain.integrations.rendering import plan_integrations
         from respectedbrain.core.errors import FoundationError
@@ -301,19 +291,6 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
             with self.assertRaises(FoundationError):
                 backend._write("task", "systemd:respected-test.timer", canonical_json({"enabled": True, "active": True}))
 
-    def test_legacy_inspection_rejects_script_name_as_unrelated_command_argument(self):
-        source = self.root / "legacy"
-        script = source / "scripts/vault_mcp_server.py"
-        script.parent.mkdir(parents=True)
-        script.write_text("legacy", encoding="utf-8")
-        path = self.home / ".cursor/mcp.json"
-        path.parent.mkdir()
-        path.write_text(json.dumps({"mcpServers": {"respected-vault": {"command": "third-party.exe", "args": [str(script)]}}}), encoding="utf-8")
-        backend = self.backend()
-        with mock.patch.object(backend, "_task_read", return_value=None), mock.patch.object(backend, "_shortcut_read", return_value=None), mock.patch.object(backend, "_registry_read", return_value=None):
-            with self.assertRaises(OwnershipConflict):
-                backend.inspect_legacy_registrations(source, self.vault, self.ctx.paths, self.profile)
-
     def test_managed_identity_uses_registered_uppercase_settings(self):
         from respectedbrain.core.context import AppContext
         from respectedbrain.integrations.rendering import managed_rule
@@ -353,25 +330,6 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         with self.assertRaises(OwnershipConflict):
             plan_integrations(self.ctx, self.profile, {"shortcut": True}, backend)
 
-    def test_migration_preview_removes_only_proven_disabled_global_sections(self):
-        source = self.root / "legacy"
-        script = source / "hooks/bridge.py"
-        script.parent.mkdir(parents=True)
-        script.write_text("legacy", encoding="utf-8")
-        path = self.home / ".codex/AGENTS.md"
-        path.parent.mkdir()
-        path.write_text("User before\n<!-- RESPECTED-GLOBAL:BEGIN -->\nVault " + str(self.vault) + "\n<!-- RESPECTED-GLOBAL:END -->\nUser after\n", encoding="utf-8")
-        backend = self.backend()
-        self.assertTrue(hasattr(backend, "preview_migration"))
-        before = snapshot(self.root)
-        with mock.patch.object(backend, "_task_read", return_value=None), mock.patch.object(backend, "_shortcut_read", return_value=None), mock.patch.object(backend, "_registry_read", return_value=None):
-            rows = backend.preview_migration(self.ctx, legacy_root=source, vault=self.vault, roots=self.ctx.paths, profile=self.profile, desired={"global": False, "mcp": False, "schedule": False, "shortcut": False})
-        row = next(row for row in rows if row.key == str(path))
-        self.assertIn(b"User before", row.after)
-        self.assertIn(b"User after", row.after)
-        self.assertNotIn(b"RESPECTED-GLOBAL", row.after)
-        self.assertEqual(snapshot(self.root), before)
-
     def test_mcp_registration_preserves_unknown_entry_fields(self):
         from respectedbrain.integrations.rendering import plan_integrations
         path = self.home / ".cursor/mcp.json"
@@ -381,71 +339,6 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         rows = plan_integrations(self.ctx, self.profile, {"mcp": True}, self.backend())
         row = next(row for row in rows if row.key == str(path))
         self.assertEqual(json.loads(row.after)["mcpServers"]["respected-vault"]["env"], {"USER_SETTING": "keep"})
-
-    def test_enabled_migration_preserves_original_codex_notify_chain(self):
-        import sys
-        source = self.root / "legacy"
-        script = source / "hooks/codex_notify.py"
-        script.parent.mkdir(parents=True)
-        script.write_text("legacy", encoding="utf-8")
-        codex = self.home / ".codex"
-        codex.mkdir()
-        chain = codex / "respected-notify-chain.json"
-        chain.write_text(json.dumps({"argv": ["original.exe", "turn-ended"]}), encoding="utf-8")
-        old_notify = [sys.executable, str(script), "--chain-file", str(chain)]
-        (codex / "config.toml").write_text("notify = " + json.dumps(old_notify), encoding="utf-8")
-        backend = self.backend()
-        with mock.patch.object(backend, "_task_read", return_value=None), mock.patch.object(backend, "_shortcut_read", return_value=None), mock.patch.object(backend, "_registry_read", return_value=None):
-            rows = backend.preview_migration(self.ctx, legacy_root=source, vault=self.vault, roots=self.ctx.paths, profile=self.profile, desired={"global": True})
-        target = str(self.ctx.paths.state_dir / "codex-notify-chain.json")
-        self.assertIn(target, {row.key for row in rows})
-        row = next(row for row in rows if row.key == target)
-        self.assertEqual(json.loads(row.after)["argv"], ["original.exe", "turn-ended"])
-
-    def test_legacy_native_records_need_exact_executable_proof_not_path_mention(self):
-        from respectedbrain.integrations.backend import canonical_json, canonical_task_xml
-        import hashlib
-        source = self.root / "legacy/runtime"
-        source.mkdir(parents=True)
-        (source / "morning_briefing.py").write_text("old", encoding="utf-8")
-        name = "respected-morning-briefing-" + hashlib.sha256(str(self.vault).encode()).hexdigest()[:12]
-        xml = '<Task><Actions><Exec><Command>third-party.exe</Command><Arguments>' + source.as_posix() + '</Arguments></Exec></Actions></Task>'
-        backend = self.backend()
-        for kind in ("task", "shortcut"):
-            with self.subTest(kind=kind), mock.patch.object(backend, "_registry_read", return_value=None), mock.patch.object(backend, "_task_read", side_effect=lambda key: canonical_task_xml(xml) if kind == "task" and key == name else None), mock.patch.object(backend, "_shortcut_read", return_value=canonical_json({"target":"third-party.exe", "arguments":source.as_posix()}) if kind == "shortcut" else None):
-                with self.assertRaises(OwnershipConflict):
-                    backend.inspect_legacy_registrations(source, self.vault, self.ctx.paths, self.profile)
-
-    def test_legacy_inno_snapshot_parses_quoted_exact_uninstaller_path(self):
-        from respectedbrain.integrations.backend import canonical_json
-        source = self.root / "Old Install/runtime"
-        source.mkdir(parents=True)
-        uninstaller = source.parent / "unins000.exe"
-        uninstaller.write_bytes(b"MZ")
-        record = canonical_json({"values":{"InstallLocation":{"type":1,"data":str(source.parent)},"UninstallString":{"type":1,"data":'"' + str(uninstaller) + '"'}},"subkeys":{}})
-        backend = self.backend()
-        with mock.patch.object(backend, "_registry_read", return_value=record), mock.patch.object(backend, "_task_read", return_value=None), mock.patch.object(backend, "_shortcut_read", return_value=None):
-            rows = backend.inspect_legacy_registrations(source, self.vault, self.ctx.paths, self.profile)
-        self.assertEqual(len(rows), 1)
-        self.assertEqual((rows[0].kind, rows[0].before, rows[0].after), ("registry", record, record))
-
-    def test_disabled_legacy_hook_cleanup_preserves_existing_empty_user_hook(self):
-        import sys
-        source = self.root / "legacy"
-        script = source / "hooks/bridge.py"
-        script.parent.mkdir(parents=True)
-        script.write_text("old", encoding="utf-8")
-        path = self.home / ".claude/settings.json"
-        path.parent.mkdir()
-        user = {"matcher":"user-owned-empty", "hooks":[]}
-        old = {"type":"command", "command":__import__("subprocess").list2cmdline([sys.executable,str(script),"--global-hook"])}
-        path.write_text(json.dumps({"hooks":{"SessionStart":[{"hooks":[old]},user]},"custom":True}), encoding="utf-8")
-        backend = self.backend()
-        with mock.patch.object(backend, "_registry_read", return_value=None), mock.patch.object(backend, "_task_read", return_value=None), mock.patch.object(backend, "_shortcut_read", return_value=None):
-            rows = backend.preview_migration(self.ctx,legacy_root=source,vault=self.vault,roots=self.ctx.paths,profile=self.profile,desired={})
-        after = json.loads(next(row.after for row in rows if row.key == str(path)))
-        self.assertEqual(after["hooks"]["SessionStart"], [user])
-        self.assertTrue(after["custom"])
 
     def test_global_skills_never_replace_unowned_or_user_changed_content(self):
         from respectedbrain.integrations.rendering import plan_integrations
@@ -510,65 +403,6 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         rows=plan_integrations(self.ctx,self.profile,{"shortcut":True},backend)
         descriptor=json.loads(rows[0].after)
         self.assertEqual(descriptor["arguments"],"open --vault-id " + self.ctx.paths.vault_id)
-
-    def test_legacy_external_rollback_bytes_are_separate_from_uninstall_baseline(self):
-        from respectedbrain.installation.ownership import OwnershipManifest,manifest_document,decode_bytes
-        from respectedbrain.installation.transaction import Transaction
-        from tests.foundation_transactions_test import Backend
-        source=self.root / "legacy"
-        source.mkdir()
-        path=self.home / ".codex/AGENTS.md"
-        path.parent.mkdir()
-        original=("User before\n<!-- RESPECTED-GLOBAL:BEGIN -->\nVault " + str(self.vault) + "\n<!-- RESPECTED-GLOBAL:END -->\nUser after\n").encode()
-        path.write_bytes(original)
-        backend=self.backend()
-        with mock.patch.object(backend,"_task_read",return_value=None),mock.patch.object(backend,"_shortcut_read",return_value=None),mock.patch.object(backend,"_registry_read",return_value=None):
-            rows=backend.preview_migration(self.ctx,legacy_root=source,vault=self.vault,roots=self.ctx.paths,profile=self.profile,desired={"global":True})
-        row=next(item for item in rows if item.key==str(path))
-        self.assertEqual(row.before,original)
-        self.assertTrue(row.has_uninstall_baseline)
-        self.assertIn(b"User before",row.uninstall_before)
-        self.assertIn(b"User after",row.uninstall_before)
-        self.assertNotIn(b"RESPECTED-GLOBAL",row.uninstall_before)
-        document=manifest_document(OwnershipManifest(3,(),(row,)))
-        import hashlib
-        stored=document["external"][0]
-        self.assertNotIn("before",stored)                      # minimal retention: no complete copy of the client's file
-        self.assertNotIn("after",stored)
-        self.assertEqual(stored["before_sha256"],hashlib.sha256(row.uninstall_before).hexdigest())
-        self.assertEqual(stored["after_sha256"],hashlib.sha256(row.after).hexdigest())
-        self.assertNotIn(b"User before",decode_bytes(stored["delta"]))     # unrelated user content is not in the delta
-        self.data.mkdir(parents=True,exist_ok=True)
-        persisted=self.data / "m.json"
-        persisted.write_text(__import__("json").dumps(document),encoding="utf-8")
-        from respectedbrain.installation.ownership import read_manifest
-        self.assertEqual(read_manifest(persisted).external[0].undo(row.after),row.uninstall_before)   # undo restores the baseline exactly
-        fake=Backend()
-        fake.records[(row.kind,row.key)]=original
-        with self.assertRaisesRegex(RuntimeError,"fault"):
-            with Transaction(self.data,fake) as transaction:
-                transaction.apply_external(row)
-                raise RuntimeError("fault")
-        self.assertEqual(fake.read(row.kind,row.key),original)
-
-    def test_retired_legacy_native_task_has_no_uninstall_resurrection_baseline(self):
-        import hashlib,sys,subprocess
-        from respectedbrain.integrations.backend import canonical_task_xml
-        from respectedbrain.integrations.scheduling.service import _windows_xml
-        source=self.root / "legacy"
-        source.mkdir()
-        script=source / "morning_briefing.py"
-        script.write_text("old",encoding="utf-8")
-        name="respected-morning-briefing-"+hashlib.sha256(str(self.vault).encode()).hexdigest()[:12]
-        task=canonical_task_xml(_windows_xml(sys.executable,subprocess.list2cmdline([str(script),"--vault-root",str(self.vault),"--if-due"])))
-        backend=self.backend()
-        with mock.patch.object(backend,"_task_read",side_effect=lambda key: task if key==name else None),mock.patch.object(backend,"_shortcut_read",return_value=None),mock.patch.object(backend,"_registry_read",return_value=None):
-            rows=backend.preview_migration(self.ctx,legacy_root=source,vault=self.vault,roots=self.ctx.paths,profile=self.profile,desired={})
-        row=next(item for item in rows if item.kind=="task")
-        self.assertEqual(row.before,task)
-        self.assertIsNone(row.after)
-        self.assertTrue(row.has_uninstall_baseline)
-        self.assertIsNone(row.uninstall_before)
 
 
 if __name__ == '__main__':
