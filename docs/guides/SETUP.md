@@ -26,7 +26,6 @@ Kurulu/dağıtım launcher'ıyla CLI örneği:
 
 ```text
 respectedbrain setup --vault "<not kasası>" --package "<doğrulanmış dağıtım>"
-respectedbrain setup --gui --vault "<not kasası>" --package "<doğrulanmış dağıtım>"
 ```
 
 `<...>` alanları gerçek mutlak yollarla değiştirilir. Windows'ta CLI adı `respectedbrain.exe`; PATH'e eklenmemişse tam executable yolunu kullanın. macOS'ta launcher `.app/Contents/MacOS/respectedbrain` içindedir. Doğrulanmamış veya başka OS için üretilmiş paketi kaynak package klasörü sanmayın.

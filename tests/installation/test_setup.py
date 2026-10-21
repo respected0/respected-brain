@@ -48,6 +48,17 @@ class FoundationSetupTest(unittest.TestCase):
         kwargs.setdefault("require_provenance", False)
         return setup(self.roots, self.vault, profile={"OS_NAME": "RespectedOS", "USER_NAME": "Ada", "USER_BIO": "Test", "COMPANION": "Atlas", "platform": "windows-native", "user_home": str(self.root / "home")}, desired=self.desired, backend=self.backend, package=kwargs.pop("package", self.package), **kwargs)
 
+    def action(self, *, profile=None, desired=None):
+        values = {"OS_NAME": "AdaOS", "USER_NAME": "Ada Lovelace", "USER_BIO": "Algoritma Mimarı", "COMPANION": "Babbage",
+                  "platform": "windows-native", "user_home": str(self.root / "home"), **(profile or {})}
+        return setup(self.roots, self.vault, profile=values, desired=self.desired if desired is None else desired,
+                     backend=self.backend, package=self.package, require_provenance=False)
+
+    def global_hooks(self):
+        # hooks are global only (vault keeps notes + .obsidian), so they are read from the fake home
+        self.assertFalse((self.vault / ".claude").exists())
+        return (self.root / "home/.claude/settings.json").read_text(encoding="utf-8")
+
     def test_fresh_setup_is_pure_vault(self):
         result = self.install()
         self.assertTrue(result.success, result.conflicts)
@@ -104,14 +115,79 @@ class FoundationSetupTest(unittest.TestCase):
         self.assertTrue(self.install(package=None).success)
         self.assertEqual(ConfigStore(self.roots.data_root).read()["preferences"]["summary_provider"], "codex")
 
-    def test_gui_and_cli_use_shared_setup_service(self):
-        from respectedbrain.installation import wizard
-        from respectedbrain.installation.transaction import OperationResult
-        with patch.object(wizard, "setup", return_value=OperationResult(False, "test", ("injected",))) as service:
-            result = wizard.run_action("install", self.roots, self.vault, profile={"USER_NAME": "Ada"}, desired=self.desired, backend=self.backend, package=self.package)
+    def test_fresh_native_install_renders_global_hooks_for_final_registered_uuid(self):
+        from respectedbrain.integrations.backend import NativeBackend
+        self.backend = NativeBackend(self.roots.data_root)
+        self.assertTrue(self.action(desired={**self.desired,"global":True}).success)
+        identity=json.loads((self.vault / ".respected.json").read_text())["vault_id"]
+        content=self.global_hooks()
+        self.assertIn(identity,content)
+        self.assertIn(str(self.roots.app_root / "respectedbrain.exe").replace("\\","\\\\"),content)
+        self.assertNotIn(".respected-stage",content)
+
+    def test_reinstall_preserves_user_note_and_project_config_bytes(self):
+        self.assertTrue(self.action().success)
+        path=self.vault / "knowledge/human-note.md"
+        path.write_bytes("İnsan notu.\n".encode())
+        settings=self.vault / ".claude/settings.json"
+        settings.parent.mkdir()
+        settings.write_bytes(b'{"myProjectSetting":true}')
+        before=snapshot(self.vault)
+        self.assertTrue(self.action().success)
+        self.assertEqual(snapshot(self.vault),before)
+
+    def test_reinstall_applies_requested_vault_shortcut(self):
+        self.assertTrue(self.action().success)
+        result=self.action(desired={**self.desired,"shortcut":True})
+        self.assertTrue(result.success,result.conflicts)
+        rows=[value for (kind,key),value in self.backend.records.items() if kind=="shortcut"]
+        self.assertEqual(len(rows),1)
+        self.assertIn("open --vault-id",json.loads(rows[0])["arguments"])
+
+    def test_requested_global_failure_is_reported_and_existing_notes_retained(self):
+        self.assertTrue(self.action().success)
+        before=snapshot(self.vault)
+        with patch.object(self.backend,"apply",side_effect=OSError("global failure")):
+            result=self.action(desired={**self.desired,"global":True})
         self.assertFalse(result.success)
-        self.assertEqual(service.call_args.args, (self.roots, self.vault))
-        self.assertEqual(service.call_args.kwargs["package"], self.package)
+        self.assertEqual(snapshot(self.vault),before)
+
+    def test_native_install_persists_only_stable_application_launcher(self):
+        from respectedbrain.integrations.backend import NativeBackend
+        self.backend = NativeBackend(self.roots.data_root)
+        self.assertTrue(self.action(desired={**self.desired,"global":True}).success)
+        content=self.global_hooks()
+        self.assertIn("respectedbrain.exe",content)
+        self.assertNotIn("python",content)
+        self.assertNotIn(".py",content)
+
+    def test_integration_failure_rolls_back_partial_fresh_install(self):
+        with patch.object(self.backend,"apply",side_effect=OSError("integration failed")):
+            result=self.action(desired={**self.desired,"global":True})
+        self.assertFalse(result.success)
+        self.assertFalse(self.vault.exists())
+        self.assertFalse((self.roots.app_root / "respectedbrain.exe").exists())
+
+    def test_custom_priority_is_saved_in_data_config(self):
+        self.assertTrue(self.action(profile={"provider_priority":["antigravity","codex"]}).success)
+        self.assertEqual(ConfigStore(self.roots.data_root).read()["preferences"]["provider_priority"],["antigravity","codex"])
+
+    def test_single_provider_lock_retains_fail_fast_setting(self):
+        self.assertTrue(self.action(profile={"summary_provider":"codex","provider_fallback":False}).success)
+        preferences=ConfigStore(self.roots.data_root).read()["preferences"]
+        self.assertEqual(preferences["summary_provider"],"codex")
+        self.assertFalse(preferences["provider_fallback"])
+
+    def test_mcp_registration_uses_installed_launcher_and_uuid(self):
+        result=self.action(desired={**self.desired,"mcp":True})
+        self.assertTrue(result.success,result.conflicts)
+        records=[json.loads(value) for (kind,key),value in self.backend.records.items() if kind=="mcp" and value and "mcpServers" in json.loads(value)]
+        self.assertTrue(records)
+        for record in records:
+            command=record["mcpServers"]["respected-vault"]
+            self.assertEqual(command["command"],str(self.roots.app_root / "respectedbrain.exe"))
+            self.assertEqual(command["args"][0],"mcp")
+            self.assertIn("--vault-id",command["args"])
 
     def test_vault_gets_no_local_hook_folders_and_notes_survive_maintenance(self):
         from respectedbrain.integrations.backend import NativeBackend

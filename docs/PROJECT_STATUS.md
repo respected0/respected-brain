@@ -16,7 +16,7 @@ kurucu yoktur. Hub kapalıyken de hook'lar, MCP ve zamanlanmış brifing kurulu 
 | Arama: FTS5 her zaman; isteğe bağlı yerel anlamsal arama (llama.cpp + bge-m3, Hub'dan açılır) | var; gerçek modelle doğrulandı |
 | Yetkili hafıza yazımı (Orchestrator için ayrı `write` izni, yalnız gelen kutusu, geri alınabilir) | var |
 | Hub "Hafıza" çalışma alanı (arama, okuma, hızlı not, brifing) | var |
-| Kurulum sihirbazı: Kimlik → Hafıza → Kaynaklar → İzinler, istemci başına seçim | var; masaüstü E2E ile doğrulandı |
+| Hub kurulum sihirbazı: Kimlik → Hafıza → Kaynaklar → İzinler, istemci başına seçim | var; masaüstü E2E ile doğrulandı |
 | Kaldırma: yalnız sahipli girdileri geri alır, kasa ve notlar kalır | var |
 | Restic yedeği ve `--restore-to` | var; gerçek restic ile sınandı |
 

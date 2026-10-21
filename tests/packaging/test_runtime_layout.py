@@ -20,12 +20,11 @@ class RuntimeLayoutTest(IntegrationFixture, unittest.TestCase):
                 args = dispatch.call_args.args[0]
                 self.assertEqual((args.command, args.vault_id), (command, self.ctx.paths.vault_id))
 
-    def test_setup_accepts_explicit_vault_and_gui_mode(self):
+    def test_setup_accepts_explicit_vault(self):
         with mock.patch.object(cli, "_dispatch", return_value=4) as dispatch:
-            self.assertEqual(cli.main(["setup", "--gui", "--vault", str(self.vault)]), 4)
+            self.assertEqual(cli.main(["setup", "--vault", str(self.vault)]), 4)
         args = dispatch.call_args.args[0]
         self.assertEqual(args.vault, self.vault)
-        self.assertTrue(args.gui)
 
     def test_importing_package_services_has_no_home_io_or_process_side_effect(self):
         probe = '''
@@ -37,7 +36,7 @@ with mock.patch.object(Path, 'home', side_effect=AssertionError('home lookup')),
     importlib.import_module('respectedbrain.' + sys.argv[1])
 assert sys.path == before
 '''
-        for name in ("core.paths", "installation.setup", "installation.update", "installation.uninstall", "installation.wizard", "integrations.rendering"):
+        for name in ("core.paths", "installation.setup", "installation.update", "installation.uninstall", "integrations.rendering"):
             with self.subTest(name=name):
                 checked = subprocess.run([sys.executable, '-c', probe, name], cwd=ROOT,
                                          capture_output=True, text=True, timeout=30)

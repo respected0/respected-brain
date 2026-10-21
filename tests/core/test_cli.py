@@ -93,6 +93,19 @@ class FoundationCliTest(unittest.TestCase):
         self.assertFalse(service.call_args.kwargs["desired"]["schedule"])
         self.assertEqual(service.call_args.kwargs["profile"]["USER_NAME"], "Ada")
 
+    def test_setup_passes_chosen_clients_and_refuses_unknown_ones(self):
+        from respectedbrain.installation.transaction import OperationResult
+        vault = str(self.ctx.paths.vault_root)
+        with patch("respectedbrain.installation.setup.setup", return_value=OperationResult(True, "test", ())) as service:
+            self.call(["setup", "--vault", vault, "--clients", "claude,codex", "--mcp-clients", "claude"])
+        desired = service.call_args.kwargs["desired"]
+        self.assertEqual((desired["clients"], desired["mcp_clients"]), (["claude", "codex"], ["claude"]))
+        with patch("respectedbrain.installation.setup.setup") as service:
+            code, _, err = self.call(["setup", "--vault", vault, "--clients", "claude,nope"])
+        self.assertNotEqual(code, 0)
+        self.assertIn("nope", err)
+        service.assert_not_called()
+
     def test_deferred_and_direct_uninstall_keep_the_same_data_choice(self):
         from respectedbrain.installation.transaction import OperationResult
         for flags, purge in (([], True), (["--keep-data"], False), (["--purge-data"], True)):

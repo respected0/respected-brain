@@ -238,7 +238,3 @@ def main(argv: Sequence[str] | None = None, *, ctx: AppContext | None = None) ->
         status = "temizlendi" if modified else "değişiklik gerekmedi"
         print(f"{target.name}: {status} (Yedek: {backup})")
     return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

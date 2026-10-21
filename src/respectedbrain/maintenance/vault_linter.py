@@ -22,7 +22,6 @@ import json
 import os
 from pathlib import Path
 import re
-import sys
 from typing import Any
 
 
@@ -273,7 +272,3 @@ def main(argv=None, *, ctx: AppContext | None = None) -> int:
         print("\nGenel Durum: " + ("TEMİZ / SAĞLIKLI" if results["is_healthy"] else "DİKKAT GEREKİYOR"))
 
     return 0 if results["is_healthy"] else 1
-
-
-if __name__ == "__main__":
-    sys.exit(main())

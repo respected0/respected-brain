@@ -10,7 +10,7 @@
 | --- | --- |
 | `core/` | bağlam, yollar, kilitler, platform, CLI dağıtımı, Windows süreç/dosya korumaları |
 | `vault/`, `briefing/`, `search/` | kasa kayıt defteri ve haritalar, sabah brifingi, FTS ve indeks tazeliği |
-| `installation/` | setup, sihirbaz, update/repair/uninstall, transaction, ertelenmiş işlem, sınır regresyonları |
+| `installation/` | setup, update/repair/uninstall, transaction, ertelenmiş işlem, sınır regresyonları |
 | `integrations/` | istemci entegrasyonları, hook'lar, MCP kaydı, yapılandırma delta'sı, zamanlama, sağlayıcı izinleri |
 | `memory/` | hafıza sözleşmeleri, olay günlüğü, transcript bütünlüğü, oturum betikleri, maskeleme |
 | `maintenance/` | bakım araçları, restic yedeği/geri yükleme, git snapshot, sır tarama, kasa hijyeni |

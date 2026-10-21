@@ -18,7 +18,6 @@ import json
 import os
 from pathlib import Path
 import re
-import sys
 import tempfile
 from typing import Any
 
@@ -362,7 +361,3 @@ def main(argv=None, *, ctx: AppContext | None = None) -> int:
         print(f"\nİşlem tamamlandı: {imported_count} oturum vault'a aktarıldı, {skipped_count} atlandı.")
 
     return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())

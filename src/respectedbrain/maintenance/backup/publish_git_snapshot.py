@@ -13,7 +13,6 @@ import os
 from pathlib import Path
 import re
 import subprocess
-import sys
 import tempfile
 import time
 from typing import Any
@@ -614,7 +613,3 @@ def main(argv: list[str] | None = None, *, ctx: AppContext | None = None) -> int
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0 if result.get("status") in {"ok", "preview", "skipped:not_due"} else 1
-
-
-if __name__ == "__main__":
-    sys.exit(main())

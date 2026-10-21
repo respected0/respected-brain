@@ -1,4 +1,4 @@
-"""What the frozen build and the installable package must contain (provenance module, tkinter runtime, clean UTF-8 sources)."""
+"""What the frozen build and the installable package must contain (provenance module, clean UTF-8 sources)."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -12,7 +12,7 @@ from tests.support.builder import build_dist
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
-class FrozenGuiPackagingTest(unittest.TestCase):
+class FrozenPackagingTest(unittest.TestCase):
     def test_a_stale_installed_package_stops_the_build_before_freezing(self) -> None:
         # the frozen exe would carry the installed metadata's version, not the checkout's (seen once: 0.0.1 for 0.1.0)
         with mock.patch.object(build_dist, "version", return_value="0.0.1"), mock.patch("subprocess.run") as run:
@@ -20,20 +20,8 @@ class FrozenGuiPackagingTest(unittest.TestCase):
                 build_dist.build(platform="windows" if sys.platform == "win32" else "linux", output=Path(tempfile.gettempdir()))
         run.assert_not_called()
 
-    def test_pyinstaller_collects_tkinter_runtime(self) -> None:
-        class BuildStopped(Exception):
-            pass
 
-        with tempfile.TemporaryDirectory() as output, mock.patch('subprocess.run', side_effect=BuildStopped()) as run:
-            with self.assertRaises(BuildStopped):
-                build_dist.build(platform='windows' if sys.platform == 'win32' else 'linux', output=Path(output))
-
-        command = run.call_args.args[0]
-        self.assertIn('--collect-all', command)
-        self.assertEqual('tkinter', command[command.index('--collect-all') + 1])
-
-
-class WizardEncodingRegressionTest(unittest.TestCase):
+class EncodingRegressionTest(unittest.TestCase):
     """User-facing Turkish text must stay valid UTF-8 with no mojibake."""
 
     MOJIBAKE = set("\u00c3\u00c4\u00c5\u00c2\u00e2\u20ac\u0161\u0178\u02c6\u2039\u203a")
@@ -46,16 +34,6 @@ class WizardEncodingRegressionTest(unittest.TestCase):
         controls = sorted({character for character in text if 0x80 <= ord(character) <= 0x9f})
         self.assertEqual(controls, [], f"{relative} contains C1 control characters from bad decoding")
         return text
-
-    def test_wizard_source_is_clean_utf8(self):
-        text = self._assert_clean("src/respectedbrain/installation/wizard.py")
-        for expected in (
-            "Güncelleme için doğrulanmış yeni paket seçilmeli",
-            "Programı Kaldır",
-            "Kurulum & Bakım",
-            "İşlem tamamlandı",
-        ):
-            self.assertIn(expected, text)
 
     def test_cli_source_is_clean_utf8(self):
         self._assert_clean("src/respectedbrain/cli.py")

@@ -16,7 +16,6 @@ import json
 import os
 from pathlib import Path
 import re
-import sys
 from typing import Any
 
 
@@ -156,7 +155,3 @@ def main(argv=None, *, ctx: AppContext | None = None) -> int:
                 print(f"    Öneri: {pair['recommendation']}")
 
     return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())

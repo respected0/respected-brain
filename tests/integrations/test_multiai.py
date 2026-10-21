@@ -505,7 +505,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(run.call_count, 1)
 
     def test_locked_summary_provider_does_not_append_fallback_candidates(self):
-        """A non-auto provider is the wizard's fail-fast single-model contract."""
+        """A non-auto provider is the fail-fast single-model contract."""
         from respectedbrain.providers import runner
         preferences={"summary_provider":"codex","provider_priority":["codex"],"provider_fallback":False}
         self.assertEqual(runner._available(None,preferences),["codex"])

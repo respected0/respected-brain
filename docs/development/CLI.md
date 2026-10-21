@@ -137,7 +137,6 @@ Doğrulanmış native paketi kurar, boş kasa seed ve bağlantıları yönetir.
 | --- | --- | --- |
 | `--vault` | isteğe bağlı | Path |
 | `--package` | isteğe bağlı | Path |
-| `--gui` | isteğe bağlı; default: False | flag |
 | `--user-name` | isteğe bağlı | metin/argv |
 | `--user-bio` | isteğe bağlı | metin/argv |
 | `--companion` | isteğe bağlı | metin/argv |

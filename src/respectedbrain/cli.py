@@ -67,7 +67,6 @@ def _parser():
     setup_parser = commands.add_parser("setup")
     setup_parser.add_argument("--vault", type=Path)
     setup_parser.add_argument("--package", type=Path)
-    setup_parser.add_argument("--gui", action="store_true")
     setup_parser.add_argument("--allow-unattested", action="store_true", help="Accept a local package without a release attestation (development builds)")
     setup_parser.add_argument("--user-name")
     setup_parser.add_argument("--user-bio")
@@ -92,10 +91,6 @@ def _parser():
     commands.add_parser("recover")
     rpp_parser = commands.add_parser("rpp", help=argparse.SUPPRESS)
     rpp_parser.add_argument("--data-root", type=Path)
-    welcome = commands.add_parser("welcome", help="First-use personalization")
-    _selector(welcome)
-    welcome.add_argument("--app-root", type=Path, help=argparse.SUPPRESS)
-    welcome.add_argument("--data-root", type=Path, help=argparse.SUPPRESS)
     hook = commands.add_parser("hook")
     _selector(hook)
     hook.add_argument("--provider", required=True, choices=("claude", "codex", "cursor", "antigravity", "gemini"))
@@ -121,7 +116,7 @@ def _dispatch(args) -> int:
     if args.command == "_resume-operation":
         from .installation.deferred import resume_operation
         return resume_operation(args.request, expected_hash=args.request_hash)
-    if args.command in ("setup", "recover", "welcome"):
+    if args.command in ("setup", "recover"):
         roots = application_roots()
         from .integrations.backend import NativeBackend
         backend = NativeBackend(roots.data_root)
@@ -131,35 +126,10 @@ def _dispatch(args) -> int:
             results = recover_transactions(roots.data_root, backend)
             print(json.dumps([asdict(result) for result in results], ensure_ascii=False, indent=2))
             return 1 if any(result.conflicts for result in results) else 0
-        if args.command == "welcome":
-            if getattr(args, "app_root", None) is not None or getattr(args, "data_root", None) is not None:
-                from .core.paths import Roots
-                roots = Roots(
-                    (args.app_root or roots.app_root).resolve(),
-                    (args.data_root or roots.data_root).resolve(),
-                    (args.vault or roots.default_vault).resolve(),
-                )
-            config = ConfigStore(roots.data_root).read()
-            identity = args.vault_id or config.get("active_vault_id")
-            entry = config["vaults"].get(identity) if identity else None
-            if args.vault is not None:
-                selected = args.vault.resolve()
-                entry = next((row for row in config["vaults"].values() if Path(row["path"]).resolve() == selected), None)
-            elif args.vault_id is not None and entry is None:
-                raise SelectionError("Kayıtlı kasa bulunamadı")
-            settings = entry.get("settings", {}) if entry else {}
-            if {"USER_NAME", "USER_BIO", "COMPANION", "OS_NAME"} <= settings.keys():
-                return 0
-            from .installation.wizard import main as wizard_main
-            vault = Path(entry["path"]) if entry is not None else (args.vault.resolve() if args.vault is not None else roots.default_vault)
-            return wizard_main(roots=roots, backend=backend, vault=vault, package=None, profile=settings, desired={})
         desired_overrides = {key: getattr(args, "desired_" + key) for key in ("global", "mcp", "schedule", "shortcut") if getattr(args, "desired_" + key) is not None}
         profile = {key: value for key, value in {"USER_NAME": args.user_name, "USER_BIO": args.user_bio, "COMPANION": args.companion, "OS_NAME": args.os_name, "summary_provider": args.summary_provider, "platform": args.platform}.items() if value is not None}
         vault = args.vault.resolve() if args.vault is not None else None
         package = args.package.resolve() if args.package is not None else None
-        if args.gui:
-            from .installation.wizard import main as wizard_main
-            return wizard_main(roots=roots, backend=backend, vault=vault, package=package, profile=profile, desired=desired_overrides)
         from .installation.setup import setup
         desired = ConfigStore(roots.data_root).read()["integrations"]
         stored = {key: desired.get(key) for key in ("clients", "mcp_clients")}

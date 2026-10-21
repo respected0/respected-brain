@@ -21,7 +21,6 @@ from datetime import datetime, timezone
 import os
 from pathlib import Path
 import re
-import sys
 import tempfile
 import json
 from typing import Any, Dict, List, Tuple
@@ -272,7 +271,3 @@ def main(argv=None, *, ctx: AppContext | None = None) -> int:
         for f in res["links_updated_files"][:10]:
             print(f"    - {f}")
     return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())

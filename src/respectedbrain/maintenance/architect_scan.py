@@ -341,7 +341,3 @@ def main(argv=None, *, ctx: AppContext | None = None) -> int:
         print(md)
 
     return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())

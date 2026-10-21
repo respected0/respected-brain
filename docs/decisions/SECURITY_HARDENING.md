@@ -74,8 +74,6 @@ o dört bulgunun kapanışını da kapsar.
   zincirini korur.
 - `_DeadlineReader` her bloklayan okuma öncesi kalan mutlak süreyi sokete uygular;
   geç byte sonrası idle bağlantı eski socket timeout'unu beklemez.
-- Frozen build `_tkinter.pyd`, Tcl ve Tk runtime dizinlerini paketler; wizard
-  başlamadan önce `TCL_LIBRARY` ve `TK_LIBRARY` forward-slash olarak ayarlanır.
 - Eski, çağrılmayan snapshot implementation bloğu kaldırılmıştır.
 
 ## 3. Doğrulama
