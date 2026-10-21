@@ -11,12 +11,12 @@ Kullanıcının canlı programını veya not kasasını kaynak işi sırasında 
 - Testler `tests/` altında `src/respectedbrain` ile aynı alana konur (`test_*.py`); ortak sahteler `tests/support/`.
   `python -m unittest discover -s tests -t .` geçmeden tamamlandı deme. Test paketi HOME'u geçici klasöre yönlendirir;
   bunu atlatan test yazma.
-- Paket değişikliğinde `tools/build_dist.py` ile build al ve `tools/verify_dist.py` ile doğrula.
+- Paket değişikliğinde `packaging/build_dist.py` ile build al ve `tests.packaging.test_distribution` ile doğrula.
 
 ## Kaynak ve kurulu ürün sınırları
 
-Ürün kodu `src/respectedbrain/`, immutable hazır içerik `resources/`, paket tarifleri `packaging/`, geliştirici araçları
-`tools/` altında kalır. AppRoot, DataRoot ve VaultRoot birbirinden ayrıdır. Güncelleme/kaldırma insan notlarını üzerine
+Ürün kodu `src/respectedbrain/`, immutable hazır içerik `resources/`, paket tarifleri `packaging/`, build betiği
+altında bulunur. AppRoot, DataRoot ve VaultRoot birbirinden ayrıdır. Güncelleme/kaldırma insan notlarını üzerine
 yazmaz; sahiplik, işlem günlüğü ve geri alma korumaları korunur.
 
 ## Push sonrası CI takibi

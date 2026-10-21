@@ -33,7 +33,7 @@ DataRoot'ta `config.json`, `install-manifest.json`, log/işlem yedekleri ve `vau
 | `maintenance/` | Not bakım/onarım, ingestion, Restic ve Git snapshot yardımcıları |
 | `resources/` | Immutable defaults, instructions, skills, provider şablonları, vault-template |
 
-Paket yolu `src/respectedbrain/` olur. `packaging/` OS paket tarifleri, `tools/` build ve dağıtım doğrulama, `tests/` (aynı alanlara bölünmüş) doğrulama, `docs/` belgelerdir.
+Paket yolu `src/respectedbrain/` olur. `packaging/` OS paket tarifleri ve build betiği, `tests/` (aynı alanlara bölünmüş) doğrulama, `docs/` belgelerdir.
 
 Sınırlar: core özellik modüllerini import etmez; vault program kurmaz, sağlayıcı çağırmaz; providers kasa temizlemez, global ayar yazmaz; search veritabanını kasaya yazmaz; integrations özellik algoritmalarını ikinci kez içermez; installation not içeriğini paket dosyası saymaz; resources canlı config veya state değildir.
 

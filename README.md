@@ -93,7 +93,6 @@ Paket üretim tarifi, indirilebilir bir sürümün yayımlandığı kanıtı de�
 secondbrain/
 ├── src/respectedbrain/     Program modülleri ve resources
 ├── packaging/             Windows / macOS / Linux paket tarifleri
-├── tools/                 Build ve dağıtım doğrulama
 ├── tests/                 src ile aynı alanlara bölünmüş testler 
 ├── docs/                  Kullanım, mimari, güvenlik ve kararlar
 └── pyproject.toml         Paket sürümü ve bağımlılık tanımı
@@ -104,8 +103,8 @@ Kaynak geliştirme **Python 3.10+** ister. Çekirdek zorunlu üçüncü taraf Py
 ```powershell
 python -m pip install -e ".[dev]"
 python -m respectedbrain --version
-python tools/build_dist.py --platform windows --output dist
-python tools/verify_dist.py --distribution dist/RespectedBrain --platform windows
+python packaging/build_dist.py --platform windows --output dist
+python -m unittest tests.packaging.test_distribution
 python -m unittest discover -s tests -t .   # HOME test sırasında geçici klasöre yönlenir
 ```
 

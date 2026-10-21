@@ -1,10 +1,6 @@
 """Guard the single source tree and the native release entrypoint contract."""
 from pathlib import Path
-import os
 import importlib.util
-import subprocess
-import sys
-import tempfile
 import unittest
 from unittest import mock
 
@@ -23,34 +19,6 @@ class SourceCleanupTest(unittest.TestCase):
         with mock.patch.object(tool.sys, 'platform', 'linux'):
             self.assertEqual(tool.distribution_name(), 'RespectedBrain')
             self.assertEqual(tool.workspace_paths(root)[1], root / 'app')
-
-    def test_native_verification_stage_labels_handle_single_argument_version(self):
-        from tests.support.packages import seed_package
-        from respectedbrain import __version__
-        spec = importlib.util.spec_from_file_location('native_verifier', ROOT / 'tools/verify_dist.py')
-        tool = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(tool)
-        with tempfile.TemporaryDirectory() as temporary:
-            package = seed_package(Path(temporary) / 'package')
-            def reply(argv, **kwargs):
-                command = argv[1:]
-                output = f'{__version__}\n' if command == ['--version'] else 'identity\n' if command[:2] == ['vault', 'register'] else '{"identity": {}}' if command == ['vault', 'list'] else '{"id": 1}' if command[0] == 'mcp' else ''
-                return subprocess.CompletedProcess(argv, 0, output, '')
-            with mock.patch.object(tool.subprocess, 'run', side_effect=reply):
-                self.assertEqual(tool.verify(package, platform='windows'), 0)
-
-    def test_frozen_verification_failure_publishes_diagnostic_annotation(self):
-        from tests.support.packages import seed_package
-        with tempfile.TemporaryDirectory() as temporary:
-            package = seed_package(Path(temporary) / 'package')
-            result = subprocess.run([sys.executable, str(ROOT / 'tools/verify_dist.py'),
-                                     '--platform', 'macos', '--distribution', str(package)],
-                                    env={**os.environ, 'GITHUB_ACTIONS': 'true'},
-                                    capture_output=True, text=True, timeout=30)
-            self.assertNotEqual(result.returncode, 0)
-            self.assertIn('::error title=Native distribution verification::stage=manifest; code=platform-mismatch',
-                          result.stdout)
-            self.assertNotIn(str(package), result.stdout)
 
     def test_retired_source_entrypoints_are_absent(self):
         for name in ("runtime", "installer", "template", "setup.py", "setup", "setup.command"):

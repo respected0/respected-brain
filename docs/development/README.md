@@ -17,13 +17,13 @@ durur, `pip install -e ".[dev]"` ile yeniden kurun.
 ## 2. Kod okumaya nereden başlarım?
 
 `pyproject.toml → __main__.py → cli.py → bootstrap.py → core/context.py`. Core saf kök/config/bağlam sunar; özellik
-modülleri CLI'ı import etmez. Kaynak `src/respectedbrain`, paket tarifleri `packaging`, araçlar `tools`, testler `tests`.
+modülleri CLI'ı import etmez. Kaynak `src/respectedbrain`, paket tarifleri ve build betiği `packaging`, testler `tests`.
 
 ## 3. Dondurulmuş build
 
 ```powershell
-.venv\Scripts\python.exe tools/build_dist.py --platform windows --output dist
-.venv\Scripts\python.exe tools/verify_dist.py --platform windows --distribution dist/RespectedBrain
+.venv\Scripts\python.exe packaging/build_dist.py --platform windows --output dist
+.venv\Scripts\python.exe -m unittest tests.packaging.test_distribution
 ```
 
 Çıktı `dist/RespectedBrain/` (`respectedbrain.exe`, `app/`, `distribution.json`). Hub bunu imzalı katalog paketine

@@ -1,21 +1,24 @@
 """What the frozen build and the installable package must contain (provenance module, tkinter runtime, clean UTF-8 sources)."""
 from __future__ import annotations
 
+import importlib.util
 from pathlib import Path
 import sys
 import tempfile
 import unittest
 from unittest import mock
 
-from tools.build_dist import build
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
+# packaging/ is not a package (it would shadow pip's `packaging`), so the build script is loaded by path
+_spec = importlib.util.spec_from_file_location("build_dist", REPO_ROOT / "packaging/build_dist.py")
+builder = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(builder)
+build = builder.build
 
 
 class FrozenGuiPackagingTest(unittest.TestCase):
     def test_a_stale_installed_package_stops_the_build_before_freezing(self) -> None:
         # the frozen exe would carry the installed metadata's version, not the checkout's (seen once: 0.0.1 for 0.1.0)
-        import tools.build_dist as builder
         with mock.patch.object(builder, "version", return_value="0.0.1"), mock.patch("subprocess.run") as run:
             with self.assertRaisesRegex(RuntimeError, "not this checkout"):
                 builder.build(platform="windows" if sys.platform == "win32" else "linux", output=Path(tempfile.gettempdir()))
@@ -73,7 +76,7 @@ class PackagingIncludesProvenanceTest(unittest.TestCase):
         self.assertEqual(module_path.parent.parent.name, "respectedbrain")
 
     def test_frozen_build_collects_all_respectedbrain_submodules(self):
-        build_source = (REPO_ROOT / "tools/build_dist.py").read_text(encoding="utf-8")
+        build_source = (REPO_ROOT / "packaging/build_dist.py").read_text(encoding="utf-8")
         self.assertIn('--collect-submodules', build_source)
         self.assertIn('respectedbrain', build_source)
 
