@@ -53,7 +53,6 @@ class SimpleHtmlToMarkdown(HTMLParser):
         self.pieces: list[str] = []
         self.discard_depth = 0
         self.in_pre = False
-        self.in_code = False
         self.current_href: str | None = None
         self.link_text: list[str] = []
 
@@ -82,7 +81,6 @@ class SimpleHtmlToMarkdown(HTMLParser):
             self.in_pre = True
             self.pieces.append("\n\n```\n")
         elif tag_lower == "code" and not self.in_pre:
-            self.in_code = True
             self.pieces.append("`")
         elif tag_lower == "blockquote":
             self.pieces.append("\n\n> ")
@@ -109,7 +107,6 @@ class SimpleHtmlToMarkdown(HTMLParser):
             self.in_pre = False
             self.pieces.append("\n```\n\n")
         elif tag_lower == "code" and not self.in_pre:
-            self.in_code = False
             self.pieces.append("`")
         elif tag_lower == "a" and self.current_href:
             text = "".join(self.link_text).strip()
@@ -308,7 +305,7 @@ def safe_fetch_url(
 
     while True:
         try:
-            remaining_timeout = _check_deadline()
+            _check_deadline()
         except TimeoutError:
             return False, "İstek zaman aşımına uğradı", {}
 

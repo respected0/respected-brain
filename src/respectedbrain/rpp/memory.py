@@ -15,24 +15,14 @@ from typing import Any
 from . import memory_grants as grants
 from ..core.config import ConfigStore
 from ..core.platform import path_within_vault
+from ..memory.inbox import MemoryOpError, clean_text as _clean
 from .integrations import _context
 from ..search.engine import IndexUnavailable, SearchEngine
 
 _ALLOWED_KEYS = {"token", "query", "limit", "snippet_chars", "category", "mode"}
 _MODES = ("auto", "fts", "semantic", "hybrid")
-_CONTROL_RE = re.compile(r"[\x00-\x1f\x7f-\x9f]")
 _MAX_HASH_BYTES = 2_000_000
 _INDEX_HINT = "recall never builds or repairs the index; refresh it with the SecondBrain product"
-
-
-class MemoryOpError(Exception):
-    """Memory operation failure carrying a stable code, a message and a hint."""
-
-    def __init__(self, code: str, message: str, hint: str = "") -> None:
-        super().__init__(message)
-        self.code = code
-        self.message = message
-        self.hint = hint
 
 
 def _bad(message: str, hint: str = "") -> MemoryOpError:
@@ -110,14 +100,6 @@ def _normal_relative(path: Any) -> bool:
     if not isinstance(path, str) or not path or "\\" in path or re.match(r"^[A-Za-z]:", path):
         return False
     return all(part not in ("", "..") for part in path.split("/"))
-
-
-def _clean(text: Any, limit: int | None = None, *, ellipsis: bool = False) -> str:
-    text = _CONTROL_RE.sub(" ", str(text or "")).replace(">>>", "").replace("<<<", "")
-    text = " ".join(text.split())
-    if limit is not None and len(text) > limit:
-        text = text[:limit] + ("..." if ellipsis else "")
-    return text
 
 
 def _matches_index(file: Path, indexed: tuple[float, str] | None) -> bool:

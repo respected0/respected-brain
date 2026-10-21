@@ -16,8 +16,6 @@ from ..core.config import ConfigStore, atomic_write_json
 from ..core.errors import FoundationError, SelectionError
 
 ACTIONS = ("install", "update", "repair", "uninstall")
-OPS = ("lifecycle.plan", "lifecycle.apply", "lifecycle.status",
-       "lifecycle.rollback", "operation.receipt")
 
 # One step per action. reversible=False marks work the engine cannot undo, so the
 # dry run exposes it before apply and rollback refuses it.

@@ -1072,7 +1072,7 @@ def _extract_session_threads(
 
     threads_map: dict[str, dict[str, Any]] = dict(existing_threads)
 
-    for section_name, text in sections.items():
+    for text in sections.values():
         for line in text.splitlines():
             stripped = line.strip()
             thread_match = re.search(
@@ -1471,7 +1471,6 @@ def flush_transcript(ctx: AppContext, *, session_id: str, transcript: Path, mode
     except Exception as error:
         write_health(ctx.paths.state_dir, f"unexpected:{error.__class__.__name__}")
         return 1
-    return 0
 
 
 @guarded_writer

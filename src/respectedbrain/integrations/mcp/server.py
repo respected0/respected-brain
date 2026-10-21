@@ -83,7 +83,7 @@ class RespectedMcpServer:
     def _save_inbox_note(self, name: str, arguments: dict[str, Any]) -> str:
         """Both write tools land in one fixed inbox (never Knowledge/Projects), with ownership front matter and a revert record."""
         import uuid
-        from respectedbrain.rpp import memory_write as writes
+        from respectedbrain.memory import inbox as writes
         title = str(arguments.get("title", "")).strip()
         body = str(arguments.get("content", "")).strip()
         tags = arguments.get("tags", [])
@@ -195,7 +195,7 @@ class RespectedMcpServer:
         elif name == "respected_revert_note":
             if not self._write_enabled():
                 return WRITE_OFF
-            from respectedbrain.rpp import memory_write as writes
+            from respectedbrain.memory import inbox as writes
             try:
                 outcome = writes.revert_mcp(self.ctx, str(arguments.get("operation_id", "")))
             except writes.MemoryOpError as error:

@@ -1,11 +1,10 @@
-"""Tests for the maintenance tools (Smart Merge, Architect Scanner, Vault Linter, URL safety, templates).
+"""Tests for the maintenance tools (Smart Merge, Architect Scanner, Vault Linter, templates).
 
 Covers:
 1. Smart Note Merge (smart_merge.py): Metadata union, redirect callout, wikilink rewriting.
 2. Codebase Architect Scanner (architect_scan.py): Architecture extraction, module discovery, markdown/json output.
 3. Vault Linter (vault_linter.py): En/Em-dash filename rule and freshness claim linting.
-4. URL Safety Canonical Hashing (url_safety.py): Content normalization and hashing.
-5. Note Template & Rules: Bi-temporal timeline schema and future agent preamble.
+4. Note Template & Rules: Bi-temporal timeline schema and future agent preamble.
 """
 
 from __future__ import annotations
@@ -18,7 +17,6 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-from respectedbrain.maintenance.ingestion import url_safety
 from respectedbrain.maintenance import vault_linter
 from respectedbrain.maintenance import architect_scan
 from respectedbrain.maintenance import smart_merge
@@ -190,16 +188,6 @@ class TestVaultLinter(unittest.TestCase):
             self.assertEqual(report["freshness_warnings_count"], 1)
             self.assertIn("500-Knowledge/Pipeline.md:2", report["freshness_warnings"][0]["file"])
 
-
-class TestUrlSafety(unittest.TestCase):
-    """Canonical text normalization and content hashing tests."""
-
-    def test_normalize_canonical_text_strips_volatile_elements(self):
-        raw = "<p>Hello   World!</p>\r\n* item 1\r\n+ item 2\r\n"
-        normalized = url_safety.normalize_canonical_text(raw)
-        self.assertNotIn("<p>", normalized)
-        self.assertNotIn("</p>", normalized)
-        self.assertIn("hello world!", normalized.lower())
 
 class TestTemplatesAndRules(unittest.TestCase):
     """Timeline schema and future agent preamble in templates & companion rules."""

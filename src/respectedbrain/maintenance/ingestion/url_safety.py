@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import argparse
 import ipaddress
-import re
 import socket
 import sys
 from urllib.parse import urlparse
@@ -253,29 +252,11 @@ def validate_safe_url(url: str, require_resolvable: bool = False) -> tuple[bool,
     # DNS çözümleme ve çözümlenen IP kontrolü
     if require_resolvable:
         effective_port = port or (443 if parsed.scheme == "https" else 80)
-        safe_dns, ips, dns_reason = resolve_safe_addresses(hostname_clean, effective_port)
+        safe_dns, _, dns_reason = resolve_safe_addresses(hostname_clean, effective_port)
         if not safe_dns:
             return False, dns_reason
 
     return True, "URL güvenli"
-
-
-def normalize_canonical_text(text: str) -> str:
-    """Temizlenmiş kanonik metin gövdesi oluşturur.
-
-    1. HTML ve script etiketlerini ayıklar.
-    2. BOM karakterini ve CRLF'yi LF'ye çevirir.
-    3. Madde imlerini (* ve +) standart '-' yapar.
-    4. Tüm whitespace dizilerini (yeni satırlar dahil) tek bir boşluğa indirir ve kırpar.
-    """
-    if not text:
-        return ""
-    clean = re.sub(r"<[^>]+>", " ", text)
-    clean = clean.lstrip("\ufeff")
-    clean = clean.replace("\r\n", "\n").replace("\r", "\n")
-    clean = re.sub(r"^\s*[\*\+]\s+", "- ", clean, flags=re.MULTILINE)
-    clean = re.sub(r"\s+", " ", clean).strip()
-    return clean
 
 
 def main() -> int:

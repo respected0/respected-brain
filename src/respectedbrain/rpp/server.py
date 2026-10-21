@@ -21,7 +21,6 @@ from . import integrations, lifecycle, memory, memory_grants, memory_capture, me
 
 PROTOCOL_MIN = "1.0"
 PROTOCOL_MAX = "1.1"
-RPP_VERSION = PROTOCOL_MIN  # v1.0 name retained for existing importers
 PRODUCT_ID = "respected-secondbrain"
 SECRET_MASK = "***set***"
 _OPERATION_ID = re.compile(r"^[A-Za-z0-9_-]{8,64}$")

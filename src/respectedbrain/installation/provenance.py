@@ -49,7 +49,6 @@ class TrustedProvenancePolicy:
     expected_subject_name: str = "distribution.json"
     expected_predicate_type: str = "https://slsa.dev/provenance/v1"
     expected_issuer: str = "https://token.actions.githubusercontent.com"
-    enforce_provenance: bool = True
     verifier_callable: Callable[[Path, Path, "TrustedProvenancePolicy"], tuple[bool, str]] | None = None
 
 
