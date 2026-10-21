@@ -1,0 +1,370 @@
+#!/usr/bin/env python3
+"""Adversarial and failure matrix quality tests for Respected Brain 2.1 & 2.2."""
+
+from __future__ import annotations
+
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+from types import SimpleNamespace
+import unittest
+from unittest import mock
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+class AdversarialQualityTest(unittest.TestCase):
+    def setUp(self) -> None:
+        from respectedbrain.providers import runner
+        from respectedbrain.memory import compile
+        from respectedbrain.core import platform
+        from tests.support.fakes import memory_context as make_context
+        self.runner, self.compiler, self.runtime = runner, compile, platform
+        temporary = tempfile.TemporaryDirectory(prefix="adversarial-context-")
+        self.addCleanup(temporary.cleanup)
+        self.ctx = make_context(Path(temporary.name) / "vault")
+
+    # -------------------------------------------------------------------------
+    # 2.2 Provider & Fallback Adversarial Matrix
+    # -------------------------------------------------------------------------
+
+    def test_invalid_recursion_depth_prevents_provider_execution(self):
+        for value in ('invalid', '-1'):
+            with self.subTest(value=value), mock.patch.dict(os.environ, {'BEYIN_RECURSION_DEPTH':value}), mock.patch.object(self.runner, '_command') as command, mock.patch.object(self.runner, '_run_process_tree', side_effect=OSError('fake executable')):
+                output,error,provider=self.runner.run_model('prompt', REPO_ROOT, 'text',10,ctx=self.ctx)
+                self.assertIsNone(output)
+                self.assertEqual(error,'recursion-depth-invalid')
+                command.assert_not_called()
+
+    def test_windows_workspace_does_not_fall_back_outside_stage(self):
+        invocation=self.runner.Invocation(['agy.exe'],'prompt',True)
+        with mock.patch.object(self.runner,'_available',return_value=['antigravity']), mock.patch.object(self.runner,'_command',return_value=invocation), mock.patch.object(self.runtime,'windows_user_root',return_value=None), mock.patch.object(self.runtime,'external_temp_parent',return_value=REPO_ROOT), mock.patch.object(self.runner, '_run_process_tree') as process:
+            output,error,provider=self.runner.run_model('prompt',Path('/tmp/linux-stage'),'workspace',10,ctx=self.ctx)
+        self.assertIsNone(output)
+        self.assertEqual(error,'antigravity-workspace-cwd-unavailable')
+        process.assert_not_called()
+
+    def test_wsl_workspace_without_windows_stage_does_not_launch_child(self):
+        invocation=self.runner.Invocation(['agy.exe'],'prompt',True)
+        with mock.patch.dict(os.environ,{'WSL_INTEROP':'fixture'}),mock.patch.object(self.runner,'_available',return_value=['antigravity']),mock.patch.object(self.runner,'_command',return_value=invocation),mock.patch.object(self.runtime,'windows_user_root',return_value=None),mock.patch.object(self.runtime,'external_temp_parent',return_value=None),mock.patch.object(self.runner, '_run_process_tree') as process:
+            output,error,provider=self.runner.run_model('prompt',Path('/tmp/linux-stage'),'workspace',10,ctx=self.ctx)
+        self.assertIsNone(output)
+        self.assertEqual(error,'antigravity-workspace-cwd-unavailable')
+        process.assert_not_called()
+
+    @unittest.skipUnless(os.name=='nt','Windows custom-command quoting')
+    def test_custom_command_keeps_windows_backslashes_and_space_arguments(self):
+        import sys
+        script=self.ctx.paths.vault_root/'fixture child.py'
+        script.parent.mkdir(parents=True,exist_ok=True)
+        script.write_text('# fixture only\n', encoding='utf-8')
+        argument=r'C:\fixture\unquoted-path'
+        command=f'"{sys.executable}" "{script}" {argument}'
+        self.assertEqual(self.runner._custom_argv(command), [sys.executable, str(script), argument])
+        with mock.patch.dict(os.environ,{'BEYIN_LLM_COMMAND':command,'BEYIN_RECURSION_DEPTH':'0'}), mock.patch.object(self.runner, '_run_process_tree') as process:
+            text,error,provider=self.runner.run_model('prompt fixture',self.ctx.paths.vault_root,'text',5,ctx=self.ctx)
+        self.assertIsNone(text)
+        self.assertEqual(error, 'custom-isolation-required')
+        self.assertEqual(provider,'custom')
+        process.assert_not_called()
+
+    @unittest.skipUnless(os.name=='nt','Windows custom-command quoting contract')
+    def test_custom_command_windows_native_quoting_contract_with_apostrophes_quotes_unicode(self):
+        import subprocess,sys
+        test_cases = [
+            [sys.executable, r"C:\O'Brien\model.py", "Bob's notes"],
+            [sys.executable, "don't", "can't"],
+            [sys.executable, r"C:\normal path\model.py", r"C:\unquoted\path"],
+            [sys.executable, "", "empty arg above"],
+            [sys.executable, 'quote"inside', 'slash\\end\\'],
+            [sys.executable, "Türkçe ğüşıöç 🚀 emoji", 'çift "iç tırnak" deneme'],
+            [sys.executable, "arg1", "arg2", "arg3", "arg4", "arg5"],
+        ]
+        for case in test_cases:
+            command = subprocess.list2cmdline(case)
+            actual = self.runner._custom_argv(command)
+            self.assertEqual(actual, case, f"argv mismatch for: {command}")
+
+        # The command is parsed for compatibility, but run_model must reject it before launch.
+        script = self.ctx.paths.vault_root / 'echo_argv_child.py'
+        script.parent.mkdir(parents=True, exist_ok=True)
+        script.write_text(
+            'import json, sys\n'
+            'sys.stdout.reconfigure(encoding="utf-8")\n'
+            'print(json.dumps({"argv": sys.argv[1:], "prompt": sys.stdin.read()}, ensure_ascii=False))\n',
+            encoding='utf-8',
+        )
+        for args in [
+            [r"C:\O'Brien\model.py", "Bob's notes"],
+            ["don't", "can't"],
+            ["", "Türkçe 🚀", 'with "quote"'],
+        ]:
+            cmd_list = [sys.executable, str(script)] + args
+            command = subprocess.list2cmdline(cmd_list)
+            with mock.patch.dict(os.environ, {'BEYIN_LLM_COMMAND': command, 'BEYIN_RECURSION_DEPTH': '0'}), mock.patch.object(self.runner, '_run_process_tree') as process:
+                text, error, provider = self.runner.run_model('prompt roundtrip', self.ctx.paths.vault_root, 'text', 5, ctx=self.ctx)
+            self.assertIsNone(text)
+            self.assertEqual((error, provider), ('custom-isolation-required', 'custom'))
+            process.assert_not_called()
+
+    def test_structured_provider_errors_are_bounded_and_redacted(self):
+        import json
+        secret='private-secret-'+('x'*1000)
+        invocation=self.runner.Invocation(['gemini'],'prompt')
+        result=SimpleNamespace(returncode=0,stdout=json.dumps({'error':{'message':'unauthorized '+secret}}),stderr='')
+        with mock.patch.object(self.runner,'_available',return_value=['gemini']),mock.patch.object(self.runner,'_command',return_value=invocation),mock.patch.object(self.runner, '_run_process_tree', return_value=result):
+            output,error,provider=self.runner.run_model('prompt',REPO_ROOT,'text',10,preferred='gemini',ctx=self.ctx)
+        self.assertIsNone(output)
+        self.assertEqual(error,'gemini-response-error:auth')
+        self.assertNotIn(secret,error)
+
+    def test_malformed_structured_output_is_not_successful_text(self):
+        for provider,payload in [('gemini','[]'),('gemini','{"response":42}'),('antigravity','{"event":"result","result":null}'),('antigravity','{"event":"progress"}')]:
+            with self.subTest(provider=provider,payload=payload):
+                text,error=self.runner._extract_response(payload,provider)
+                self.assertEqual(text,'')
+                self.assertIsNotNone(error)
+
+    def test_runner_uses_the_same_executable_discovery_as_status(self):
+        with mock.patch.object(self.runner,'_find_executable',return_value='fixture-local/codex.exe'),mock.patch.object(self.runner.shutil,'which',return_value=None):
+            invocation=self.runner._command('codex','prompt','text')
+        self.assertIsNotNone(invocation)
+        self.assertEqual(invocation.argv[0],'fixture-local/codex.exe')
+
+    def test_auto_fallback_exhaustion_returns_last_provider_error(self) -> None:
+        """When all providers fail in auto mode, system must not crash and must report last error."""
+        commands = {
+            "claude": self.runner.Invocation(["claude"], "prompt"),
+            "codex": self.runner.Invocation(["codex"], "prompt"),
+            "antigravity": self.runner.Invocation(["agy"], None),
+        }
+        with mock.patch.object(self.runner, "_configured_provider", return_value="auto"), \
+             mock.patch.object(self.runner, "_available", return_value=["claude", "codex", "antigravity"]), \
+             mock.patch.object(self.runner, "_command", side_effect=lambda p, pr, m, vault: commands[p]), \
+             mock.patch.object(self.runner, "_run_process_tree", side_effect=[
+                 SimpleNamespace(returncode=1, stdout="", stderr="claude auth failed"),
+                 SimpleNamespace(returncode=2, stdout="", stderr="codex config error"),
+                 SimpleNamespace(returncode=3, stdout="", stderr="antigravity fatal error"),
+             ]) as run_mock:
+            output, error, provider = self.runner.run_model("prompt", REPO_ROOT, "text", 10, preferred=None, ctx=self.ctx)
+
+        self.assertIsNone(output)
+        self.assertEqual(error, "antigravity-exit-3")
+        self.assertEqual(provider, "antigravity")
+        self.assertEqual(run_mock.call_count, 3)
+
+    def test_auto_fallback_handles_timeout_and_advances_to_next_candidate(self) -> None:
+        """If provider 1 times out, auto mode must advance to candidate 2 rather than aborting."""
+        commands = {
+            "claude": self.runner.Invocation(["claude"], "prompt"),
+            "codex": self.runner.Invocation(["codex"], "prompt"),
+        }
+        with mock.patch.object(self.runner, "_configured_provider", return_value="auto"), \
+             mock.patch.object(self.runner, "_available", return_value=["claude", "codex"]), \
+             mock.patch.object(self.runner, "_command", side_effect=lambda p, pr, m, vault: commands[p]), \
+             mock.patch.object(self.runner, "_run_process_tree", side_effect=[
+                 subprocess.TimeoutExpired(cmd=["claude"], timeout=10),
+                 SimpleNamespace(returncode=0, stdout="codex-recovered", stderr=""),
+             ]) as run_mock:
+            output, error, provider = self.runner.run_model("prompt", REPO_ROOT, "text", 10, preferred=None, ctx=self.ctx)
+
+        self.assertEqual((output, error, provider), ("codex-recovered", None, "codex"))
+        self.assertEqual(run_mock.call_count, 2)
+
+    def test_auto_fallback_handles_oserror_exec_error_and_advances(self) -> None:
+        """If provider binary fails with OSError (permission, corrupted binary), it advances."""
+        commands = {
+            "claude": self.runner.Invocation(["claude"], "prompt"),
+            "codex": self.runner.Invocation(["codex"], "prompt"),
+        }
+        with mock.patch.object(self.runner, "_configured_provider", return_value="auto"), \
+             mock.patch.object(self.runner, "_available", return_value=["claude", "codex"]), \
+             mock.patch.object(self.runner, "_command", side_effect=lambda p, pr, m, vault: commands[p]), \
+             mock.patch.object(self.runner, "_run_process_tree", side_effect=[
+                 OSError("Binary corrupted or not executable"),
+                 SimpleNamespace(returncode=0, stdout="codex-ok", stderr=""),
+             ]) as run_mock:
+            output, error, provider = self.runner.run_model("prompt", REPO_ROOT, "text", 10, preferred=None, ctx=self.ctx)
+
+        self.assertEqual((output, error, provider), ("codex-ok", None, "codex"))
+        self.assertEqual(run_mock.call_count, 2)
+
+    def test_auto_fallback_handles_stream_error_and_advances(self) -> None:
+        """If antigravity emits a JSON stream error, auto mode must fall back to next provider."""
+        stream_error_payload = '{"event": "result", "result": {"status": "ERROR", "error": "stream-quota-exceeded"}}\n'
+        commands = {
+            "antigravity": self.runner.Invocation(["agy"], None),
+            "codex": self.runner.Invocation(["codex"], "prompt"),
+        }
+        with mock.patch.object(self.runner, "_configured_provider", return_value="auto"), \
+             mock.patch.object(self.runner, "_available", return_value=["antigravity", "codex"]), \
+             mock.patch.object(self.runner, "_command", side_effect=lambda p, pr, m, vault: commands[p]), \
+             mock.patch.object(self.runner, "_run_process_tree", side_effect=[
+                 SimpleNamespace(returncode=0, stdout=stream_error_payload, stderr=""),
+                 SimpleNamespace(returncode=0, stdout="codex-salvaged", stderr=""),
+             ]) as run_mock:
+            output, error, provider = self.runner.run_model("prompt", REPO_ROOT, "text", 10, preferred=None, ctx=self.ctx)
+
+        self.assertEqual((output, error, provider), ("codex-salvaged", None, "codex"))
+        self.assertEqual(run_mock.call_count, 2)
+
+    def test_auto_fallback_rejects_empty_success_and_advances(self) -> None:
+        commands = {
+            "gemini": self.runner.Invocation(["gemini"], "prompt"),
+            "codex": self.runner.Invocation(["codex"], "prompt"),
+        }
+        with mock.patch.object(self.runner, "_configured_provider", return_value="auto"), \
+             mock.patch.object(self.runner, "_available", return_value=["gemini", "codex"]), \
+             mock.patch.object(self.runner, "_command", side_effect=lambda p, pr, m, vault: commands[p]), \
+             mock.patch.object(self.runner, "_run_process_tree", side_effect=[
+                 SimpleNamespace(returncode=0, stdout='{\"response\":\"\",\"error\":null}', stderr=""),
+                 SimpleNamespace(returncode=0, stdout="codex-recovered", stderr=""),
+             ]) as run_mock:
+            result = self.runner.run_model("prompt", REPO_ROOT, "text", 10, ctx=self.ctx)
+
+        self.assertEqual(result, ("codex-recovered", None, "codex"))
+        self.assertEqual(run_mock.call_count, 2)
+
+    def test_preferred_provider_still_fails_fast_on_non_retryable_error(self) -> None:
+        """When an explicit provider is requested, fail-fast contract MUST be preserved."""
+        commands = {
+            "codex": self.runner.Invocation(["codex"], "prompt"),
+            "claude": self.runner.Invocation(["claude"], "prompt"),
+        }
+        with mock.patch.object(self.runner, "_available", return_value=["codex", "claude"]), \
+             mock.patch.object(self.runner, "_command", side_effect=lambda p, pr, m, vault: commands[p]), \
+             mock.patch.object(self.runner, "_run_process_tree", return_value=SimpleNamespace(
+                 returncode=1, stdout="", stderr="unauthorized api key"
+             )) as run_mock:
+            output, error, provider = self.runner.run_model("prompt", REPO_ROOT, "text", 10, preferred="codex", ctx=self.ctx)
+
+        self.assertEqual((output, error, provider), (None, "codex-exit-1:auth", "codex"))
+        self.assertEqual(run_mock.call_count, 1)
+
+    def test_locked_provider_reports_safe_auth_failure_category_without_raw_stderr(self) -> None:
+        commands = {"codex": self.runner.Invocation(["codex"], "prompt")}
+        secret_stderr = "Unauthorized bearer sk-secret-value for account person@example.test"
+        with mock.patch.object(self.runner, "_available", return_value=["codex"]), \
+             mock.patch.object(self.runner, "_command", side_effect=lambda p, pr, m, vault: commands[p]), \
+             mock.patch.object(self.runner, "_run_process_tree", return_value=SimpleNamespace(
+                 returncode=1, stdout="", stderr=secret_stderr
+             )):
+            output, error, provider = self.runner.run_model(
+                "prompt", REPO_ROOT, "text", 10, preferred="codex"
+            , ctx=self.ctx)
+
+        self.assertEqual((output, error, provider), (None, "codex-exit-1:auth", "codex"))
+        self.assertNotIn("secret", error)
+        self.assertNotIn("example.test", error)
+
+    def test_locked_provider_reports_hook_trust_category(self) -> None:
+        commands = {"codex": self.runner.Invocation(["codex"], "prompt")}
+        with mock.patch.object(self.runner, "_available", return_value=["codex"]), \
+             mock.patch.object(self.runner, "_command", side_effect=lambda p, pr, m, vault: commands[p]), \
+             mock.patch.object(self.runner, "_run_process_tree", return_value=SimpleNamespace(
+                 returncode=1,
+                 stdout="",
+                 stderr="Project hooks require trust before non-interactive execution",
+             )):
+            output, error, provider = self.runner.run_model(
+                "prompt", REPO_ROOT, "text", 10, preferred="codex"
+            , ctx=self.ctx)
+
+        self.assertEqual(
+            (output, error, provider),
+            (None, "codex-exit-1:hook-trust", "codex"),
+        )
+
+    def test_failure_categories_are_bounded_and_do_not_echo_provider_output(self) -> None:
+        cases = (
+            ("Permission denied by sandbox policy", "sandbox"),
+            ("network unreachable while connecting", "network"),
+            ("database is locked by another process", "busy"),
+            ("invalid config.toml", "config"),
+            ("unclassified secret payload", None),
+        )
+        for provider_output, expected in cases:
+            with self.subTest(expected=expected):
+                category = self.runner._safe_failure_category("", provider_output)
+                self.assertEqual(category, expected)
+                if category is not None:
+                    self.assertNotIn("payload", category)
+                    self.assertNotIn("config.toml", category)
+
+    def test_zero_pixel_flags_on_windows(self) -> None:
+        """Ensure CREATE_NO_WINDOW flag is guaranteed on Windows for hidden and detached runners."""
+        with mock.patch.object(self.runtime.os, "name", "nt"):
+            hidden = self.runtime.hidden_process_options()
+            self.assertEqual(hidden.get("creationflags"), 0x08000000)
+
+            detached = self.runtime.detached_process_options()
+            flags = detached.get("creationflags", 0)
+            self.assertTrue(flags & 0x08000000, "CREATE_NO_WINDOW flag must be set in detached processes")
+
+    # -------------------------------------------------------------------------
+    # 2.1 Knowledge Domain Isolation & Boundary Adversarial Matrix
+    # -------------------------------------------------------------------------
+
+    def test_domain_path_validation_strictly_rejects_unsafe_paths(self) -> None:
+        """Adversarial paths (directory traversal, non-md, root escape) must be rejected."""
+        is_allowed = self.compiler._is_allowed_output_file
+        # Legitimate domain paths
+        self.assertTrue(is_allowed("knowledge/concepts/tech/ark.md"))
+        self.assertTrue(is_allowed("knowledge/concepts/research/vergi.md"))
+        self.assertTrue(is_allowed("knowledge/concepts/project/p1/arch.md"))
+        self.assertTrue(is_allowed("knowledge/concepts/genel.md"))
+        self.assertTrue(is_allowed("knowledge/connections/c1--c2.md"))
+        self.assertTrue(is_allowed("knowledge/index.md"))
+        self.assertTrue(is_allowed("knowledge/log.md"))
+
+        # Adversarial / forbidden paths
+        self.assertFalse(is_allowed("knowledge/concepts/tech/malicious.exe"))
+        self.assertFalse(is_allowed("knowledge/concepts/tech/script.py"))
+        self.assertFalse(is_allowed("knowledge/concepts/tech/hook.sh"))
+        self.assertFalse(is_allowed("knowledge/concepts/research/data.json"))
+        self.assertFalse(is_allowed("knowledge/concepts/research/"))
+        self.assertFalse(is_allowed("knowledge/concepts/"))
+        self.assertFalse(is_allowed("knowledge/tech.md"))
+        self.assertFalse(is_allowed("knowledge/research.md"))
+        self.assertFalse(is_allowed("daily/2026-09-11.md"))
+        self.assertFalse(is_allowed("SETUP.md"))
+        self.assertFalse(is_allowed("CLAUDE.md"))
+        self.assertFalse(is_allowed(".agents/rules/test.md"))
+        self.assertFalse(is_allowed(".claude/hooks/session-start.sh"))
+
+    def test_promotion_refuses_overwrite_if_live_file_changed_concurrently(self) -> None:
+        """If a target file was modified concurrently by the user while staging compiled, abort promotion."""
+        with tempfile.TemporaryDirectory() as temporary:
+            vault = Path(temporary)
+            knowledge = vault / "knowledge"
+            concepts = knowledge / "concepts" / "research"
+            concepts.mkdir(parents=True)
+            live_file = concepts / "analiz.md"
+            live_file.write_text("initial user content", encoding="utf-8")
+
+            stage_dir = vault / "temp_stage"
+            stage_concepts = stage_dir / "knowledge" / "concepts" / "research"
+            stage_concepts.mkdir(parents=True)
+            staged_file = stage_concepts / "analiz.md"
+            staged_file.write_text("compiled content", encoding="utf-8")
+
+            # live_baseline recorded digest from 'initial user content', but user modified it to 'concurrent change'
+            live_file.write_text("concurrent change by user", encoding="utf-8")
+            live_baseline = {
+                "knowledge/concepts/research/analiz.md": "fake-stale-hash",
+            }
+
+            with self.assertRaises(self.compiler.PolicyError) as context:
+                self.compiler._promote_changes(
+                    stage_dir, vault, ["knowledge/concepts/research/analiz.md"], live_baseline
+                )
+            self.assertIn("live-target-changed", str(context.exception))
+            # Verify live file was not overwritten by stale compiled content
+            self.assertEqual(live_file.read_text(encoding="utf-8"), "concurrent change by user")
+
+
+if __name__ == "__main__":
+    unittest.main()

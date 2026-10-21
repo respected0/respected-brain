@@ -32,7 +32,7 @@ jobs:
       - name: Install editable package
         run: python -m pip install -e ".[dev]"
       - name: Verify minimum-version import, wheel and host adapters
-        run: python -m unittest tests.package_contract_test tests.runtime_platform_test tests.turn_log_pipeline_test tests.scenario_matrix_test -v
+        run: python -m unittest tests.packaging.test_package_contract tests.core.test_platform tests.integrations.test_turn_log_pipeline tests.scenarios.test_provider_matrix -v
 
   native:
     name: native (windows, Python 3.13)
@@ -53,13 +53,7 @@ jobs:
       - name: Verify frozen launcher without system Python
         run: python tools/verify_distribution.py --platform windows --distribution dist/RespectedBrain
       - name: Physical host package smoke
-        run: python tests/smoke/platform_smoke.py --package dist/RespectedBrain --output native-smoke.json
-      - name: Required Windows install and launcher acceptance
-        shell: pwsh
-        run: |
-          ./tests/install_windows_test.ps1
-          ./tests/windows_launchers_test.ps1
-          ./tests/briefing_schedule_windows_test.ps1
+        run: python tests/native/smoke/platform_smoke.py --package dist/RespectedBrain --output native-smoke.json
       - name: Preserve native executable permissions for source matrix
         run: python -c "import shutil; shutil.make_archive('native-payload','gztar',root_dir='dist')"
       - uses: actions/upload-artifact@v4
@@ -99,9 +93,6 @@ jobs:
           mkdir -p dist
           tar -xzf native-payload.tar.gz -C dist
       - name: Run Python unit and integration tests
-        run: python tests/run_all.py --python-only
-      - name: Shell package hooks
-        shell: bash
-        run: bash tests/hooks_test.sh
+        run: python -m unittest discover -s tests -t .
       - name: Verify diff whitespace
         run: git diff --check

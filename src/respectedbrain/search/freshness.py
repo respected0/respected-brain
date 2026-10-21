@@ -7,6 +7,7 @@ import time
 from typing import Any
 
 from ..core.context import AppContext
+from ..core.errors import BusyError
 from .engine import SearchEngine
 
 
@@ -16,6 +17,8 @@ def refresh_now(ctx: AppContext, *, attempts: int = 5, wait: float = 2.0) -> dic
     for attempt in range(attempts):
         try:
             stats = SearchEngine(ctx).index_vault()
+        except BusyError:  # another writer is admitted right now: same as a busy index, wait and retry
+            stats = None
         except (ValueError, OSError, sqlite3.Error) as error:  # freshness is best effort: never fail the caller's real work
             return {"refreshed": False, "reason": type(error).__name__}
         if stats is not None:
