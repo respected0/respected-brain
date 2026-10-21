@@ -16,7 +16,7 @@ loglar tazeliğini koruyor mu, vault kirlenmiş mi. Amaç sessiz arızayı gör�
 2. Notların kökü VaultRoot'tur. DataRoot/config.json kullanıcı yapılandırmasıdır;
    DataRoot/vaults/<UUID>/state teknik durum, DataRoot/vaults/<UUID>/cache geçici veridir.
    RESPECTED_DATA_DIR override'ını önce kontrol et. Varsayılan DataRoot Windows Known Folder
-   LocalAppData/RespectedBrain, Linux XDG_DATA_HOME/respectedbrain (yoksa ~/.local/share/respectedbrain),
+   LocalAppData/Respected/RespectedBrain/data, Linux XDG_DATA_HOME/respectedbrain (yoksa ~/.local/share/respectedbrain),
    macOS ~/Library/Application Support/RespectedBrain'dir. AppRoot kurulu uygulamadır; buraya yazma.
 3. Native launcher `respectedbrain` (Windows'ta `respectedbrain.exe`) kullanılır; kurulu motor
    ayrıca Python istemez. POSIX dosya kontrol örneklerini Windows'ta mevcut PowerShell/dosya

@@ -49,6 +49,7 @@ SETTINGS_FIELDS = (
     {"key": "summary_provider", "type": "enum", "label": "Summary provider",
      "default": "auto", "secret": False,
      "enum": ["auto", "codex", "claude", "antigravity", "gemini", "cursor"]},
+    {"key": "assistant_name", "type": "string", "label": "Assistant name", "default": "", "secret": False, "max_length": 40},
     {"key": "capture_mode", "type": "enum", "label": "Capture mode", "default": "auto", "secret": False,
      "enum": ["auto", "manual"]},
     {"key": "mcp_write", "type": "boolean", "label": "Allow AI tools to save notes through MCP (inbox only, reviewable)",
@@ -201,6 +202,8 @@ def _field_errors(field, value):
             return [{"key": key, "message": f"{key} must be at most {field['max']}"}]
     if kind == "string" and not isinstance(value, str):
         return [{"key": key, "message": f"{key} must be a string"}]
+    if kind == "string" and len(value) > field.get("max_length", len(value)):
+        return [{"key": key, "message": f"{key} must be at most {field['max_length']} characters"}]
     if kind == "enum" and value not in field["enum"]:
         allowed = ", ".join(field["enum"])
         return [{"key": key, "message": f"{key} must be one of: {allowed}"}]

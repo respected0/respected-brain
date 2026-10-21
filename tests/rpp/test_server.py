@@ -114,6 +114,15 @@ class RppTest(unittest.TestCase):
         self.assertTrue(readback["result"]["settings"]["integrations.mcp"])
         self.assertIs(readback["result"]["settings"]["provider_fallback"], True)
 
+    def test_assistant_name_is_a_product_setting_with_a_length_limit(self):
+        applied = self.call({"rpp": "1.0", "op": "settings.apply", "operation_id": "op-name-1",
+                             "payload": {"settings": {"assistant_name": "Jarvis"}}})
+        self.assertTrue(applied["ok"])
+        readback = self.call({"rpp": "1.0", "op": "settings.readback"})
+        self.assertEqual(readback["result"]["settings"]["assistant_name"], "Jarvis")
+        tooLong = self.call({"rpp": "1.0", "op": "settings.validate", "payload": {"settings": {"assistant_name": "x" * 41}}})
+        self.assertFalse(tooLong["result"]["valid"])
+
     def test_readback_defaults_without_config(self):
         response = self.call({"rpp": "1.0", "op": "settings.readback"})
         self.assertTrue(response["ok"])

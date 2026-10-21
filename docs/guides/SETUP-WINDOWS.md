@@ -24,7 +24,12 @@ Not kasası bunlardan ayrıdır; örneğin `C:/Users/<kullanıcı>/Documents/Ben
 
 ## 2. Hub üzerinden kurulum
 
-Windows'ta SecondBrain bağımsız bir kurucuyla değil, **Respected Hub** üzerinden kurulur, güncellenir, onarılır ve kaldırılır. Hub imzalı native dağıtımı doğrular, kasa yolunu ve AI istemci seçimlerini sorar, ardından ürünün kendi `setup` hizmetini çalıştırır; program, veri ve kasa yolları ayrı tutulur. Bağımsız Inno kurucusu ve `_inno-*` kabuk komutları kaldırıldı. Geliştirme sırasında aynı hizmet `respectedbrain setup --gui --vault ... --package ...` ile çağrılabilir.
+İki eşdeğer yol vardır; ikisi de ürünün kendi `setup` hizmetini çalıştırır, program, veri ve kasa yolları ayrı tutulur.
+
+- **Hub ile (önerilen):** Hub imzalı native dağıtımı doğrular, kasa yolunu ve AI istemci seçimlerini sorar, `setup` hizmetini çağırır.
+- **Bağımsız kurucu:** `RespectedSecondBrain-Windows-Setup.exe` (Inno, kullanıcı başına, admin gerekmez; `packaging/build_installer.py` ile üretilir). Yalnızca kasa klasörünü sorar (sessiz kurulumda `/VAULT="yol"`), dağıtımı geçici klasöre açıp `respectedbrain setup ... --allow-unattested --no-global --no-mcp --no-schedule --no-shortcut` çalıştırır; AI istemci bağlantıları sonradan seçilir. Kurucunun kendi dosyası yalnızca `%LOCALAPPDATA%/Respected/RespectedBrain/installer/unins000.exe` olur; Windows'taki Yüklü uygulamalar girdisini bu kurucu yazar, kaldırma `respectedbrain uninstall --keep-data --allow-unattested` çalıştırır (kasa ve veri klasörü korunur).
+
+Geliştirme sırasında aynı hizmet `respectedbrain setup --vault ... --package ...` ile çağrılabilir.
 
 ## 3. Kullanımda executable ve son makbuz
 

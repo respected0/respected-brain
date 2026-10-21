@@ -83,7 +83,7 @@ def _parser():
         _selector(operation)
         if name in ("update", "repair"):
             operation.add_argument("--package", type=Path, required=name == "update")
-            operation.add_argument("--allow-unattested", action="store_true", help="Accept a local package without a release attestation (development builds)")
+        operation.add_argument("--allow-unattested", action="store_true", help="Accept a local package without a release attestation (development builds)")
         if name == "uninstall":
             operation.add_argument("--keep-data", action="store_true")
             operation.add_argument("--purge-data", dest="keep_data", action="store_false", help=argparse.SUPPRESS)

@@ -20,7 +20,7 @@ Skill komutlarındaki `UUID` yer tutucusunu bu listedeki gerçek kimlikle deği�
 kasa varsa her işlemde `--vault-id` seç. DataRoot/config.json kullanıcı tercihleri ve kasa
 kayıtlarını tutar; DataRoot/vaults/<UUID>/state teknik durum, DataRoot/vaults/<UUID>/cache geçici
 veri, aynı UUID altında overrides kişisel instruction/skill katmanıdır. RESPECTED_DATA_DIR
-veri dizinini açıkça değiştirebilir. Varsayılan DataRoot Windows Known Folder LocalAppData/RespectedBrain,
+veri dizinini açıkça değiştirebilir. Varsayılan DataRoot Windows Known Folder LocalAppData/Respected/RespectedBrain/data,
 Linux XDG_DATA_HOME/respectedbrain (yoksa ~/.local/share/respectedbrain), macOS
 ~/Library/Application Support/RespectedBrain'dir. AppRoot kurulu uygulama ve paket kaynaklarıdır;
 not veya teknik state buraya yazılmaz. VaultRoot/.respected.json taşınabilir kasa UUID marker'ıdır.

@@ -31,6 +31,8 @@ class FoundationDeferredTest(unittest.TestCase):
             self.assertFalse(helper.is_relative_to(ctx.paths.data_root))
             self.assertEqual(snapshot(ctx.paths.app_root), before)
             self.assertEqual(helper.read_bytes(), b"MZ-fixture")
+            # --allow-unattested must survive the hand-over, or the helper re-checks provenance and an unattested install cannot finish
+            self.assertIs(json.loads((helper.parent / "request.json").read_text(encoding="utf-8"))["require_provenance"], False)
             import shutil
             shutil.rmtree(helper.parent)
 

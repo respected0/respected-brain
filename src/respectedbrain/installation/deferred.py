@@ -41,7 +41,7 @@ def defer_operation(ctx, *, mode, package=None, purge_data=True, require_provena
         identity = "deferred-" + str(uuid4())
         request = temporary / "request.json"
         receipt = ctx.paths.data_root / "backups" / identity / "result.json"
-        atomic_write_json(request, {"schema_version": 3, "parent_pid": os.getpid(), "mode": mode, "app_root": str(ctx.paths.app_root), "data_root": str(ctx.paths.data_root), "vault": str(ctx.paths.vault_root), "vault_id": ctx.paths.vault_id, "package": str(package) if package is not None else None, "purge_data": bool(purge_data), "receipt": str(receipt)})
+        atomic_write_json(request, {"schema_version": 3, "parent_pid": os.getpid(), "mode": mode, "app_root": str(ctx.paths.app_root), "data_root": str(ctx.paths.data_root), "vault": str(ctx.paths.vault_root), "vault_id": ctx.paths.vault_id, "package": str(package) if package is not None else None, "purge_data": bool(purge_data), "require_provenance": require_provenance, "receipt": str(receipt)})
         subprocess.Popen([str(temporary / document["launcher"]), "_resume-operation", "--request", str(request), "--request-hash", digest(request)], cwd=temporary, env={**os.environ, "RESPECTED_APP_DIR": str(ctx.paths.app_root), "RESPECTED_DATA_DIR": str(ctx.paths.data_root)}, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         # The caller must exit; the helper writes a final receipt after activation.
         return OperationResult(False, identity, (), pending=True)
@@ -78,8 +78,10 @@ def resume_operation(request: Path, *, expected_hash: str, require_provenance=No
         raise OwnershipConflict("Activation request changed")
     if not request.resolve().is_relative_to(Path(tempfile.gettempdir()).resolve()):
         raise OwnershipConflict("Activation helper must live in OS temporary storage")
-    validate_package(request.parent, require_provenance=require_provenance)
     document = json.loads(request.read_text(encoding="utf-8"))
+    if require_provenance is None:  # the choice made when the operation was queued (--allow-unattested); the hash above covers it
+        require_provenance = document.get("require_provenance")
+    validate_package(request.parent, require_provenance=require_provenance)
     if document.get("schema_version") != 3 or document.get("mode") not in ("update", "uninstall"):
         raise OwnershipConflict("Invalid activation request")
     _wait_parent(int(document["parent_pid"]))

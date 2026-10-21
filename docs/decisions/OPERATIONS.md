@@ -90,7 +90,7 @@ uygular. İşlem sonunda AppRoot, DataRoot, VaultRoot sözleşmesi doğrudan
 oluşur.
 
 Windows'ta bu adımları Respected Hub çalıştırır: imzalı paketi doğrulayıp stage eder, sonra ürünün kendi
-`setup`/`update`/`repair`/`uninstall` komutunu çağırır. Bağımsız kurucu yoktur; kasa ayrı kullanıcı seçimidir.
+`setup`/`update`/`repair`/`uninstall` komutunu çağırır. Hub'sız kurulum için bağımsız bir Inno kurucusu da vardır (`packaging/windows/secondbrain_setup.iss`): yalnızca kasa yolunu sorar ve aynı `setup` hizmetini çağırır; kasa ayrı kullanıcı seçimidir.
 
 ### Güncelleme
 
