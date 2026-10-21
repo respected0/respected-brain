@@ -39,7 +39,6 @@ def _load_bundle_entries(text: str) -> list[dict[str, Any]]:
 
 
 @dataclass(frozen=True)
-
 class TrustedProvenancePolicy:
     """Official release verification policy constraints."""
     expected_repo: str = "respected0/respected-secondbrain"
@@ -98,11 +97,11 @@ def verify_release_provenance(
     raw_bundle = entries[0]
 
     # Disallow bare unsigned in-toto statements: attestation must be wrapped in a cryptographic envelope
-    if isinstance(raw_bundle, dict) and raw_bundle.get("_type") == "https://in-toto.io/Statement/v1":
+    if raw_bundle.get("_type") == "https://in-toto.io/Statement/v1":
         return False, "Unsigned in-toto statement rejected: cryptographic attestation envelope required", {}
 
     payload: dict[str, Any] = {}
-    if isinstance(raw_bundle, dict) and "dsseEnvelope" in raw_bundle:
+    if "dsseEnvelope" in raw_bundle:
         envelope = raw_bundle["dsseEnvelope"]
         sigs = envelope.get("signatures", [])
         if not sigs or not any(s.get("sig") for s in sigs):
@@ -135,7 +134,8 @@ def verify_release_provenance(
                 if version_proc.returncode != 0 or "gh version 2.102.0" not in version_proc.stdout:
                     return False, "Unsupported gh verifier version; pinned 2.102.0 required", {}
                 proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30, check=False)
-                if proc.returncode != 0 or not isinstance(json.loads(proc.stdout), list) or not json.loads(proc.stdout):
+                verified = json.loads(proc.stdout) if proc.returncode == 0 else None
+                if not isinstance(verified, list) or not verified:
                     return False, f"Cryptographic verifier rejected attestation: {proc.stderr.strip()}", {}
             except Exception as exc:
                 return False, f"Cryptographic verifier execution error: {exc}", {}

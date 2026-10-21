@@ -318,5 +318,77 @@ class ProvenanceTest(unittest.TestCase):
                 with self.assertRaisesRegex(Exception,'provenance'): validate_package(seed_package(root/'unsigned'))
 
 
+class VerifierRejectionTest(unittest.TestCase):
+    """Every fail-closed branch of the verifier returns a reason instead of trusting the package."""
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.root = Path(temporary.name)
+        self.package = self.root / "distribution.json"
+        self.package.write_bytes(b"manifest")
+        self.sha = hashlib.sha256(b"manifest").hexdigest()
+        self.trusting = TrustedProvenancePolicy(expected_ref="refs/tags/v0.0.1", verifier_callable=lambda *_: (True, "fixture"))
+
+    def verify(self, bundle, policy=None):
+        path = self.root / "bundle.json"
+        path.write_text(bundle if isinstance(bundle, str) else json.dumps(bundle), encoding="utf-8")
+        return verify_release_provenance(self.package, path, policy=policy or self.trusting)
+
+    def good(self, **kwargs):
+        return _synthetic_slsa_bundle(subject_name="distribution.json", subject_sha256=self.sha, **kwargs)
+
+    def test_bundle_text_shapes(self):
+        item = {"a": 1}
+        self.assertEqual(_load_bundle_entries("  "), [])
+        self.assertEqual(_load_bundle_entries(json.dumps([item, 5])), [item])
+        self.assertEqual(_load_bundle_entries(json.dumps(item)), [item])
+        self.assertEqual(_load_bundle_entries("5"), [])
+
+    def test_unusable_inputs_are_rejected_with_a_reason(self):
+        self.assertFalse(verify_release_provenance(self.root / "missing.json")[0])
+        cases = {
+            "not json {": "Failed to parse",
+            json.dumps([self.good(), self.good()]): "exactly one",
+            json.dumps({"mediaType": "x"}): "Unsupported attestation bundle",
+        }
+        for bundle, reason in cases.items():
+            with self.subTest(reason=reason):
+                ok, message, _ = self.verify(bundle)
+                self.assertFalse(ok)
+                self.assertIn(reason, message)
+
+    def test_envelope_without_signature_or_with_rejected_signature_fails(self):
+        unsigned = self.good()
+        unsigned["dsseEnvelope"]["signatures"] = []
+        self.assertIn("Missing cryptographic signature", self.verify(unsigned)[1])
+        rejecting = TrustedProvenancePolicy(expected_ref="refs/tags/v0.0.1", verifier_callable=lambda *_: (False, "bad"))
+        self.assertIn("verification failed: bad", self.verify(self.good(), rejecting)[1])
+
+    def test_corrupt_payload_and_policy_mismatches_fail(self):
+        corrupt = self.good()
+        corrupt["dsseEnvelope"]["payload"] = "%%%"
+        self.assertIn("Corrupted DSSE", self.verify(corrupt)[1])
+        wrong_workflow = self.good(workflow=".github/workflows/other.yml")
+        self.assertIn("workflow mismatch", self.verify(wrong_workflow)[1])
+        wrong_ref = self.good(ref="refs/heads/main")
+        self.assertIn("ref mismatch", self.verify(wrong_ref)[1])
+
+    def test_gh_verifier_must_be_the_pinned_version_and_accept_the_bundle(self):
+        policy = TrustedProvenancePolicy(expected_ref="refs/tags/v0.0.1")
+        cases = {
+            "Unsupported gh verifier version": [mock.Mock(returncode=0, stdout="gh version 2.0.0", stderr="")],
+            "rejected attestation": [mock.Mock(returncode=0, stdout="gh version 2.102.0", stderr=""),
+                                      mock.Mock(returncode=1, stdout="", stderr="no match")],
+            "verifier execution error": [mock.Mock(returncode=0, stdout="gh version 2.102.0", stderr=""),
+                                          mock.Mock(returncode=0, stdout="not json", stderr="")],
+        }
+        for reason, results in cases.items():
+            with self.subTest(reason=reason), mock.patch("shutil.which", return_value="gh"),                     mock.patch("subprocess.run", side_effect=results):
+                ok, message, _ = self.verify(self.good(), policy)
+                self.assertFalse(ok)
+                self.assertIn(reason, message)
+
+
 if __name__ == "__main__":
     unittest.main()

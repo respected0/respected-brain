@@ -259,6 +259,34 @@ class McpServerTest(unittest.TestCase):
     def test_absolute_note_paths_are_refused(self):
         self.assertIsNone(self.server._safe_resolve('/🔮 850-Companion/Core.md'))
 
+    def test_search_tool_lists_hits_or_reports_none(self) -> None:
+        out = self.server.call_tool("respected_search", {"query": "Direkt"})
+        self.assertIn("Arama Sonuçları", out)
+        self.assertIn("Kurallar", out)
+        self.assertIn("eşleşen not bulunamadı", self.server.call_tool("respected_search", {"query": "zzzqqq"}))
+
+    def test_decisions_tool_returns_records_and_active_rules(self) -> None:
+        out = self.server.call_tool("respected_get_decisions", {})
+        self.assertIn("Karar ve Mimari Kayıtları", out)
+        self.assertIn("Direkt ol", out)
+
+    def test_stdio_lists_tools_serves_calls_and_rejects_unknown_methods(self):
+        import io
+        from unittest.mock import patch
+        calls = [('tools/list', {}), ('tools/call', {'name': 'respected_get_note', 'arguments': {'path': '🔮 850-Companion/Core.md'}}),
+                 ('tools/call', {'name': 'unknown_tool_xyz', 'arguments': {}}), ('nope', {})]
+        requests = [json.dumps({'jsonrpc': '2.0', 'id': index, 'method': method, 'params': params})
+                    for index, (method, params) in enumerate(calls, 1)]
+        output = io.StringIO()
+        with patch('sys.stdin', io.StringIO('\n'.join(requests))), patch('sys.stdout', output):
+            self.server.run_stdio()
+        listing, note, unknown, missing = [json.loads(line) for line in output.getvalue().splitlines()]
+        self.assertIn('respected_search', [tool['name'] for tool in listing['result']['tools']])
+        self.assertFalse(note['result']['isError'])
+        self.assertIn('Companion düşünme ortağı', note['result']['content'][0]['text'])
+        self.assertTrue(unknown['result']['isError'])
+        self.assertEqual(missing['error']['code'], -32601)
+
     def test_stdio_errors_do_not_stop_next_request(self):
         import io
         from unittest.mock import patch

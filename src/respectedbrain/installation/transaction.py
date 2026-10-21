@@ -23,11 +23,6 @@ def _file_mode(path: Path) -> int | None:
     return stat.S_IMODE(path.stat().st_mode) if path.is_file() else None
 
 
-def _mode_matches(row: dict, name: str, actual: int | None) -> bool:
-    # Existing journals predate mode metadata; retain their byte-only recovery.
-    return name not in row or row[name] == actual
-
-
 def _compact_external(document: dict) -> bool:
     """Replace complete copies of client config files by a delta + fingerprints (minimal secret retention)."""
     from respectedbrain.integrations import delta as delta_module
@@ -81,7 +76,7 @@ def _validate_journal(document: dict, directory: Path) -> None:
                     or (backup is None) != (row["before"] is None)):
                 raise ValueError("Invalid before-image reference")
             for field in ("before_mode", "after_mode"):
-                value = row.get(field)
+                value = row[field]
                 if value is not None and (type(value) is not int or not 0 <= value <= 0o7777):
                     raise ValueError("Invalid journal mode")
         for row in document["external"]:
@@ -222,7 +217,7 @@ class Transaction:
         # share one durable snapshot before target mutation.
         row = self._capture_before(target, persist=False)
         actual = digest(target) if target.exists() else None
-        if actual != row["after"] or not _mode_matches(row, "after_mode", _file_mode(target)):
+        if actual != row["after"] or row["after_mode"] != _file_mode(target):
             raise OwnershipConflict(f"Target changed during transaction: {target}")
         self._parent(target)
         row["after"] = hashlib.sha256(payload).hexdigest()
@@ -280,7 +275,7 @@ class Transaction:
         for row in self.document["files"]:
             path = safe_path(Path(row["path"]))
             actual = digest(path) if path.is_file() else None
-            if (actual != row["after"] or not _mode_matches(row, "after_mode", _file_mode(path))
+            if (actual != row["after"] or row["after_mode"] != _file_mode(path)
                     or path.exists() and not path.is_file()):
                 raise OwnershipConflict(f"Target changed before commit: {path}")
         checked = set()
@@ -316,9 +311,9 @@ class Transaction:
                 safe_path(path)
                 actual = digest(path) if path.is_file() else None
                 mode = _file_mode(path)
-                if actual == row["before"] and _mode_matches(row, "before_mode", mode):
+                if actual == row["before"] and row["before_mode"] == mode:
                     continue
-                if actual != row["after"] or not _mode_matches(row, "after_mode", mode) or (path.exists() and not path.is_file()):
+                if actual != row["after"] or row["after_mode"] != mode or (path.exists() and not path.is_file()):
                     raise OwnershipConflict("Rollback target changed")
                 if row["backup"] is None:
                     path.unlink(missing_ok=True)
@@ -326,7 +321,7 @@ class Transaction:
                     backup = safe_path(self.directory / row["backup"])
                     if digest(backup) != row["before"]:
                         raise OwnershipConflict("Backup changed")
-                    _atomic_write_mode(path, backup.read_bytes(), row.get("before_mode"))
+                    _atomic_write_mode(path, backup.read_bytes(), row["before_mode"])
             except (OSError, ValueError, OwnershipConflict):
                 conflicts.append(str(path))
         for name in reversed(self.document["directories"]):
