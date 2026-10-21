@@ -6,8 +6,8 @@ from respectedbrain.core.config import ConfigStore
 from respectedbrain.core.errors import OwnershipConflict
 from respectedbrain.core.paths import Roots
 from respectedbrain.integrations.backend import ExternalChange
-from .common import installed_profile, linux_launcher_path
-from .ownership import safe_path, OwnedFile, OwnershipManifest, digest, prove_ownership
+from .common import ensure_linux_launcher, installed_profile, linux_launcher_path
+from .ownership import safe_path, OwnedFile, OwnershipManifest, digest, manifest_document, prove_ownership
 
 
 def validate_manifest_roots(ctx, manifest):
@@ -85,7 +85,6 @@ def plan_connections(ctx, backend, previous):
         return tuple(disabled), tuple(retained)
     from respectedbrain.integrations.rendering import plan_integrations
     roots = Roots(ctx.paths.app_root, ctx.paths.data_root, ctx.paths.vault_root)
-    settings = config["vaults"][ctx.paths.vault_id].get("settings", {})
     changes = plan_integrations(fresh, installed_profile(roots, settings), desired, backend)
     if "clients" in desired or "mcp_clients" in desired:  # a client that is no longer selected gets its previous registrations restored
         planned = {(change.kind, change.key) for change in changes}
@@ -110,3 +109,17 @@ def operation_manifest(ctx, files, external, *, previous=None):
     owned.update({item.path: item for item in files})
     owned[config_path] = OwnedFile(config_path, digest(config_path), "technical")
     return OwnershipManifest(3, tuple(owned.values()), tuple(external))
+
+
+def refresh_integrations(ctx, backend, tx, previous, profile):
+    """Install the PATH launcher and apply the planned integration changes; returns (launchers, owned external rows)."""
+    launchers = ensure_linux_launcher(ctx, profile, tx, previous)
+    changes, external = plan_connections(ctx, backend, previous)
+    for change in changes:
+        tx.apply_external(change)
+    return launchers, external
+
+
+def write_manifest(ctx, tx, files, external, previous):
+    tx.write_json(ctx.paths.data_root / "install-manifest.json",
+                  manifest_document(operation_manifest(ctx, files, external, previous=previous)))

@@ -10,8 +10,8 @@ from respectedbrain.core.errors import FoundationError, OwnershipConflict
 from respectedbrain.core.paths import Roots
 from respectedbrain.core.resources import ResourceCatalog
 from respectedbrain.vault.registry import VaultRegistry
-from .common import installed_profile, installation_context, ensure_linux_launcher
-from .ownership import OwnedFile, OwnershipManifest, digest, manifest_document, read_manifest, safe_path
+from .common import installed_profile, installation_context
+from .ownership import OwnedFile, OwnershipManifest, digest, read_manifest, safe_path
 from .transaction import Transaction, OperationResult, recover_transactions
 from . import payload
 
@@ -79,24 +79,17 @@ def setup(roots: Roots, vault: Path, *, profile: Mapping[str, str], desired: Map
                         value["preferences"][key] = profile[key]
             config = store.update(edit, writer=tx.write_json)
             ctx = installation_context(roots, vault, identity, config)
-            profile_object = installed_profile(roots, profile)
-            launchers = ensure_linux_launcher(ctx, profile_object, tx, previous)
-            project_connections = []
-            # Hooks are global only (home-level, via plan_connections); the vault keeps just its notes and .obsidian (no .claude/.cursor/.agents/...).
-            from .operations import plan_connections, operation_manifest
-            changes, external = plan_connections(ctx, backend, previous)
-            external = (*external, *project_connections)
-            for change in changes:
-                tx.apply_external(change)
+            # Hooks are global only (home-level); the vault keeps just its notes and .obsidian (no .claude/.cursor/.agents/...).
+            from .operations import refresh_integrations, write_manifest
+            launchers, external = refresh_integrations(ctx, backend, tx, previous, resolved_profile)
             tx.checkpoint("integrations")
             owned = tuple(OwnedFile(roots.app_root / name, digest(roots.app_root / name), "application", stat.S_IMODE((roots.app_root / name).stat().st_mode)) for name in payload.package_members(roots.app_root, document))
             owned += (OwnedFile(store.path, digest(store.path), "technical"),) + launchers
-            tx.write_json(manifest_path, manifest_document(operation_manifest(ctx, owned, external, previous=previous)))
+            write_manifest(ctx, tx, owned, external, previous)
             tx.checkpoint("health")
             payload.validate_package(roots.app_root, require_provenance=require_provenance)
             payload.validate_installed_health(roots.app_root, document, roots.data_root)
             tx.checkpoint("cleanup")
             return tx.commit()
     except (FoundationError, OSError, ValueError) as error:
-        conflicts = tx.result.conflicts if tx is not None else ()
-        return OperationResult(False, tx.tx_id if tx else "", (str(error), *conflicts))
+        return OperationResult.failed(tx, error)

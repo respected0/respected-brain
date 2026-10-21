@@ -71,4 +71,4 @@ def uninstall(ctx, *, backend, purge_data=True) -> OperationResult:
             # Unknown files and backup journals are deliberately retained.
             return OperationResult(not conflicts, result.tx_id, tuple(conflicts))
     except (FoundationError, OSError, ValueError) as error:
-        return OperationResult(False, tx.tx_id if tx else "", (str(error), *(tx.result.conflicts if tx else ())))
+        return OperationResult.failed(tx, error)

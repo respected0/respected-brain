@@ -131,6 +131,10 @@ class OperationResult:
     conflicts: tuple[str, ...]
     pending: bool = False
 
+    @classmethod
+    def failed(cls, tx, error) -> "OperationResult":
+        return cls(False, tx.tx_id if tx else "", (str(error), *(tx.result.conflicts if tx else ())))
+
 
 class Transaction:
     def __init__(self, data_root: Path, backend, *, vault_id: str | None = None,
