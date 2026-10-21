@@ -88,46 +88,19 @@ def _forward_chained(argv: list[str]) -> None:
         except Exception:
             pass
 
-    chained_env = os.environ.get("CODEX_NOTIFY_CHAIN")
-    candidates = []
-    if chained_env:
-        candidates.append(chained_env)
-
-    appdata = os.environ.get("LOCALAPPDATA") or ""
-    if appdata:
-        default_cua = (
-            Path(appdata)
-            / "OpenAI"
-            / "Codex"
-            / "runtimes"
-            / "cua_node"
-            / "a708e72b10c27b59"
-            / "bin"
-            / "node_modules"
-            / "@oai"
-            / "sky"
-            / "bin"
-            / "windows"
-            / "codex-computer-use.exe"
-        )
-        if default_cua.is_file():
-            candidates.append(str(default_cua))
-
-    flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0
-    for target in candidates:
-        if os.path.isfile(target) or shutil.which(target):
-            try:
-                subprocess.Popen(
-                    [target, "turn-ended", *payload_args],
-                    stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL,
-                    stdin=subprocess.DEVNULL,
-                    creationflags=flags,
-                    close_fds=True,
-                )
-                break
-            except Exception:
-                pass
+    target = os.environ.get("CODEX_NOTIFY_CHAIN")
+    if target and (os.path.isfile(target) or shutil.which(target)):
+        try:
+            subprocess.Popen(
+                [target, "turn-ended", *payload_args],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                stdin=subprocess.DEVNULL,
+                creationflags=(getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000) if os.name == "nt" else 0),
+                close_fds=True,
+            )
+        except Exception:
+            pass
 
 
 def dispatch(ctx, *, argv, stdin):

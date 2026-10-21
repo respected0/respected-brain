@@ -41,7 +41,7 @@ class ForwardChainedTest(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name)
         self.chain = self.root / "chain.json"
-        environment = mock.patch.dict(codex_notify.os.environ, {"CODEX_NOTIFY_CHAIN": "", "LOCALAPPDATA": ""})
+        environment = mock.patch.dict(codex_notify.os.environ, {"CODEX_NOTIFY_CHAIN": ""})
         environment.start()
         self.addCleanup(environment.stop)
         popen = mock.patch.object(codex_notify.subprocess, "Popen")
