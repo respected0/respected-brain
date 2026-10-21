@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "respectedbrain"
-version = "0.1.0"
+version = "0.1.0-beta.1"
 description = "Local, provider-neutral memory for a personal Markdown vault"
 readme = "README.md"
 requires-python = ">=3.10"

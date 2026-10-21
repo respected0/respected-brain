@@ -39,12 +39,12 @@
     {
       "path": ".github/workflows/ci.yml",
       "role": "Depo sözleşmesi",
-      "purpose": "Yalnızca Windows üzerinde native dağıtım üretir, doğrular, regresyon ve host smoke kapılarını çalıştırır; PR/main değişikliklerinin kalite kapısıdır. macOS/Linux kodu repoda kalır ama CI'da derlenmez/test edilmez. Erken Python 3.10 import/wheel/adapter kapısı native üretimden önce çalışır; native aşama atlas kontrolü, frozen launcher doğrulaması, fiziksel smoke ve Windows PowerShell kabul betiklerini çalıştırır; source işi 3.10 ve 3.13 ile tests/run_all.py --python-only'yi native payload üzerinde koşar. Bağımsız installer veya release üretmez.",
+      "purpose": "Yalnızca Windows üzerinde native dağıtım üretir, doğrular, regresyon ve host smoke kapılarını çalıştırır; PR/main değişikliklerinin kalite kapısıdır. macOS/Linux kodu repoda kalır ama CI'da derlenmez/test edilmez. Erken Python 3.10 import/wheel/adapter kapısı native üretimden önce çalışır; native aşama atlas kontrolü, frozen launcher doğrulaması, fiziksel smoke ve Windows PowerShell kabul betiklerini çalıştırır; source işi 3.10 ve 3.13 ile tests/run_all.py --python-only'yi native payload üzerinde koşar. Bağımsız installer veya release üretmez. Shell kapısı yalnızca tests/hooks_test.sh'dir.",
       "relationships": [
         "tools/build_installer.py, verify_distribution.py ve tests komutlarını bağlar; atlas --check kaynak/inceleme drift'ini yakalar.",
         "Python keşfi tests/run_all.py --python-only üzerinden tam stderr ve doğrulanmış public başarısız test kimliği annotasyonlarını korur."
       ],
-      "review_sha256": "bd94b29d384856b053897fe9894c4fe5957fa2d3a5622484df333e434b9f85be"
+      "review_sha256": "ba507e4df770da64838e2199b2864f5dbfa634d4fec4a68ecd7b53484d92c93e"
     },
     {
       "path": ".gitignore",
@@ -554,11 +554,11 @@
     {
       "path": "pyproject.toml",
       "role": "Depo sözleşmesi",
-      "purpose": "respectedbrain 0.1.0 paketini, Python >=3.10 sınırını, sıfır zorunlu üçüncü taraf bağımlılığını, build-system gereksinimleriyle eşleşen dev geliştirme araçlarını (setuptools>=69, build, wheel, pyinstaller, tomli) ve console script'i tanımlar; resources dosyalarını açıkça paketler. gateway/web/index.html paket verisi kaldırıldı.",
+      "purpose": "respectedbrain 0.1.0-beta.1 paketini (Python metadata'da PEP 440 biçimi 0.1.0b1), Python >=3.10 sınırını, sıfır zorunlu üçüncü taraf bağımlılığını, build-system gereksinimleriyle eşleşen dev geliştirme araçlarını (setuptools>=69, build, wheel, pyinstaller, tomli) ve console script'i tanımlar; resources dosyalarını açıkça paketler. gateway/web/index.html paket verisi kaldırıldı.",
       "relationships": [
         "Setuptools src yerleşimini kurar; respectedbrain.cli:main kurulu giriş olur; build_installer sürümü buradan edinir."
       ],
-      "review_sha256": "61081ba5545a7f0f315420840a9c595e904a90b0d70b5f9c6bbeb729cc0e7e04"
+      "review_sha256": "f530a947b41df187280263d6ad3377b8245ea46b2a31b02ebebcdfbef92cdca5"
     },
     {
       "path": "src/respectedbrain/__init__.py",
@@ -2270,12 +2270,12 @@
     {
       "path": "tests/package_contract_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Paket kaynaklarının checkout olmadan erişilmesini, dev bağımlılıklarının build-system gereksinimlerini (setuptools>=69, wheel) eksiksiz karşıladığını, import yan etkisizliğini, resource path escape reddini ve temporary materialization'ı sınar. Odak örnekleri: `test_dev_dependencies_satisfy_build_system_requirements`, `test_resources_and_import_are_independent_of_checkout`, `test_resource_names_cannot_escape_package`, `test_materialized_template_is_temporary_and_complete`. Resource geçici tahsisinin gerçek directory junction/symlink altında kanonik ve safe_path uyumlu olduğunu doğrular; owned_temp_alias fixture helper'ını paylaşır. Başarısız wheel/venv/import/CLI subprocess adımında yalnız sabit whitelist stage etiketini CI annotation'ına taşır; tam exception/çıktı normal assert logunda kalır. Gerçek başarısız subprocess regresyonu özel mesajın bildirime sızmadığını doğrular. Kurulu paket ve CLI sürüm çıktısı 0.1.0 olarak doğrulanır.",
+      "purpose": "Paket kaynaklarının checkout olmadan erişilmesini, dev bağımlılıklarının build-system gereksinimlerini (setuptools>=69, wheel) eksiksiz karşıladığını, import yan etkisizliğini, resource path escape reddini ve temporary materialization'ı sınar. Odak örnekleri: `test_dev_dependencies_satisfy_build_system_requirements`, `test_resources_and_import_are_independent_of_checkout`, `test_resource_names_cannot_escape_package`, `test_materialized_template_is_temporary_and_complete`. Resource geçici tahsisinin gerçek directory junction/symlink altında kanonik ve safe_path uyumlu olduğunu doğrular; owned_temp_alias fixture helper'ını paylaşır. Başarısız wheel/venv/import/CLI subprocess adımında yalnız sabit whitelist stage etiketini CI annotation'ına taşır; tam exception/çıktı normal assert logunda kalır. Gerçek başarısız subprocess regresyonu özel mesajın bildirime sızmadığını doğrular. Kurulu paket ve CLI sürüm çıktısı pyproject.toml sürümünün PEP 440 biçimiyle (EXPECTED_VERSION) karşılaştırılır.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.core.resources`."
       ],
-      "review_sha256": "efd77addf3733a8092070d2e63ac16384ba5c87e0334528a1137659d646cc6ec"
+      "review_sha256": "da9aefe75daf206e3c1e09e553a5889fbca7a28d77b05d909c1a0d900ea915d4"
     },
     {
       "path": "tests/profile_render_test.py",
@@ -2367,11 +2367,11 @@
     {
       "path": "tests/run_all.py",
       "role": "Test altyapısı veya native kabul girişi",
-      "purpose": "Native dağıtım doğrulamasını, Python/PowerShell/Bash testlerini ve host kanıtını birleştirir; --python-only yalnız Python keşfini çalıştırır, tam unittest çıktısını korur ve CI hatasında yalnız doğrulanmış public test kimliklerini annotasyona taşır. Başarısız kimlikler GitHub step annotation sınırına takılmamak için tek güvenli bildirime toplanır; ham hata/subtest metni annotation içine alınmaz. Python 3.10 unittest module.Class başlığını güvenli public method kimliğiyle tamamlar; yeni module.Class.method biçimini ve tekrarsız listeyi korur.",
+      "purpose": "Native dağıtım doğrulamasını, Python/PowerShell/Bash testlerini ve host kanıtını birleştirir; --python-only yalnız Python keşfini çalıştırır, tam unittest çıktısını korur ve CI hatasında yalnız doğrulanmış public test kimliklerini annotasyona taşır. Başarısız kimlikler GitHub step annotation sınırına takılmamak için tek güvenli bildirime toplanır; ham hata/subtest metni annotation içine alınmaz. Python 3.10 unittest module.Class başlığını güvenli public method kimliğiyle tamamlar; yeni module.Class.method biçimini ve tekrarsız listeyi korur. Bash kapısı yalnızca hooks_test.sh'i çalıştırır (upstream senkron aracı 2026-10-21'de kaldırıldı).",
       "relationships": [
         "CI/release --python-only yolunu native doğrulama sonrası çağırır; varsayılan tam orkestrasyon native gate'ini korur. scenario_matrix_test gerçek başarısız discovery, traceback koruma ve test kimliği filtresini sınar."
       ],
-      "review_sha256": "7a780e96026092723cfb7c8c363c8a0539f05a05905ef9bfc410d544e5cf44ad"
+      "review_sha256": "9364511621549763fb8ddc6d76aace152ddd097d1daa15c88462f5f19b59aa36"
     },
     {
       "path": "tests/runtime_layout_test.py",
@@ -2736,23 +2736,14 @@
       "review_sha256": "628adf0e76ed92ecf7dc061f55335f9cfacfbd370c930185a5e0fb0388557a31"
     },
     {
-      "path": "tests/upstream_sync_test.sh",
-      "role": "Test altyapısı veya native kabul girişi",
-      "purpose": "Yerel bare remote'lar ile upstream check/merge, kirli checkout reddi, invalid mode ve backup branch davranışlarını gerçek Git üzerinden sınar.",
-      "relationships": [
-        "tools/upstream_sync.sh internet/prod remote olmadan çalıştırılır; Bash kapısıdır."
-      ],
-      "review_sha256": "4c9cab3c0ec0e8c77d8d3c12c9e36a93e012fa7b60916af52403b5377346aa35"
-    },
-    {
       "path": "tests/vault_hygiene_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "SSRF host/port/scheme, HTML cleanup/redirect, wiki lint/tiling, native kaynak-skill-template ve fail-closed fetch hijyenini sınar. Odak örnekleri: `test_safe_public_urls`, `test_blocks_localhost_and_loopback`, `test_blocks_private_subnets`. Paket `__version__` değeri pyproject.toml sürümüyle karşılaştırılır.",
+      "purpose": "SSRF host/port/scheme, HTML cleanup/redirect, wiki lint/tiling, native kaynak-skill-template ve fail-closed fetch hijyenini sınar. Odak örnekleri: `test_safe_public_urls`, `test_blocks_localhost_and_loopback`, `test_blocks_private_subnets`. Paket `__version__` değeri pyproject.toml sürümünün PEP 440 biçimiyle karşılaştırılır.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.maintenance.ingestion.url_safety`, `respectedbrain.maintenance.ingestion.defuddle`, `respectedbrain.maintenance.vault_linter`, `respectedbrain.maintenance.tiling_check`, `respectedbrain`, `respectedbrain.core.resources`, `respectedbrain.integrations.scheduling.service`, `respectedbrain.maintenance.ingestion`."
       ],
-      "review_sha256": "103c461eb4b4326c7173a32f86bcecafe059e69ea9703234d71969ab0fb676d1"
+      "review_sha256": "2924b3d64e6c4f15a02eb1043ff890b9fa86a12b61e93478a69d4cc14600ca36"
     },
     {
       "path": "tests/vault_registry_test.py",
@@ -2829,15 +2820,6 @@
         "repository_inventory.json anlamsal kaynak, REPOSITORY_MAP.md çıktıdır; test/CI drift kapıları korunur. Yeni sibling ürünler bağımsız kopyalarını kullanır; .local/build/dependency dışarıda kalır."
       ],
       "review_sha256": "e65607a6639b5c66c84d79882e0cc7880536723a6b9eaee4dbd0e8937220074c"
-    },
-    {
-      "path": "tools/upstream_sync.sh",
-      "role": "Depo sözleşmesi",
-      "purpose": "Upstream remote'u fetch eder; check salt okunur fark gösterir, merge yalnız temiz ağaçta geri dönüş dalı kurup commitsiz birleştirme başlatır.",
-      "relationships": [
-        "tests/upstream_sync_test.sh yerel bare Git fixture'larıyla kirli ağaç ve hata davranışlarını korur; ürün runtime'ı değildir."
-      ],
-      "review_sha256": "e37048c1f16e4a6a41f0bba666ac4177e47ef9d03282ed4f5c3d5a36fab88d47"
     },
     {
       "path": "tools/verify_distribution.py",

@@ -226,7 +226,7 @@ class TestManifestAndTemplates(unittest.TestCase):
         from respectedbrain import __version__
         from respectedbrain.core.resources import ResourceCatalog
         import importlib
-        self.assertRegex(__version__, r"^\d+\.\d+\.\d+(?:[.+-].*)?$")
+        self.assertRegex(__version__, r"^\d+\.\d+\.\d+(?:(?:a|b|rc)\d+|[.+-].*)?$")  # PEP 440 pre-releases: 0.1.0b1
         for name in ("maintenance.ingestion.url_safety", "maintenance.ingestion.defuddle", "maintenance.vault_linter", "maintenance.tiling_check", "memory.graph.graph_analysis", "memory.graph.graphrag", "memory.session_brain", "memory.session_viz"):
             module = importlib.import_module("respectedbrain." + name)
             self.assertTrue(Path(module.__file__).is_relative_to(ROOT / "src/respectedbrain"))
@@ -266,7 +266,8 @@ class TestManifestAndTemplates(unittest.TestCase):
 
         # Sürüm dosyası
         from respectedbrain import __version__
-        self.assertEqual(__version__, tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"])
+        from packaging.version import Version
+        self.assertEqual(__version__, str(Version(tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"])))
         self.assertFalse((ROOT / "src/respectedbrain/resources/vault-template" / ".respectedbrain-version").exists())
         self.assertFalse((ROOT / "src/respectedbrain/resources/vault-template" / ".beyin-version").exists())
         self.assertFalse((ROOT / "src/respectedbrain/resources/vault-template" / ".beyin-multi-version").exists())

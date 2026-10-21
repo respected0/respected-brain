@@ -15,6 +15,10 @@ from unittest import mock
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
+# pyproject keeps the SemVer spelling (0.1.0-beta.1); Python metadata reports its PEP 440 form (0.1.0b1)
+import tomllib
+from packaging.version import Version
+EXPECTED_VERSION = str(Version(tomllib.loads((ROOT / 'pyproject.toml').read_text(encoding='utf-8'))['project']['version']))
 
 
 def run_package_step(stage, command, **kwargs):
@@ -117,23 +121,23 @@ sys.addaudithook(audit)
 import respectedbrain
 from respectedbrain.core.resources import ResourceCatalog
 catalog = ResourceCatalog()
-assert respectedbrain.__version__ == '0.1.0'
+assert respectedbrain.__version__ == sys.argv[2]
 assert '🔮 850-Companion/Core.md' in catalog.iter_files('vault-template')
 assert 'SKILL.md' in catalog.iter_files('skills/beyin-doktor')
 assert json.loads(catalog.read_text('defaults.json'))['summary_provider'] == 'auto'
 print(respectedbrain.__version__)
 '''
-            checked = run_package_step('import-resources', [str(python), '-c', probe, str(config)], cwd=home, env=env,
+            checked = run_package_step('import-resources', [str(python), '-c', probe, str(config), EXPECTED_VERSION], cwd=home, env=env,
                                      capture_output=True, text=True, encoding='utf-8')
             self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
-            self.assertEqual(checked.stdout.strip(), '0.1.0')
+            self.assertEqual(checked.stdout.strip(), EXPECTED_VERSION)
             self.assertEqual(config.read_text(encoding='utf-8'), '{"sentinel": true}')
             module = run_package_step('module-cli', [str(python), '-m', 'respectedbrain', '--version'], cwd=home, env=env,
                                     capture_output=True, text=True, encoding='utf-8')
             launcher = isolated / ('Scripts/respectedbrain.exe' if os.name == 'nt' else 'bin/respectedbrain')
             entry = run_package_step('console-cli', [str(launcher), '--version'], cwd=home, env=env,
                                    capture_output=True, text=True, encoding='utf-8')
-            self.assertEqual((module.returncode, module.stdout), (0, '0.1.0\n'))
+            self.assertEqual((module.returncode, module.stdout), (0, EXPECTED_VERSION + '\n'))
             self.assertEqual((entry.returncode, entry.stdout), (module.returncode, module.stdout))
 
     def test_materialized_resource_canonicalizes_its_owned_temp_allocation(self):

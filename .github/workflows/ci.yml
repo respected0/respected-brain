@@ -100,10 +100,8 @@ jobs:
           tar -xzf native-payload.tar.gz -C dist
       - name: Run Python unit and integration tests
         run: python tests/run_all.py --python-only
-      - name: Shell package hooks and repository sync
+      - name: Shell package hooks
         shell: bash
-        run: |
-          bash tests/hooks_test.sh
-          bash tests/upstream_sync_test.sh
+        run: bash tests/hooks_test.sh
       - name: Verify diff whitespace
         run: git diff --check

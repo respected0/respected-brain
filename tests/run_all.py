@@ -176,10 +176,6 @@ def main(argv=None) -> int:
         cmd = [bash, "tests/hooks_test.sh"]
         ok, elapsed, _ = run_command("Bash Hooks Test Paketi", cmd)
         results.append(("Bash hooks_test.sh", "Shell Hooks & Lifecycle", ok, elapsed))
-
-        cmd = [bash, "tests/upstream_sync_test.sh"]
-        ok, elapsed, _ = run_command("Bash Upstream Sync Test Paketi", cmd)
-        results.append(("Bash upstream_sync_test.sh", "Git Sync Sözleşmesi", ok, elapsed))
     else:
         print("\n>> BİLGİ: Bash bulunamadı (Windows saf ortam), .sh testleri atlandı.")
 
