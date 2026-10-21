@@ -65,6 +65,14 @@ class MemoryOpTest(unittest.TestCase):
         self.assertTrue(response["ok"], response)
         return response["result"]
 
+    def test_rpp_responses_never_carry_the_token_hash(self):
+        granted = self.call("memory.grant", {"label": "orchestrator"}, operation_id="op-grant-0001")
+        revoked = self.call("memory.revoke", {"grant_id": granted["result"]["grant_id"]}, operation_id="op-revoke-0001")
+        for response in (granted, revoked):
+            self.assertTrue(response["ok"], response)
+            self.assertNotIn("token_sha256", json.dumps(response))
+        self.assertNotIn(granted["result"]["token"], json.dumps(revoked))
+
     def test_manifest_hides_memory_recall_from_v10(self):
         old = self.call("manifest", version="1.0")["result"]
         self.assertNotIn("memory_recall", old["capabilities"])
