@@ -1,27 +1,23 @@
 """What the frozen build and the installable package must contain (provenance module, tkinter runtime, clean UTF-8 sources)."""
 from __future__ import annotations
 
-import importlib.util
 from pathlib import Path
 import sys
 import tempfile
 import unittest
 from unittest import mock
 
+from tests.support.builder import build_dist
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
-# packaging/ is not a package (it would shadow pip's `packaging`), so the build script is loaded by path
-_spec = importlib.util.spec_from_file_location("build_dist", REPO_ROOT / "packaging/build_dist.py")
-builder = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(builder)
-build = builder.build
 
 
 class FrozenGuiPackagingTest(unittest.TestCase):
     def test_a_stale_installed_package_stops_the_build_before_freezing(self) -> None:
         # the frozen exe would carry the installed metadata's version, not the checkout's (seen once: 0.0.1 for 0.1.0)
-        with mock.patch.object(builder, "version", return_value="0.0.1"), mock.patch("subprocess.run") as run:
+        with mock.patch.object(build_dist, "version", return_value="0.0.1"), mock.patch("subprocess.run") as run:
             with self.assertRaisesRegex(RuntimeError, "not this checkout"):
-                builder.build(platform="windows" if sys.platform == "win32" else "linux", output=Path(tempfile.gettempdir()))
+                build_dist.build(platform="windows" if sys.platform == "win32" else "linux", output=Path(tempfile.gettempdir()))
         run.assert_not_called()
 
     def test_pyinstaller_collects_tkinter_runtime(self) -> None:
@@ -30,7 +26,7 @@ class FrozenGuiPackagingTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as output, mock.patch('subprocess.run', side_effect=BuildStopped()) as run:
             with self.assertRaises(BuildStopped):
-                build(platform='windows' if sys.platform == 'win32' else 'linux', output=Path(output))
+                build_dist.build(platform='windows' if sys.platform == 'win32' else 'linux', output=Path(output))
 
         command = run.call_args.args[0]
         self.assertIn('--collect-all', command)

@@ -1,6 +1,5 @@
 """WAL metadata contracts; actual POSIX execution and symlink checks skip on Windows."""
 from contextlib import contextmanager
-import importlib
 import json
 import os
 from pathlib import Path
@@ -11,6 +10,7 @@ import tempfile
 import unittest
 from respectedbrain.core.errors import OwnershipConflict
 from respectedbrain.installation.transaction import Transaction, recover_transactions
+from tests.support.builder import build_dist
 
 class Backend:
     @contextmanager
@@ -33,7 +33,7 @@ class FoundationPosixDistributionTest(unittest.TestCase):
         (source / "app/Python").write_bytes(b"python shared library")
         (source / "app/respectedbrain/resources/instructions.md").write_bytes(b"instructions")
         bundle = self.root / "RespectedBrain.app"
-        function = getattr(importlib.import_module("tools.build_dist"), "assemble_macos_bundle", None)
+        function = getattr(build_dist, "assemble_macos_bundle", None)
         self.assertTrue(callable(function), "macOS bundle assembler is missing")
         function(source, bundle)
         self.assertEqual((bundle / "Contents/MacOS/respectedbrain").read_bytes(), b"launcher")
@@ -50,7 +50,7 @@ class FoundationPosixDistributionTest(unittest.TestCase):
         bundle = self.root / "RespectedBrain.app"
         bundle.mkdir()
         (bundle / "obsolete").write_bytes(b"old package")
-        function = getattr(importlib.import_module("tools.build_dist"), "assemble_macos_bundle", None)
+        function = getattr(build_dist, "assemble_macos_bundle", None)
         self.assertTrue(callable(function), "macOS bundle assembler is missing")
         function(source, bundle)
         self.assertFalse((bundle / "obsolete").exists())
@@ -124,7 +124,7 @@ class FoundationPosixDistributionTest(unittest.TestCase):
             self.assertEqual(self.mode(target), 0o755)
         self.assertEqual(self.mode(target), 0o640)
     def normalizer(self):
-        function = getattr(importlib.import_module("tools.build_dist"), "dereference_distribution_links", None)
+        function = getattr(build_dist, "dereference_distribution_links", None)
         self.assertTrue(callable(function), "Safe frozen-distribution link normalization is missing")
         return function
     def test_regular_distribution_normalization_is_idempotent(self):
@@ -187,7 +187,7 @@ class SimulatedLinkNormalizationTest(unittest.TestCase):
         def resolve(path, strict=False):
             return original_resolve(links.get(path, path), strict=strict)
         with patch.object(Path, "is_symlink", lambda path: path in links), patch.object(Path, "resolve", resolve):
-            importlib.import_module("tools.build_dist").dereference_distribution_links(self.app)
+            build_dist.dereference_distribution_links(self.app)
     def test_virtual_internal_links_materialize_verified_regular_bytes(self):
         library = self.app / "library"
         library.write_bytes(b"verified library")
