@@ -11,9 +11,9 @@ import unittest
 from unittest.mock import patch
 from uuid import uuid4
 
-from respectedbrain import rpp_memory, rpp_memory_index as idx
+from respectedbrain.rpp import memory as rpp_memory, memory_index as idx
 from respectedbrain.core.config import ConfigStore
-from respectedbrain.rpp_integrations import _context
+from respectedbrain.rpp.integrations import _context
 from respectedbrain.search.engine import SearchEngine
 
 

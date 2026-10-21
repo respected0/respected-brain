@@ -29,6 +29,7 @@ DataRoot'ta `config.json`, `install-manifest.json`, log/işlem yedekleri ve `vau
 | `search/` | SQLite FTS5/BM25 tam metin arama ve indeks |
 | `integrations/` | Provider hook/adaptörleri, MCP, global bağlantı, scheduler ve backend |
 | `installation/` | Setup, update, repair, uninstall, hash sahipliği, WAL/recovery |
+| `rpp/` | Hub ve Orchestrator ile konuşulan RPP sunucusu: `server` istekleri dağıtır; lifecycle, integrations ve memory.* işlemleri |
 | `maintenance/` | Not bakım/onarım, ingestion, Restic ve Git snapshot yardımcıları |
 | `resources/` | Immutable defaults, instructions, skills, provider şablonları, vault-template |
 

@@ -12,7 +12,7 @@ import types
 import unittest
 from unittest.mock import patch
 
-from respectedbrain import rpp, rpp_lifecycle
+from respectedbrain.rpp import server as rpp, lifecycle as rpp_lifecycle
 
 
 ACTIONS = ("install", "update", "repair", "uninstall")

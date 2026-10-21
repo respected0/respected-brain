@@ -6,10 +6,10 @@ import re
 from pathlib import Path
 from typing import Any
 
-from .rpp_integrations import _context
-from .rpp_memory import MemoryOpError, _active_vault_id, _bad
-from .search import semantic
-from .search.engine import IndexUnavailable, SearchEngine
+from .integrations import _context
+from .memory import MemoryOpError, _active_vault_id, _bad
+from ..search import semantic
+from ..search.engine import IndexUnavailable, SearchEngine
 
 _MODEL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:/-]{0,79}$")
 

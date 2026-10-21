@@ -12,8 +12,8 @@ import json
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .core.config import ConfigStore, atomic_write_json
-from .core.errors import FoundationError, SelectionError
+from ..core.config import ConfigStore, atomic_write_json
+from ..core.errors import FoundationError, SelectionError
 
 ACTIONS = ("install", "update", "repair", "uninstall")
 OPS = ("lifecycle.plan", "lifecycle.apply", "lifecycle.status",
@@ -74,7 +74,7 @@ def inspect(data_root):
     installed = (data_root / "install-manifest.json").is_file() or _has_vault(data_root)
     app = None
     try:
-        from .bootstrap import application_roots
+        from ..bootstrap import application_roots
         app = str(application_roots().app_root)
     except Exception:
         app = None
@@ -133,10 +133,10 @@ def create_vault(data_root, target):
     refused so user notes are never overwritten.
     """
     from datetime import date
-    from .core.resources import ResourceCatalog
-    from .installation.transaction import Transaction
-    from .integrations.backend import NativeBackend
-    from .vault.registry import VaultRegistry
+    from ..core.resources import ResourceCatalog
+    from ..installation.transaction import Transaction
+    from ..integrations.backend import NativeBackend
+    from ..vault.registry import VaultRegistry
     raw = target.get("vault_path")
     if not isinstance(raw, str) or not raw or not Path(raw).is_absolute():
         raise LifecycleError("BAD_REQUEST", "target.vault_path must be an absolute path.",
@@ -176,10 +176,10 @@ def create_vault(data_root, target):
 
 def _context(data_root):
     """A context for the installation at ``data_root`` using the product's own roots."""
-    from .core.context import AppContext
-    from .core.paths import AppPaths
-    from .core.resources import ResourceCatalog
-    from .bootstrap import application_roots
+    from ..core.context import AppContext
+    from ..core.paths import AppPaths
+    from ..core.resources import ResourceCatalog
+    from ..bootstrap import application_roots
     roots = application_roots()
     document = ConfigStore(data_root).read()
     identity = document.get("active_vault_id")
@@ -192,17 +192,17 @@ def _context(data_root):
 
 
 def _backend(data_root):
-    from .integrations.backend import NativeBackend
+    from ..integrations.backend import NativeBackend
     return NativeBackend(data_root)
 
 
 def _delegate(action, ctx, backend):
     """Run one action through the real installation engine."""
     if action == "repair":
-        from .installation.repair import repair
+        from ..installation.repair import repair
         return repair(ctx, backend=backend)
     if action == "uninstall":
-        from .installation.uninstall import uninstall
+        from ..installation.uninstall import uninstall
         return uninstall(ctx, backend=backend, purge_data=False)
     # install and update both need a verified package. RPP deliberately accepts no
     # arbitrary path, so the caller must supply it through the product's own channels.

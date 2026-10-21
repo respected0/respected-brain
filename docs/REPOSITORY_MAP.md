@@ -2,7 +2,7 @@
 
 > Bu belge `tools/repository_map.py` tarafından `docs/repository_inventory.json` içindeki gözden geçirilmiş açıklamalardan üretilir. Doğrudan bu Markdown dosyasını düzenlemeyin.
 
-**Kapsam:** 304 proje dosyası. Git indeksindeki dosyalar ve henüz eklenmemiş, ignore edilmeyen proje dosyaları dahildir. Bağımlılık/üretim önbellekleri ayrı kategoriler olarak açıklanır.
+**Kapsam:** 305 proje dosyası. Git indeksindeki dosyalar ve henüz eklenmemiş, ignore edilmeyen proje dosyaları dahildir. Bağımlılık/üretim önbellekleri ayrı kategoriler olarak açıklanır.
 
 ## Nasıl okunur ve nereden başlanır
 
@@ -368,16 +368,18 @@ secondbrain/
 │       │       │   └── .gitkeep
 │       │       └── 🧠 500-Knowledge/
 │       │           └── .gitkeep
-│       ├── rpp.py
-│       ├── rpp_integrations.py
-│       ├── rpp_lifecycle.py
-│       ├── rpp_memory.py
-│       ├── rpp_memory_capture.py
-│       ├── rpp_memory_grants.py
-│       ├── rpp_memory_index.py
-│       ├── rpp_memory_semantic.py
-│       ├── rpp_memory_workspace.py
-│       ├── rpp_memory_write.py
+│       ├── rpp/
+│       │   ├── __init__.py
+│       │   ├── integrations.py
+│       │   ├── lifecycle.py
+│       │   ├── memory.py
+│       │   ├── memory_capture.py
+│       │   ├── memory_grants.py
+│       │   ├── memory_index.py
+│       │   ├── memory_semantic.py
+│       │   ├── memory_workspace.py
+│       │   ├── memory_write.py
+│       │   └── server.py
 │       ├── search/
 │       │   ├── __init__.py
 │       │   ├── engine.py
@@ -657,7 +659,7 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **Amaç / sorumluluk:** MCP ile not yazmanın kullanıcı iznine (mcp_write) bağlanması ve tek bir gelen kutusuna yönlendirilmesi, oturum dökümünün varsayılan olarak kopyalanmaması (opt-in, maskelenmiş, kasa dışında, saklama süreli), gizli bilgi maskeleme, istemci yapılandırmalarında yalnızca kendi girdilerimizi geri alma (delta) ve tam dosya kopyası tutmama, ayrıca restic geri yükleme kararını ve sınırlarını kaydeder.
 
-**İlişkiler ve sınır:** integrations/delta.py, memory/redact.py, integrations/mcp/server.py, rpp_memory_write.py ve maintenance/backup/backup_restic.py ile birlikte okunur.
+**İlişkiler ve sınır:** integrations/delta.py, memory/redact.py, integrations/mcp/server.py, rpp/memory_write.py ve maintenance/backup/backup_restic.py ile birlikte okunur.
 
 #### [`docs/decisions/PRODUCT_EXTRACTION.md`](../docs/decisions/PRODUCT_EXTRACTION.md)
 
@@ -689,7 +691,7 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **Amaç / sorumluluk:** SecondBrain'in RPP v1.0/v1.1 çalışma sözleşmesi: manifest, health, ayar şeması/doğrulama/uygulama/geri okuma ve v1.1 yaşam döngüsü işlemleri.
 
-**İlişkiler ve sınır:** rpp.py ve rpp_lifecycle.py uygular; tools/rpp_conformance.py iki üründe doğrular.
+**İlişkiler ve sınır:** rpp/server.py ve rpp/lifecycle.py uygular; tools/rpp_conformance.py iki üründe doğrular.
 
 #### [`docs/decisions/SECURITY_HARDENING.md`](../docs/decisions/SECURITY_HARDENING.md)
 
@@ -2109,87 +2111,95 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **İlişkiler ve sınır:** Git boş klasör saklamadığı için bu küçük placeholder gereklidir; pyproject package-data içinde açıkça bulunur ve setup yalnız yeni kasa genesis'inde kopyalar. Çalışan kod veya kullanıcı içeriği değildir.
 
-### src/respectedbrain
+### src/respectedbrain/rpp
 
-#### [`src/respectedbrain/rpp.py`](../src/respectedbrain/rpp.py)
+#### [`src/respectedbrain/rpp/__init__.py`](../src/respectedbrain/rpp/__init__.py)
 
-**Rol:** RPP sunucusu.
+**Rol:** Protokol paketi.
 
-**Amaç / sorumluluk:** SecondBrain'in RPP v1.0/v1.1 sunucusu: manifest/health/settings.* ve v1.1 işlemleri (lifecycle.*, integrations.plan, memory.grant/revoke/recall/write/index/semantic/capture). Tek JSON isteği alır, tek JSON yanıt döndürür; hiçbir işlem çağıran tarafından yol, vault veya kimlik kabul etmez. memory.search, memory.note.read, memory.capture.note ve memory.briefing.run işlemleri ile memory_workspace kapasitesi eklendi. mcp_write, archive_transcripts ve transcript_retention_days ayarları eklendi.
+**Amaç / sorumluluk:** RPP (Respected Product Protocol) sunucu paketi: Hub ve Orchestrator'ın SecondBrain ile konuştuğu JSON protokolü. server.py istekleri dağıtır; integrations, lifecycle ve memory_* modülleri işlem ailelerini uygular. 2026-10-21'de kökteki rpp_*.py dosyalarından toplandı.
 
-**İlişkiler ve sınır:** Hub rpp.rs allow-list'iyle çağırır; Orchestrator memory.recall/write için kullanır. Kapasiteler CAPABILITY_DETAILS ile 1.0 manifestinden gizlenir; testleri tests/test_rpp*.py.
+**İlişkiler ve sınır:** cli.py `rpp` komutu rpp.server.main'i çalıştırır; integrations/mcp/server.py rpp.memory_write'ı kullanır; Hub src-tauri/src/rpp.rs istemci tarafıdır.
 
-#### [`src/respectedbrain/rpp_integrations.py`](../src/respectedbrain/rpp_integrations.py)
+#### [`src/respectedbrain/rpp/integrations.py`](../src/respectedbrain/rpp/integrations.py)
 
 **Rol:** RPP işlemi.
 
-**Amaç / sorumluluk:** integrations.plan: istenen AI istemci entegrasyonlarının (global kural/hook, MCP, zamanlama, kısayol) hangi dosyaları tam olarak değiştireceğini, hangi istemcilerin bulunduğunu ve hangi kayıtların eski haline döneceğini YAZMADAN hesaplar. İstemci başına seçim (clients/mcp_clients) ve geri yükleme önizlemesi içerir. Önizleme geri alma satırları da girdi düzeyindeki geri almayı kullanır. Önizleme geri alma satırları delta tabanlı sahiplik kaydını kullanır.
+**Amaç / sorumluluk:** integrations.plan: istenen AI istemci entegrasyonlarının (global kural/hook, MCP, zamanlama, kısayol) hangi dosyaları tam olarak değiştireceğini, hangi istemcilerin bulunduğunu ve hangi kayıtların eski haline döneceğini YAZMADAN hesaplar. İstemci başına seçim (clients/mcp_clients) ve geri yükleme önizlemesi içerir. Önizleme geri alma satırları da girdi düzeyindeki geri almayı kullanır. Önizleme geri alma satırları delta tabanlı sahiplik kaydını kullanır. (2026-10-21: `src/respectedbrain/rpp/integrations.py` yolundan taşındı.)
 
 **İlişkiler ve sınır:** Uygulama yine kurucudur (setup/update/repair); plan aynı rendering.plan_integrations ve ownership manifest'ini kullanır. Hub sihirbazı önizlemeyi gösterir; testleri tests/test_rpp_integrations.py.
 
-#### [`src/respectedbrain/rpp_lifecycle.py`](../src/respectedbrain/rpp_lifecycle.py)
+#### [`src/respectedbrain/rpp/lifecycle.py`](../src/respectedbrain/rpp/lifecycle.py)
 
 **Rol:** RPP işlemi.
 
-**Amaç / sorumluluk:** lifecycle.plan/apply/status/rollback ve operation.receipt: kurulum motorunu (Transaction, ownership manifest) RPP üzerinden sunar; ilk kasa kurulumu (create_vault) AI istemci yapılandırmasına yazmadan şablonu açar. Kurulum durumunu sahiplik manifestinden raporlar.
+**Amaç / sorumluluk:** lifecycle.plan/apply/status/rollback ve operation.receipt: kurulum motorunu (Transaction, ownership manifest) RPP üzerinden sunar; ilk kasa kurulumu (create_vault) AI istemci yapılandırmasına yazmadan şablonu açar. Kurulum durumunu sahiplik manifestinden raporlar. (2026-10-21: `src/respectedbrain/rpp/lifecycle.py` yolundan taşındı.)
 
 **İlişkiler ve sınır:** Hub brain.rs ve lifecycle köprüsü kullanır; installation/* motorunu çağırır, yeni yaşam döngüsü kodu yazmaz. Testleri tests/test_rpp_lifecycle.py, tests/test_rpp_vault.py.
 
-#### [`src/respectedbrain/rpp_memory.py`](../src/respectedbrain/rpp_memory.py)
+#### [`src/respectedbrain/rpp/memory.py`](../src/respectedbrain/rpp/memory.py)
 
 **Rol:** RPP işlemi.
 
-**Amaç / sorumluluk:** memory.grant/revoke/recall: kullanıcı onaylı gizli jeton (yalnız SHA-256 saklanır) ile sınırlı, salt okunur, kısa snippet'li hafıza erişimi. Recall dizinde yalnız dosyanın güncel sha256'sı indekslenenle aynıysa sonuç döndürür; mode (auto/fts/semantic/hybrid) ile anlamsal arama birleştirilir. Sorgu hattı run_query olarak ayrıldı; jetonlu recall ve kullanıcının kendi aramaları aynı doğrulamalı hattı kullanır.
+**Amaç / sorumluluk:** memory.grant/revoke/recall: kullanıcı onaylı gizli jeton (yalnız SHA-256 saklanır) ile sınırlı, salt okunur, kısa snippet'li hafıza erişimi. Recall dizinde yalnız dosyanın güncel sha256'sı indekslenenle aynıysa sonuç döndürür; mode (auto/fts/semantic/hybrid) ile anlamsal arama birleştirilir. Sorgu hattı run_query olarak ayrıldı; jetonlu recall ve kullanıcının kendi aramaları aynı doğrulamalı hattı kullanır. (2026-10-21: `src/respectedbrain/rpp/memory.py` yolundan taşındı.)
 
 **İlişkiler ve sınır:** rpp_memory_grants jeton deposunu, search/engine ve search/semantic dizinleri kullanır; Orchestrator memory.py tüketir. Testleri tests/test_rpp_memory.py, test_rpp_memory_op.py.
 
-#### [`src/respectedbrain/rpp_memory_capture.py`](../src/respectedbrain/rpp_memory_capture.py)
+#### [`src/respectedbrain/rpp/memory_capture.py`](../src/respectedbrain/rpp/memory_capture.py)
 
 **Rol:** RPP işlemi.
 
-**Amaç / sorumluluk:** memory.capture.run: capture_mode=manual iken bekleyen AI oturumlarını (hook yükleri) ve Codex/Antigravity transkriptlerini kullanıcı isteğiyle hafızaya özetler, değişen günleri derler.
+**Amaç / sorumluluk:** memory.capture.run: capture_mode=manual iken bekleyen AI oturumlarını (hook yükleri) ve Codex/Antigravity transkriptlerini kullanıcı isteğiyle hafızaya özetler, değişen günleri derler. (2026-10-21: `src/respectedbrain/rpp/memory_capture.py` yolundan taşındı.)
 
 **İlişkiler ve sınır:** memory.lifecycle manuel modda oturumu pending-capture-*.json olarak saklar; bu işlem memory.flush.flush_transcript ile işler. Hub 'Bekleyen oturumları şimdi yakala' düğmesi çağırır; testi tests/test_index_freshness.py.
 
-#### [`src/respectedbrain/rpp_memory_grants.py`](../src/respectedbrain/rpp_memory_grants.py)
+#### [`src/respectedbrain/rpp/memory_grants.py`](../src/respectedbrain/rpp/memory_grants.py)
 
 **Rol:** RPP işlemi.
 
-**Amaç / sorumluluk:** Hafıza erişim izinleri: jeton oluşturma (yalnız hash saklanır), iptal, doğrulama; her izin bir kasaya bağlıdır ve isteğe bağlı write bayrağı taşır (yazma ayrı izindir).
+**Amaç / sorumluluk:** Hafıza erişim izinleri: jeton oluşturma (yalnız hash saklanır), iptal, doğrulama; her izin bir kasaya bağlıdır ve isteğe bağlı write bayrağı taşır (yazma ayrı izindir). (2026-10-21: `src/respectedbrain/rpp/memory_grants.py` yolundan taşındı.)
 
 **İlişkiler ve sınır:** rpp_memory ve rpp_memory_write doğrular; Hub memory_access izni oluşturup Orchestrator ayarına verir. Testleri tests/test_rpp_memory_grants.py.
 
-#### [`src/respectedbrain/rpp_memory_index.py`](../src/respectedbrain/rpp_memory_index.py)
+#### [`src/respectedbrain/rpp/memory_index.py`](../src/respectedbrain/rpp/memory_index.py)
 
 **Rol:** RPP işlemi.
 
-**Amaç / sorumluluk:** memory.index.status/refresh: arama dizininin tazeliğini okur ve onaylı biçimde artımlı yeniler (FTS ve açıksa anlamsal vektörler); operasyon kimliğiyle idempotent.
+**Amaç / sorumluluk:** memory.index.status/refresh: arama dizininin tazeliğini okur ve onaylı biçimde artımlı yeniler (FTS ve açıksa anlamsal vektörler); operasyon kimliğiyle idempotent. (2026-10-21: `src/respectedbrain/rpp/memory_index.py` yolundan taşındı.)
 
 **İlişkiler ve sınır:** search/engine ve search/freshness kullanır; Hub hafıza dizini paneli çağırır. Testleri tests/test_rpp_memory_index*.py.
 
-#### [`src/respectedbrain/rpp_memory_semantic.py`](../src/respectedbrain/rpp_memory_semantic.py)
+#### [`src/respectedbrain/rpp/memory_semantic.py`](../src/respectedbrain/rpp/memory_semantic.py)
 
 **Rol:** RPP işlemi.
 
-**Amaç / sorumluluk:** memory.semantic.status/configure/pull: opsiyonel yerel anlamsal aramanın durumunu okur, açıp kapatır ve (yalnız açık onayla) sabitlenmiş çalışma zamanı ve modeli indirir. Yazdığı tek yapılandırma semantic.json'dur.
+**Amaç / sorumluluk:** memory.semantic.status/configure/pull: opsiyonel yerel anlamsal aramanın durumunu okur, açıp kapatır ve (yalnız açık onayla) sabitlenmiş çalışma zamanı ve modeli indirir. Yazdığı tek yapılandırma semantic.json'dur. (2026-10-21: `src/respectedbrain/rpp/memory_semantic.py` yolundan taşındı.)
 
 **İlişkiler ve sınır:** search/semantic.py'yi çağırır; Hub MemoryIndex paneli kullanır. Testleri tests/test_rpp_memory_semantic.py.
 
-#### [`src/respectedbrain/rpp_memory_workspace.py`](../src/respectedbrain/rpp_memory_workspace.py)
+#### [`src/respectedbrain/rpp/memory_workspace.py`](../src/respectedbrain/rpp/memory_workspace.py)
 
 **Rol:** RPP işlemi.
 
-**Amaç / sorumluluk:** Hub'ın kullanıcıya dönük hafıza işlemleri: memory.search (jetonsuz, recall ile aynı salt okunur ve hash doğrulamalı hat), memory.note.read (yalnız kasa içindeki .md notları, sınırlı), memory.capture.note (Dump gelen kutusuna yeni not, üzerine yazmaz, operasyon kimliğiyle idempotent, yazımdan sonra dizin tazelenir) ve memory.briefing.run (zamanı gelmişse brifing). Yol/kimlik kabul etmez.
+**Amaç / sorumluluk:** Hub'ın kullanıcıya dönük hafıza işlemleri: memory.search (jetonsuz, recall ile aynı salt okunur ve hash doğrulamalı hat), memory.note.read (yalnız kasa içindeki .md notları, sınırlı), memory.capture.note (Dump gelen kutusuna yeni not, üzerine yazmaz, operasyon kimliğiyle idempotent, yazımdan sonra dizin tazelenir) ve memory.briefing.run (zamanı gelmişse brifing). Yol/kimlik kabul etmez. (2026-10-21: `src/respectedbrain/rpp/memory_workspace.py` yolundan taşındı.)
 
 **İlişkiler ve sınır:** Hub brain komutları (webview köprüsü memory.* işlemlerini engeller) çağırır; rpp_memory.run_query, integrations/notes ve search/freshness kullanır. Eski yerel panelin arama/okuma/yakalama işlevlerinin yerine geçer. Testi tests/test_rpp_memory_workspace.py.
 
-#### [`src/respectedbrain/rpp_memory_write.py`](../src/respectedbrain/rpp_memory_write.py)
+#### [`src/respectedbrain/rpp/memory_write.py`](../src/respectedbrain/rpp/memory_write.py)
 
 **Rol:** RPP işlemi.
 
-**Amaç / sorumluluk:** memory.write/revert: write izinli jetonla vault'ta yalnız sabit gelen kutusu klasörüne YENİ not oluşturur (üzerine yazmaz, atomik, idempotent, sahiplik front matter'ı); düzenlenmemiş notu geri alır. Not oluşturma ve geri alma ortak _create/_revert işlevlerine ayrıldı; MCP için write_mcp/revert_mcp (mcp gelen kutusu, sahiplik kaydı) eklendi.
+**Amaç / sorumluluk:** memory.write/revert: write izinli jetonla vault'ta yalnız sabit gelen kutusu klasörüne YENİ not oluşturur (üzerine yazmaz, atomik, idempotent, sahiplik front matter'ı); düzenlenmemiş notu geri alır. Not oluşturma ve geri alma ortak _create/_revert işlevlerine ayrıldı; MCP için write_mcp/revert_mcp (mcp gelen kutusu, sahiplik kaydı) eklendi. (2026-10-21: `src/respectedbrain/rpp/memory_write.py` yolundan taşındı.)
 
 **İlişkiler ve sınır:** rpp_memory_grants doğrular, search/freshness yazımdan sonra dizini tazeler; Orchestrator orchestrator_memory_note aracı çağırır. Testleri tests/test_rpp_memory_write.py.
+
+#### [`src/respectedbrain/rpp/server.py`](../src/respectedbrain/rpp/server.py)
+
+**Rol:** RPP sunucusu.
+
+**Amaç / sorumluluk:** SecondBrain'in RPP v1.0/v1.1 sunucusu: manifest/health/settings.* ve v1.1 işlemleri (lifecycle.*, integrations.plan, memory.grant/revoke/recall/write/index/semantic/capture). Tek JSON isteği alır, tek JSON yanıt döndürür; hiçbir işlem çağıran tarafından yol, vault veya kimlik kabul etmez. memory.search, memory.note.read, memory.capture.note ve memory.briefing.run işlemleri ile memory_workspace kapasitesi eklendi. mcp_write, archive_transcripts ve transcript_retention_days ayarları eklendi. (2026-10-21: `src/respectedbrain/rpp.py` yolundan taşındı.)
+
+**İlişkiler ve sınır:** Hub rpp.rs allow-list'iyle çağırır; Orchestrator memory.recall/write için kullanır. Kapasiteler CAPABILITY_DETAILS ile 1.0 manifestinden gizlenir; testleri tests/test_rpp*.py.
 
 ### src/respectedbrain/search
 
@@ -2215,7 +2225,7 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **Amaç / sorumluluk:** Arama dizinini ürünün kendi süreçlerinde (oturum başı, flush sonu, günlük görev, memory.write sonrası, index-refresh) artımlı tazeleyen en-iyi-çaba yardımcı; Hub veya sürekli çalışan süreç gerektirmez. Anlamsal vektörleri de günceller.
 
-**İlişkiler ve sınır:** cli.py, rpp_memory_index.py ve rpp_memory_write.py çağırır; search/engine ve search/semantic kullanır. Testi tests/test_index_freshness.py.
+**İlişkiler ve sınır:** cli.py, rpp/memory_index.py ve rpp/memory_write.py çağırır; search/engine ve search/semantic kullanır. Testi tests/test_index_freshness.py.
 
 #### [`src/respectedbrain/search/semantic.py`](../src/respectedbrain/search/semantic.py)
 
@@ -2895,7 +2905,7 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **Amaç / sorumluluk:** RPP v1.0/v1.1 sunucu sözleşmesi: manifest, kapasite gizleme, ayar şeması/doğrulama/uygulama/geri okuma, hata tipleri.
 
-**İlişkiler ve sınır:** rpp.py sınanır; tools/rpp_conformance.py canlı karşılığıdır.
+**İlişkiler ve sınır:** rpp/server.py sınanır; tools/rpp_conformance.py canlı karşılığıdır.
 
 #### [`tests/test_rpp_integrations.py`](../tests/test_rpp_integrations.py)
 

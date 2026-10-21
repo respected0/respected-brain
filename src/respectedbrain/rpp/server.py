@@ -15,9 +15,9 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from .core.config import ConfigStore, atomic_write_json, validate_config
-from .core.errors import FoundationError, SelectionError
-from . import rpp_integrations, rpp_lifecycle, rpp_memory, rpp_memory_grants, rpp_memory_capture, rpp_memory_index, rpp_memory_semantic, rpp_memory_workspace, rpp_memory_write
+from ..core.config import ConfigStore, atomic_write_json, validate_config
+from ..core.errors import FoundationError, SelectionError
+from . import integrations, lifecycle, memory, memory_grants, memory_capture, memory_index, memory_semantic, memory_workspace, memory_write
 
 PROTOCOL_MIN = "1.0"
 PROTOCOL_MAX = "1.1"
@@ -117,12 +117,12 @@ def _resolve_data_root(override) -> Path:
         if not path.is_absolute():
             raise SelectionError("RPP data root must be an absolute path")
         return path.resolve()
-    from .bootstrap import application_roots
+    from ..bootstrap import application_roots
     return application_roots().data_root
 
 
 def _op_manifest(version, operation_id, data_root):
-    state = rpp_lifecycle.inspect(data_root)
+    state = lifecycle.inspect(data_root)
     since = {item["id"]: item["since"] for item in CAPABILITY_DETAILS}
     visible = [cap for cap in CAPABILITIES if version != PROTOCOL_MIN or since.get(cap) != "1.1"]
     result = {
@@ -321,28 +321,28 @@ def _op_readback(version, operation_id, data_root):
 
 def _op_lifecycle_plan(version, operation_id, data_root, payload):
     action = payload.get("action")
-    if action not in rpp_lifecycle.ACTIONS:
+    if action not in lifecycle.ACTIONS:
         return _reply(version, False, operation_id, {},
                       _error("BAD_REQUEST", "Unknown lifecycle action.",
-                             "Use one of: " + ", ".join(rpp_lifecycle.ACTIONS) + "."))
-    result = rpp_lifecycle.plan(action, payload.get("target") or {})
+                             "Use one of: " + ", ".join(lifecycle.ACTIONS) + "."))
+    result = lifecycle.plan(action, payload.get("target") or {})
     return _reply(version, True, operation_id, result, None)
 
 
 def _op_lifecycle_apply(version, operation_id, data_root, payload):
     action = payload.get("action")
-    if action not in rpp_lifecycle.ACTIONS:
+    if action not in lifecycle.ACTIONS:
         return _reply(version, False, operation_id, {},
                       _error("BAD_REQUEST", "Unknown lifecycle action.",
-                             "Use one of: " + ", ".join(rpp_lifecycle.ACTIONS) + "."))
+                             "Use one of: " + ", ".join(lifecycle.ACTIONS) + "."))
     if not isinstance(operation_id, str) or not _OPERATION_ID.match(operation_id):
         return _reply(version, False, operation_id, {},
                       _error("BAD_REQUEST",
                              "lifecycle.apply requires an operation_id of 8-64 characters [A-Za-z0-9_-].",
                              "Provide a unique operation_id."))
     try:
-        receipt = rpp_lifecycle.apply(operation_id, action, payload.get("target") or {}, data_root)
-    except rpp_lifecycle.LifecycleError as error:
+        receipt = lifecycle.apply(operation_id, action, payload.get("target") or {}, data_root)
+    except lifecycle.LifecycleError as error:
         return _reply(version, False, operation_id, {}, _error(error.code, error.message, error.hint))
     return _reply(version, True, operation_id, receipt, None)
 
@@ -354,8 +354,8 @@ def _op_lifecycle_status(version, operation_id, data_root, payload):
                       _error("BAD_REQUEST", "An operation_id of 8-64 characters [A-Za-z0-9_-] is required.",
                              "Pass operation_id in the payload."))
     try:
-        receipt = rpp_lifecycle.read_receipt(target, data_root)
-    except rpp_lifecycle.LifecycleError as error:
+        receipt = lifecycle.read_receipt(target, data_root)
+    except lifecycle.LifecycleError as error:
         return _reply(version, False, operation_id, {}, _error(error.code, error.message, error.hint))
     return _reply(version, True, operation_id, receipt, None)
 
@@ -367,8 +367,8 @@ def _op_lifecycle_rollback(version, operation_id, data_root, payload):
                       _error("BAD_REQUEST", "An operation_id of 8-64 characters [A-Za-z0-9_-] is required.",
                              "Pass operation_id in the payload."))
     try:
-        receipt = rpp_lifecycle.rollback(target, data_root)
-    except rpp_lifecycle.LifecycleError as error:
+        receipt = lifecycle.rollback(target, data_root)
+    except lifecycle.LifecycleError as error:
         return _reply(version, False, operation_id, {}, _error(error.code, error.message, error.hint))
     return _reply(version, True, operation_id, receipt, None)
 
@@ -380,16 +380,16 @@ def _op_operation_receipt(version, operation_id, data_root, payload):
                       _error("BAD_REQUEST", "An operation_id of 8-64 characters [A-Za-z0-9_-] is required.",
                              "Pass operation_id in the payload."))
     try:
-        receipt = rpp_lifecycle.read_receipt(target, data_root)
-    except rpp_lifecycle.LifecycleError as error:
+        receipt = lifecycle.read_receipt(target, data_root)
+    except lifecycle.LifecycleError as error:
         return _reply(version, False, operation_id, {}, _error(error.code, error.message, error.hint))
     return _reply(version, True, operation_id, receipt, None)
 
 
 def _op_integrations_plan(version, operation_id, data_root, payload):
     try:
-        result = rpp_integrations.plan(data_root, payload.get("target") or {})
-    except rpp_integrations.PlanError as error:
+        result = integrations.plan(data_root, payload.get("target") or {})
+    except integrations.PlanError as error:
         return _reply(version, False, operation_id, {}, _error(error.code, error.message, error.hint))
     return _reply(version, True, operation_id, result, None)
 
@@ -397,77 +397,77 @@ def _op_integrations_plan(version, operation_id, data_root, payload):
 def _memory_reply(version, operation_id, call):
     try:
         return _reply(version, True, operation_id, call(), None)
-    except (rpp_memory.MemoryOpError, rpp_memory_grants.GrantError) as error:
+    except (memory.MemoryOpError, memory_grants.GrantError) as error:
         return _reply(version, False, operation_id, {}, _error(error.code, error.message, error.hint))
 
 
 def _op_memory_grant(version, operation_id, data_root, payload):
     return _memory_reply(version, operation_id,
-                         lambda: rpp_memory.grant(data_root, operation_id, payload))
+                         lambda: memory.grant(data_root, operation_id, payload))
 
 
 def _op_memory_revoke(version, operation_id, data_root, payload):
-    return _memory_reply(version, operation_id, lambda: rpp_memory.revoke(data_root, payload))
+    return _memory_reply(version, operation_id, lambda: memory.revoke(data_root, payload))
 
 
 def _op_memory_write(version, operation_id, data_root, payload):
-    return _memory_reply(version, operation_id, lambda: rpp_memory_write.write(data_root, operation_id, payload))
+    return _memory_reply(version, operation_id, lambda: memory_write.write(data_root, operation_id, payload))
 
 
 def _op_memory_write_revert(version, operation_id, data_root, payload):
-    return _memory_reply(version, operation_id, lambda: rpp_memory_write.revert(data_root, payload))
+    return _memory_reply(version, operation_id, lambda: memory_write.revert(data_root, payload))
 
 
 def _op_memory_semantic_status(version, operation_id, data_root, payload):
-    return _memory_reply(version, operation_id, lambda: rpp_memory_semantic.status(data_root))
+    return _memory_reply(version, operation_id, lambda: memory_semantic.status(data_root))
 
 
 def _op_memory_semantic_configure(version, operation_id, data_root, payload):
-    return _memory_reply(version, operation_id, lambda: rpp_memory_semantic.configure(data_root, payload))
+    return _memory_reply(version, operation_id, lambda: memory_semantic.configure(data_root, payload))
 
 
 def _op_memory_semantic_pull(version, operation_id, data_root, payload):
-    return _memory_reply(version, operation_id, lambda: rpp_memory_semantic.pull(data_root, payload))
+    return _memory_reply(version, operation_id, lambda: memory_semantic.pull(data_root, payload))
 
 
 def _op_memory_capture_run(version, operation_id, data_root, payload):
-    return _memory_reply(version, operation_id, lambda: rpp_memory_capture.run(data_root, payload))
+    return _memory_reply(version, operation_id, lambda: memory_capture.run(data_root, payload))
 
 
 def _op_memory_search(version, operation_id, data_root, payload):
-    return _memory_reply(version, operation_id, lambda: rpp_memory_workspace.search(data_root, payload))
+    return _memory_reply(version, operation_id, lambda: memory_workspace.search(data_root, payload))
 
 
 def _op_memory_note_read(version, operation_id, data_root, payload):
-    return _memory_reply(version, operation_id, lambda: rpp_memory_workspace.read(data_root, payload))
+    return _memory_reply(version, operation_id, lambda: memory_workspace.read(data_root, payload))
 
 
 def _op_memory_capture_note(version, operation_id, data_root, payload):
-    return _memory_reply(version, operation_id, lambda: rpp_memory_workspace.capture(data_root, operation_id, payload))
+    return _memory_reply(version, operation_id, lambda: memory_workspace.capture(data_root, operation_id, payload))
 
 
 def _op_memory_briefing_run(version, operation_id, data_root, payload):
-    return _memory_reply(version, operation_id, lambda: rpp_memory_workspace.briefing(data_root, payload))
+    return _memory_reply(version, operation_id, lambda: memory_workspace.briefing(data_root, payload))
 
 
 def _op_memory_recall(version, operation_id, data_root, payload):
-    return _memory_reply(version, operation_id, lambda: rpp_memory.recall(data_root, payload))
+    return _memory_reply(version, operation_id, lambda: memory.recall(data_root, payload))
 
 
 def _index_reply(version, operation_id, call):
     try:
         return _reply(version, True, operation_id, call(), None)
-    except rpp_memory_index.MemoryIndexError as error:
+    except memory_index.MemoryIndexError as error:
         return _reply(version, False, operation_id, {}, _error(error.code, error.message, error.hint))
 
 
 def _op_memory_index_status(version, operation_id, data_root, payload):
-    return _index_reply(version, operation_id, lambda: rpp_memory_index.status(data_root))
+    return _index_reply(version, operation_id, lambda: memory_index.status(data_root))
 
 
 def _op_memory_index_refresh(version, operation_id, data_root, payload):
     return _index_reply(version, operation_id,
-                        lambda: rpp_memory_index.refresh(data_root, operation_id, payload))
+                        lambda: memory_index.refresh(data_root, operation_id, payload))
 
 
 _V11_OPS = {

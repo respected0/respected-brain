@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from respectedbrain import rpp
+from respectedbrain.rpp import server as rpp
 
 
 class CreateVaultTest(unittest.TestCase):

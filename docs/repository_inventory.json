@@ -107,7 +107,7 @@
       "relationships": [
         "Belge merkezi docs/README.md; aktif durum docs/PROJECT_STATUS.md. Gerçek dosya/komut davranışı src, packaging, tools ve tests kaynaklarıyla karşılaştırılır."
       ],
-      "review_sha256": "8f721a448917ba2cb900e1d318162fc43cafd5bc4aed9f492cb54b8eb4960ca5"
+      "review_sha256": "bd11f1dc24f6cb304c9aad1511cf2800224dbc93b25c3c8aab9543ffa8fb947e"
     },
     {
       "path": "docs/PROJECT_STATUS.md",
@@ -186,7 +186,7 @@
       "role": "Gizlilik ve istemci yapılandırması kararı",
       "purpose": "MCP ile not yazmanın kullanıcı iznine (mcp_write) bağlanması ve tek bir gelen kutusuna yönlendirilmesi, oturum dökümünün varsayılan olarak kopyalanmaması (opt-in, maskelenmiş, kasa dışında, saklama süreli), gizli bilgi maskeleme, istemci yapılandırmalarında yalnızca kendi girdilerimizi geri alma (delta) ve tam dosya kopyası tutmama, ayrıca restic geri yükleme kararını ve sınırlarını kaydeder.",
       "relationships": [
-        "integrations/delta.py, memory/redact.py, integrations/mcp/server.py, rpp_memory_write.py ve maintenance/backup/backup_restic.py ile birlikte okunur."
+        "integrations/delta.py, memory/redact.py, integrations/mcp/server.py, rpp/memory_write.py ve maintenance/backup/backup_restic.py ile birlikte okunur."
       ],
       "review_sha256": "4fd4ce4c10b08fbd6f3c0e24f60ce68e9e2ada89f3d6a81fa829790f569a2826"
     },
@@ -222,7 +222,7 @@
       "role": "Mimari karar",
       "purpose": "SecondBrain'in RPP v1.0/v1.1 çalışma sözleşmesi: manifest, health, ayar şeması/doğrulama/uygulama/geri okuma ve v1.1 yaşam döngüsü işlemleri.",
       "relationships": [
-        "rpp.py ve rpp_lifecycle.py uygular; tools/rpp_conformance.py iki üründe doğrular."
+        "rpp/server.py ve rpp/lifecycle.py uygular; tools/rpp_conformance.py iki üründe doğrular."
       ],
       "review_sha256": "3d587b9d479b2a202456267bb594305e12524749a2d9ec83209c98c78143ca18"
     },
@@ -612,7 +612,7 @@
       "relationships": [
         "bootstrap servis bağlamını seçer; Foundation/OS ve argüman hataları çıkış kodlarına çevrilir. Hook/MCP stdout protokolü korunur; stale-input expiry memory.flush sorumluluğundadır. tests/wizard_options_test.py, tests/uninstall_test.py ve tests/test_index_freshness.py welcome/purge ve open sınırını sınar."
       ],
-      "review_sha256": "47b3c468b5d8e5dc389d57b2af0bd336d1a2f31e635134e6cd760ce25f2e78e9"
+      "review_sha256": "b0ebec61ea2a92a1c3c37ddaddbff2b1bff961495c687c9d9a7e91ba245b0b7a"
     },
     {
       "path": "src/respectedbrain/core/__init__.py",
@@ -900,7 +900,7 @@
       "relationships": [
         "CLI mcp ve editor launcher kullanır; integrations.notes ortak not I/O sınırıdır; SearchEngine arama/backlink sağlar. mcp_and_features_test transport, metadata, dosya korunması ve gerçek Windows junction fixturelarını doğrular."
       ],
-      "review_sha256": "d63619b0018f93fe95cb662df5ec4a649f1857556e3192345fc52d611442be4e"
+      "review_sha256": "b86caeb48de840dcdea260b68c831defba34311f826b63b55bbff6784ffe8ca4"
     },
     {
       "path": "src/respectedbrain/integrations/notes.py",
@@ -1673,94 +1673,103 @@
       "review_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     {
-      "path": "src/respectedbrain/rpp.py",
-      "role": "RPP sunucusu",
-      "purpose": "SecondBrain'in RPP v1.0/v1.1 sunucusu: manifest/health/settings.* ve v1.1 işlemleri (lifecycle.*, integrations.plan, memory.grant/revoke/recall/write/index/semantic/capture). Tek JSON isteği alır, tek JSON yanıt döndürür; hiçbir işlem çağıran tarafından yol, vault veya kimlik kabul etmez. memory.search, memory.note.read, memory.capture.note ve memory.briefing.run işlemleri ile memory_workspace kapasitesi eklendi. mcp_write, archive_transcripts ve transcript_retention_days ayarları eklendi.",
+      "path": "src/respectedbrain/rpp/__init__.py",
+      "role": "Protokol paketi",
+      "purpose": "RPP (Respected Product Protocol) sunucu paketi: Hub ve Orchestrator'ın SecondBrain ile konuştuğu JSON protokolü. server.py istekleri dağıtır; integrations, lifecycle ve memory_* modülleri işlem ailelerini uygular. 2026-10-21'de kökteki rpp_*.py dosyalarından toplandı.",
       "relationships": [
-        "Hub rpp.rs allow-list'iyle çağırır; Orchestrator memory.recall/write için kullanır. Kapasiteler CAPABILITY_DETAILS ile 1.0 manifestinden gizlenir; testleri tests/test_rpp*.py."
+        "cli.py `rpp` komutu rpp.server.main'i çalıştırır; integrations/mcp/server.py rpp.memory_write'ı kullanır; Hub src-tauri/src/rpp.rs istemci tarafıdır."
       ],
-      "review_sha256": "eb6736847238d5c996e74378067595edb1502b629bd2a748b286d86bc8b330c4"
+      "review_sha256": "70dcdecc3ff7c0eb003e66a4d7ca489682bf91d55e40bf02383088cb71983c84"
     },
     {
-      "path": "src/respectedbrain/rpp_integrations.py",
+      "path": "src/respectedbrain/rpp/integrations.py",
       "role": "RPP işlemi",
-      "purpose": "integrations.plan: istenen AI istemci entegrasyonlarının (global kural/hook, MCP, zamanlama, kısayol) hangi dosyaları tam olarak değiştireceğini, hangi istemcilerin bulunduğunu ve hangi kayıtların eski haline döneceğini YAZMADAN hesaplar. İstemci başına seçim (clients/mcp_clients) ve geri yükleme önizlemesi içerir. Önizleme geri alma satırları da girdi düzeyindeki geri almayı kullanır. Önizleme geri alma satırları delta tabanlı sahiplik kaydını kullanır.",
+      "purpose": "integrations.plan: istenen AI istemci entegrasyonlarının (global kural/hook, MCP, zamanlama, kısayol) hangi dosyaları tam olarak değiştireceğini, hangi istemcilerin bulunduğunu ve hangi kayıtların eski haline döneceğini YAZMADAN hesaplar. İstemci başına seçim (clients/mcp_clients) ve geri yükleme önizlemesi içerir. Önizleme geri alma satırları da girdi düzeyindeki geri almayı kullanır. Önizleme geri alma satırları delta tabanlı sahiplik kaydını kullanır. (2026-10-21: `src/respectedbrain/rpp/integrations.py` yolundan taşındı.)",
       "relationships": [
         "Uygulama yine kurucudur (setup/update/repair); plan aynı rendering.plan_integrations ve ownership manifest'ini kullanır. Hub sihirbazı önizlemeyi gösterir; testleri tests/test_rpp_integrations.py."
       ],
-      "review_sha256": "d503f59be952bedacc3d85bfceab83fdf7c2b8ded0175d5edc01810680171a12"
+      "review_sha256": "b7c7356826d3edb82db798142503c916b5d8ce14d63d3c361661fe6e7f7808e5"
     },
     {
-      "path": "src/respectedbrain/rpp_lifecycle.py",
+      "path": "src/respectedbrain/rpp/lifecycle.py",
       "role": "RPP işlemi",
-      "purpose": "lifecycle.plan/apply/status/rollback ve operation.receipt: kurulum motorunu (Transaction, ownership manifest) RPP üzerinden sunar; ilk kasa kurulumu (create_vault) AI istemci yapılandırmasına yazmadan şablonu açar. Kurulum durumunu sahiplik manifestinden raporlar.",
+      "purpose": "lifecycle.plan/apply/status/rollback ve operation.receipt: kurulum motorunu (Transaction, ownership manifest) RPP üzerinden sunar; ilk kasa kurulumu (create_vault) AI istemci yapılandırmasına yazmadan şablonu açar. Kurulum durumunu sahiplik manifestinden raporlar. (2026-10-21: `src/respectedbrain/rpp/lifecycle.py` yolundan taşındı.)",
       "relationships": [
         "Hub brain.rs ve lifecycle köprüsü kullanır; installation/* motorunu çağırır, yeni yaşam döngüsü kodu yazmaz. Testleri tests/test_rpp_lifecycle.py, tests/test_rpp_vault.py."
       ],
-      "review_sha256": "59136430d8fb7fae0774ab231b69e2900a86fc7ae258421dce7fd5978c7fa46b"
+      "review_sha256": "98e8fe6319b1dbdecbeb4585055f78583bf6d4a803de0dfecc5937e472f19b45"
     },
     {
-      "path": "src/respectedbrain/rpp_memory.py",
+      "path": "src/respectedbrain/rpp/memory.py",
       "role": "RPP işlemi",
-      "purpose": "memory.grant/revoke/recall: kullanıcı onaylı gizli jeton (yalnız SHA-256 saklanır) ile sınırlı, salt okunur, kısa snippet'li hafıza erişimi. Recall dizinde yalnız dosyanın güncel sha256'sı indekslenenle aynıysa sonuç döndürür; mode (auto/fts/semantic/hybrid) ile anlamsal arama birleştirilir. Sorgu hattı run_query olarak ayrıldı; jetonlu recall ve kullanıcının kendi aramaları aynı doğrulamalı hattı kullanır.",
+      "purpose": "memory.grant/revoke/recall: kullanıcı onaylı gizli jeton (yalnız SHA-256 saklanır) ile sınırlı, salt okunur, kısa snippet'li hafıza erişimi. Recall dizinde yalnız dosyanın güncel sha256'sı indekslenenle aynıysa sonuç döndürür; mode (auto/fts/semantic/hybrid) ile anlamsal arama birleştirilir. Sorgu hattı run_query olarak ayrıldı; jetonlu recall ve kullanıcının kendi aramaları aynı doğrulamalı hattı kullanır. (2026-10-21: `src/respectedbrain/rpp/memory.py` yolundan taşındı.)",
       "relationships": [
         "rpp_memory_grants jeton deposunu, search/engine ve search/semantic dizinleri kullanır; Orchestrator memory.py tüketir. Testleri tests/test_rpp_memory.py, test_rpp_memory_op.py."
       ],
-      "review_sha256": "7eabefa27e35ff9dd7e84e9b2226c9d9851702d3a864bb6634a0e283b311bd13"
+      "review_sha256": "f00a47e1aeb982bf8cc529bb202b53a15977204516290a57d88ae80417175e01"
     },
     {
-      "path": "src/respectedbrain/rpp_memory_capture.py",
+      "path": "src/respectedbrain/rpp/memory_capture.py",
       "role": "RPP işlemi",
-      "purpose": "memory.capture.run: capture_mode=manual iken bekleyen AI oturumlarını (hook yükleri) ve Codex/Antigravity transkriptlerini kullanıcı isteğiyle hafızaya özetler, değişen günleri derler.",
+      "purpose": "memory.capture.run: capture_mode=manual iken bekleyen AI oturumlarını (hook yükleri) ve Codex/Antigravity transkriptlerini kullanıcı isteğiyle hafızaya özetler, değişen günleri derler. (2026-10-21: `src/respectedbrain/rpp/memory_capture.py` yolundan taşındı.)",
       "relationships": [
         "memory.lifecycle manuel modda oturumu pending-capture-*.json olarak saklar; bu işlem memory.flush.flush_transcript ile işler. Hub 'Bekleyen oturumları şimdi yakala' düğmesi çağırır; testi tests/test_index_freshness.py."
       ],
-      "review_sha256": "e47063b3d96b77c3a21cc9858a29a7d3e492a321d42039da3ac302d53ef8970b"
+      "review_sha256": "5ce04e89714b217cf3175e85397a7b82bbc10e5b95f724abb6c49fd00737a7a0"
     },
     {
-      "path": "src/respectedbrain/rpp_memory_grants.py",
+      "path": "src/respectedbrain/rpp/memory_grants.py",
       "role": "RPP işlemi",
-      "purpose": "Hafıza erişim izinleri: jeton oluşturma (yalnız hash saklanır), iptal, doğrulama; her izin bir kasaya bağlıdır ve isteğe bağlı write bayrağı taşır (yazma ayrı izindir).",
+      "purpose": "Hafıza erişim izinleri: jeton oluşturma (yalnız hash saklanır), iptal, doğrulama; her izin bir kasaya bağlıdır ve isteğe bağlı write bayrağı taşır (yazma ayrı izindir). (2026-10-21: `src/respectedbrain/rpp/memory_grants.py` yolundan taşındı.)",
       "relationships": [
         "rpp_memory ve rpp_memory_write doğrular; Hub memory_access izni oluşturup Orchestrator ayarına verir. Testleri tests/test_rpp_memory_grants.py."
       ],
       "review_sha256": "a1a4bb47ecff146a57a0136a1e3c53face246ebacda56f95a6d8badc4a578bfa"
     },
     {
-      "path": "src/respectedbrain/rpp_memory_index.py",
+      "path": "src/respectedbrain/rpp/memory_index.py",
       "role": "RPP işlemi",
-      "purpose": "memory.index.status/refresh: arama dizininin tazeliğini okur ve onaylı biçimde artımlı yeniler (FTS ve açıksa anlamsal vektörler); operasyon kimliğiyle idempotent.",
+      "purpose": "memory.index.status/refresh: arama dizininin tazeliğini okur ve onaylı biçimde artımlı yeniler (FTS ve açıksa anlamsal vektörler); operasyon kimliğiyle idempotent. (2026-10-21: `src/respectedbrain/rpp/memory_index.py` yolundan taşındı.)",
       "relationships": [
         "search/engine ve search/freshness kullanır; Hub hafıza dizini paneli çağırır. Testleri tests/test_rpp_memory_index*.py."
       ],
-      "review_sha256": "744b75f6c4a5e27f24054059ac1937c8e1a5fb2d9a3c036d779acc0dba358c53"
+      "review_sha256": "af5676872a33137c413d1b6fa993b3c65e3bb774003f1ed445a89315ae1de761"
     },
     {
-      "path": "src/respectedbrain/rpp_memory_semantic.py",
+      "path": "src/respectedbrain/rpp/memory_semantic.py",
       "role": "RPP işlemi",
-      "purpose": "memory.semantic.status/configure/pull: opsiyonel yerel anlamsal aramanın durumunu okur, açıp kapatır ve (yalnız açık onayla) sabitlenmiş çalışma zamanı ve modeli indirir. Yazdığı tek yapılandırma semantic.json'dur.",
+      "purpose": "memory.semantic.status/configure/pull: opsiyonel yerel anlamsal aramanın durumunu okur, açıp kapatır ve (yalnız açık onayla) sabitlenmiş çalışma zamanı ve modeli indirir. Yazdığı tek yapılandırma semantic.json'dur. (2026-10-21: `src/respectedbrain/rpp/memory_semantic.py` yolundan taşındı.)",
       "relationships": [
         "search/semantic.py'yi çağırır; Hub MemoryIndex paneli kullanır. Testleri tests/test_rpp_memory_semantic.py."
       ],
-      "review_sha256": "3f31a49b0988e8f386ca9c5680696269930fb9cc751c95dc26149fd09f583a2e"
+      "review_sha256": "e1ddd4adfbdac3c81eee67b6bedb896c22c040a46a4290e9afa977301dd6fbc9"
     },
     {
-      "path": "src/respectedbrain/rpp_memory_workspace.py",
+      "path": "src/respectedbrain/rpp/memory_workspace.py",
       "role": "RPP işlemi",
-      "purpose": "Hub'ın kullanıcıya dönük hafıza işlemleri: memory.search (jetonsuz, recall ile aynı salt okunur ve hash doğrulamalı hat), memory.note.read (yalnız kasa içindeki .md notları, sınırlı), memory.capture.note (Dump gelen kutusuna yeni not, üzerine yazmaz, operasyon kimliğiyle idempotent, yazımdan sonra dizin tazelenir) ve memory.briefing.run (zamanı gelmişse brifing). Yol/kimlik kabul etmez.",
+      "purpose": "Hub'ın kullanıcıya dönük hafıza işlemleri: memory.search (jetonsuz, recall ile aynı salt okunur ve hash doğrulamalı hat), memory.note.read (yalnız kasa içindeki .md notları, sınırlı), memory.capture.note (Dump gelen kutusuna yeni not, üzerine yazmaz, operasyon kimliğiyle idempotent, yazımdan sonra dizin tazelenir) ve memory.briefing.run (zamanı gelmişse brifing). Yol/kimlik kabul etmez. (2026-10-21: `src/respectedbrain/rpp/memory_workspace.py` yolundan taşındı.)",
       "relationships": [
         "Hub brain komutları (webview köprüsü memory.* işlemlerini engeller) çağırır; rpp_memory.run_query, integrations/notes ve search/freshness kullanır. Eski yerel panelin arama/okuma/yakalama işlevlerinin yerine geçer. Testi tests/test_rpp_memory_workspace.py."
       ],
-      "review_sha256": "22d5fbe0b4b199a33b4f03a797b865faa866bd2253906e42e674d2e1d3e82557"
+      "review_sha256": "85b75eb535e688aac53a9af36edc89a1ab4db01f737740464cfcc64f962099f8"
     },
     {
-      "path": "src/respectedbrain/rpp_memory_write.py",
+      "path": "src/respectedbrain/rpp/memory_write.py",
       "role": "RPP işlemi",
-      "purpose": "memory.write/revert: write izinli jetonla vault'ta yalnız sabit gelen kutusu klasörüne YENİ not oluşturur (üzerine yazmaz, atomik, idempotent, sahiplik front matter'ı); düzenlenmemiş notu geri alır. Not oluşturma ve geri alma ortak _create/_revert işlevlerine ayrıldı; MCP için write_mcp/revert_mcp (mcp gelen kutusu, sahiplik kaydı) eklendi.",
+      "purpose": "memory.write/revert: write izinli jetonla vault'ta yalnız sabit gelen kutusu klasörüne YENİ not oluşturur (üzerine yazmaz, atomik, idempotent, sahiplik front matter'ı); düzenlenmemiş notu geri alır. Not oluşturma ve geri alma ortak _create/_revert işlevlerine ayrıldı; MCP için write_mcp/revert_mcp (mcp gelen kutusu, sahiplik kaydı) eklendi. (2026-10-21: `src/respectedbrain/rpp/memory_write.py` yolundan taşındı.)",
       "relationships": [
         "rpp_memory_grants doğrular, search/freshness yazımdan sonra dizini tazeler; Orchestrator orchestrator_memory_note aracı çağırır. Testleri tests/test_rpp_memory_write.py."
       ],
-      "review_sha256": "c99d7aa75681be28dcf41bdf2b64a03088f001758722ca4511915d55d4c9a0e5"
+      "review_sha256": "82fe3b0318904889d6aaf6893f90ba2d68d801b566980baa3c5ae1afca629579"
+    },
+    {
+      "path": "src/respectedbrain/rpp/server.py",
+      "role": "RPP sunucusu",
+      "purpose": "SecondBrain'in RPP v1.0/v1.1 sunucusu: manifest/health/settings.* ve v1.1 işlemleri (lifecycle.*, integrations.plan, memory.grant/revoke/recall/write/index/semantic/capture). Tek JSON isteği alır, tek JSON yanıt döndürür; hiçbir işlem çağıran tarafından yol, vault veya kimlik kabul etmez. memory.search, memory.note.read, memory.capture.note ve memory.briefing.run işlemleri ile memory_workspace kapasitesi eklendi. mcp_write, archive_transcripts ve transcript_retention_days ayarları eklendi. (2026-10-21: `src/respectedbrain/rpp.py` yolundan taşındı.)",
+      "relationships": [
+        "Hub rpp.rs allow-list'iyle çağırır; Orchestrator memory.recall/write için kullanır. Kapasiteler CAPABILITY_DETAILS ile 1.0 manifestinden gizlenir; testleri tests/test_rpp*.py."
+      ],
+      "review_sha256": "2618cec7f336b23d7b73474d1b3f65d4780ae7153a215cc70b53a651492d3925"
     },
     {
       "path": "src/respectedbrain/search/__init__.py",
@@ -1786,7 +1795,7 @@
       "role": "Bağlamla çalışan ürün servisi",
       "purpose": "Arama dizinini ürünün kendi süreçlerinde (oturum başı, flush sonu, günlük görev, memory.write sonrası, index-refresh) artımlı tazeleyen en-iyi-çaba yardımcı; Hub veya sürekli çalışan süreç gerektirmez. Anlamsal vektörleri de günceller.",
       "relationships": [
-        "cli.py, rpp_memory_index.py ve rpp_memory_write.py çağırır; search/engine ve search/semantic kullanır. Testi tests/test_index_freshness.py."
+        "cli.py, rpp/memory_index.py ve rpp/memory_write.py çağırır; search/engine ve search/semantic kullanır. Testi tests/test_index_freshness.py."
       ],
       "review_sha256": "3c4452bad95a94ac981d31556ed4fb6eea64a3da7a13657f10b77eceecb725c7"
     },
@@ -2577,7 +2586,7 @@
       "relationships": [
         "search/freshness, memory/lifecycle ve rpp_memory_capture sınanır; geçici veri/kasa kökleri kullanır."
       ],
-      "review_sha256": "4b9b549bac6a4fabd457becb5401bb06b02f71de7241d029752dbef7d0fb6df2"
+      "review_sha256": "b60b785be1f0c6c2555250f8e823cd8ca0b6d0de2b8d094d6f0bfa61833ceeab"
     },
     {
       "path": "tests/test_redact.py",
@@ -2593,9 +2602,9 @@
       "role": "Davranış/regresyon testi",
       "purpose": "RPP v1.0/v1.1 sunucu sözleşmesi: manifest, kapasite gizleme, ayar şeması/doğrulama/uygulama/geri okuma, hata tipleri.",
       "relationships": [
-        "rpp.py sınanır; tools/rpp_conformance.py canlı karşılığıdır."
+        "rpp/server.py sınanır; tools/rpp_conformance.py canlı karşılığıdır."
       ],
-      "review_sha256": "6600e04f22806b22b9b67673614ce8b61fd175b07d120e870c1ffbc43705a699"
+      "review_sha256": "f2f714b53acdbb57397fc0542ce3b27403b554bafd235e0c32334b6971fbf6c3"
     },
     {
       "path": "tests/test_rpp_integrations.py",
@@ -2604,7 +2613,7 @@
       "relationships": [
         "rpp_integrations ve integrations/rendering sınanır; geçici HOME kullanır, gerçek yapılandırmaya dokunmaz."
       ],
-      "review_sha256": "5262315217dd864800e483cbd6e7eead63ebceb4bc742942603fb73f51828aa7"
+      "review_sha256": "c8eda83105befee6c01cea200643f33ee8c6100a1261920895f023e3db18faae"
     },
     {
       "path": "tests/test_rpp_lifecycle.py",
@@ -2613,7 +2622,7 @@
       "relationships": [
         "rpp_lifecycle ve kurulum motoru sınanır; geçici kök dizinler."
       ],
-      "review_sha256": "e4ee3f073ed01514de2be16f80d6aca3ac0090ad65a93388003e8b40139fe360"
+      "review_sha256": "12b4ff8f11eba47e8f6d55e6e55ebc16a35aa30336afa9cf18016f4d2995a641"
     },
     {
       "path": "tests/test_rpp_memory.py",
@@ -2622,7 +2631,7 @@
       "relationships": [
         "rpp_memory sınanır."
       ],
-      "review_sha256": "c573e2d990752b47e0df2a3e5216d674f3ed65435815296e3cfe76398c894c09"
+      "review_sha256": "6f2dbf6831376dc7a7f01f00346f82805b9f4045a7cce7429886ba086717eb8c"
     },
     {
       "path": "tests/test_rpp_memory_grants.py",
@@ -2631,7 +2640,7 @@
       "relationships": [
         "rpp_memory_grants sınanır."
       ],
-      "review_sha256": "adb51814bfbc3fa5710cb00afb8e5a25637a18119ad6682b156f4c454f60fab0"
+      "review_sha256": "9c6ccc877d02f8c2ad0f16755984756a688294fac02cf645d4d75732b33ac24f"
     },
     {
       "path": "tests/test_rpp_memory_index.py",
@@ -2640,7 +2649,7 @@
       "relationships": [
         "rpp_memory_index sınanır."
       ],
-      "review_sha256": "d8b722201dfbbd52192fee5d2325245fc75d535c73b81d516b6f78d3717e4a0c"
+      "review_sha256": "1816754efe18e2e0a3305c82f5f81fd25aeab4b048d566bb514d4a6d7f34b572"
     },
     {
       "path": "tests/test_rpp_memory_index_op.py",
@@ -2649,7 +2658,7 @@
       "relationships": [
         "rpp ve rpp_memory_index birlikte sınanır."
       ],
-      "review_sha256": "71874e4b65d9b622592515932f483c8ef0c1d347717ad2fe851176db5ab236a0"
+      "review_sha256": "783a092a1868b3216c0cd4f497caf6d6a813f8c11379880acd302b32a344c826"
     },
     {
       "path": "tests/test_rpp_memory_op.py",
@@ -2658,7 +2667,7 @@
       "relationships": [
         "rpp ve rpp_memory birlikte sınanır."
       ],
-      "review_sha256": "305aa702773ed10132ee489a5241ce7036c7e90c7f3f563e00418e6af2f932d4"
+      "review_sha256": "28ed438af1c55a415fa67e325588d6173cd174c48dbbf4312208ef4f25cf6c00"
     },
     {
       "path": "tests/test_rpp_memory_semantic.py",
@@ -2667,7 +2676,7 @@
       "relationships": [
         "search/semantic ve rpp_memory_semantic sınanır; gerçek model doğrulaması ayrı kanıt kaydındadır."
       ],
-      "review_sha256": "51b31573a9308bb162b1d26293f15cce109e8d5f494baf73ce2cac71be3c4ee1"
+      "review_sha256": "c0646faaf171e4bf0893d340bcebfb5693b0c350cb0ed8ff9c2854a221b3366f"
     },
     {
       "path": "tests/test_rpp_memory_workspace.py",
@@ -2676,7 +2685,7 @@
       "relationships": [
         "rpp_memory_workspace sınanır; geçici veri/kasa kökleri kullanır."
       ],
-      "review_sha256": "f9dec105ac03cef855096020bbe8ed097e1a92875140419a3292f4384895c275"
+      "review_sha256": "0b0bbd34c09eddcbe72cfe3656068f29896e30ac269fd7f5ca3d3b8d7c4c95e6"
     },
     {
       "path": "tests/test_rpp_memory_write.py",
@@ -2685,7 +2694,7 @@
       "relationships": [
         "rpp_memory_write sınanır."
       ],
-      "review_sha256": "9b655bc01918899e8718ce0203dff45101b6a907b99dcf796d892c2ee7a7307a"
+      "review_sha256": "f321f7a38ea571ffb2259f8984eb413c640264f94b8e1a83cb73aa840c790b7e"
     },
     {
       "path": "tests/test_rpp_vault.py",
@@ -2694,7 +2703,7 @@
       "relationships": [
         "rpp_lifecycle.create_vault sınanır."
       ],
-      "review_sha256": "6803d4646b69f5f0978c87a60223142c83cde6af174223598393ee177dca28f8"
+      "review_sha256": "71cfec926717cd56c2ebdefa4a98b4a64d49f4bb0e76a07887bf91eb649a829d"
     },
     {
       "path": "tests/transaction_performance_test.py",
@@ -2743,7 +2752,7 @@
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.maintenance.ingestion.url_safety`, `respectedbrain.maintenance.ingestion.defuddle`, `respectedbrain.maintenance.vault_linter`, `respectedbrain.maintenance.tiling_check`, `respectedbrain`, `respectedbrain.core.resources`, `respectedbrain.integrations.scheduling.service`, `respectedbrain.maintenance.ingestion`."
       ],
-      "review_sha256": "2924b3d64e6c4f15a02eb1043ff890b9fa86a12b61e93478a69d4cc14600ca36"
+      "review_sha256": "fbb9a4ce5d4e6073cfbc127ab0e1cb2f0f6441a299007c549e03929beaf3958d"
     },
     {
       "path": "tests/vault_registry_test.py",

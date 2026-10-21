@@ -10,7 +10,7 @@ from unittest.mock import patch
 from uuid import uuid4
 
 from respectedbrain.core.config import ConfigStore
-from respectedbrain.rpp_integrations import _context
+from respectedbrain.rpp.integrations import _context
 from respectedbrain.search import freshness
 
 
@@ -70,7 +70,7 @@ class CaptureModeTest(unittest.TestCase):
         self.assertEqual(len(pending), 1)  # ...but the session is remembered so the user can capture it later
 
     def test_capture_run_needs_confirmation_and_runs_the_catch_up(self):
-        from respectedbrain import rpp_memory_capture
+        from respectedbrain.rpp import memory_capture as rpp_memory_capture
         self.assertRaises(Exception, rpp_memory_capture.run, self.data, {})
         with patch("respectedbrain.memory.flush.catch_up_unflushed_sessions", return_value=2) as catch_up, \
                 patch("respectedbrain.memory.flush.compile_catch_up", return_value=0):

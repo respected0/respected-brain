@@ -12,11 +12,11 @@ import re
 from pathlib import Path
 from typing import Any
 
-from . import rpp_memory_grants as grants
-from .core.config import ConfigStore
-from .core.platform import path_within_vault
-from .rpp_integrations import _context
-from .search.engine import IndexUnavailable, SearchEngine
+from . import memory_grants as grants
+from ..core.config import ConfigStore
+from ..core.platform import path_within_vault
+from .integrations import _context
+from ..search.engine import IndexUnavailable, SearchEngine
 
 _ALLOWED_KEYS = {"token", "query", "limit", "snippet_chars", "category", "mode"}
 _MODES = ("auto", "fts", "semantic", "hybrid")
@@ -146,7 +146,7 @@ def _lead(file: Path, chars: int) -> str:
 
 def _find(ctx, engine, data_root, query, limit, category, mode, snippet_chars):
     """FTS hits, semantic hits or their reciprocal-rank fusion; semantic problems fall back to FTS (never an error in auto/hybrid)."""
-    from .search import semantic
+    from ..search import semantic
     cfg = semantic.load_config(data_root)
     want_semantic = mode in ("semantic", "hybrid") or (mode == "auto" and cfg["enabled"])
     info = {"mode": "fts", "semantic": "off" if not cfg["enabled"] else "not_used"}

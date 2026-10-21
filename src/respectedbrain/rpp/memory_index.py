@@ -1,4 +1,4 @@
-"""rpp_memory_index: explicit, confirmed refresh of the product's own search index (never writes the vault)."""
+"""memory_index: explicit, confirmed refresh of the product's own search index (never writes the vault)."""
 
 from __future__ import annotations
 
@@ -10,10 +10,10 @@ import re
 import time
 from typing import Any
 
-from .core.config import ConfigStore, atomic_write_json
-from .rpp_integrations import _context
-from .search.engine import IndexUnavailable, SearchEngine
-from .search.freshness import refresh_semantic
+from ..core.config import ConfigStore, atomic_write_json
+from .integrations import _context
+from ..search.engine import IndexUnavailable, SearchEngine
+from ..search.freshness import refresh_semantic
 
 _OPERATION_ID_RE = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
 _OPERATIONS_DIR = "memory-index-operations"

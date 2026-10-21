@@ -11,11 +11,11 @@ from __future__ import annotations
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
 
-from .core.config import ConfigStore
-from .core.context import AppContext
-from .core.errors import FoundationError, OwnershipConflict, SelectionError
-from .core.paths import AppPaths
-from .core.resources import ResourceCatalog
+from ..core.config import ConfigStore
+from ..core.context import AppContext
+from ..core.errors import FoundationError, OwnershipConflict, SelectionError
+from ..core.paths import AppPaths
+from ..core.resources import ResourceCatalog
 
 FLAGS = ("global", "mcp", "schedule", "shortcut")
 
@@ -38,7 +38,7 @@ def _desired(target):
     raw = target.get("desired")
     if not isinstance(raw, dict):
         raise PlanError("BAD_REQUEST", "target.desired must be an object.", "Pass {global, mcp, schedule, shortcut} booleans.")
-    from .integrations.rendering import CLIENTS
+    from ..integrations.rendering import CLIENTS
     lists = {}
     for list_key in ("clients", "mcp_clients"):
         chosen = raw.get(list_key)
@@ -55,7 +55,7 @@ def _desired(target):
 
 
 def _context(data_root, target):
-    from .bootstrap import application_roots
+    from ..bootstrap import application_roots
     roots = application_roots()
     store = ConfigStore(data_root)
     config = store.read()
@@ -88,7 +88,7 @@ def _describe(change):
 
 def _removals(ctx, backend, desired, data_root, planned=frozenset()):
     """Registrations Respected owns that the new choices switch off: exactly what the installer would restore."""
-    from .installation.ownership import read_manifest
+    from ..installation.ownership import read_manifest
     manifest = Path(data_root) / "install-manifest.json"
     if not manifest.is_file():
         return []
@@ -109,16 +109,16 @@ def _removals(ctx, backend, desired, data_root, planned=frozenset()):
         current = backend.read(prior.kind, prior.key)
         if prior.restored(current):
             continue
-        from .installation.operations import _undo
+        from ..installation.operations import _undo
         _undo(prior, current)  # raises OwnershipConflict only when our own entry was edited
         rows.append({"kind": prior.kind, "target": str(prior.key), "action": "restore", "summary": _EXPLAIN.get(prior.kind, prior.kind), "size_after": len(prior.before or b"")})
     return rows
 
 
 def plan(data_root, target):
-    from .installation.common import installed_profile
-    from .integrations.backend import NativeBackend
-    from .integrations.rendering import mcp_destinations, plan_integrations
+    from ..installation.common import installed_profile
+    from ..integrations.backend import NativeBackend
+    from ..integrations.rendering import mcp_destinations, plan_integrations
     desired = _desired(target)
     try:
         roots, ctx = _context(data_root, target)
@@ -135,7 +135,7 @@ def plan(data_root, target):
                         "Resolve or remove the conflicting entry, or leave this integration off.")
     except (FoundationError, SelectionError, ValueError, OSError) as error:
         raise PlanError("BAD_REQUEST", f"Integration plan failed: {error}", "Check the selected options.")
-    from .integrations.rendering import detect_clients
+    from ..integrations.rendering import detect_clients
     return {"desired": desired, "current": ConfigStore(Path(data_root)).read().get("integrations", {}),
             "launcher": list(profile.launcher), "discovered": discovered,
             "clients": [{"id": key, "detected": found} for key, found in detect_clients(profile).items()], "changes": changes,

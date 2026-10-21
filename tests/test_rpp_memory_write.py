@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import patch
 from uuid import uuid4
 
-from respectedbrain import rpp
+from respectedbrain.rpp import server as rpp
 from respectedbrain.core.config import ConfigStore
 
 

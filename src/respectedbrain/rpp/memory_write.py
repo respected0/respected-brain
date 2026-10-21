@@ -17,13 +17,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from . import rpp_memory_grants as grants
-from .core.config import atomic_write_json
-from .core.coordination import writer_lease
-from .core.errors import BusyError
-from .core.platform import path_within_vault
-from .rpp_integrations import _context
-from .rpp_memory import MemoryOpError, _active_vault_id, _bad, _clean, _from_grant
+from . import memory_grants as grants
+from ..core.config import atomic_write_json
+from ..core.coordination import writer_lease
+from ..core.errors import BusyError
+from ..core.platform import path_within_vault
+from .integrations import _context
+from .memory import MemoryOpError, _active_vault_id, _bad, _clean, _from_grant
 
 INBOX = "🔮 850-Companion/Inbox/Orchestrator"
 _OPERATIONS_DIR = "memory-write-operations"
@@ -133,7 +133,7 @@ def _create(ctx, data_root: Path, operation_id: str, *, grant_id: str, source: s
     for old in sorted(record_path.parent.glob("*.json"), key=lambda p: (_read_json(p) or {}).get("created_ns", 0))[:-_KEEP_OPERATIONS]:
         old.unlink(missing_ok=True)
     try:  # make the note recallable now; failure only means the next hook/schedule refresh will do it
-        from .search.freshness import refresh_now
+        from ..search.freshness import refresh_now
         result["indexed"] = bool(refresh_now(ctx, attempts=1).get("refreshed"))
     except Exception:
         pass

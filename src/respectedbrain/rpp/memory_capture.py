@@ -7,9 +7,9 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .providers.runner import ModelRunner
-from .rpp_integrations import _context
-from .rpp_memory import MemoryOpError, _active_vault_id, _bad
+from ..providers.runner import ModelRunner
+from .integrations import _context
+from .memory import MemoryOpError, _active_vault_id, _bad
 
 
 def run(data_root: Path, payload: Any) -> dict[str, Any]:
@@ -18,7 +18,7 @@ def run(data_root: Path, payload: Any) -> dict[str, Any]:
         raise _bad("explicit confirmation required", "Send {confirm: true}.")
     if not _active_vault_id(Path(data_root)):
         raise MemoryOpError("NO_VAULT", "No vault is registered.", "Register a vault in the SecondBrain product first.")
-    from .memory.flush import catch_up_unflushed_sessions, compile_catch_up
+    from ..memory.flush import catch_up_unflushed_sessions, compile_catch_up
     _, ctx = _context(Path(data_root), {})
     now = datetime.now().astimezone()
     model = ModelRunner(ctx)
@@ -30,7 +30,7 @@ def run(data_root: Path, payload: Any) -> dict[str, Any]:
 
 def _flush_pending(ctx, model, now) -> int:
     """Sessions that ended while capture_mode was manual (their hook payloads were kept, nothing else)."""
-    from .memory.flush import flush_transcript
+    from ..memory.flush import flush_transcript
     done = 0
     for pending in sorted(ctx.paths.state_dir.glob("pending-capture-*.json"), key=lambda p: p.stat().st_mtime):
         try:

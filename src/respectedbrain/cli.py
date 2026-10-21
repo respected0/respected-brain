@@ -112,7 +112,7 @@ def _parser():
 
 def _dispatch(args) -> int:
     if args.command == "rpp":
-        from .rpp import main as rpp_main
+        from .rpp.server import main as rpp_main
         return rpp_main(data_root=args.data_root)
     if args.command in ("compile", "flush"):
         from .memory.lifecycle import _is_reentrant

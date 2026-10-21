@@ -12,9 +12,9 @@ from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
 
-from respectedbrain import rpp
+from respectedbrain.rpp import server as rpp
 from respectedbrain.core.config import ConfigStore
-from respectedbrain.rpp_integrations import _context
+from respectedbrain.rpp.integrations import _context
 from respectedbrain.search import freshness, semantic
 
 CONCEPTS = [("car", "automobile", "vehicle"), ("cat", "feline", "kitten"), ("sql", "database", "sqlite")]

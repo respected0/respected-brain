@@ -15,12 +15,12 @@ import time
 from pathlib import Path
 from typing import Any
 
-from .core.config import atomic_write_json
-from .core.coordination import writer_lease
-from .core.errors import BusyError
-from .integrations.notes import create_note, note_path, read_note
-from .rpp_integrations import _context
-from .rpp_memory import MemoryOpError, _active_vault_id, _bad, _clean, _int_in, run_query
+from ..core.config import atomic_write_json
+from ..core.coordination import writer_lease
+from ..core.errors import BusyError
+from ..integrations.notes import create_note, note_path, read_note
+from .integrations import _context
+from .memory import MemoryOpError, _active_vault_id, _bad, _clean, _int_in, run_query
 
 _CAPTURE_DIR = "📥 000-Inbox/Dump"
 _OPERATIONS_DIR = "memory-capture-note-operations"
@@ -121,7 +121,7 @@ def capture(data_root: Path, operation_id: Any, payload: Any) -> dict[str, Any]:
     for old in sorted(record_path.parent.glob("*.json"), key=lambda p: p.stat().st_mtime)[:-_KEEP_OPERATIONS]:
         old.unlink(missing_ok=True)
     try:  # searchable right away; if it fails the next hook/schedule refresh does it
-        from .search.freshness import refresh_now
+        from ..search.freshness import refresh_now
         result["indexed"] = bool(refresh_now(ctx, attempts=1).get("refreshed"))
     except Exception:
         pass
@@ -133,8 +133,8 @@ def briefing(data_root: Path, payload: Any) -> dict[str, Any]:
     if not isinstance(payload, dict) or set(payload) != {"confirm"} or payload["confirm"] is not True:
         raise _bad("explicit confirmation required", "Send {confirm: true}.")
     _vault_id(data_root)
-    from .briefing.service import run_if_due
-    from .providers.runner import ModelRunner
+    from ..briefing.service import run_if_due
+    from ..providers.runner import ModelRunner
     _, ctx = _context(Path(data_root), {})
     status = run_if_due(ctx, model=ModelRunner(ctx), now=dt.datetime.now().astimezone())
     return {"status": status}

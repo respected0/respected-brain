@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from respectedbrain import rpp
+from respectedbrain.rpp import server as rpp
 
 
 class IntegrationPlanTest(unittest.TestCase):
