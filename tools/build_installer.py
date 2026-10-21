@@ -7,6 +7,7 @@ import json
 import os
 import plistlib
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -86,7 +87,19 @@ def assemble_macos_bundle(source: Path, bundle: Path) -> None:
             raise
 
 
+def check_installed_package() -> None:
+    """The frozen build stamps the pip-installed metadata: refuse an install of another checkout or an older version."""
+    import respectedbrain
+    from packaging.version import Version
+    declared = re.search(r'(?m)^version\s*=\s*"([^"]+)"', (ROOT / "pyproject.toml").read_text(encoding="utf-8")).group(1)
+    location = Path(respectedbrain.__file__).resolve()
+    if not location.is_relative_to((ROOT / "src").resolve()) or Version(version("respectedbrain")) != Version(declared):
+        raise RuntimeError(f"installed respectedbrain {version('respectedbrain')} at {location} is not this checkout "
+                           f"({declared}); run: python -m pip install -e \".[dev]\"")
+
+
 def build(*, platform: str, output: Path) -> Path:
+    check_installed_package()
     native = "windows" if sys.platform == "win32" else "macos" if sys.platform == "darwin" else "linux"
     if platform != native:
         raise ValueError("Frozen distributions must be built on their native platform")

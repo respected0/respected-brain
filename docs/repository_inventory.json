@@ -2427,12 +2427,12 @@
     {
       "path": "tests/packaging/test_build_contents.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Dondurulmuş build'in tkinter çalışma zamanını topladığını, provenance modülünün kurulum paketinde olduğunu, PyInstaller'ın tüm respectedbrain alt modüllerini topladığını, setuptools'un installation paketini bulduğunu ve sihirbaz/CLI kaynaklarının bozulmamış UTF-8 olduğunu sınar. Build komutu geçici bir çıktı klasörüyle durdurulur (depo köküne klasör bırakmaz).",
+      "purpose": "Dondurulmuş build'in tkinter çalışma zamanını topladığını, provenance modülünün kurulum paketinde olduğunu, PyInstaller'ın tüm respectedbrain alt modüllerini topladığını, setuptools'un installation paketini bulduğunu ve sihirbaz/CLI kaynaklarının bozulmamış UTF-8 olduğunu sınar. Build komutu geçici bir çıktı klasörüyle durdurulur (depo köküne klasör bırakmaz). Eski/yabancı kurulu paket varken build'in PyInstaller çağrılmadan durduğunu da sınar.",
       "relationships": [
         "unittest keşfi (python -m unittest discover -s tests -t .) ve CI tarafından yapılır.",
         "Doğrudan sınadığı noktalar: `tools/build_installer.py`, `respectedbrain.installation`."
       ],
-      "review_sha256": "7bd315ebb82a430c4bf0bbef0412afc2f5c749c7e3df2b7112327853b5fb16de"
+      "review_sha256": "28e47f9b93ae90226a9307c94103eb240f7ca91b066b9fcb7e86deaae404a40f"
     },
     {
       "path": "tests/packaging/test_distribution.py",
@@ -2840,11 +2840,11 @@
     {
       "path": "tools/build_installer.py",
       "role": "Depo sözleşmesi",
-      "purpose": "Native onedir dağıtımını üretir (Hub kataloğunun kullandığı paket; bağımsız installer üretmez); tam Tcl/Tk runtime'ını denetler, tkinter/_tkinter ve Tcl/Tk kaynaklarını paketler, macOS iç linkleri normalleştirir ve hash manifest yazar.",
+      "purpose": "Native onedir dağıtımını üretir (Hub kataloğunun kullandığı paket; bağımsız installer üretmez); tam Tcl/Tk runtime'ını denetler, tkinter/_tkinter ve Tcl/Tk kaynaklarını paketler, macOS iç linkleri normalleştirir ve hash manifest yazar. Build öncesi kurulu respectedbrain paketinin bu checkout'tan geldiğini ve sürümünün pyproject ile aynı olduğunu doğrular; aksi halde dondurmadan durur (eski editable kurulum yanlış sürüm damgalayamaz).",
       "relationships": [
         "packaging girdilerini kullanır; verify_distribution.py çıktıyı denetler; Hub'daki release/tools/build_brain_dist.py çağırır; tests/maintenance/test_snapshot_publish.py Tcl/Tk paketleme sözleşmesini sınar."
       ],
-      "review_sha256": "36d86881f365e3ad7a1ba92970337775480ba7de6e8ae40e3e971763b9166d0f"
+      "review_sha256": "4f5fa4a6e12bd4f4db719d7c17e2759e864ff7cea3b24dbd192d2ea16439a6ab"
     },
     {
       "path": "tools/repository_map.py",

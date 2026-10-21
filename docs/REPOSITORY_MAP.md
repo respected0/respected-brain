@@ -2785,7 +2785,7 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **Rol:** Davranış/regresyon testi.
 
-**Amaç / sorumluluk:** Dondurulmuş build'in tkinter çalışma zamanını topladığını, provenance modülünün kurulum paketinde olduğunu, PyInstaller'ın tüm respectedbrain alt modüllerini topladığını, setuptools'un installation paketini bulduğunu ve sihirbaz/CLI kaynaklarının bozulmamış UTF-8 olduğunu sınar. Build komutu geçici bir çıktı klasörüyle durdurulur (depo köküne klasör bırakmaz).
+**Amaç / sorumluluk:** Dondurulmuş build'in tkinter çalışma zamanını topladığını, provenance modülünün kurulum paketinde olduğunu, PyInstaller'ın tüm respectedbrain alt modüllerini topladığını, setuptools'un installation paketini bulduğunu ve sihirbaz/CLI kaynaklarının bozulmamış UTF-8 olduğunu sınar. Build komutu geçici bir çıktı klasörüyle durdurulur (depo köküne klasör bırakmaz). Eski/yabancı kurulu paket varken build'in PyInstaller çağrılmadan durduğunu da sınar.
 
 **İlişkiler ve sınır:** unittest keşfi (python -m unittest discover -s tests -t .) ve CI tarafından yapılır. Doğrudan sınadığı noktalar: `tools/build_installer.py`, `respectedbrain.installation`.
 
@@ -3151,7 +3151,7 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **Rol:** Depo sözleşmesi.
 
-**Amaç / sorumluluk:** Native onedir dağıtımını üretir (Hub kataloğunun kullandığı paket; bağımsız installer üretmez); tam Tcl/Tk runtime'ını denetler, tkinter/_tkinter ve Tcl/Tk kaynaklarını paketler, macOS iç linkleri normalleştirir ve hash manifest yazar.
+**Amaç / sorumluluk:** Native onedir dağıtımını üretir (Hub kataloğunun kullandığı paket; bağımsız installer üretmez); tam Tcl/Tk runtime'ını denetler, tkinter/_tkinter ve Tcl/Tk kaynaklarını paketler, macOS iç linkleri normalleştirir ve hash manifest yazar. Build öncesi kurulu respectedbrain paketinin bu checkout'tan geldiğini ve sürümünün pyproject ile aynı olduğunu doğrular; aksi halde dondurmadan durur (eski editable kurulum yanlış sürüm damgalayamaz).
 
 **İlişkiler ve sınır:** packaging girdilerini kullanır; verify_distribution.py çıktıyı denetler; Hub'daki release/tools/build_brain_dist.py çağırır; tests/maintenance/test_snapshot_publish.py Tcl/Tk paketleme sözleşmesini sınar.
 

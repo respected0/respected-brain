@@ -13,6 +13,14 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 class FrozenGuiPackagingTest(unittest.TestCase):
+    def test_a_stale_installed_package_stops_the_build_before_freezing(self) -> None:
+        # the frozen exe would carry the installed metadata's version, not the checkout's (seen once: 0.0.1 for 0.1.0)
+        import tools.build_installer as builder
+        with mock.patch.object(builder, "version", return_value="0.0.1"), mock.patch("subprocess.run") as run:
+            with self.assertRaisesRegex(RuntimeError, "not this checkout"):
+                builder.build(platform="windows" if sys.platform == "win32" else "linux", output=Path(tempfile.gettempdir()))
+        run.assert_not_called()
+
     def test_pyinstaller_collects_tkinter_runtime(self) -> None:
         class BuildStopped(Exception):
             pass
