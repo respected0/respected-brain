@@ -23,7 +23,7 @@ modülleri CLI'ı import etmez. Kaynak `src/respectedbrain`, paket tarifleri `pa
 
 ```powershell
 .venv\Scripts\python.exe tools/build_dist.py --platform windows --output dist
-.venv\Scripts\python.exe tools/verify_distribution.py --platform windows --distribution dist/RespectedBrain
+.venv\Scripts\python.exe tools/verify_dist.py --platform windows --distribution dist/RespectedBrain
 ```
 
 Çıktı `dist/RespectedBrain/` (`respectedbrain.exe`, `app/`, `distribution.json`). Hub bunu imzalı katalog paketine

@@ -49,7 +49,7 @@ jobs:
       - name: Build required native distribution
         run: python tools/build_dist.py --platform windows --output dist
       - name: Verify frozen launcher without system Python
-        run: python tools/verify_distribution.py --platform windows --distribution dist/RespectedBrain
+        run: python tools/verify_dist.py --platform windows --distribution dist/RespectedBrain
       - name: Physical host package smoke
         run: python tests/native/smoke/platform_smoke.py --package dist/RespectedBrain --output native-smoke.json
       - name: Preserve native executable permissions for source matrix

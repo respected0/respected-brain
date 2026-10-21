@@ -134,5 +134,57 @@ class BackupRestoreTest(unittest.TestCase):
         self.assertEqual(result["status"], "ok", result)
 
 
+class ResticSafetyTest(unittest.TestCase):
+    def setUp(self):
+        self.restic = B
+
+    def test_restic_preflight_checks_binary_presence(self):
+        """Restic backup must fail closed with clear guidance if restic is missing."""
+        with mock.patch("shutil.which", return_value=None):
+            installed, message = self.restic.check_prerequisites()
+            self.assertFalse(installed)
+            self.assertIn("restic kurulu değil", message.lower())
+
+    def test_restic_target_safety_aborts_when_inside_vault(self):
+        """Restic backup must refuse to initialize repo inside the vault itself."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir).resolve()
+            inside_target = str(vault / "backups")
+
+            with self.assertRaises(ValueError) as ctx:
+                self.restic.check_target_safety(vault, inside_target)
+            self.assertIn("vault içinde olamaz", str(ctx.exception))
+
+            with mock.patch.object(self.restic, "check_prerequisites", return_value=(True, "restic")):
+                result = self.restic.run_backup(vault, inside_target)
+                self.assertEqual(result.get("status"), "error")
+                self.assertIn("vault içinde olamaz", result.get("error", ""))
+
+    def test_restic_target_safety_passes_when_outside_vault(self):
+        """Restic target safety passes when repository is in an external location."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir).resolve()
+            vault = temp_path / "vault"
+            vault.mkdir()
+            outside_target = str(temp_path / "external_backups")
+
+            # Must not raise
+            self.restic.check_target_safety(vault, outside_target)
+
+    def test_restic_preview_mode_returns_metadata_without_apply(self):
+        """Without apply=True, run_backup returns preview metadata without running restic."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir).resolve()
+            vault = temp_path / "vault"
+            vault.mkdir()
+            target = str(temp_path / "backup_repo")
+
+            with mock.patch.object(self.restic, "check_prerequisites", return_value=(True, "restic")):
+                result = self.restic.run_backup(vault, target, apply=False)
+                self.assertEqual(result.get("status"), "preview")
+                self.assertEqual(result.get("vault"), str(vault))
+                self.assertEqual(result.get("repo"), target)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -27,7 +27,7 @@ class SourceCleanupTest(unittest.TestCase):
     def test_native_verification_stage_labels_handle_single_argument_version(self):
         from tests.support.packages import seed_package
         from respectedbrain import __version__
-        spec = importlib.util.spec_from_file_location('native_verifier', ROOT / 'tools/verify_distribution.py')
+        spec = importlib.util.spec_from_file_location('native_verifier', ROOT / 'tools/verify_dist.py')
         tool = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(tool)
         with tempfile.TemporaryDirectory() as temporary:
@@ -43,7 +43,7 @@ class SourceCleanupTest(unittest.TestCase):
         from tests.support.packages import seed_package
         with tempfile.TemporaryDirectory() as temporary:
             package = seed_package(Path(temporary) / 'package')
-            result = subprocess.run([sys.executable, str(ROOT / 'tools/verify_distribution.py'),
+            result = subprocess.run([sys.executable, str(ROOT / 'tools/verify_dist.py'),
                                      '--platform', 'macos', '--distribution', str(package)],
                                     env={**os.environ, 'GITHUB_ACTIONS': 'true'},
                                     capture_output=True, text=True, timeout=30)

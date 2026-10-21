@@ -8,10 +8,8 @@ yerel ağa (LAN), localhost'a, intranet adreslerine veya özel portlara
 
 from __future__ import annotations
 
-import argparse
 import ipaddress
 import socket
-import sys
 from urllib.parse import urlparse
 
 
@@ -257,21 +255,3 @@ def validate_safe_url(url: str, require_resolvable: bool = False) -> tuple[bool,
             return False, dns_reason
 
     return True, "URL güvenli"
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser(description="URL Güvenlik ve SSRF Doğrulayıcı")
-    parser.add_argument("url", help="Kontrol edilecek URL")
-    args = parser.parse_args()
-
-    safe, reason = validate_safe_url(args.url)
-    if safe:
-        print(f"GÜVENLİ: {args.url}")
-        return 0
-    else:
-        print(f"GÜVENSİZ: {args.url} -> {reason}", file=sys.stderr)
-        return 1
-
-
-if __name__ == "__main__":
-    sys.exit(main())

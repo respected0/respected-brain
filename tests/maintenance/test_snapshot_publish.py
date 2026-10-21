@@ -239,4 +239,106 @@ class ImmutableSnapshotChainTest(unittest.TestCase):
             self.assertEqual(first['commit'], self._git(remote, 'rev-parse', f'{retried["commit"]}^'))
 
 
+class SnapshotGuardTest(unittest.TestCase):
+    def setUp(self):
+        self.snapshot = snapshot_module
+
+    def test_git_snapshot_secret_guard_aborts_on_nested_forbidden_files(self):
+        """Git snapshot must abort on root and deep-nested secret files (.env, keys, credentials)."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir).resolve()
+            nested = vault / "config" / "credentials"
+            nested.mkdir(parents=True)
+
+            (vault / ".env").write_text("API_KEY=123", encoding="utf-8")
+            (vault / ".env.production").write_text("PROD_SECRET=456", encoding="utf-8")
+            (nested / "aws_credentials.json").write_text('{"key": "secret"}', encoding="utf-8")
+            (vault / "id_rsa").write_text("private key", encoding="utf-8")
+            (vault / "server.pem").write_text("cert", encoding="utf-8")
+            (vault / "note.md").write_text("# Regular note", encoding="utf-8")
+
+            safe, forbidden = self.snapshot.check_secret_guard(vault)
+            self.assertFalse(safe)
+            self.assertGreaterEqual(len(forbidden), 5)
+            self.assertTrue(any(".env" in f for f in forbidden))
+            self.assertTrue(any("aws_credentials" in f for f in forbidden))
+            self.assertTrue(any("id_rsa" in f for f in forbidden))
+
+    def test_git_snapshot_secret_guard_passes_on_clean_vault(self):
+        """Clean vault with standard notes and markdown documents must pass secret guard."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir).resolve()
+            (vault / "knowledge").mkdir()
+            (vault / "knowledge" / "Architect.md").write_text("# Architecture", encoding="utf-8")
+            (vault / "daily").mkdir()
+            (vault / "daily" / "2026-09-07.md").write_text("# Today", encoding="utf-8")
+
+            safe, forbidden = self.snapshot.check_secret_guard(vault)
+            self.assertTrue(safe)
+            self.assertEqual(forbidden, [])
+
+    def test_git_snapshot_fails_closed_on_non_git_directory(self):
+        """If directory is not a git repo, publish_if_due must halt fail-closed without crashing."""
+        with tempfile.TemporaryDirectory() as temp_dir:
+            vault = Path(temp_dir).resolve()
+            (vault / "note.md").write_text("# Note", encoding="utf-8")
+
+            result = self.snapshot.publish_if_due(vault, receipt_file=vault / "receipt.json", remote="origin", branch="main")
+            self.assertTrue(result.get("status", "").startswith("halted:"))
+            self.assertIn("fail-closed", result.get("detail", "").lower())
+
+    def test_git_snapshot_real_divergence_detection(self):
+        """Test real divergence between local and remote git branches using actual git commands."""
+        git = shutil.which("git")
+        if git is None:
+            self.skipTest("git is not available")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir).resolve()
+            remote_repo = temp_path / "remote.git"
+            local_repo = temp_path / "local"
+
+            # 1. Create bare remote
+            subprocess.run([git, "init", "--bare", str(remote_repo)], check=True, capture_output=True)
+            subprocess.run([git, "symbolic-ref", "HEAD", "refs/heads/main"], cwd=remote_repo, check=True, capture_output=True)
+
+            # 2. Clone to local
+            subprocess.run([git, "clone", str(remote_repo), str(local_repo)], check=True, capture_output=True)
+            subprocess.run([git, "config", "user.email", "test@test.com"], cwd=local_repo, check=True)
+            subprocess.run([git, "config", "user.name", "Tester"], cwd=local_repo, check=True)
+
+            # 3. Create and push initial commit
+            (local_repo / "initial.md").write_text("# Initial", encoding="utf-8")
+            subprocess.run([git, "add", "."], cwd=local_repo, check=True, capture_output=True)
+            subprocess.run([git, "commit", "-m", "initial"], cwd=local_repo, check=True, capture_output=True)
+            subprocess.run([git, "branch", "-M", "main"], cwd=local_repo, check=True, capture_output=True)
+            subprocess.run([git, "fetch", str(local_repo), "main:main"], cwd=remote_repo, check=True, capture_output=True)
+
+            # 4. In clean state, publish_if_due preview should show clean divergence
+            preview = self.snapshot.publish_if_due(local_repo, receipt_file=temp_path / "receipt.json", remote="origin", branch="main", apply=False)
+            self.assertEqual(preview.get("status"), "preview")
+            self.assertEqual(preview.get("divergence"), "clean")
+
+            # 5. Simulate remote advancement via a second clone
+            other_clone = temp_path / "other"
+            subprocess.run([git, "clone", "-b", "main", str(remote_repo), str(other_clone)], check=True, capture_output=True)
+            subprocess.run([git, "config", "user.email", "test@test.com"], cwd=other_clone, check=True)
+            subprocess.run([git, "config", "user.name", "Tester"], cwd=other_clone, check=True)
+            (other_clone / "remote_change.md").write_text("# Remote", encoding="utf-8")
+            subprocess.run([git, "add", "."], cwd=other_clone, check=True, capture_output=True)
+            subprocess.run([git, "commit", "-m", "remote commit"], cwd=other_clone, check=True, capture_output=True)
+            advance = subprocess.run([git, "fetch", str(other_clone), "main:main"], cwd=remote_repo, capture_output=True, text=True)
+            self.assertEqual(advance.returncode, 0, f"local remote fixture failed: {advance.stderr}")
+
+            # 6. Make competing local commit in local_repo
+            (local_repo / "local_change.md").write_text("# Local", encoding="utf-8")
+            subprocess.run([git, "add", "."], cwd=local_repo, check=True, capture_output=True)
+            subprocess.run([git, "commit", "-m", "local commit"], cwd=local_repo, check=True, capture_output=True)
+
+            # 7. Now local and remote have diverged!
+            result = self.snapshot.publish_if_due(local_repo, receipt_file=temp_path / "receipt.json", remote="origin", branch="main", apply=True)
+            self.assertEqual(result.get("status"), "halted:diverged")
+            self.assertIn("fail-closed", result.get("detail", "").lower())
+
+
 if __name__ == '__main__': unittest.main()
