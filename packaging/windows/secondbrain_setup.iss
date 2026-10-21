@@ -35,6 +35,57 @@ Source: "{#StageDir}\*"; DestDir: "{tmp}\RespectedBrainStage"; Flags: ignorevers
 
 [Code]
 var
+  ChoicePage: TInputOptionWizardPage;
+  HubChosen: Boolean;
+
+function HubExe(): String;
+begin
+  Result := ExpandConstant('{localappdata}\Respected\RespectedHub\app\respected-hub.exe');
+end;
+
+function AlreadyInstalled(): Boolean;
+begin
+  Result := RegValueExists(HKCU, 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{2F6A9C41-85D7-4B3E-9A10-C7E4D58B1F23}_is1', 'UninstallString');
+end;
+
+// Two ways to the same installed product: through the Hub (recommended) or on its own. Silent installs and updates skip the question.
+procedure CreateChoicePage;
+begin
+  ChoicePage := CreateInputOptionPage(wpWelcome, 'Kurulum yolu', 'Nasıl devam etmek istersin?',
+    'İkisi de aynı ürünü kurar; fark, güncellemeleri ve ayarları nereden yöneteceğindir.', True, False);
+  ChoicePage.Add('Respected Hub ile devam et (önerilen): kurulum, güncelleme ve ayarlar görsel arayüzden yönetilir');
+  ChoicePage.Add('Yalnızca SecondBrain (gelişmiş / geliştiriciler için): Hub olmadan, bu kurucuyla');
+  ChoicePage.SelectedValueIndex := 0;
+end;
+
+function ShouldSkipPage(PageID: Integer): Boolean;
+begin
+  Result := (PageID = ChoicePage.ID) and (WizardSilent or AlreadyInstalled());
+end;
+
+procedure CancelButtonClick(CurPageID: Integer; var Cancel, Confirm: Boolean);
+begin
+  if HubChosen then Confirm := False;
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  Code: Integer;
+begin
+  Result := True;
+  if WizardSilent or (CurPageID <> ChoicePage.ID) or (ChoicePage.SelectedValueIndex <> 0) then Exit;
+  if FileExists(HubExe()) then
+    Exec(HubExe(), '--install=secondbrain', '', SW_SHOWNORMAL, ewNoWait, Code)
+  else begin
+    ShellExec('open', 'https://github.com/respected0/respected-hub/releases/latest', '', '', SW_SHOWNORMAL, ewNoWait, Code);
+    MsgBox('Respected Hub kurulu değil. Açılan sayfadan RespectedHub-Windows-Setup.exe dosyasını indirip çalıştırın; Hub, SecondBrain ürününü senin için kuracak.', mbInformation, MB_OK);
+  end;
+  HubChosen := True;
+  Result := False;
+  WizardForm.Close;
+end;
+
+var
   VaultPage: TInputDirWizardPage;
 
 // /VAULT="C:\path" for silent installs
@@ -60,7 +111,8 @@ end;
 
 procedure InitializeWizard;
 begin
-  VaultPage := CreateInputDirPage(wpWelcome, 'Not kasası', 'Notların nerede saklanacak?',
+  CreateChoicePage;
+  VaultPage := CreateInputDirPage(ChoicePage.ID, 'Not kasası', 'Notların nerede saklanacak?',
     'Boş veya yeni bir klasör seç. Mevcut notlarının üzerine yazılmaz ve kaldırırken kasan silinmez.', False, '');
   VaultPage.Add('');
   VaultPage.Values[0] := CommandValue('VAULT', ExpandConstant('{userdocs}\RespectedOS'));
