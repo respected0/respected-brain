@@ -35,11 +35,6 @@ def find_forbidden_occurrences(
     return occurrences
 
 
-def load_legacy_names():
-    from respectedbrain.core import legacy_names
-    return legacy_names
-
-
 class NamingContractTest(unittest.TestCase):
     def test_repository_current_surfaces_have_no_unallowlisted_legacy_brand(self):
         result = subprocess.run(
@@ -115,42 +110,6 @@ class NamingContractTest(unittest.TestCase):
                 (Path("legacy.txt"), 3, "respot"),
                 (Path("legacy.txt"), 4, "respot"),
             ],
-        )
-
-    def test_legacy_identifiers_are_reconstructed_by_one_compatibility_module(self):
-        legacy = load_legacy_names()
-
-        self.assertIsNotNone(legacy, "core/legacy_names.py is missing")
-        old_namespace = "res" + "pot"
-        old_upper = "RES" + "POT"
-        self.assertEqual(legacy.LEGACY_PRODUCT_NAME, "Res" + "pot Brain")
-        self.assertEqual(legacy.LEGACY_NAMESPACE, old_namespace)
-        self.assertEqual(
-            legacy.LEGACY_GLOBAL_BEGIN,
-            "<!-- " + old_upper + "-GLOBAL:BEGIN -->",
-        )
-        self.assertEqual(
-            legacy.LEGACY_GLOBAL_END,
-            "<!-- " + old_upper + "-GLOBAL:END -->",
-        )
-        self.assertEqual(legacy.LEGACY_HOOK_NAME, old_namespace + "-brain")
-        self.assertEqual(legacy.LEGACY_CURSOR_RULE, old_namespace + "-brain.mdc")
-        self.assertEqual(
-            legacy.LEGACY_UPDATE_SCRIPT,
-            "scripts/update_" + old_namespace + ".py",
-        )
-        self.assertEqual(
-            legacy.LEGACY_MANIFEST_SCRIPT,
-            "scripts/" + old_namespace + "_manifest.py",
-        )
-        self.assertEqual(
-            legacy.LEGACY_TASK_PREFIX,
-            old_namespace + "-morning-briefing-",
-        )
-        self.assertEqual(legacy.LEGACY_GLOBAL_BACKUP_ROOT, "." + old_namespace + "-backups")
-        self.assertEqual(
-            legacy.LEGACY_SCHEDULE_BACKUP_ROOT,
-            "." + old_namespace + "/schedule-backups",
         )
 
     def test_current_manifest_uses_package_version_and_schema3_uuid_marker(self):

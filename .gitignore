@@ -38,19 +38,10 @@ auth.json
 *.yedek-*
 *.tmp
 tmp/
-tmp-brief/
-.beyin/backups/
-.beyin/cache/
 .respected-install-*/
 
 # Local Agent & Runtime State
 .local/
-runtime/state/
-runtime/.state/
-.beyin/engine/.state/
-.claude/hooks/.state/
-.claude/scripts/.state/*
-!.claude/scripts/.state/.gitkeep
 🔮 850-Companion/Session-Logs/
 
 # Python & Testing Artifacts
@@ -79,7 +70,6 @@ release-stage/
 /setup.exe
 *.egg-info/
 *.egg
-node_modules/
 
 # Operating System Garbage
 # macOS
@@ -104,16 +94,10 @@ $RECYCLE.BIN/
 .idea/
 *.swp
 *.swo
-.vscode/*
-!.vscode/settings.json
-!.vscode/extensions.json
-.vscode/*.local.json
+.vscode/
 .obsidian/workspace*
 .obsidian/cache
 
 # Diagnostics & Logs
 *.log
 logs/
-npm-debug.log*
-yarn-debug.log*
-pnpm-debug.log*

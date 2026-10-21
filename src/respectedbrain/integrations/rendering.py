@@ -176,7 +176,7 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED) -> tuple[list[tup
                         if item not in expected and not owned:
                             raise OwnershipConflict(f"Unknown managed hook command: {path}")
                     else:
-                        check(item, namespace or key in {HOOK_NAME, LEGACY_HOOK_NAME})
+                        check(item, namespace or key == HOOK_NAME)
             elif isinstance(value, list):
                 for item in value:
                     check(item, namespace)
@@ -208,9 +208,6 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED) -> tuple[list[tup
         config = home / ".gemini/config"
         hooks_path = config / "hooks.json"
         hooks = load_object(hooks_path)
-        if LEGACY_HOOK_NAME in hooks and HOOK_NAME in hooks:
-            raise ValueError("legacy ve current Antigravity hook anahtarları çakışıyor")
-        hooks.pop(LEGACY_HOOK_NAME, None)
         hooks[HOOK_NAME] = {
             "PreInvocation": [{"type": "command", "command": bridge_command(vault, "antigravity", "start", platform), "timeout": 15}],
             "Stop": [{"type": "command", "command": bridge_command(vault, "antigravity", "turn", platform), "timeout": 10}],
@@ -316,15 +313,6 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED) -> tuple[list[tup
         }
         merge_simple_hooks(hooks, "cursor", additions)
         rule_path = config / "rules" / CURSOR_RULE
-        legacy_rule_path = config / "rules" / LEGACY_CURSOR_RULE
-        if planner.read(legacy_rule_path) is not None:
-            if planner.read(rule_path) is not None:
-                raise ValueError("legacy ve current Cursor rule dosyaları çakışıyor")
-            legacy_content = planner.text(legacy_rule_path)
-            if classify_managed_block(legacy_content) != "legacy":
-                raise ValueError("legacy Cursor rule yönetilen dosya olarak doğrulanamadı")
-            writes.append((legacy_rule_path, None))
-            touched.append(legacy_rule_path)
         cursor_rule = merge_managed(planner.text(rule_path), rule) if planner.read(rule_path) is not None else "---\ndescription: Global second-brain memory\nalwaysApply: true\n---\n\n" + rule + "\n"
         writes += [(hooks_path, json.dumps(hooks, ensure_ascii=False, indent=2) + "\n"), (rule_path, cursor_rule)]
         writes += copy_skills(vault, [config / "skills"])

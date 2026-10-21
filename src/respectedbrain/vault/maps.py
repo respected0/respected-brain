@@ -12,7 +12,6 @@ import time
 
 from respectedbrain.core import platform as runtime_platform
 from respectedbrain.core.context import AppContext
-from respectedbrain.core.legacy_names import LEGACY_MAP_HEADER
 
 
 COMMAND_CENTER = "🎯 100-Command-Center"
@@ -136,10 +135,7 @@ def _validate_map_target(vault_root: Path, path: Path) -> None:
                 first_line = handle.readline()
         except (OSError, UnicodeError) as error:
             raise ValueError(f"map-collision:{path.name}") from error
-        generated_headers = {HEADER}
-        if LEGACY_MAP_HEADER is not None:
-            generated_headers.add(LEGACY_MAP_HEADER)
-        if first_line not in generated_headers:
+        if first_line != HEADER:
             raise ValueError(f"map-collision:{path.name}")
 
 

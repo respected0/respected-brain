@@ -4,37 +4,25 @@ import ast
 import json
 from pathlib import Path
 import re
-from respectedbrain.core.legacy_names import LEGACY_GLOBAL_BEGIN, LEGACY_GLOBAL_END, LEGACY_HOOK_NAME, LEGACY_CURSOR_RULE
 BEGIN = "<!-- RESPECTED-GLOBAL:BEGIN -->"
 END = "<!-- RESPECTED-GLOBAL:END -->"
 HOOK_NAME = "respected-brain"
 CURSOR_RULE = HOOK_NAME + ".mdc"
 SUPPORTED = ("antigravity", "gemini", "codex", "cursor", "claude")
 def classify_managed_block(existing: str) -> str:
-    current = (existing.count(BEGIN), existing.count(END))
-    legacy = (existing.count(LEGACY_GLOBAL_BEGIN), existing.count(LEGACY_GLOBAL_END))
-    if current[0] != current[1] or legacy[0] != legacy[1] or max((*current, *legacy)) > 1:
+    begin, end = existing.count(BEGIN), existing.count(END)
+    if begin != end or begin > 1:
         return "partial"
-    if current[0] and legacy[0]:
-        return "collision"
-    if current[0]:
-        return "current"
-    if legacy[0]:
-        return "legacy"
-    return "none"
+    return "current" if begin else "none"
 
 
 def merge_managed(existing: str, managed: str) -> str:
     state = classify_managed_block(existing)
     if state == "partial":
         raise ValueError("global talimat dosyasında yarım veya tekrarlı yönetim bloğu var")
-    if state == "collision":
-        raise ValueError("legacy ve current global yönetim blokları çakışıyor")
-    if state in {"current", "legacy"}:
-        begin = BEGIN if state == "current" else LEGACY_GLOBAL_BEGIN
-        end = END if state == "current" else LEGACY_GLOBAL_END
-        start = existing.index(begin)
-        finish = existing.index(end, start) + len(end)
+    if state == "current":
+        start = existing.index(BEGIN)
+        finish = existing.index(END, start) + len(END)
         return existing[:start] + managed + existing[finish:]
     separator = "\n\n" if existing.strip() else ""
     return existing.rstrip() + separator + managed + "\n"

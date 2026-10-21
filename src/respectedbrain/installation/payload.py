@@ -5,6 +5,7 @@ import os
 import re
 from pathlib import Path, PurePosixPath
 import subprocess
+from typing import Any
 
 from respectedbrain.core.errors import OwnershipConflict
 from .ownership import safe_path, digest

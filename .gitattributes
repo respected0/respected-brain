@@ -70,7 +70,6 @@ docs/records/** whitespace=-blank-at-eol
 
 # Distribution export exclusions
 /.github export-ignore
-/.vscode export-ignore
 /tests export-ignore
 /.gitattributes export-ignore
 /.gitignore export-ignore

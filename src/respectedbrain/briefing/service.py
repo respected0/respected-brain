@@ -19,7 +19,6 @@ from respectedbrain.core import platform as runtime_platform
 from respectedbrain.core.context import AppContext, ModelService
 from respectedbrain.core.errors import BusyError
 from respectedbrain.core.locking import exclusive_lock
-from respectedbrain.core.legacy_names import LEGACY_BRIEFING_BEGIN, LEGACY_BRIEFING_END
 
 
 def compile_memory(ctx, *, model, now):
@@ -199,23 +198,11 @@ def _update_dashboard(path: Path, day: str) -> None:
     block = f"{BEGIN}\n## Bugünün Brifingi\n\n[[Briefings/{day}|Bugünün Brifingi]]\n{END}"
     begin_count = existing.count(BEGIN)
     end_count = existing.count(END)
-    legacy_begin_count = existing.count(LEGACY_BRIEFING_BEGIN)
-    legacy_end_count = existing.count(LEGACY_BRIEFING_END)
-    if (
-        begin_count != end_count
-        or begin_count > 1
-        or legacy_begin_count != legacy_end_count
-        or legacy_begin_count > 1
-        or (begin_count and legacy_begin_count)
-    ):
+    if begin_count != end_count or begin_count > 1:
         raise ValueError("dashboard-briefing-marker-incomplete")
     if begin_count == 1:
         start = existing.index(BEGIN)
         finish = existing.index(END, start) + len(END)
-        updated = existing[:start] + block + existing[finish:]
-    elif legacy_begin_count == 1:
-        start = existing.index(LEGACY_BRIEFING_BEGIN)
-        finish = existing.index(LEGACY_BRIEFING_END, start) + len(LEGACY_BRIEFING_END)
         updated = existing[:start] + block + existing[finish:]
     else:
         separator = "\n\n" if existing.strip() else ""

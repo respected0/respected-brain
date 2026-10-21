@@ -34,7 +34,7 @@
       "relationships": [
         "Shell shebang'leri, Windows PowerShell ve tarihsel belge bütünlüğünü Git checkout/commit sırasında korur."
       ],
-      "review_sha256": "42114a8b52dd63bc77194d4ad1116d7b31f7b4dbb8990393c982e74aaba9863b"
+      "review_sha256": "59cb32c75b21959e56adfd4fc27b5df6ded11161b8241d4e2599067d31de0552"
     },
     {
       "path": ".github/workflows/ci.yml",
@@ -49,29 +49,11 @@
     {
       "path": ".gitignore",
       "role": "Depo sözleşmesi",
-      "purpose": "Kimlik bilgileri, kişisel ayarlar, teknik state, veritabanı, sanal ortam ve build çıktılarının Git'e girmesini engeller; paketlenmiş başlangıç kaynaklarını dışlamaz. Yerel geliştirici kanıtı .local/ altında dışlanır.",
+      "purpose": "Kimlik bilgileri, kişisel ayarlar, veritabanı, sanal ortam, editör ayarları (.vscode/.idea) ve build çıktılarının Git'e girmesini engeller; paketlenmiş başlangıç kaynaklarını dışlamaz. Yerel geliştirici kanıtı .local/ altında dışlanır.",
       "relationships": [
         "Git keşif aracı --exclude-standard ile bu kuralları kullanır; vault-template/.gitignore yeni kullanıcı kasası için ayrı kurallardır."
       ],
-      "review_sha256": "ed55bb6957a3ee1da09f89c6a10f08781b80852aa76378d3defe77bd620ac621"
-    },
-    {
-      "path": ".vscode/extensions.json",
-      "role": "Depo sözleşmesi",
-      "purpose": "Python/Pylance, PowerShell, EditorConfig ve GitHub Actions eklentilerini geliştiriciye önerir.",
-      "relationships": [
-        "VS Code'un geliştirme ortamını kolaylaştırır; runtime bağımlılığı veya otomatik eklenti kurulumu değildir."
-      ],
-      "review_sha256": "8bc4f275ebdf642be94b7930b1a5ea27e1de1cb056bacaeaaf3ef5fdadd5bb4b"
-    },
-    {
-      "path": ".vscode/settings.json",
-      "role": "Depo sözleşmesi",
-      "purpose": "UTF-8 ve dosya sonu politikasını, unittest keşfini, Python analiz arama yollarını ve izleyici dışlamalarını ayarlar.",
-      "relationships": [
-        "src paketi ve tests dizinindeki geliştirme deneyimini etkiler; ürünün kurulu yollarını belirlemez."
-      ],
-      "review_sha256": "73fd575d7268cf08a66c46667f93f0e6c11404606f3ef41bd45cbc6fdea01a82"
+      "review_sha256": "18918afbad383d20072c7122406166c296cbee63ad63a0f9c02fe1ab8461ea25"
     },
     {
       "path": "AGENTS.md",
@@ -603,7 +585,7 @@
       "relationships": [
         "ModelService ve memory.compile.compile_memory wrapper'ı kullanılır; çağrı before_date filtresi geçirmez. Derleme başarısız olsa da geçerli brifing yazılıp exit 1 dönebilir; aynı günün dosyası varsa sonraki çağrı derlemeyi tekrar denemez. core.locking.exclusive_lock, UUID state/lock ve hazırlanmış çıktı staging alanı DataRoot'tadır; CLI briefing ve schedule aynı run_if_due girişine bağlanır. guarded_writer ortak yazıcı lease ile aktivasyon kilidine uyar; Dashboard expected_before byte değeriyle, yeni brifing ise beklenen yoklukla yayımlanır."
       ],
-      "review_sha256": "052ecb3c7212da7c50edef538446232daed6737eb2e0f99b2cfd8adac8a74274"
+      "review_sha256": "c08dd6754dbb8e4c8ea4834b4e64c176a816bbfebf7456f8cbf9f0f25d4eeac5"
     },
     {
       "path": "src/respectedbrain/cli.py",
@@ -658,15 +640,6 @@
         "CLI anlamlı hata koduna çevirir; core'dan özellik paketine ters bağımlılık oluşturmaz."
       ],
       "review_sha256": "67029a5cd75db66b485f094d98882a895b373aa67e98e79a6baf5a4615b1f5a0"
-    },
-    {
-      "path": "src/respectedbrain/core/legacy_names.py",
-      "role": "Paylaşılan çekirdek sözleşme",
-      "purpose": "Eski marka/marker/hook adlarını tek uyumluluk modülünde yeniden kurar; yalnız migration ve eski format okuma için kabul edilen adları sınırlar.",
-      "relationships": [
-        "global_config, memory.events/briefing/maps ve legacy migration eski kayıtları tanır; naming_contract_test yeni yüzeylere sızmayı yakalar."
-      ],
-      "review_sha256": "b572ef163595db8e6a63b45411fd26f57353ce2e6cd2a4c62cec80cec9bf66f2"
     },
     {
       "path": "src/respectedbrain/core/locking.py",
@@ -756,7 +729,7 @@
       "relationships": [
         "src/respectedbrain/installation/provenance.py ve tools/verify_distribution.py tarafından çağrılır."
       ],
-      "review_sha256": "829c5bf52af5544595cbf9f8e04bd9acf1cdef4574fb259371bd544dba3abd17"
+      "review_sha256": "c7245846fe487c1be86cfadf08589ccd5cd5620ad135a3f2826e7a7e168e53b0"
     },
     {
       "path": "src/respectedbrain/installation/provenance.py",
@@ -853,9 +826,9 @@
       "role": "Ajan ve işletim sistemi bağlantısı",
       "purpose": "Managed talimat blokları, Codex TOML notify ve provider hook JSON merge'lerini saf algoritmalarla birleştirir; bilinmeyen kullanıcı alanlarını korur.",
       "relationships": [
-        "rendering planı bu merge sonuçlarını external change olarak verir; legacy_registration eski managed kayıtları kanıtlı ayırır."
+        "rendering planı bu merge sonuçlarını external change olarak verir; yalnız güncel RESPECTED-GLOBAL bloğunu tanır (eski marka geçişi beta öncesi kaldırıldı)."
       ],
-      "review_sha256": "ed122dd02c4affd1db7ecb19e4ae413e79f80ae5bebb095abba226dd0f3ccf54"
+      "review_sha256": "b05952d52f9029df7c665de5eeb6bb0c791f6bf13461339fe88931ec27cd90ca"
     },
     {
       "path": "src/respectedbrain/integrations/hooks/__init__.py",
@@ -918,7 +891,7 @@
       "relationships": [
         "ResourceCatalog seed içeriğidir; backend ExternalChange çıktısını Transaction uygular. Scheduling ortak sahiplik kontrolünü kullanır. foundation_integrations/profile_render/multiai/mcp_registration plan ve kullanıcı alanı korumasını sınar."
       ],
-      "review_sha256": "4e227163809f6882c2682b78c6000c39b1c5e0d219abc14c4d6d6ec1fa708a3f"
+      "review_sha256": "b3ed6054655d3c3e35e41d9fc88ce73c051dd062249ca1dc461cbfb3ce284133"
     },
     {
       "path": "src/respectedbrain/integrations/scheduling/__init__.py",
@@ -1824,7 +1797,7 @@
       "relationships": [
         "ResourceCatalog ve UUID overrides skill önceliği sağlar; lifecycle bağlamında kompakt giriş noktaları kullanılır; repository atlasından farklıdır."
       ],
-      "review_sha256": "4683df27e179485f71a35a9a0b5eb3b59dfdd432a1b5a58d8a8500970ae9da03"
+      "review_sha256": "278a79b65f9ac4e05b76dd952bbb69b74059180dc5a2096afe47888ee12564f8"
     },
     {
       "path": "src/respectedbrain/vault/registry.py",
@@ -1974,12 +1947,12 @@
     {
       "path": "tests/foundation_distribution_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Üretilmiş native payload'un checkout/Python olmadan çalışmasını ve değişmiş dağıtım hash reddini sınar. Odak örnekleri: `test_frozen_runs_without_checkout_or_python`, `test_distribution_tampering_fails_before_launcher`.",
+      "purpose": "Üretilmiş native payload'un checkout/Python olmadan çalışmasını ve değişmiş dağıtım hash reddini sınar. Odak örnekleri: `test_frozen_runs_without_checkout_or_python`, `test_distribution_tampering_fails_before_launcher`. dist/ yoksa yerelde açıklamayla atlanır; CI (CI ortam değişkeni) yapıyı önce üretir ve testi zorunlu tutar.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.installation.payload`, `respectedbrain.core.errors`."
       ],
-      "review_sha256": "ad34aaebc469e588e89dac719c91ee783013dac9a7e1cdc5c1a2049456abba44"
+      "review_sha256": "2dad2bc77b1d910ca04a87dee620bf4845e2cf775a6ec6327f723d902a832bc5"
     },
     {
       "path": "tests/foundation_features_test.py",
@@ -2131,16 +2104,6 @@
       "review_sha256": "68aebdf2dc29065af22e9db604c156b337d4246b49333f15d358634f167228eb"
     },
     {
-      "path": "tests/global_brand_migration_test.py",
-      "role": "Davranış/regresyon testi",
-      "purpose": "Eski global marka kayıtlarının readonly preview ve idempotent apply ile dönüşmesini; collision/unknown rule/backup korumasını sınar. Odak örnekleri: `test_preview_is_read_only_and_apply_migrates_all_legacy_identities_idempotently`, `test_current_and_legacy_blocks_collide_without_mutation`, `test_unverified_legacy_cursor_rule_fails_closed`.",
-      "relationships": [
-        "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
-        "Doğrudan sınadığı ürün import noktaları: `respectedbrain.core.legacy_names`, `respectedbrain.integrations.rendering`, `respectedbrain.integrations.backend`, `respectedbrain.installation.transaction`."
-      ],
-      "review_sha256": "eeb0e2e2b8abc9a37da057149b6e57c84e84a4a6b13a9b4667443e90b8105698"
-    },
-    {
       "path": "tests/graph_and_session_test.py",
       "role": "Davranış/regresyon testi",
       "purpose": "Wikilink graph hubs/orphans/synthesis/cross-link, GraphRAG ranking/BFS ve SessionBrain ingest/query/HTML görselleştirme davranışlarını sınar. Odak örnekleri: `test_graph_construction_and_orphans`, `test_hub_and_degree`, `test_synthesis_gaps`. Aynı adlı notlar/path linkleri, junction sınırı, prose/insan edit koruması, bridge skorları, bozuk/atomik/concurrent session indeksi ve HTML/script enjeksiyonu regresyonlarını sınar. Üretilen JavaScript Node ile çalıştırılarak filter composition ve click/tooltip metin güvenliği doğrulanır; dört ayrı fixture sürecinde indeks kayıtları korunur.",
@@ -2178,6 +2141,16 @@
       "review_sha256": "52609c77c0e4707ac6f166ed64d0ce13efc9c2a62f28c4fc282c17780896aca2"
     },
     {
+      "path": "tests/integration_rollback_test.py",
+      "role": "Davranış/regresyon testi",
+      "purpose": "Entegrasyon transaction'ında ikinci yazma başarısız olursa yeni dosya ve klasörlerin geri alınmasını ve istemci yedek köklerinin bilinmeyen kullanıcı verisi olarak hiç dokunulmadan korunmasını sınar.",
+      "relationships": [
+        "foundation_integrations_test.IntegrationFixture ve foundation_support.snapshot kullanır; geçici fake home ile çalışır, kişisel vault kullanılmaz.",
+        "Doğrudan sınadığı ürün import noktaları: `respectedbrain.integrations.rendering`, `respectedbrain.integrations.backend`, `respectedbrain.installation.transaction`."
+      ],
+      "review_sha256": "c7fb8c89250e2a3b35ac71c5abcc5f40883e6e31d77371acc7455adb4f083970"
+    },
+    {
       "path": "tests/knowledge_domain_test.py",
       "role": "Davranış/regresyon testi",
       "purpose": "Compiler'ın domain etiket/index formatını ve knowledge/concepts altında nested domain çıktılarını güvenli promote etmesini sınar. Odak örnekleri: `test_compile_prompt_specifies_domain_tagging_and_index_structure`, `test_template_index_markdown_has_domain_column`, `test_allowed_output_file_permits_nested_domain_concepts`.",
@@ -2209,12 +2182,12 @@
     {
       "path": "tests/maps_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Gövdeleri okumadan deterministik map, skill frontmatter, atomic replacement, legacy marker migration ve user/reparse hedef korumasını sınar. Odak örnekleri: `test_refresh_writes_visible_deterministic_maps_without_reading_note_bodies`, `test_skills_map_uses_only_canonical_skill_frontmatter`, `test_map_replacement_leaves_no_temporary_file`. Geçici gerçek Windows junction/POSIX symlink ile dış dosya adlarının haritaya girmemesini doğrular.",
+      "purpose": "Gövdeleri okumadan deterministik map, skill frontmatter, atomic replacement ve user/reparse hedef korumasını sınar. Odak örnekleri: `test_refresh_writes_visible_deterministic_maps_without_reading_note_bodies`, `test_skills_map_uses_only_canonical_skill_frontmatter`, `test_map_replacement_leaves_no_temporary_file`. Geçici gerçek Windows junction/POSIX symlink ile dış dosya adlarının haritaya girmemesini doğrular.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.vault`."
       ],
-      "review_sha256": "9353b9e780c7425c289a3699eccab0aea3406586dd7619ef8c96c5c3fb92fdf5"
+      "review_sha256": "b29f72767ecdf66ff5715e6cb7aa1f863a3d295b4d2b432427f6b89787b3043e"
     },
     {
       "path": "tests/mcp_and_features_test.py",
@@ -2244,7 +2217,7 @@
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.briefing`, `respectedbrain.core.context`."
       ],
-      "review_sha256": "0ac9aff63a9b46344bff544ecfc4306b741f6d720183c575af9798b839df7988"
+      "review_sha256": "3dc9e3ebd56fe0c72562c145fb28ed506229c4b37fa6d57c957adfdd1ad42a8d"
     },
     {
       "path": "tests/multiai_test.py",
@@ -2259,12 +2232,12 @@
     {
       "path": "tests/naming_contract_test.py",
       "role": "Davranış/regresyon testi",
-      "purpose": "Güncel marka ve schema3/version sözleşmesini, izinli legacy isimlerin tek modülde kalmasını ve güncel public rehber native sınırını (Hub üzerinden kurulum, repo adresi, AppRoot/DataRoot) sınar. Odak örnekleri: `test_repository_current_surfaces_have_no_unallowlisted_legacy_brand`, `test_current_public_guides_use_the_modular_native_contract`, `test_scanner_reports_legacy_brand_only_outside_the_allowlist`.",
+      "purpose": "Güncel marka ve schema3/version sözleşmesini, eski marka adının izinli dosyalar dışında hiçbir yüzeye sızmamasını ve güncel public rehber native sınırını (Hub üzerinden kurulum, repo adresi, AppRoot/DataRoot) sınar. Odak örnekleri: `test_repository_current_surfaces_have_no_unallowlisted_legacy_brand`, `test_current_public_guides_use_the_modular_native_contract`, `test_scanner_reports_legacy_brand_only_outside_the_allowlist`.",
       "relationships": [
         "unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz.",
         "Doğrudan sınadığı ürün import noktaları: `respectedbrain.core`, `respectedbrain`."
       ],
-      "review_sha256": "99bde6caa65944b237910e238faed5325420c09f5a3bfd66cc701ee94ee80715"
+      "review_sha256": "ebc5c9f452822546ab8b07f981f4b37d648e9371ed36320b9db9919c793779f8"
     },
     {
       "path": "tests/output_normalization_test.py",
@@ -2433,11 +2406,11 @@
     {
       "path": "tests/secret_scanner_test.py",
       "role": "Doğrulama paketi",
-      "purpose": "Not içeriklerindeki sentetik token ve anahtar bloklarının sızıntısız tespiti, sliding window sınır bölünmesi, Git index blob taraması ve symlink kaçışlarını sınar.",
+      "purpose": "Not içeriklerindeki sentetik token ve anahtar bloklarının sızıntısız tespiti, sliding window sınır bölünmesi, Git index blob taraması ve symlink kaçışlarını sınar. .gitignore'a sonradan giren izlenen dosyadaki sırrın da yakalandığını doğrular.",
       "relationships": [
         "src/respectedbrain/maintenance/backup/publish_git_snapshot.py modülünü doğrular."
       ],
-      "review_sha256": "73953e02731ed6d505bf34823c1fba5bdd090b363975b2fcf33dff5d97cf6fd1"
+      "review_sha256": "9b1e8d4f8f7ecde91aa2ca4b85988b1d416461ee7097de47502578864712fdfa"
     },
     {
       "path": "tests/security_hardening_fifth_fix_test.py",

@@ -195,35 +195,6 @@ class MorningBriefingTest(unittest.TestCase):
         self.assertEqual(final.read_bytes(), user_note)
         self.assertFalse(created)
 
-    def test_success_replaces_one_legacy_dashboard_block_with_current_markers(self):
-        worker = load_worker()
-        old_upper = "RES" + "POT"
-        old_begin = "<!-- " + old_upper + "-BRIEFING:BEGIN -->"
-        old_end = "<!-- " + old_upper + "-BRIEFING:END -->"
-        dashboard_path = self.vault / "🎯 100-Command-Center/Dashboard.md"
-        dashboard_path.write_text(
-            "# Dashboard\n\nKullanıcı içeriği.\n\n"
-            + old_begin
-            + "\n## Bugünün Brifingi\n\n[[Briefings/2026-08-30|Dün]]\n"
-            + old_end
-            + "\n",
-            encoding="utf-8",
-        )
-
-        created = worker.run_if_due(
-            self.vault,
-            datetime.fromisoformat("2026-08-31T09:17:00+03:00"),
-            lambda _prompt, _cwd: (VALID, None, "codex"),
-        )
-
-        self.assertTrue(created)
-        dashboard = dashboard_path.read_text(encoding="utf-8")
-        self.assertIn("Kullanıcı içeriği.", dashboard)
-        self.assertEqual(dashboard.count("<!-- RESPECTED-BRIEFING:BEGIN -->"), 1)
-        self.assertEqual(dashboard.count("<!-- RESPECTED-BRIEFING:END -->"), 1)
-        self.assertNotIn(old_begin, dashboard)
-        self.assertNotIn(old_end, dashboard)
-
     def test_failure_leaves_no_final_and_can_retry_same_day(self):
         worker = load_worker()
         now = datetime.fromisoformat("2026-08-31T10:00:00+03:00")

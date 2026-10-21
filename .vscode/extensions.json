@@ -1,9 +1,0 @@
-{
-  "recommendations": [
-    "ms-python.python",
-    "ms-python.vscode-pylance",
-    "ms-vscode.powershell",
-    "editorconfig.editorconfig",
-    "github.vscode-github-actions"
-  ]
-}

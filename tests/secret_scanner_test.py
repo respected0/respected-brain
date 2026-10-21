@@ -1,6 +1,7 @@
 """Tests for content secret scanning before Git snapshot publication."""
 from __future__ import annotations
 
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -124,6 +125,10 @@ class ContentSecretScanningTest(unittest.TestCase):
 
             # Now add ignored_folder to .gitignore
             (root / ".gitignore").write_text("ignored_folder/\n", encoding="utf-8")
+
+            safe, findings = check_secret_guard(root)
+            self.assertFalse(safe)
+            self.assertTrue(any("secret.md" in json.dumps(finding) for finding in findings), findings)
 
     def test_snapshot_index_race_condition_aborts_and_preserves_staging(self):
         """A secret captured into the immutable tree after the live-index scan aborts publication."""

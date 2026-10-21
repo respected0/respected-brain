@@ -2,7 +2,7 @@
 
 > Bu belge `tools/repository_map.py` tarafından `docs/repository_inventory.json` içindeki gözden geçirilmiş açıklamalardan üretilir. Doğrudan bu Markdown dosyasını düzenlemeyin.
 
-**Kapsam:** 305 proje dosyası. Git indeksindeki dosyalar ve henüz eklenmemiş, ignore edilmeyen proje dosyaları dahildir. Bağımlılık/üretim önbellekleri ayrı kategoriler olarak açıklanır.
+**Kapsam:** 302 proje dosyası. Git indeksindeki dosyalar ve henüz eklenmemiş, ignore edilmeyen proje dosyaları dahildir. Bağımlılık/üretim önbellekleri ayrı kategoriler olarak açıklanır.
 
 ## Nasıl okunur ve nereden başlanır
 
@@ -120,9 +120,6 @@ secondbrain/
 │   └── workflows/
 │       └── ci.yml
 ├── .gitignore
-├── .vscode/
-│   ├── extensions.json
-│   └── settings.json
 ├── AGENTS.md
 ├── LICENSE
 ├── README.md
@@ -206,7 +203,6 @@ secondbrain/
 │       │   ├── context.py
 │       │   ├── coordination.py
 │       │   ├── errors.py
-│       │   ├── legacy_names.py
 │       │   ├── locking.py
 │       │   ├── paths.py
 │       │   ├── platform.py
@@ -420,11 +416,11 @@ secondbrain/
 │   ├── foundation_support.py
 │   ├── foundation_transactions_test.py
 │   ├── foundation_writer_coordination_test.py
-│   ├── global_brand_migration_test.py
 │   ├── graph_and_session_test.py
 │   ├── hooks_test.sh
 │   ├── hybrid_wsl_smoke.ps1
 │   ├── install_windows_test.ps1
+│   ├── integration_rollback_test.py
 │   ├── knowledge_domain_test.py
 │   ├── lifecycle_test.py
 │   ├── maintenance_review_test.py
@@ -529,29 +525,9 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **Rol:** Depo sözleşmesi.
 
-**Amaç / sorumluluk:** Kimlik bilgileri, kişisel ayarlar, teknik state, veritabanı, sanal ortam ve build çıktılarının Git'e girmesini engeller; paketlenmiş başlangıç kaynaklarını dışlamaz. Yerel geliştirici kanıtı .local/ altında dışlanır.
+**Amaç / sorumluluk:** Kimlik bilgileri, kişisel ayarlar, veritabanı, sanal ortam, editör ayarları (.vscode/.idea) ve build çıktılarının Git'e girmesini engeller; paketlenmiş başlangıç kaynaklarını dışlamaz. Yerel geliştirici kanıtı .local/ altında dışlanır.
 
 **İlişkiler ve sınır:** Git keşif aracı --exclude-standard ile bu kuralları kullanır; vault-template/.gitignore yeni kullanıcı kasası için ayrı kurallardır.
-
-### .vscode
-
-#### [`.vscode/extensions.json`](../.vscode/extensions.json)
-
-**Rol:** Depo sözleşmesi.
-
-**Amaç / sorumluluk:** Python/Pylance, PowerShell, EditorConfig ve GitHub Actions eklentilerini geliştiriciye önerir.
-
-**İlişkiler ve sınır:** VS Code'un geliştirme ortamını kolaylaştırır; runtime bağımlılığı veya otomatik eklenti kurulumu değildir.
-
-#### [`.vscode/settings.json`](../.vscode/settings.json)
-
-**Rol:** Depo sözleşmesi.
-
-**Amaç / sorumluluk:** UTF-8 ve dosya sonu politikasını, unittest keşfini, Python analiz arama yollarını ve izleyici dışlamalarını ayarlar.
-
-**İlişkiler ve sınır:** src paketi ve tests dizinindeki geliştirme deneyimini etkiler; ürünün kurulu yollarını belirlemez.
-
-### Depo kökü
 
 #### [`AGENTS.md`](../AGENTS.md)
 
@@ -1113,14 +1089,6 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **İlişkiler ve sınır:** CLI anlamlı hata koduna çevirir; core'dan özellik paketine ters bağımlılık oluşturmaz.
 
-#### [`src/respectedbrain/core/legacy_names.py`](../src/respectedbrain/core/legacy_names.py)
-
-**Rol:** Paylaşılan çekirdek sözleşme.
-
-**Amaç / sorumluluk:** Eski marka/marker/hook adlarını tek uyumluluk modülünde yeniden kurar; yalnız migration ve eski format okuma için kabul edilen adları sınırlar.
-
-**İlişkiler ve sınır:** global_config, memory.events/briefing/maps ve legacy migration eski kayıtları tanır; naming_contract_test yeni yüzeylere sızmayı yakalar.
-
 #### [`src/respectedbrain/core/locking.py`](../src/respectedbrain/core/locking.py)
 
 **Rol:** Paylaşılan çekirdek sözleşme.
@@ -1291,7 +1259,7 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **Amaç / sorumluluk:** Managed talimat blokları, Codex TOML notify ve provider hook JSON merge'lerini saf algoritmalarla birleştirir; bilinmeyen kullanıcı alanlarını korur.
 
-**İlişkiler ve sınır:** rendering planı bu merge sonuçlarını external change olarak verir; legacy_registration eski managed kayıtları kanıtlı ayırır.
+**İlişkiler ve sınır:** rendering planı bu merge sonuçlarını external change olarak verir; yalnız güncel RESPECTED-GLOBAL bloğunu tanır (eski marka geçişi beta öncesi kaldırıldı).
 
 ### src/respectedbrain/integrations/hooks
 
@@ -2379,7 +2347,7 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **Rol:** Davranış/regresyon testi.
 
-**Amaç / sorumluluk:** Üretilmiş native payload'un checkout/Python olmadan çalışmasını ve değişmiş dağıtım hash reddini sınar. Odak örnekleri: `test_frozen_runs_without_checkout_or_python`, `test_distribution_tampering_fails_before_launcher`.
+**Amaç / sorumluluk:** Üretilmiş native payload'un checkout/Python olmadan çalışmasını ve değişmiş dağıtım hash reddini sınar. Odak örnekleri: `test_frozen_runs_without_checkout_or_python`, `test_distribution_tampering_fails_before_launcher`. dist/ yoksa yerelde açıklamayla atlanır; CI (CI ortam değişkeni) yapıyı önce üretir ve testi zorunlu tutar.
 
 **İlişkiler ve sınır:** unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz. Doğrudan sınadığı ürün import noktaları: `respectedbrain.installation.payload`, `respectedbrain.core.errors`.
 
@@ -2503,14 +2471,6 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **İlişkiler ve sınır:** unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz. Doğrudan sınadığı ürün import noktaları: `respectedbrain.core.coordination`, `respectedbrain.core.errors`, `respectedbrain.installation.transaction`, `respectedbrain.core.locking`, `respectedbrain.vault.maps`, `respectedbrain.orchestration.runner`.
 
-#### [`tests/global_brand_migration_test.py`](../tests/global_brand_migration_test.py)
-
-**Rol:** Davranış/regresyon testi.
-
-**Amaç / sorumluluk:** Eski global marka kayıtlarının readonly preview ve idempotent apply ile dönüşmesini; collision/unknown rule/backup korumasını sınar. Odak örnekleri: `test_preview_is_read_only_and_apply_migrates_all_legacy_identities_idempotently`, `test_current_and_legacy_blocks_collide_without_mutation`, `test_unverified_legacy_cursor_rule_fails_closed`.
-
-**İlişkiler ve sınır:** unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz. Doğrudan sınadığı ürün import noktaları: `respectedbrain.core.legacy_names`, `respectedbrain.integrations.rendering`, `respectedbrain.integrations.backend`, `respectedbrain.installation.transaction`.
-
 #### [`tests/graph_and_session_test.py`](../tests/graph_and_session_test.py)
 
 **Rol:** Davranış/regresyon testi.
@@ -2543,6 +2503,14 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **İlişkiler ve sınır:** foundation_native_install_test gerçek installer/executable-in-use/health rollback sınırını sınar; tests/run_all Windows kabul kapısıdır. Dağıtımın geniş frozen doğrulaması run_all başlangıcında ayrıca yapılır.
 
+#### [`tests/integration_rollback_test.py`](../tests/integration_rollback_test.py)
+
+**Rol:** Davranış/regresyon testi.
+
+**Amaç / sorumluluk:** Entegrasyon transaction'ında ikinci yazma başarısız olursa yeni dosya ve klasörlerin geri alınmasını ve istemci yedek köklerinin bilinmeyen kullanıcı verisi olarak hiç dokunulmadan korunmasını sınar.
+
+**İlişkiler ve sınır:** foundation_integrations_test.IntegrationFixture ve foundation_support.snapshot kullanır; geçici fake home ile çalışır, kişisel vault kullanılmaz. Doğrudan sınadığı ürün import noktaları: `respectedbrain.integrations.rendering`, `respectedbrain.integrations.backend`, `respectedbrain.installation.transaction`.
+
 #### [`tests/knowledge_domain_test.py`](../tests/knowledge_domain_test.py)
 
 **Rol:** Davranış/regresyon testi.
@@ -2571,7 +2539,7 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **Rol:** Davranış/regresyon testi.
 
-**Amaç / sorumluluk:** Gövdeleri okumadan deterministik map, skill frontmatter, atomic replacement, legacy marker migration ve user/reparse hedef korumasını sınar. Odak örnekleri: `test_refresh_writes_visible_deterministic_maps_without_reading_note_bodies`, `test_skills_map_uses_only_canonical_skill_frontmatter`, `test_map_replacement_leaves_no_temporary_file`. Geçici gerçek Windows junction/POSIX symlink ile dış dosya adlarının haritaya girmemesini doğrular.
+**Amaç / sorumluluk:** Gövdeleri okumadan deterministik map, skill frontmatter, atomic replacement ve user/reparse hedef korumasını sınar. Odak örnekleri: `test_refresh_writes_visible_deterministic_maps_without_reading_note_bodies`, `test_skills_map_uses_only_canonical_skill_frontmatter`, `test_map_replacement_leaves_no_temporary_file`. Geçici gerçek Windows junction/POSIX symlink ile dış dosya adlarının haritaya girmemesini doğrular.
 
 **İlişkiler ve sınır:** unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz. Doğrudan sınadığı ürün import noktaları: `respectedbrain.vault`.
 
@@ -2611,7 +2579,7 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **Rol:** Davranış/regresyon testi.
 
-**Amaç / sorumluluk:** Güncel marka ve schema3/version sözleşmesini, izinli legacy isimlerin tek modülde kalmasını ve güncel public rehber native sınırını (Hub üzerinden kurulum, repo adresi, AppRoot/DataRoot) sınar. Odak örnekleri: `test_repository_current_surfaces_have_no_unallowlisted_legacy_brand`, `test_current_public_guides_use_the_modular_native_contract`, `test_scanner_reports_legacy_brand_only_outside_the_allowlist`.
+**Amaç / sorumluluk:** Güncel marka ve schema3/version sözleşmesini, eski marka adının izinli dosyalar dışında hiçbir yüzeye sızmamasını ve güncel public rehber native sınırını (Hub üzerinden kurulum, repo adresi, AppRoot/DataRoot) sınar. Odak örnekleri: `test_repository_current_surfaces_have_no_unallowlisted_legacy_brand`, `test_current_public_guides_use_the_modular_native_contract`, `test_scanner_reports_legacy_brand_only_outside_the_allowlist`.
 
 **İlişkiler ve sınır:** unittest keşfi tests/run_all.py ve CI tarafından yapılır; production servisleri geçici fixture kökleriyle sınanır, kişisel vault kullanılmaz. Doğrudan sınadığı ürün import noktaları: `respectedbrain.core`, `respectedbrain`.
 
@@ -2755,7 +2723,7 @@ Her kayıt bir dosyayı açıklar; boş `.gitkeep` ve paket `__init__.py` dosyal
 
 **Rol:** Doğrulama paketi.
 
-**Amaç / sorumluluk:** Not içeriklerindeki sentetik token ve anahtar bloklarının sızıntısız tespiti, sliding window sınır bölünmesi, Git index blob taraması ve symlink kaçışlarını sınar.
+**Amaç / sorumluluk:** Not içeriklerindeki sentetik token ve anahtar bloklarının sızıntısız tespiti, sliding window sınır bölünmesi, Git index blob taraması ve symlink kaçışlarını sınar. .gitignore'a sonradan giren izlenen dosyadaki sırrın da yakalandığını doğrular.
 
 **İlişkiler ve sınır:** src/respectedbrain/maintenance/backup/publish_git_snapshot.py modülünü doğrular.
 
