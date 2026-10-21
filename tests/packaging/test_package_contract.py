@@ -106,7 +106,7 @@ from respectedbrain.core.resources import ResourceCatalog
 catalog = ResourceCatalog()
 assert respectedbrain.__version__ == sys.argv[2]
 assert '🔮 850-Companion/Core.md' in catalog.iter_files('vault-template')
-assert 'SKILL.md' in catalog.iter_files('skills/beyin-doktor')
+assert 'SKILL.md' in catalog.iter_files('skills/secondbrain-doktor')
 assert json.loads(catalog.read_text('defaults.json'))['summary_provider'] == 'auto'
 print(respectedbrain.__version__)
 '''

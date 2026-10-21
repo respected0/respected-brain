@@ -28,7 +28,7 @@ gerçek AI istemci ayarına veya kasa kayıt defterine ulaşamaz.
 
 ```powershell
 python -m unittest discover -s tests -t .
-python tools/build_installer.py --platform windows --output dist
+python tools/build_dist.py --platform windows --output dist
 python tools/verify_distribution.py --platform windows --distribution dist/RespectedBrain
 python tests/native/smoke/platform_smoke.py --package dist/RespectedBrain --output native-smoke.json
 ```

@@ -31,7 +31,6 @@ class WizardTest(unittest.TestCase):
         self.assertTrue((self.vault / "knowledge/connections").is_dir())
         config=ConfigStore(self.roots.data_root).read()
         self.assertEqual(config["preferences"]["provider_priority"],["antigravity","codex"])
-        self.assertFalse((self.vault / ".beyin").exists())
 
     def global_hooks(self):
         # hooks are global only (vault keeps notes + .obsidian), so they are read from the fake home

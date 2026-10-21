@@ -47,7 +47,7 @@ from tests.support.fakes import FakeModel
 
 class ScriptsTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.temporary = tempfile.TemporaryDirectory(prefix="beyin-tests-")
+        self.temporary = tempfile.TemporaryDirectory(prefix="secondbrain-tests-")
         self.root = Path(self.temporary.name)
         self.vault = self.root / "vault"
         from dataclasses import replace
@@ -56,7 +56,6 @@ class ScriptsTest(unittest.TestCase):
         config = ConfigStore(self.ctx.paths.data_root).update(lambda doc: doc["preferences"].update(summary_provider="claude", provider_priority=["claude"], provider_fallback=False))
         self.ctx = replace(self.ctx, config=config)
         self.engine = self.ctx.paths.app_root
-        self.beyin = self.ctx.paths.app_root
         self.state = self.ctx.paths.state_dir
         self.daily = self.vault / "daily"
         self.knowledge = self.vault / "knowledge"
@@ -90,28 +89,28 @@ import time
 prompt = sys.stdin.read()
 arguments = sys.argv[1:]
 is_compile = "sonnet" in arguments
-log_path = os.environ.get("BEYIN_TEST_LOG")
+log_path = os.environ.get("RESPECTED_TEST_LOG")
 if log_path:
     with Path(log_path).open("a", encoding="utf-8") as log:
         log.write(json.dumps({
             "argv": arguments,
             "cwd": os.getcwd(),
             "cwd_mode": oct(Path.cwd().stat().st_mode & 0o777),
-            "guard": os.environ.get("BEYIN_INVOKED_BY"),
+            "guard": os.environ.get("RESPECTED_INVOKED_BY"),
             "prompt": prompt,
         }, ensure_ascii=False) + "\\n")
 
-delay = float(os.environ.get("BEYIN_TEST_SLEEP", "0"))
+delay = float(os.environ.get("RESPECTED_TEST_SLEEP", "0"))
 if delay:
     time.sleep(delay)
 
 if is_compile:
-    action = os.environ.get("BEYIN_TEST_COMPILE_ACTION", "append_log")
+    action = os.environ.get("RESPECTED_TEST_COMPILE_ACTION", "append_log")
     if action == "append_log":
         with Path("knowledge/log.md").open("a", encoding="utf-8") as target:
             target.write("\\nmodel change\\n")
     elif action == "forbidden":
-        target = Path(os.environ.get("BEYIN_TEST_FORBIDDEN", "SETUP.md"))
+        target = Path(os.environ.get("RESPECTED_TEST_FORBIDDEN", "SETUP.md"))
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text("forbidden", encoding="utf-8")
     elif action == "directive" and "UNTRUSTED_DIRECTIVE" in prompt:
@@ -124,11 +123,11 @@ if is_compile:
         target = Path("knowledge/concepts/escape.md")
         target.symlink_to("../../daily/input.md")
 else:
-    output = os.environ.get("BEYIN_TEST_OUTPUT", "FLUSH_BOS")
+    output = os.environ.get("RESPECTED_TEST_OUTPUT", "FLUSH_BOS")
     if output:
         print(output)
 
-raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
+raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
 """,
             encoding="utf-8",
         )
@@ -160,12 +159,12 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
 
     def _environment(self, **overrides: str) -> dict[str, str]:
         environment = os.environ.copy()
-        environment.pop("BEYIN_INVOKED_BY", None)
+        environment.pop("RESPECTED_INVOKED_BY", None)
         environment["PATH"] = f"{self.bin_dir}{os.pathsep}{environment['PATH']}"
-        environment["BEYIN_TEST_LOG"] = str(self.stub_log)
+        environment["RESPECTED_TEST_LOG"] = str(self.stub_log)
         environment["RESPECTED_APP_DIR"] = str(self.ctx.paths.app_root)
         environment["RESPECTED_DATA_DIR"] = str(self.ctx.paths.data_root)
-        environment["BEYIN_FAKE_HOUR"] = "0"
+        environment["RESPECTED_FAKE_HOUR"] = "0"
         environment["PYTHONUTF8"] = "1"
         environment["PYTHONIOENCODING"] = "utf-8"
         environment.update(overrides)
@@ -273,7 +272,7 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
     def _run_flush(self, hook: Path, reason: str = "sessionend", **environment: str):
         import contextlib, io
         stdout, stderr = io.StringIO(), io.StringIO()
-        now = dt.datetime.fromisoformat(environment.get("BEYIN_FAKE_NOW", dt.datetime.now().isoformat()))
+        now = dt.datetime.fromisoformat(environment.get("RESPECTED_FAKE_NOW", dt.datetime.now().isoformat()))
         with mock.patch.dict(os.environ, self._environment(**environment), clear=True), contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
             value = FLUSH.load_hook_input(hook)
             status = FLUSH.flush_transcript(self.ctx, session_id=value["session_id"], transcript=Path(value["transcript_path"]), model=ModelRunner(self.ctx), now=now, reason=reason)
@@ -318,7 +317,7 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
 
     def test_flush_temp_directory_uses_uuid_cache_parent(self):
         transcript = self._write_transcript([("user","cache staging")])
-        result = self._run_flush(self._write_hook("cache-session",transcript),BEYIN_TEST_OUTPUT=VALID_SUMMARY)
+        result = self._run_flush(self._write_hook("cache-session",transcript),RESPECTED_TEST_OUTPUT=VALID_SUMMARY)
         self.assertEqual(result.returncode,0,result.stderr)
         call = self._stub_calls("haiku")[0]
         self.assertEqual(Path(call["cwd"]).parent,self.ctx.paths.cache_dir)
@@ -643,11 +642,11 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
     def test_flush_bos_appends_nothing_and_records_success(self) -> None:
         transcript = self._write_transcript([("user", "yalnızca selam")])
         hook = self._write_hook("bos-session", transcript)
-        result = self._run_flush(hook, BEYIN_TEST_OUTPUT="FLUSH_BOS")
+        result = self._run_flush(hook, RESPECTED_TEST_OUTPUT="FLUSH_BOS")
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(list(self.daily.glob("*.md")), [])
         last_flush = json.loads(
-            (self.state / "last-flush.json").read_text(encoding="utf-8")
+            FLUSH._session_state_path(self.state, "bos-session").read_text(encoding="utf-8")
         )
         self.assertEqual(last_flush["session_id"], "bos-session")
         self.assertEqual(last_flush["status"], "ok")
@@ -675,7 +674,7 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
         hook = self._write_hook("normalized-session", transcript)
         raw = "Selam! İşte özet:\n```markdown\n" + VALID_SUMMARY + "\n```"
 
-        result = self._run_flush(hook, BEYIN_TEST_OUTPUT=raw)
+        result = self._run_flush(hook, RESPECTED_TEST_OUTPUT=raw)
 
         self.assertEqual(result.returncode, 0, result.stderr)
         daily_body = next(self.daily.glob("*.md")).read_text(encoding="utf-8")
@@ -688,7 +687,7 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
             [("user", "karar aldık"), ("assistant", "uygulandı")]
         )
         hook = self._write_hook("daily-session", transcript)
-        result = self._run_flush(hook, BEYIN_TEST_OUTPUT=VALID_SUMMARY)
+        result = self._run_flush(hook, RESPECTED_TEST_OUTPUT=VALID_SUMMARY)
         self.assertEqual(result.returncode, 0, result.stderr)
         daily_files = list(self.daily.glob("*.md"))
         self.assertEqual(len(daily_files), 1)
@@ -713,7 +712,7 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
                 "",
             ],
         )
-        self.assertEqual(calls[0]["guard"], "beyin-scripts")
+        self.assertEqual(calls[0]["guard"], "secondbrain-scripts")
         self.assertNotEqual(Path(str(calls[0]["cwd"])), self.vault)
         self.assertIn("BEGIN UNTRUSTED TRANSCRIPT DATA", calls[0]["prompt"])
 
@@ -722,16 +721,16 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
         hook = self._write_hook("retry-session", transcript)
         first = self._run_flush(
             hook,
-            BEYIN_TEST_OUTPUT="## Bağlam\nEksik çıktı",
+            RESPECTED_TEST_OUTPUT="## Bağlam\nEksik çıktı",
         )
         self.assertEqual(first.returncode, 1)
         self.assertEqual(list(self.daily.glob("*.md")), [])
         failed = json.loads(
-            (self.state / "last-flush.json").read_text(encoding="utf-8")
+            FLUSH._session_state_path(self.state, "retry-session").read_text(encoding="utf-8")
         )
         self.assertEqual(failed["status"], "fail")
 
-        second = self._run_flush(hook, BEYIN_TEST_OUTPUT=VALID_SUMMARY)
+        second = self._run_flush(hook, RESPECTED_TEST_OUTPUT=VALID_SUMMARY)
         self.assertEqual(second.returncode, 0)
         # 1.4.0: first flush attempts initial call + 1-shot repair (2 calls); second flush makes 1 call.
         self.assertEqual(len(self._stub_calls("haiku")), 3)
@@ -750,8 +749,8 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
             "sessionend",
         ]
         environment = self._environment(
-            BEYIN_TEST_OUTPUT=VALID_SUMMARY,
-            BEYIN_TEST_SLEEP="0.25",
+            RESPECTED_TEST_OUTPUT=VALID_SUMMARY,
+            RESPECTED_TEST_SLEEP="0.25",
         )
         first = subprocess.Popen(
             command,
@@ -786,7 +785,7 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
         self.assertEqual(result.returncode, 0)
         self.assertEqual(self._stub_calls(), [])
         state = json.loads(
-            (self.state / "last-flush.json").read_text(encoding="utf-8")
+            FLUSH._session_state_path(self.state, "short-precompact").read_text(encoding="utf-8")
         )
         self.assertEqual(state["status"], "ok")
 
@@ -1427,7 +1426,7 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
 
         flush_result = self._run_flush(
             current_hook,
-            BEYIN_TEST_OUTPUT="FLUSH_BOS",
+            RESPECTED_TEST_OUTPUT="FLUSH_BOS",
         )
         self.assertEqual(flush_result.returncode, 0)
         self.assertFalse(current_hook.exists())
@@ -1443,9 +1442,9 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
         hook = self._write_hook("midnight-session", transcript)
         result = self._run_flush(
             hook,
-            BEYIN_TEST_OUTPUT=VALID_SUMMARY,
-            BEYIN_FAKE_NOW="2026-08-22T23:59:59+03:00",
-            BEYIN_TEST_SLEEP="0.1",
+            RESPECTED_TEST_OUTPUT=VALID_SUMMARY,
+            RESPECTED_FAKE_NOW="2026-08-22T23:59:59+03:00",
+            RESPECTED_TEST_SLEEP="0.1",
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         expected = self.daily / "2026-08-22.md"
@@ -1469,13 +1468,13 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
         )
         flush_result = self._run_flush(
             hook_input,
-            BEYIN_TEST_OUTPUT=hostile_summary,
+            RESPECTED_TEST_OUTPUT=hostile_summary,
         )
         self.assertEqual(flush_result.returncode, 0, flush_result.stderr)
         daily_path = next(self.daily.glob("*.md"))
 
         compile_result = self._run_compile(
-            BEYIN_TEST_COMPILE_ACTION="directive"
+            RESPECTED_TEST_COMPILE_ACTION="directive"
         )
         self.assertEqual(compile_result.returncode, 1, compile_result.stderr)
         self.assertEqual(real_hook.read_text(encoding="utf-8"), "original hook\n")
@@ -1497,8 +1496,8 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
         daily_path.write_text("güvenilmeyen günlük", encoding="utf-8")
         before = self._payload_snapshot()
         result = self._run_compile(
-            BEYIN_TEST_COMPILE_ACTION="forbidden",
-            BEYIN_TEST_FORBIDDEN="SETUP.md",
+            RESPECTED_TEST_COMPILE_ACTION="forbidden",
+            RESPECTED_TEST_FORBIDDEN="SETUP.md",
         )
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertEqual(self._payload_snapshot(), before)
@@ -1513,7 +1512,7 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
         daily_path = self.daily / "2026-08-20.md"
         daily_path.write_text("kalıcı günlük", encoding="utf-8")
         knowledge_before = self._payload_snapshot()
-        result = self._run_compile(BEYIN_TEST_COMPILE_ACTION="none")
+        result = self._run_compile(RESPECTED_TEST_COMPILE_ACTION="none")
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertEqual(self._payload_snapshot(), knowledge_before)
         state = json.loads(
@@ -1527,7 +1526,7 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
         daily_path.write_text("silme denemesi", encoding="utf-8")
         before = self._payload_snapshot()
         result = self._run_compile(
-            BEYIN_TEST_COMPILE_ACTION="delete_index"
+            RESPECTED_TEST_COMPILE_ACTION="delete_index"
         )
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertEqual(self._payload_snapshot(), before)
@@ -1547,7 +1546,7 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
         daily_path = self.daily / "2026-08-20.md"
         daily_path.write_text("symlink denemesi", encoding="utf-8")
         before = self._payload_snapshot()
-        result = self._run_compile(BEYIN_TEST_COMPILE_ACTION="symlink")
+        result = self._run_compile(RESPECTED_TEST_COMPILE_ACTION="symlink")
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertEqual(self._payload_snapshot(), before)
         state = json.loads(
@@ -1607,7 +1606,7 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
         result = self._run_compile(
             "--trigger-claim",
             str(claim),
-            BEYIN_TEST_COMPILE_ACTION="none",
+            RESPECTED_TEST_COMPILE_ACTION="none",
         )
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertFalse(claim.exists())
@@ -1684,13 +1683,13 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
         if os.name != "nt":
             self.assertEqual(call["cwd_mode"], "0o700")
         self.assertFalse(call_cwd.exists())
-        self.assertEqual(call["guard"], "beyin-scripts")
+        self.assertEqual(call["guard"], "secondbrain-scripts")
 
     def test_compile_stops_batch_on_first_failure(self) -> None:
         (self.daily / "2026-08-19.md").write_text("bir", encoding="utf-8")
         (self.daily / "2026-08-20.md").write_text("iki", encoding="utf-8")
         log_before = (self.knowledge / "log.md").read_bytes()
-        result = self._run_compile(BEYIN_TEST_EXIT="7")
+        result = self._run_compile(RESPECTED_TEST_EXIT="7")
         self.assertEqual(result.returncode, 1, result.stderr)
         self.assertEqual(len(self._stub_calls("sonnet")), 1)
         self.assertEqual((self.knowledge / "log.md").read_bytes(), log_before)
@@ -1706,7 +1705,7 @@ raise SystemExit(int(os.environ.get("BEYIN_TEST_EXIT", "0")))
 
     def test_recursion_guard_exits_both_scripts(self) -> None:
         missing_hook = self.root / "does-not-exist.json"
-        environment = self._environment(BEYIN_INVOKED_BY="outer")
+        environment = self._environment(RESPECTED_INVOKED_BY="outer")
         flush_result = subprocess.run(
             [
                 sys.executable,

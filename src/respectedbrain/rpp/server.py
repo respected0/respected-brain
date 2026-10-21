@@ -75,16 +75,6 @@ _V10_OPS = ("manifest", "health", "settings.schema", "settings.validate",
             "settings.apply", "settings.readback")
 
 
-class RppError(Exception):
-    """Expected failure carrying the protocol error triple."""
-
-    def __init__(self, code, message, hint=""):
-        super().__init__(message)
-        self.code = code
-        self.message = message
-        self.hint = hint
-
-
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 

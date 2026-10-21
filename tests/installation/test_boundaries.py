@@ -40,7 +40,7 @@ class BoundaryRegressionTest(unittest.TestCase):
         """If temporary staging directory falls inside vault root, compile must abort immediately."""
         with tempfile.TemporaryDirectory() as temp_dir:
             vault_root = Path(temp_dir).resolve()
-            state_dir = vault_root / ".beyin" / "engine" / ".state"
+            state_dir = vault_root / "engine" / ".state"
             state_dir.mkdir(parents=True, exist_ok=True)
             daily_dir = vault_root / "daily"
             daily_dir.mkdir(parents=True, exist_ok=True)
@@ -106,7 +106,6 @@ class BoundaryRegressionTest(unittest.TestCase):
             self.assertTrue(hooks.is_file())
             self.assertIn(ctx.paths.vault_id, hooks.read_text(encoding="utf-8"))
             self.assertIn("/opt/respectedbrain/bin/respectedbrain", hooks.read_text(encoding="utf-8"))
-            self.assertFalse((ctx.paths.vault_root / ".beyin").exists())
 
 
 if __name__ == "__main__":

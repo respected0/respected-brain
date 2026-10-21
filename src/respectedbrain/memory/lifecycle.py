@@ -11,7 +11,6 @@ import json
 import os
 from pathlib import Path
 import subprocess
-import sys
 import tempfile
 import threading
 import time
@@ -28,10 +27,10 @@ CLOSING = (
     "[Hafıza] Süreklilik senin sorumluluğun. Bu kullanıcı için kim olduğunu anlamak üzere "
     "🔮 850-Companion/Core.md dosyasını oku.\nHafıza protokolü zorunludur."
 )
-TRUNCATION_NOTE = "[not: indeks kırpıldı, beyin-doktor çalıştır]"
+TRUNCATION_NOTE = "[not: indeks kırpıldı, secondbrain-doktor çalıştır]"
 CAP_DIAGNOSTIC = (
-    "Beyin uyarısı: Oturum başlangıç bağlamı 16.000 karakter sınırına sığmadı. "
-    "Bölüm limitlerini kontrol etmek için beyin-doktor çalıştır."
+    "Hafıza uyarısı: Oturum başlangıç bağlamı 16.000 karakter sınırına sığmadı. "
+    "Bölüm limitlerini kontrol etmek için secondbrain-doktor çalıştır."
 )
 
 
@@ -253,7 +252,7 @@ def _launch_flush(ctx: AppContext, provider: str, *, payload: dict[str, Any] | N
     if reason:
         command.extend(("--reason", reason))
     environment = os.environ.copy()
-    environment.update({"BEYIN_PROVIDER": provider, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1",
+    environment.update({"RESPECTED_PROVIDER": provider, "PYTHONIOENCODING": "utf-8", "PYTHONUTF8": "1",
                         "RESPECTED_APP_DIR": str(ctx.paths.app_root), "RESPECTED_DATA_DIR": str(ctx.paths.data_root)})
     try:
         process = subprocess.Popen(command, cwd=ctx.paths.vault_root, env=environment,
@@ -287,24 +286,24 @@ def start_context(vault_root: Path, state_dir: Path, session_id: str, now: datet
         "[Hafıza: Son Oturum]": _cap(
             _last_session(memory_dir),
             4_000,
-            "[not: son oturum 4.000 karakterde kırpıldı, beyin-doktor çalıştır]",
+            "[not: son oturum 4.000 karakterde kırpıldı, secondbrain-doktor çalıştır]",
         ),
         "[Hafıza: Aktif Konular]": _cap(
             _active_threads(memory_dir),
             2_000,
-            "[not: aktif konular 2.000 karakterde kırpıldı, beyin-doktor çalıştır]",
+            "[not: aktif konular 2.000 karakterde kırpıldı, secondbrain-doktor çalıştır]",
         ),
         "[Hafıza: Kurallar]": _cap(
             "\n".join(_read_lines(memory_dir / "Kurallar.md", 60)),
             4_000,
-            "[not: kurallar 4.000 karakterde kırpıldı, beyin-doktor çalıştır]",
+            "[not: kurallar 4.000 karakterde kırpıldı, secondbrain-doktor çalıştır]",
         ),
         "[Hafıza: Son Journal]": _cap(
             _latest_journal(memory_dir),
             1_500,
-            "[not: son Journal 1.500 karakterde kırpıldı, beyin-doktor çalıştır]",
+            "[not: son Journal 1.500 karakterde kırpıldı, secondbrain-doktor çalıştır]",
         ),
-        "[Beyin Haritası]": _cap(
+        "[Hafıza Haritası]": _cap(
             "\n".join(_read_lines(vault_map_path, 120)),
             2_500,
             "[not: Vault Map 2.500 karakterde kırpıldı]",
@@ -322,7 +321,7 @@ def start_context(vault_root: Path, state_dir: Path, session_id: str, now: datet
     reflection = _cap(
         _reflection_debt(state_dir),
         1_000,
-        "[not: hafıza uyarıları 1.000 karakterde kırpıldı, beyin-doktor çalıştır]",
+        "[not: hafıza uyarıları 1.000 karakterde kırpıldı, secondbrain-doktor çalıştır]",
     )
     return _fit_context(sections, reflection)
 
@@ -430,10 +429,10 @@ def _finish_session(
 
 
 def _is_reentrant() -> bool:
-    if os.environ.get("BEYIN_INVOKED_BY"):
+    if os.environ.get("RESPECTED_INVOKED_BY"):
         return True
     try:
-        depth = int(os.environ.get("BEYIN_RECURSION_DEPTH", "0"))
+        depth = int(os.environ.get("RESPECTED_RECURSION_DEPTH", "0"))
         if depth >= 1:
             return True
     except ValueError:

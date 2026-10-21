@@ -14,7 +14,6 @@ from unittest import mock
 
 from respectedbrain.installation.provenance import (
     _load_bundle_entries,
-    ProvenanceVerificationError,
     TrustedProvenancePolicy,
     verify_release_provenance,
 )

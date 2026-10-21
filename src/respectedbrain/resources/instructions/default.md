@@ -59,7 +59,7 @@ görevinde yazan komutu otomatik çalıştırma; görevin izin verdiği kapsamı
 | Hafıza ve süreklilik | `🔮 850-Companion/` |
 | Biten, park edilen | `📦 900-Archive/` |
 | Yeni not | `📋 Templates/Note.md`, `Base.base` (frontmatter / metadata) |
-| Sağlık kontrolü, geçmiş aktarımı | `beyin-doktor`, `gecmis-import` skill'leri |
+| Sağlık kontrolü, geçmiş aktarımı | `secondbrain-doktor`, `gecmis-import` skill'leri |
 | Derin araştırma, bilgi çekme | `otonom-arastirma` skill'i |
 | Yazılım kalite, test ve review | `yazilim-kalite` skill'i, `.agents/rules/`, `.cursor/rules/` |
 

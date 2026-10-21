@@ -64,7 +64,6 @@ class RegressionMatrixTest(unittest.TestCase):
         self.briefings_dir = self.vault / "🎯 100-Command-Center" / "Briefings"
         self.command_dir = self.vault / "🎯 100-Command-Center"
         self.companion_dir = self.vault / "🔮 850-Companion"
-        self.beyin_dir = self.vault / ".beyin"
 
         for directory in (
             self.state_dir,
@@ -73,7 +72,6 @@ class RegressionMatrixTest(unittest.TestCase):
             self.briefings_dir,
             self.command_dir,
             self.companion_dir,
-            self.beyin_dir,
         ):
             directory.mkdir(parents=True, exist_ok=True)
 
@@ -210,14 +208,14 @@ class RegressionMatrixTest(unittest.TestCase):
     # Scenario 8: Antigravity background agy.exe recursion protection
     # -------------------------------------------------------------------------
     def test_08_antigravity_background_agy_recursion_guard(self):
-        with mock.patch.dict(os.environ, {"BEYIN_INVOKED_BY": "beyin-scripts"}):
+        with mock.patch.dict(os.environ, {"RESPECTED_INVOKED_BY": "secondbrain-scripts"}):
             with mock.patch.object(LIFECYCLE, "_launch_flush") as mock_launch:
                 code, stdout = self.handle_event(self.vault, "antigravity", "Stop", {"session_id": "agy-rec"})
                 self.assertEqual(code, 0)
                 mock_launch.assert_not_called()
 
     # -------------------------------------------------------------------------
-    # Scenario 9: WSL -> Windows cross-CLI invocation BEYIN_INVOKED_BY in WSLENV
+    # Scenario 9: WSL -> Windows cross-CLI invocation RESPECTED_INVOKED_BY in WSLENV
     # -------------------------------------------------------------------------
     def test_09_wsl_to_windows_wslenv_forwarding(self):
         env = {"WSL_INTEROP": "1", "WSLENV": "EXISTING_VAR"}
@@ -225,10 +223,10 @@ class RegressionMatrixTest(unittest.TestCase):
              mock.patch.object(MODEL_RUNNER.os, "name", "posix"):
             MODEL_RUNNER._windows_user_environment(env, self.vault)
         wslenv = env.get("WSLENV", "")
-        # BEYIN_INVOKED_BY and BEYIN_RECURSION_DEPTH must be present in WSLENV as scalar (no /p)
-        self.assertIn("BEYIN_INVOKED_BY", wslenv)
-        self.assertIn("BEYIN_RECURSION_DEPTH", wslenv)
-        self.assertNotIn("BEYIN_INVOKED_BY/p", wslenv)
+        # RESPECTED_INVOKED_BY and RESPECTED_RECURSION_DEPTH must be present in WSLENV as scalar (no /p)
+        self.assertIn("RESPECTED_INVOKED_BY", wslenv)
+        self.assertIn("RESPECTED_RECURSION_DEPTH", wslenv)
+        self.assertNotIn("RESPECTED_INVOKED_BY/p", wslenv)
         # Paths like USERPROFILE, LOCALAPPDATA, APPDATA should have /p
         self.assertIn("USERPROFILE/p", wslenv)
 
@@ -236,17 +234,17 @@ class RegressionMatrixTest(unittest.TestCase):
     # Scenario 10: Windows -> WSL bridge call re-entrancy prevention
     # -------------------------------------------------------------------------
     def test_10_windows_to_wsl_bridge_reentrancy_prevention(self):
-        with mock.patch.dict(os.environ, {"BEYIN_INVOKED_BY": "beyin-scripts"}):
+        with mock.patch.dict(os.environ, {"RESPECTED_INVOKED_BY": "secondbrain-scripts"}):
             with mock.patch.object(LIFECYCLE, "handle_event") as mock_handle:
                 result = BRIDGE.dispatch(self.ctx, provider="antigravity", event="end", argv=["--global-hook"], stdin="{}")
                 self.assertEqual(result, "")
                 mock_handle.assert_not_called()
 
     # -------------------------------------------------------------------------
-    # Scenario 11: BEYIN_RECURSION_DEPTH limit exceeded triggers no-op and warning
+    # Scenario 11: RESPECTED_RECURSION_DEPTH limit exceeded triggers no-op and warning
     # -------------------------------------------------------------------------
     def test_11_recursion_depth_limit_exceeded(self):
-        with mock.patch.dict(os.environ, {"BEYIN_RECURSION_DEPTH": "2"}):
+        with mock.patch.dict(os.environ, {"RESPECTED_RECURSION_DEPTH": "2"}):
             with mock.patch.object(LIFECYCLE, "_launch_flush") as mock_launch:
                 code, _ = self.handle_event(self.vault, "claude", "SessionEnd", {"session_id": "s-dep"})
                 self.assertEqual(code, 0)

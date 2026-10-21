@@ -233,7 +233,7 @@ module._upsert_daily_session(
         payload = '{"type":"agent-turn-complete","thread-id":"thread-123","cwd":"C:/work"}'
         with (
             mock.patch.object(CODEX_NOTIFY, "_forward_chained"),
-            mock.patch.object(BRIDGE, "resolve_codex_transcript", return_value=str(transcript)),
+            mock.patch.object(CODEX_NOTIFY, "resolve_codex_transcript", return_value=str(transcript)),
             mock.patch.object(LIFECYCLE.subprocess, "Popen") as popen,
         ):
             result = CODEX_NOTIFY.dispatch(self.ctx, argv=[payload], stdin="")
@@ -248,7 +248,6 @@ module._upsert_daily_session(
         self.assertIn("--vault-id", command)
         self.assertIn(self.ctx.paths.vault_id, command)
         self.assertEqual(command[-2:], ["--reason", "turn"])
-        self.assertFalse((self.vault / ".beyin").exists())
 
     def test_codex_notify_forwards_exact_persisted_chain_command(self):
         with tempfile.TemporaryDirectory() as temporary:

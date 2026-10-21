@@ -1,5 +1,5 @@
 ---
-name: beyin-oruntu
+name: secondbrain-oruntu
 description: Örtük sürtünme ve darboğaz örüntülerini çıkarır. "örüntü", "trend", "nerede takılıyoruz" için kullan.
 ---
 

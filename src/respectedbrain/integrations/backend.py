@@ -2,7 +2,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
-from typing import ContextManager, Literal, Protocol
+from typing import Literal
 
 
 def revert_external(current: bytes | None, before: bytes | None, after: bytes | None) -> bytes | None:
@@ -37,13 +37,6 @@ class ExternalChange:
         from .delta import sha256
         return sha256(current) == self.before_sha256
 
-    def untouched_since(self, current: bytes | None) -> bool:
-        """Is `current` exactly what we wrote?"""
-        if self.delta is None:
-            return current == self.after
-        from .delta import sha256
-        return sha256(current) == self.after_sha256
-
     def undo(self, current: bytes | None) -> bytes | None:
         """`current` with only our entries undone; ValueError when someone changed the same entry."""
         from . import delta
@@ -75,20 +68,12 @@ class IntegrationProfile:
     user_home: Path
 
 
-class IntegrationBackend(Protocol):
-    def read(self, kind: str, key: str) -> bytes | None: ...
-    def apply(self, change: ExternalChange) -> None: ...
-    def restore(self, change: ExternalChange) -> None: ...
-    def quiesce(self, vault_id: str | None) -> ContextManager[None]: ...
-
-
 import base64
 import hashlib
 import json
 import os
 import re
 import shutil
-import shlex
 import subprocess
 import xml.etree.ElementTree as ET
 
@@ -384,8 +369,3 @@ $item.TargetPath=$value.target; $item.Arguments=$value.arguments; $item.WorkingD
 
     def quiesce(self, vault_id: str | None):
         return quiesce_writers(self.data_root, vault_id)
-
-    def preview(self, ctx, *, desired, profile):
-        from .rendering import plan_integrations
-        return plan_integrations(ctx, profile, desired, self)
-

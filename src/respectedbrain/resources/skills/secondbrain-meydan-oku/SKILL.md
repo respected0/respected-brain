@@ -1,5 +1,5 @@
 ---
-name: beyin-meydan-oku
+name: secondbrain-meydan-oku
 description: Kararları geçmiş hata ve verilerle eleştirel test eder. "meydan oku", "challenge", "bu karar doğru mu" için kullan.
 ---
 

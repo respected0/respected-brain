@@ -132,7 +132,7 @@ ConfigStore(Path(sys.argv[1])).update(lambda cfg: cfg['preferences'].update({sys
         self.assertNotIn('C:/old/product', json.dumps(marker))
         backups = list((self.data/'backups').rglob('marker.json'))
         self.assertTrue(any(json.loads(file.read_text(encoding='utf-8')) == original for file in backups))
-        self.assertEqual(self.store.read()['vaults'][identity]['legacy_metadata']['runtime_path'], 'C:/old/product')
+        self.assertNotIn('legacy_metadata', self.store.read()['vaults'][identity])
 
     def test_read_and_discover_are_readonly_and_wrong_cwd_is_irrelevant(self):
         before = snapshot(self.root)

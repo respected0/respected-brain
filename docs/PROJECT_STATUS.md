@@ -35,7 +35,7 @@ kurucu yoktur. Hub kapalıyken de hook'lar, MCP ve zamanlanmış brifing kurulu 
 | SLSA yayın kanıtı | yerel/çevrimdışı yayın üretemez; beta paketleri Hub'ın Ed25519 imzasıyla doğrulanır, motorun kanıt kontrolü `--allow-unattested` ile atlanır |
 | macOS / Linux / WSL | kod durur, derlenmez ve CI'da test edilmez |
 | Codex, Gemini, Cursor, Antigravity gerçek oturumları | yalnız Claude Code gerçek oturumla sınandı; diğerleri fixture'larla |
-| `bounded_recall`, `graphrag`, `session_viz` | modüller test edilir ama hook akışına bağlı değildir (bilinçli karar, [RPP_MEMORY_RECALL](decisions/RPP_MEMORY_RECALL.md)) |
+| İstem anında (prompt-time) otomatik hafıza enjeksiyonu | yok; bilinçli karar, [RPP_MEMORY_RECALL](decisions/RPP_MEMORY_RECALL.md) |
 
 ## 4. Çalışma kuralları
 

@@ -133,19 +133,6 @@ class TestDefuddle(unittest.TestCase):
         self.assertIn("def test(): return True", md)
         self.assertIn("[Tıklayın](https://example.com)", md)
 
-    def test_defuddle_safe_redirect_handler_blocks_private_destinations(self):
-        """Redirects to private IP or metadata must be blocked by SafeRedirectHandler."""
-        from respectedbrain.maintenance.ingestion.defuddle import SafeRedirectHandler
-        handler = SafeRedirectHandler()
-        with self.assertRaises(ValueError) as ctx:
-            handler.redirect_request(None, None, 302, "Found", {}, "http://127.0.0.1:8080/admin")
-        self.assertIn("Yönlendirme engellendi", str(ctx.exception))
-
-        with self.assertRaises(ValueError) as ctx:
-            handler.redirect_request(None, None, 302, "Found", {}, "http://169.254.169.254/latest/meta-data/")
-        self.assertIn("Yönlendirme engellendi", str(ctx.exception))
-
-
 class TestVaultLinterAndTiling(unittest.TestCase):
     """Vault Linter ve Tiling Benzerlik Testleri."""
 
@@ -153,7 +140,6 @@ class TestVaultLinterAndTiling(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp(prefix="respected_lint_test_")
         self.vault = Path(self.temp_dir)
         (self.vault / "knowledge").mkdir(parents=True)
-        (self.vault / ".beyin").mkdir(parents=True)
 
     def tearDown(self):
         shutil.rmtree(self.temp_dir, ignore_errors=True)
@@ -230,12 +216,10 @@ class TestManifestAndTemplates(unittest.TestCase):
         from respectedbrain.core.resources import ResourceCatalog
         import importlib
         self.assertRegex(__version__, r"^\d+\.\d+\.\d+(?:(?:a|b|rc)\d+|[.+-].*)?$")  # PEP 440 pre-releases: 0.1.0b1
-        for name in ("maintenance.ingestion.url_safety", "maintenance.ingestion.defuddle", "maintenance.vault_linter", "maintenance.tiling_check", "memory.graph.graph_analysis", "memory.graph.graphrag", "memory.session_brain", "memory.session_viz"):
+        for name in ("maintenance.ingestion.url_safety", "maintenance.ingestion.defuddle", "maintenance.vault_linter", "maintenance.tiling_check"):
             module = importlib.import_module("respectedbrain." + name)
             self.assertTrue(Path(module.__file__).is_relative_to(ROOT / "src/respectedbrain"))
         catalog = ResourceCatalog()
-        for name in (".agents/rules/software-quality-1.md", ".agents/rules/software-quality-2.md", ".cursor/rules/software-quality-1.mdc", ".cursor/rules/software-quality-2.mdc"):
-            self.assertTrue(catalog.read_text("integrations/" + name))
         for name in ("📋 Templates/Base.base", "📋 Templates/Canvas.canvas", ".obsidian/snippets/secondbrain-layout.css"):
             self.assertTrue(catalog.read_text("vault-template/" + name))
 
@@ -244,25 +228,11 @@ class TestManifestAndTemplates(unittest.TestCase):
         self.assertTrue((ROOT / "src/respectedbrain/resources/vault-template" / ".obsidian" / "snippets" / "secondbrain-layout.css").is_file())
 
         skills_root = ROOT / "src/respectedbrain/resources/skills"
-        adapters_root = ROOT / "src/respectedbrain/resources/integrations"
 
         # Otonom araştırma skill'i
         self.assertTrue((skills_root / "otonom-arastirma" / "SKILL.md").is_file())
 
-        # Yazılım kalite skill'i ve iki parçalı kural seti (Madde 1-13 ve Madde 14-25 + Gate)
         self.assertTrue((skills_root / "yazilim-kalite" / "SKILL.md").is_file())
-        self.assertTrue((adapters_root / ".agents" / "rules" / "software-quality-1.md").is_file())
-        self.assertTrue((adapters_root / ".agents" / "rules" / "software-quality-2.md").is_file())
-
-        # Cursor MDC kalite kural setleri (Frontmatter + kurallar)
-        cursor_q1 = adapters_root / ".cursor" / "rules" / "software-quality-1.mdc"
-        cursor_q2 = adapters_root / ".cursor" / "rules" / "software-quality-2.mdc"
-        self.assertTrue(cursor_q1.is_file())
-        self.assertTrue(cursor_q2.is_file())
-        self.assertTrue(cursor_q1.read_text(encoding="utf-8").startswith("---\ndescription:"))
-        self.assertTrue(cursor_q2.read_text(encoding="utf-8").startswith("---\ndescription:"))
-        self.assertIn("alwaysApply: true", cursor_q1.read_text(encoding="utf-8"))
-        self.assertIn("alwaysApply: true", cursor_q2.read_text(encoding="utf-8"))
 
         # Obsidian Base şablonu
         self.assertTrue((ROOT / "src/respectedbrain/resources/vault-template" / "📋 Templates" / "Base.base").is_file())
@@ -272,8 +242,6 @@ class TestManifestAndTemplates(unittest.TestCase):
         from packaging.version import Version
         self.assertEqual(__version__, str(Version(tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"])))
         self.assertFalse((ROOT / "src/respectedbrain/resources/vault-template" / ".respectedbrain-version").exists())
-        self.assertFalse((ROOT / "src/respectedbrain/resources/vault-template" / ".beyin-version").exists())
-        self.assertFalse((ROOT / "src/respectedbrain/resources/vault-template" / ".beyin-multi-version").exists())
 
     def test_url_safety_blocks_rfc_internal_domains(self):
         from respectedbrain.maintenance.ingestion.url_safety import validate_safe_url
@@ -315,14 +283,6 @@ class TestManifestAndTemplates(unittest.TestCase):
         self.assertTrue(is_private_or_reserved_ip("[::1]"))
         self.assertTrue(is_private_or_reserved_ip("[::ffff:127.0.0.1]"))
         self.assertFalse(is_private_or_reserved_ip("[2606:4700:4700::1111]"))
-
-    def test_install_briefing_schedule_decode_windows_xml_fallbacks(self):
-        from respectedbrain.integrations.scheduling.service import _decode_windows_xml
-        # CP857 ile kodlanmış Türkçe karakterler içeren XML
-        turkish_text = '<?xml version="1.0"?><Task><Author>Şükrü Çağlar</Author></Task>'
-        cp857_bytes = turkish_text.encode("cp857")
-        decoded = _decode_windows_xml(cp857_bytes)
-        self.assertIn("Şükrü Çağlar", decoded)
 
     def test_defuddle_fail_closed_import_protection(self):
         """When validate_safe_url fallback is called, it must fail closed (return False) rejecting URLs."""

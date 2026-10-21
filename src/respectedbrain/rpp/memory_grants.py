@@ -148,7 +148,3 @@ def revoke(data_root: Path, grant_id: str) -> dict[str, Any]:
                 return {"grant_id": grant_id, "revoked": True}
     raise GrantError("GRANT_NOT_FOUND", "Unknown grant id.", "List grants to find the id.")
 
-
-def list_public(data_root: Path) -> list[dict[str, Any]]:
-    """List all grants without their token hashes."""
-    return [_public(g) for g in _load(Path(data_root))]

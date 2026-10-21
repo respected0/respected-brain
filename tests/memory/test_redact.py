@@ -2,7 +2,7 @@
 import unittest
 
 from respectedbrain.memory import flush as F
-from respectedbrain.memory.redact import categories, redact
+from respectedbrain.memory.redact import redact
 
 SECRETS = {
     "openai": "sk-" + "Ab12Cd34Ef56Gh78Ij90Kl12",

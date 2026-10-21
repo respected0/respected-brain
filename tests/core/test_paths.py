@@ -36,7 +36,6 @@ class FoundationPathsTest(unittest.TestCase):
         bound = paths.AppPaths(roots.app_root, roots.data_root, roots.default_vault, UUID)
         self.assertEqual(bound.state_dir, roots.data_root / 'vaults' / UUID / 'state')
         self.assertEqual(bound.cache_dir, roots.data_root / 'vaults' / UUID / 'cache')
-        self.assertEqual(bound.log_dir, roots.data_root / 'logs')
         self.assertEqual(bound.backup_dir, roots.data_root / 'backups')
         self.assertEqual(snapshot(self.root), before)
 

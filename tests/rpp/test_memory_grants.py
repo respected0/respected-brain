@@ -100,14 +100,5 @@ class MemoryGrantsTests(unittest.TestCase):
             grants.revoke(self.root, "nope-nope-1")
         self.assertEqual(ctx.exception.code, "GRANT_NOT_FOUND")
 
-    def test_list_public_hides_hashes(self) -> None:
-        made = self.make()
-        listed = grants.list_public(self.root)
-        self.assertEqual(len(listed), 1)
-        self.assertNotIn("token_sha256", listed[0])
-        self.assertNotIn(made["token"], str(listed))
-        self.assertFalse(listed[0]["revoked"])
-
-
 if __name__ == "__main__":
     unittest.main()

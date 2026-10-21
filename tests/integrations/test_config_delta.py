@@ -61,7 +61,6 @@ class JsonDeltaTest(unittest.TestCase):
 
     def test_restored_detection_uses_fingerprints_and_an_unrelated_file_is_never_rewritten(self):
         self.assertTrue(self.compact.restored(j(CLAUDE_BEFORE)))
-        self.assertTrue(self.compact.untouched_since(j(CLAUDE_AFTER)))
         clean = j({**CLAUDE_BEFORE, "numStartups": 4})
         self.assertEqual(self.compact.undo(clean), clean)           # nothing of ours: same bytes back, no reformatting
 

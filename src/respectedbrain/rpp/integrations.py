@@ -109,8 +109,8 @@ def _removals(ctx, backend, desired, data_root, planned=frozenset()):
         current = backend.read(prior.kind, prior.key)
         if prior.restored(current):
             continue
-        from ..installation.operations import _undo
-        _undo(prior, current)  # raises OwnershipConflict only when our own entry was edited
+        from ..installation.operations import undo_external
+        undo_external(prior, current)  # raises OwnershipConflict only when our own entry was edited
         rows.append({"kind": prior.kind, "target": str(prior.key), "action": "restore", "summary": _EXPLAIN.get(prior.kind, prior.kind), "size_after": len(prior.before or b"")})
     return rows
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Provider-neutral local CLI runner for beyin flush and compile jobs."""
+"""Provider-neutral local CLI runner for SecondBrain flush and compile jobs."""
 
 from __future__ import annotations
 
@@ -9,7 +9,6 @@ import ctypes
 import json
 import os
 from pathlib import Path
-import shlex
 import shutil
 import signal
 import subprocess
@@ -195,10 +194,10 @@ def _windows_user_environment(environment: dict[str, str], cwd: Path, vault_root
     environment["USERPROFILE"] = root_str
     environment["LOCALAPPDATA"] = f"{root_str}/AppData/Local"
     environment["APPDATA"] = f"{root_str}/AppData/Roaming"
-    environment["BEYIN_INVOKED_BY"] = environment.get("BEYIN_INVOKED_BY", "beyin-scripts")
-    environment["BEYIN_RECURSION_DEPTH"] = environment.get("BEYIN_RECURSION_DEPTH", "1")
+    environment["RESPECTED_INVOKED_BY"] = environment.get("RESPECTED_INVOKED_BY", "secondbrain-scripts")
+    environment["RESPECTED_RECURSION_DEPTH"] = environment.get("RESPECTED_RECURSION_DEPTH", "1")
     path_names = ("USERPROFILE", "LOCALAPPDATA", "APPDATA")
-    scalar_names = ("BEYIN_INVOKED_BY", "BEYIN_RECURSION_DEPTH")
+    scalar_names = ("RESPECTED_INVOKED_BY", "RESPECTED_RECURSION_DEPTH")
     environment["WSLENV"] = _merge_wslenv(
         environment.get("WSLENV", ""),
         path_names,
@@ -298,30 +297,6 @@ def _extract_response(stdout: str, provider: str) -> tuple[str, str | None]:
             return (response.strip(), None) if isinstance(response, str) else ("", "invalid-response")
         return "", "invalid-response"
     return stdout.strip(), None
-
-
-def _custom_argv(command: str) -> list[str]:
-    command = command.strip()
-    if not command:
-        return []
-    if os.name != "nt":
-        return shlex.split(command)
-    import ctypes
-    from ctypes import wintypes
-    argc = ctypes.c_int()
-    parse = ctypes.WinDLL("shell32", use_last_error=True).CommandLineToArgvW
-    parse.argtypes = [wintypes.LPCWSTR, ctypes.POINTER(ctypes.c_int)]
-    parse.restype = ctypes.POINTER(wintypes.LPWSTR)
-    argv = parse(command, ctypes.byref(argc))
-    if not argv:
-        raise ValueError("custom-command-invalid")
-    try:
-        return [argv[index] for index in range(argc.value)]
-    finally:
-        free = ctypes.WinDLL("kernel32").LocalFree
-        free.argtypes = [ctypes.c_void_p]
-        free.restype = ctypes.c_void_p
-        free(ctypes.cast(argv, ctypes.c_void_p))
 
 
 if os.name == "nt":
@@ -509,10 +484,10 @@ def run_model(
     *, ctx: AppContext,
 ) -> tuple[str | None, str | None, str | None]:
     """Return (stdout, error, provider); never invoke through a shell."""
-    if os.environ.get('BEYIN_LLM_COMMAND'):
+    if os.environ.get('RESPECTED_LLM_COMMAND'):
         return None, 'custom-isolation-required', 'custom'
     try:
-        depth = int(os.environ.get("BEYIN_RECURSION_DEPTH", "0"))
+        depth = int(os.environ.get("RESPECTED_RECURSION_DEPTH", "0"))
     except ValueError:
         return None, "recursion-depth-invalid", None
     if depth < 0:
@@ -522,8 +497,8 @@ def run_model(
     preferences = ctx.config.get("preferences", {})
     candidates = _available(preferred, preferences)
     environment = os.environ.copy()
-    environment["BEYIN_INVOKED_BY"] = "beyin-scripts"
-    environment["BEYIN_RECURSION_DEPTH"] = str(depth + 1)
+    environment["RESPECTED_INVOKED_BY"] = "secondbrain-scripts"
+    environment["RESPECTED_RECURSION_DEPTH"] = str(depth + 1)
 
     is_auto = (preferred is None or preferred == "auto") and (_configured_provider(preferences) == "auto")
     last_error: tuple[str, str] | None = None
@@ -531,7 +506,7 @@ def run_model(
         process_environment = environment.copy()
         process_environment["PYTHONIOENCODING"] = "utf-8"
         process_environment["PYTHONUTF8"] = "1"
-        process_environment["BEYIN_LLM_MODE"] = mode
+        process_environment["RESPECTED_LLM_MODE"] = mode
         invocation = _command(provider, prompt, mode, ctx.paths.vault_root)
         if invocation is None:
             continue
@@ -633,64 +608,3 @@ def _find_executable(cmd: str) -> str | None:
 
     return None
 
-
-class ProviderStatus:
-    """Explicit provider discovery with an instance-local 45-second cache."""
-    def __init__(self):
-        self._cache = {"ts": 0.0, "data": {}}
-
-    def get_cli_status(self, force_refresh: bool = False) -> dict[str, dict[str, str | bool | None]]:
-        now = time.monotonic()
-        if not force_refresh and self._cache["data"] and (now - self._cache["ts"] < 45.0):
-            return copy.deepcopy(self._cache["data"])
-
-        tools = {
-            "codex": {"cmd": "codex", "name": "OpenAI Codex"},
-            "antigravity": {"cmd": "agy", "name": "Google Antigravity"},
-            "gemini": {"cmd": "gemini", "name": "Google Gemini"},
-            "claude": {"cmd": "claude", "name": "Anthropic Claude"},
-            "cursor": {"cmd": "cursor-agent", "name": "Cursor Agent"},
-        }
-        status = {}
-        for key, item in tools.items():
-            executable = _find_executable(item["cmd"])
-            version = None
-            auth_status = "unknown"
-
-            if executable:
-                try:
-                    proc = subprocess.run(
-                        [executable, "--version"],
-                        capture_output=True,
-                        text=True,
-                        timeout=3.0,
-                        encoding="utf-8",
-                        errors="replace",
-                        **runtime_platform.hidden_process_options(),
-                    )
-                    output = (proc.stdout + " " + proc.stderr).strip()
-                    if output:
-                        version = output.splitlines()[0][:60]
-                    if key == "claude" and ("not logged in" in output.lower() or "/login" in output.lower()):
-                        auth_status = "not_logged_in"
-                    elif proc.returncode == 0:
-                        # A version probe establishes CLI availability, not login.
-                        auth_status = "unknown"
-                    else:
-                        auth_status = "error"
-                except Exception:
-                    auth_status = "installed"
-            else:
-                auth_status = "missing"
-
-            status[key] = {
-                "name": item["name"],
-                "installed": executable is not None,
-                "path": executable,
-                "version": version,
-                "auth_status": auth_status,
-            }
-
-        self._cache["ts"] = now
-        self._cache["data"] = status
-        return copy.deepcopy(status)

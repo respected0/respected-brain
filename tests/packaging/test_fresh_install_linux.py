@@ -61,7 +61,6 @@ sys.exit(0)
         store = ConfigStore(target_dir / "data")
         store.update(lambda doc: doc["preferences"].update(summary_provider=provider, provider_priority=[provider], provider_fallback=False))
         self.ctx = build_context(Roots(target_dir / "app", target_dir / "data", vault), store, vault=vault, vault_id=None, env={})
-        self.assertFalse((vault / ".beyin").exists())
         return vault
 
     def test_standalone_source_lifecycle_for_all_providers(self):

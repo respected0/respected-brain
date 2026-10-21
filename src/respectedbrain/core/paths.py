@@ -87,9 +87,5 @@ class AppPaths:
         return self.data_root / "vaults" / self.vault_id / "overrides"
 
     @property
-    def log_dir(self) -> Path:
-        return self.data_root / "logs"
-
-    @property
     def backup_dir(self) -> Path:
         return self.data_root / "backups"

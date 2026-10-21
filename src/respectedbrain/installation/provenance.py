@@ -12,11 +12,6 @@ import subprocess
 from typing import Any, Callable
 
 
-class ProvenanceVerificationError(Exception):
-    """Raised when release artifact provenance fails verification."""
-    pass
-
-
 def _load_bundle_entries(text: str) -> list[dict[str, Any]]:
     trimmed = text.strip()
     if not trimmed:

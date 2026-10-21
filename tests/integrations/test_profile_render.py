@@ -6,6 +6,8 @@ from tests.support.fakes import IntegrationFixture
 from tests.support.files import snapshot
 from respectedbrain.integrations.backend import IntegrationProfile
 from respectedbrain.integrations import rendering as RENDER
+from respectedbrain.integrations.planning import wsl_path
+from tests.support.render import render_project_integrations
 
 class ProfileRenderTest(IntegrationFixture, TestCase):
     def test_native_bridge_argv_preserves_a_spaced_windows_vault_as_one_argument(self):
@@ -37,7 +39,6 @@ class ProfileRenderTest(IntegrationFixture, TestCase):
                 text = " ".join(row.after.decode() for row in rows if row.after and __import__("pathlib").Path(row.key).name in {"hooks.json", "settings.json", "config.toml"})
                 for provider in ("antigravity", "gemini", "codex", "claude", "cursor"):
                     self.assertIn("--provider " + provider, text)
-                self.assertNotIn(".beyin", text)
                 self.assertNotIn("bridge.py", text)
                 if platform == "windows-wsl":
                     self.assertIn("wsl.exe --cd", text)
@@ -52,15 +53,13 @@ class ProfileRenderTest(IntegrationFixture, TestCase):
         self.assertEqual(snapshot(self.root), before)
 
     def test_fresh_project_configs_use_the_same_uuid_launcher_without_global_hook(self):
-        self.assertTrue(hasattr(RENDER, "render_project_integrations"))
         before = snapshot(self.root)
-        artifacts = RENDER.render_project_integrations(self.ctx, self.profile)
+        artifacts = render_project_integrations(self.ctx, self.profile)
         self.assertTrue({".claude/settings.json", ".codex/hooks.json", ".cursor/hooks.json", ".agents/hooks.json", ".gemini/settings.json"} <= set(artifacts))
         for key, content in artifacts.items():
             with self.subTest(key=key):
                 json.loads(content)
                 self.assertIn(self.ctx.paths.vault_id, content.decode())
-                self.assertNotIn(".beyin", content.decode())
                 self.assertNotIn("--global-hook", content.decode())
         self.assertEqual(snapshot(self.root), before)
 
@@ -84,7 +83,7 @@ class ProfileRenderTest(IntegrationFixture, TestCase):
 
     def test_wsl_matching_existing_uuid_is_accepted_without_registration_write(self):
         profile = IntegrationProfile("windows-wsl", ("/opt/respectedbrain",), self.home)
-        registry = json.dumps({self.ctx.paths.vault_id: {"path": RENDER.wsl_path(self.vault)}})
+        registry = json.dumps({self.ctx.paths.vault_id: {"path": wsl_path(self.vault)}})
         before = snapshot(self.root)
         with mock.patch.object(RENDER.subprocess, "run", side_effect=[mock.Mock(returncode=0), mock.Mock(returncode=0, stdout=registry)]):
             RENDER.validate_profile(self.ctx, profile)

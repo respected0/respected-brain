@@ -33,7 +33,7 @@ class AdversarialQualityTest(unittest.TestCase):
 
     def test_invalid_recursion_depth_prevents_provider_execution(self):
         for value in ('invalid', '-1'):
-            with self.subTest(value=value), mock.patch.dict(os.environ, {'BEYIN_RECURSION_DEPTH':value}), mock.patch.object(self.runner, '_command') as command, mock.patch.object(self.runner, '_run_process_tree', side_effect=OSError('fake executable')):
+            with self.subTest(value=value), mock.patch.dict(os.environ, {'RESPECTED_RECURSION_DEPTH':value}), mock.patch.object(self.runner, '_command') as command, mock.patch.object(self.runner, '_run_process_tree', side_effect=OSError('fake executable')):
                 output,error,provider=self.runner.run_model('prompt', REPO_ROOT, 'text',10,ctx=self.ctx)
                 self.assertIsNone(output)
                 self.assertEqual(error,'recursion-depth-invalid')
@@ -63,52 +63,12 @@ class AdversarialQualityTest(unittest.TestCase):
         script.write_text('# fixture only\n', encoding='utf-8')
         argument=r'C:\fixture\unquoted-path'
         command=f'"{sys.executable}" "{script}" {argument}'
-        self.assertEqual(self.runner._custom_argv(command), [sys.executable, str(script), argument])
-        with mock.patch.dict(os.environ,{'BEYIN_LLM_COMMAND':command,'BEYIN_RECURSION_DEPTH':'0'}), mock.patch.object(self.runner, '_run_process_tree') as process:
+        with mock.patch.dict(os.environ,{'RESPECTED_LLM_COMMAND':command,'RESPECTED_RECURSION_DEPTH':'0'}), mock.patch.object(self.runner, '_run_process_tree') as process:
             text,error,provider=self.runner.run_model('prompt fixture',self.ctx.paths.vault_root,'text',5,ctx=self.ctx)
         self.assertIsNone(text)
         self.assertEqual(error, 'custom-isolation-required')
         self.assertEqual(provider,'custom')
         process.assert_not_called()
-
-    @unittest.skipUnless(os.name=='nt','Windows custom-command quoting contract')
-    def test_custom_command_windows_native_quoting_contract_with_apostrophes_quotes_unicode(self):
-        import subprocess,sys
-        test_cases = [
-            [sys.executable, r"C:\O'Brien\model.py", "Bob's notes"],
-            [sys.executable, "don't", "can't"],
-            [sys.executable, r"C:\normal path\model.py", r"C:\unquoted\path"],
-            [sys.executable, "", "empty arg above"],
-            [sys.executable, 'quote"inside', 'slash\\end\\'],
-            [sys.executable, "Türkçe ğüşıöç 🚀 emoji", 'çift "iç tırnak" deneme'],
-            [sys.executable, "arg1", "arg2", "arg3", "arg4", "arg5"],
-        ]
-        for case in test_cases:
-            command = subprocess.list2cmdline(case)
-            actual = self.runner._custom_argv(command)
-            self.assertEqual(actual, case, f"argv mismatch for: {command}")
-
-        # The command is parsed for compatibility, but run_model must reject it before launch.
-        script = self.ctx.paths.vault_root / 'echo_argv_child.py'
-        script.parent.mkdir(parents=True, exist_ok=True)
-        script.write_text(
-            'import json, sys\n'
-            'sys.stdout.reconfigure(encoding="utf-8")\n'
-            'print(json.dumps({"argv": sys.argv[1:], "prompt": sys.stdin.read()}, ensure_ascii=False))\n',
-            encoding='utf-8',
-        )
-        for args in [
-            [r"C:\O'Brien\model.py", "Bob's notes"],
-            ["don't", "can't"],
-            ["", "Türkçe 🚀", 'with "quote"'],
-        ]:
-            cmd_list = [sys.executable, str(script)] + args
-            command = subprocess.list2cmdline(cmd_list)
-            with mock.patch.dict(os.environ, {'BEYIN_LLM_COMMAND': command, 'BEYIN_RECURSION_DEPTH': '0'}), mock.patch.object(self.runner, '_run_process_tree') as process:
-                text, error, provider = self.runner.run_model('prompt roundtrip', self.ctx.paths.vault_root, 'text', 5, ctx=self.ctx)
-            self.assertIsNone(text)
-            self.assertEqual((error, provider), ('custom-isolation-required', 'custom'))
-            process.assert_not_called()
 
     def test_structured_provider_errors_are_bounded_and_redacted(self):
         import json

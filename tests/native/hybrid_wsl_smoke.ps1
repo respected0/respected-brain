@@ -22,7 +22,7 @@ from respectedbrain.core.paths import Roots
 from respectedbrain.core.config import ConfigStore
 from respectedbrain.vault.registry import VaultRegistry, build_context
 from respectedbrain.integrations.backend import IntegrationProfile
-from respectedbrain.integrations.rendering import validate_profile, bridge_argv, wsl_path
+from respectedbrain.integrations.planning import validate_profile, bridge_argv, wsl_path
 package = Path(sys.argv[1]).resolve()
 document = validate_package(package)
 if document["platform"] != "linux":

@@ -42,7 +42,6 @@ tmp/
 
 # Local Agent & Runtime State
 .local/
-🔮 850-Companion/Session-Logs/
 
 # Python & Testing Artifacts
 __pycache__/
@@ -65,9 +64,6 @@ env/
 ENV/
 build/
 dist/
-release-assets/
-release-stage/
-/setup.exe
 *.egg-info/
 *.egg
 
@@ -101,3 +97,7 @@ $RECYCLE.BIN/
 # Diagnostics & Logs
 *.log
 logs/
+
+# CI smoke outputs
+native-smoke.json
+native-payload.tar.gz

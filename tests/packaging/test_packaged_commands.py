@@ -17,7 +17,7 @@ class FoundationPackagedCommandsTest(unittest.TestCase):
     def test_installed_guides_do_not_execute_retired_vault_or_checkout_engines(self):
         for name,text in self.documents().items():
             with self.subTest(name=name):
-                self.assertNotRegex(text,r"\.beyin/|\.claude/scripts/|scripts/[\w-]+\.py")
+                self.assertNotRegex(text,r"\.claude/scripts/|scripts/[\w-]+\.py")
                 blocks=re.findall(r"```(?!python)([^\n]*)\n(.*?)```",text,re.S)
                 for language,body in blocks:
                     self.assertNotRegex(body,r"(?m)^\s*(?:python3?|py(?:\.exe)? -3)\s")
@@ -44,7 +44,7 @@ class FoundationPackagedCommandsTest(unittest.TestCase):
                         for value in args.argv:
                             if value.startswith("--"):
                                 self.assertIn(value.split("=",1)[0],flags)
-                    if args.command in ("maps","compile","search","maintenance","repair","dashboard","open"):
+                    if args.command in ("maps","compile","search","maintenance","repair","open"):
                         self.assertIsNotNone(args.vault_id,"Installed examples must select the registered UUID")
                     found.append((name,args.command))
         self.assertGreaterEqual(len(found),12,"Installed workflows need actionable native CLI examples")
@@ -66,10 +66,10 @@ class FoundationPackagedCommandsTest(unittest.TestCase):
     def test_installed_diagnosis_uses_real_marker_and_packaged_seeds(self):
         documents = self.documents()
         self.assertIn(".respected.json", ResourceCatalog().iter_files("vault-template"))
-        for name in ("instructions/default.md", "beyin-doktor/SKILL.md"):
+        for name in ("instructions/default.md", "secondbrain-doktor/SKILL.md"):
             self.assertIn("VaultRoot/.respected.json", documents[name])
             self.assertNotIn("VaultRoot/respectedbrain.json", documents[name])
-        doctor = documents["beyin-doktor/SKILL.md"]
+        doctor = documents["secondbrain-doktor/SKILL.md"]
         self.assertNotIn("depodaki tohum", doctor)
         for resource in ("vault-template/knowledge/index.md", "vault-template/🔮 850-Companion/Kurallar.md"):
             self.assertTrue(ResourceCatalog().read_text(resource))

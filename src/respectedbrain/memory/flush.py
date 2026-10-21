@@ -410,13 +410,7 @@ def _is_recent_duplicate(
     current_turns: int | None = None,
     transcript_hash: str | None = None,
 ) -> bool:
-    session_state_path = _session_state_path(state_dir, session_id)
-    state_path = (
-        session_state_path
-        if session_state_path.exists()
-        else state_dir / "last-flush.json"
-    )
-    state = _load_json_object(state_path, {})
+    state = _load_json_object(_session_state_path(state_dir, session_id), {})
     if state.get("session_id") != session_id:
         return False
     if state.get("status", "ok") != "ok":
@@ -486,10 +480,6 @@ def _write_flush_state(
     if provider is not None:
         payload["provider"] = provider
     _atomic_write_json(_session_state_path(state_dir, session_id), payload)
-    try:
-        _atomic_write_json(state_dir / "last-flush.json", payload)
-    except OSError:
-        write_health(state_dir, "last-flush-compat-write-failed")
     if status == "ok":
         try:
             (state_dir / "health.json").unlink(missing_ok=True)
@@ -542,13 +532,8 @@ def _record_flush_failure(
 
 def _owned_session_state(vault_root: Path, state_dir: Path, session_id: str, transcript: Path, provider: str) -> dict[str, Any]:
     state_path = _session_state_path(state_dir, session_id)
-    compatibility = state_dir / "last-flush.json"
     try:
         previous = _load_json_object(state_path, {}) if state_path.exists() else {}
-        if not state_path.exists() and compatibility.exists():
-            candidate = _load_json_object(compatibility, {})
-            if _canonical_session_id(candidate.get("session_id", "")) == session_id:
-                raise OwnershipConflict("transcript-ownership-unknown")
     except (OSError, ValueError):
         raise OwnershipConflict("session-state-invalid")
     if state_path.exists() or previous:
@@ -654,7 +639,7 @@ _WORKSPACE_KEYS = {
 _SESSION_ID_KEYS = {"id", "sessionid", "conversationid", "threadid"}
 _WORKSPACE_CONTAINERS = {"workspace", "workspacecontext"}
 _METADATA_CONTAINERS = {"metadata", "meta", "sessionmetadata"}
-_PROVIDER_KEYS = {"provider", "beyinprovider"}
+_PROVIDER_KEYS = {"provider", "respectedprovider"}
 _PROVIDER_METADATA_TYPES = {"sessionmeta", "sessionmetadata"}
 _PROVIDERS = {"auto", "claude", "codex", "cursor", "antigravity", "gemini"}
 
@@ -957,7 +942,7 @@ def _classify_catch_up_candidate(
             metadata_seen = metadata_seen or bool(hook_paths)
             for raw_key, value in hook_payload.items():
                 key = re.sub(r"[^a-z0-9]", "", str(raw_key).casefold())
-                if key in {"provider", "beyinprovider"} and value != provider:
+                if key in {"provider", "respectedprovider"} and value != provider:
                     return "ambiguous", "hook-provider-mismatch"
                 if key == "transcriptpath" and _transcript_ownership(value, transcript_path) != "match":
                     return "ambiguous", "hook-transcript-mismatch"
@@ -1126,7 +1111,7 @@ def _record_session_event(
         return
     sections = _parse_summary_sections(summary)
     payload = {
-        "provider": provider or os.environ.get("BEYIN_PROVIDER", "auto"),
+        "provider": provider or os.environ.get("RESPECTED_PROVIDER", "auto"),
         "event_type": "session_end" if reason == "sessionend" else reason,
         "session_id": session_id,
         "context": sections.get("Bağlam", ""),
@@ -1261,7 +1246,7 @@ def _flush_session_transcript(
     lock_path = _session_lock_path(state_dir, session_id)
     state_path = _session_state_path(state_dir, session_id)
     transcript_identity = str(transcript_path.expanduser().resolve(strict=False))
-    for path in (lock_path, state_path, state_dir / "last-flush.json"):
+    for path in (lock_path, state_path):
         if not runtime_platform.path_within_vault(path, state_dir):
             raise ValueError("unsafe-session-state")
     with _provenance_lease(state_dir, session_id), lock_path.open("a+", encoding="utf-8") as lock_file:
@@ -1271,7 +1256,7 @@ def _flush_session_transcript(
                 return None
 
             snapshot = snapshot or _transcript_snapshot(transcript_path)
-            provider = provider or os.environ.get("BEYIN_PROVIDER", "auto")
+            provider = provider or os.environ.get("RESPECTED_PROVIDER", "auto")
             if provider == "auto":
                 provider = _transcript_provider(transcript_path) or provider
             previous = _owned_session_state(vault_root, state_dir, session_id, transcript_path, provider)

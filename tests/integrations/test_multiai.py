@@ -26,6 +26,7 @@ from tests.support.fakes import IntegrationFixture
 from tests.support.files import snapshot
 from respectedbrain.integrations.backend import IntegrationProfile
 from respectedbrain.integrations import rendering as RENDER
+from tests.support.render import render_project_integrations
 from respectedbrain.integrations.hooks import bridge as BRIDGE
 from respectedbrain.providers import runner as MODEL_RUNNER
 
@@ -54,18 +55,18 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
                 os.rmdir(self.ctx.paths.state_dir)
 
     def test_generated_files_have_no_drift(self):
-        first = RENDER.render_project_integrations(self.ctx, self.profile)
-        self.assertEqual(first, RENDER.render_project_integrations(self.ctx, self.profile))
+        first = render_project_integrations(self.ctx, self.profile)
+        self.assertEqual(first, render_project_integrations(self.ctx, self.profile))
 
     def test_all_provider_configs_point_to_bridge(self):
-        artifacts = RENDER.render_project_integrations(self.ctx, self.profile)
+        artifacts = render_project_integrations(self.ctx, self.profile)
         for content in artifacts.values():
             self.assertIn('respectedbrain.exe\\" hook', content.decode())  # the program path is quoted (Git Bash eats bare backslashes)
             self.assertIn(self.ctx.paths.vault_id, content.decode())
             self.assertNotIn("bridge.py", content.decode())
 
     def test_fresh_generated_adapters_expose_only_the_current_product_identity(self):
-        artifacts = RENDER.render_project_integrations(self.ctx, self.profile)
+        artifacts = render_project_integrations(self.ctx, self.profile)
         antigravity = json.loads(artifacts[".agents/hooks.json"])
         self.assertEqual(set(antigravity), {"respected-brain"})
         text = " ".join(value.decode() for value in artifacts.values())
@@ -425,7 +426,6 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
         from respectedbrain.providers import runner
         with mock.patch.object(runner,"_configured_provider",return_value="cursor"):
             self.assertEqual(runner._available("codex",store.read()["preferences"])[:2],["cursor","codex"])
-        self.assertFalse((self.vault / ".beyin").exists())
 
     def test_public_docs_describe_provider_neutral_setup(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
@@ -450,8 +450,6 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
         )
         text = "\n".join(path.read_text(encoding="utf-8") for path in paths)
         for stale in (
-            "github.com/avenoxai/avenoxbeyin.git",
-            "raw.githubusercontent.com/avenoxai",
             "claude CLI YOK",
             "mevcut Claude aboneliğinin",
             "terminal aç ve `claude` çalıştır",
@@ -480,7 +478,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
             "Linux", "macOS", "Native Windows", "WSL",
             "Python 3.10+", "kendi çalışma ortamını içerir",
             "RESPECTED_DATA_DIR", "RESPECTED_APP_DIR",
-            "salt okunur", "fiziksel macOS/Linux/WSL kanıtı sayılmaz",
+            "salt okunur", "doğrulanmış sayılmaz",
         ):
             self.assertIn(required, text)
 
@@ -540,7 +538,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
 
     def test_maintenance_skills_are_canonical_and_discoverable(self):
         names = self.ctx.resources.iter_files("skills")
-        for name in ("beyin-doktor", "gecmis-import"):
+        for name in ("secondbrain-doktor", "gecmis-import"):
             self.assertIn(name + "/SKILL.md", names)
 
     def test_global_antigravity_installer_preserves_config_and_is_idempotent(self):
@@ -615,7 +613,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
             RENDER.plan_integrations(self.ctx, self.profile, {"global": True}, self.backend())
         self.assertEqual(snapshot(self.root), before)
 
-    def test_global_installer_manages_explicit_antigravity_homes_only(self):
+    def test_global_installer_plans_hooks_for_each_given_home_without_writing(self):
         extra = self.root / "extra-home"
         extra.mkdir()
         before = snapshot(self.root)
@@ -632,31 +630,11 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
         self.assertTrue(any(row.key.startswith(str(self.home / ".agents/skills")) for row in rows))
         self.assertFalse(any(row.key.startswith(str(self.vault)) for row in rows))
 
-    def test_global_installer_multi_home_preview_is_deduplicated_and_read_only(self):
-        extra = self.root / "extra-home"
-        extra.mkdir()
-        before = snapshot(self.root)
-        for home in (self.home, extra):
-            profile = IntegrationProfile(self.profile.platform, self.profile.launcher, home)
-            rows = RENDER.plan_integrations(self.ctx, profile, {"global": True}, self.backend())
-            self.assertTrue(any(row.key == str(home / ".gemini/config/hooks.json") for row in rows))
-        self.assertEqual(snapshot(self.root), before)
-
     def test_global_installer_rejects_missing_extra_home_before_writes(self):
         profile = IntegrationProfile(self.profile.platform, self.profile.launcher, self.root / "missing-home")
         before = snapshot(self.root)
         with self.assertRaises(ValueError):
             RENDER.plan_integrations(self.ctx, profile, {"global": True}, self.backend())
-        self.assertEqual(snapshot(self.root), before)
-
-    def test_compatibility_antigravity_installer_accepts_multiple_homes(self):
-        extra = self.root / "extra-home"
-        extra.mkdir()
-        before = snapshot(self.root)
-        for home in (self.home, extra):
-            profile = IntegrationProfile(self.profile.platform, self.profile.launcher, home)
-            rows = RENDER.plan_integrations(self.ctx, profile, {"global": True}, self.backend())
-            self.assertTrue(any(row.key == str(home / ".gemini/config/hooks.json") for row in rows))
         self.assertEqual(snapshot(self.root), before)
 
     def test_native_windows_global_command_is_absolute_and_shell_free(self):

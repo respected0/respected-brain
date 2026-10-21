@@ -35,18 +35,6 @@ class KnowledgeDomainTest(unittest.TestCase):
     def tearDown(self) -> None:
         self.temporary.cleanup()
 
-    def test_compile_prompt_specifies_domain_tagging_and_index_structure(self) -> None:
-        prompt = self.compiler.COMPILE_PROMPT
-        self.assertIn("Alan (Domain) Ayrımı ve Context-Tagging:", prompt)
-        self.assertIn("* tech: Yazılım, mimari", prompt)
-        self.assertIn("* research: Araştırma, analiz", prompt)
-        self.assertIn("title, domain, aliases, tags", prompt)
-        self.assertIn("* project/<slug>:", prompt)
-        self.assertIn("* general:", prompt)
-        self.assertIn("Makale | Alan (Domain) | Özet | Kaynak |", prompt)
-        self.assertNotIn("* core:", prompt)
-        self.assertNotIn("* finance:", prompt)
-
     def test_template_index_markdown_has_domain_column(self) -> None:
         from respectedbrain.core.resources import ResourceCatalog
         text = ResourceCatalog().read_text("vault-template/knowledge/index.md")
@@ -64,7 +52,7 @@ class KnowledgeDomainTest(unittest.TestCase):
 
         self.assertFalse(is_allowed("daily/2026-09-11.md"))
         self.assertFalse(is_allowed("SETUP.md"))
-        self.assertFalse(is_allowed(".beyin/engine/compile.py"))
+        self.assertFalse(is_allowed("engine/compile.py"))
         self.assertFalse(is_allowed("knowledge/concepts/test.txt"))
         self.assertFalse(is_allowed("knowledge/unauthorized.md"))
 
@@ -77,7 +65,7 @@ class KnowledgeDomainTest(unittest.TestCase):
 
         self.assertFalse(is_allowed_dir("knowledge"))
         self.assertFalse(is_allowed_dir("daily"))
-        self.assertFalse(is_allowed_dir(".beyin"))
+        self.assertFalse(is_allowed_dir(".obsidian"))
 
     def test_atomic_promotion_creates_domain_subdirectories_in_live_vault(self) -> None:
         stage_dir = Path(tempfile.mkdtemp(prefix="stage-test-"))

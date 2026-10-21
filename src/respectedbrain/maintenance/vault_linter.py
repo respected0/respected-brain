@@ -46,7 +46,6 @@ DATE_STAMP_RE = re.compile(r"(?i)(?:as of|\bas of\b|\bitibarıyla\b|\btarihinde\
 
 EXCLUDED_DIRS = {
     ".git",
-    ".beyin",
     "cache",
     ".claude",
     ".gemini",
@@ -70,11 +69,6 @@ IGNORE_ORPHAN_BASENAMES = {
     "threads",
     "journal",
 }
-
-
-def resolve_vault_root(candidate: Path | None = None) -> Path:
-    """Resolve only an explicitly supplied vault; selection belongs to bootstrap."""
-    return selected_vault(None, candidate)
 
 
 def lint_vault(vault_root: Path) -> dict[str, Any]:

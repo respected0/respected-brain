@@ -46,7 +46,6 @@ class FoundationMaintenanceToolsTest(unittest.TestCase):
         self.assertEqual(json.loads(output.getvalue())['vault_root'], str(self.vault))
         self.assertEqual(snapshot(self.app), before_app)
         self.assertEqual(snapshot(self.vault2), before_other)
-        self.assertFalse((self.vault / '.beyin').exists())
 
     def test_explicit_tool_vault_mismatch_fails_before_mutation(self):
         maintenance = importlib.import_module('respectedbrain.maintenance')
@@ -62,7 +61,6 @@ class FoundationMaintenanceToolsTest(unittest.TestCase):
         miner._save_state()
         another = miner_module.AgentHistoryMiner(self.vault, state_file=self.ctx.paths.state_dir / 'imported_sessions.json')
         self.assertEqual(another.imported_ids, {'session-one'})
-        self.assertFalse((self.vault / '.beyin').exists())
 
     def test_snapshot_receipt_uses_data_and_preserves_interval_guard(self):
         module = importlib.import_module('respectedbrain.maintenance.backup.publish_git_snapshot')
@@ -82,7 +80,6 @@ class FoundationMaintenanceToolsTest(unittest.TestCase):
         self.assertEqual(result['status'], 'ok')
         self.assertEqual(second['status'], 'skipped:not_due')
         self.assertTrue(receipt.is_file())
-        self.assertFalse((self.vault / '.beyin').exists())
 
     def test_restic_restore_verification_temp_is_data_cache(self):
         module = importlib.import_module('respectedbrain.maintenance.backup.backup_restic')

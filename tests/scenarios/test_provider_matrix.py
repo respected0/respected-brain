@@ -12,6 +12,7 @@ import unittest
 from unittest import mock
 from respectedbrain.integrations.backend import IntegrationProfile
 from respectedbrain.integrations import rendering as RENDERER
+from tests.support.render import render_project_integrations
 from tests.support.fakes import IntegrationFixture
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -26,7 +27,7 @@ class ScenarioMatrixTest(IntegrationFixture, unittest.TestCase):
         launcher = self.profile.launcher if platform == "windows-native" else ("/opt/respectedbrain/respectedbrain",)
         profile = IntegrationProfile(platform, launcher, self.home)
         with mock.patch.object(RENDERER.subprocess, "run", return_value=subprocess.CompletedProcess([], 0, stdout=self.wsl_registry_output())):
-            output = RENDERER.render_project_integrations(self.ctx, profile)
+            output = render_project_integrations(self.ctx, profile)
         for relative, value in output.items():
             destination = vault / relative
             destination.parent.mkdir(parents=True, exist_ok=True)

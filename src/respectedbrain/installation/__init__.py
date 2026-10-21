@@ -1,1 +1,1 @@
-"""Ownership-aware installation and migration services."""
+"""Ownership-aware installation services."""

@@ -56,7 +56,6 @@ class FoundationSetupTest(unittest.TestCase):
         self.assertEqual(marker["schema_version"], 3)
         self.assertEqual(config["active_vault_id"], marker["vault_id"])
         self.assertFalse(config["integrations"]["schedule"])
-        self.assertFalse((self.vault / ".beyin").exists())
         self.assertFalse((self.vault / "unins000.exe").exists())
         self.assertFalse(any(self.vault.rglob("*.db")))
         self.assertIn("Atlas", (self.vault / "🔮 850-Companion/Core.md").read_text(encoding="utf-8"))

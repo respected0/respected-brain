@@ -9,7 +9,7 @@ import tempfile
 import unittest
 from unittest.mock import patch, MagicMock
 
-from respectedbrain.maintenance.ingestion.url_safety import validate_safe_url, is_safe_url
+from respectedbrain.maintenance.ingestion.url_safety import validate_safe_url
 from respectedbrain.maintenance.backup.publish_git_snapshot import publish_if_due
 from respectedbrain.integrations.mcp.server import RespectedMcpServer
 from respectedbrain.maintenance.ingestion.mine_agent_history import AgentHistoryMiner
@@ -24,8 +24,7 @@ class ZeroTrustSecurityTests(unittest.TestCase):
         self.vault_root = Path(self.temp_dir.name) / "vault"
         from tests.support.fakes import memory_context as make_context
         self.ctx = make_context(self.vault_root)
-        (self.vault_root / ".beyin").mkdir(parents=True, exist_ok=True)
-        (self.vault_root / ".beyin" / "instructions.md").write_text("Test Instructions", encoding="utf-8")
+        self.vault_root.mkdir(parents=True, exist_ok=True)
 
     def tearDown(self):
         self.temp_dir.cleanup()
@@ -44,8 +43,6 @@ class ZeroTrustSecurityTests(unittest.TestCase):
         # require_resolvable=True olduğunda var olmayan domain fail-closed reddedilmeli
         safe, reason = validate_safe_url("https://this-domain-definitely-does-not-exist-xyz12345.org", require_resolvable=True)
         self.assertFalse(safe)
-        self.assertTrue(is_safe_url("https://github.com"))
-        self.assertFalse(is_safe_url("https://this-domain-definitely-does-not-exist-xyz12345.org", require_resolvable=True))
 
     def test_url_safety_rejects_malicious_schemes_and_excessive_length(self):
         # Desteklenmeyen veya zararlı şemalar fail-closed reddedilmeli

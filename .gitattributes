@@ -37,8 +37,6 @@
 *.md text eol=lf
 *.mdc text eol=lf
 *.txt text eol=lf
-# Historical source copies retain their original whitespace for lossless comparison.
-docs/records/** whitespace=-blank-at-eol
 *.rst text eol=lf
 *.svg text eol=lf
 

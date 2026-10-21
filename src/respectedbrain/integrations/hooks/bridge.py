@@ -11,9 +11,8 @@ import subprocess
 from typing import Any
 from respectedbrain.memory import lifecycle as LIFECYCLE
 from respectedbrain.core.coordination import guarded_writer
-from respectedbrain.core.platform import path_within_vault
+from .transcripts import SESSION_COMPONENT, resolve_antigravity_transcript, resolve_codex_transcript
 EVENTS = ("start", "prompt", "turn", "end", "precompact", "postcompact")
-SESSION_COMPONENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$")
 def first_string(payload: dict[str, Any], *names: str) -> str:
     for name in names:
         value = payload.get(name)
@@ -40,36 +39,6 @@ def wsl_path(value: str) -> str:
     return translated if result.returncode == 0 and translated else value
 
 
-def resolve_antigravity_transcript(
-    session_id: str,
-    home: Path | None = None,
-) -> str:
-    """Resolve a known Antigravity transcript without scanning user data."""
-
-    if (
-        SESSION_COMPONENT.fullmatch(session_id) is None
-        or session_id in {".", ".."}
-    ):
-        return ""
-    profile = home or Path.home()
-    for product in ("antigravity-ide", "antigravity-cli", "antigravity"):
-        brain = profile / ".gemini" / product / "brain"
-        candidate = (
-            brain
-            / session_id
-            / ".system_generated"
-            / "logs"
-            / "transcript.jsonl"
-        )
-        try:
-            candidate.resolve(strict=True).relative_to(brain.resolve(strict=True))
-        except (OSError, RuntimeError, ValueError):
-            continue
-        if candidate.is_file():
-            return str(candidate)
-    return ""
-
-
 def antigravity_session_from_transcript(transcript_path: str) -> str:
     """Derive the stable CLI conversation key from a validated transcript path."""
 
@@ -93,43 +62,6 @@ def antigravity_session_from_transcript(transcript_path: str) -> str:
             session_id = parts[index + 3]
             if SESSION_COMPONENT.fullmatch(session_id) and session_id not in {".", ".."}:
                 return session_id
-    return ""
-
-
-def resolve_codex_transcript(
-    session_id: str,
-    home: Path | None = None,
-) -> str:
-    """Resolve a known Codex rollout transcript without scanning entire user data."""
-
-    if (
-        SESSION_COMPONENT.fullmatch(session_id) is None
-        or session_id in {".", ".."}
-        or session_id.endswith("-unknown")
-    ):
-        return ""
-    profile = home or Path.home()
-    codex_home = profile / ".codex"
-    if not codex_home.is_dir():
-        return ""
-    for folder_name in ("sessions", "archived_sessions"):
-        root = codex_home / folder_name
-        if not root.is_dir() or not path_within_vault(root, codex_home):
-            continue
-        matches = []
-        for directory, dirs, files in os.walk(root):
-            dirs[:] = [d for d in dirs if path_within_vault(Path(directory) / d, codex_home)]
-            for filename in files:
-                if not (filename == session_id + '.jsonl' or filename.endswith('-' + session_id + '.jsonl')):
-                    continue
-                match = Path(directory) / filename
-                try:
-                    if path_within_vault(match, codex_home) and match.is_file():
-                        matches.append((match.stat().st_mtime, str(match)))
-                except (OSError, RuntimeError, ValueError):
-                    continue
-        if matches:
-            return max(matches)[1]
     return ""
 
 
@@ -174,7 +106,7 @@ def normalize(provider: str, payload: dict[str, Any], *, vault_root: Path, home:
         "transcript_path": transcript_path,
         "cwd": wsl_path(cwd),
         "model": first_string(payload, "model", "modelName"),
-        "beyin_provider": provider,
+        "respected_provider": provider,
     }
 
 

@@ -104,7 +104,7 @@ Kaynak geliştirme **Python 3.10+** ister. Çekirdek zorunlu üçüncü taraf Py
 ```powershell
 python -m pip install -e ".[dev]"
 python -m respectedbrain --version
-python tools/build_installer.py --platform windows --output dist
+python tools/build_dist.py --platform windows --output dist
 python tools/verify_distribution.py --distribution dist/RespectedBrain --platform windows
 python -m unittest discover -s tests -t .   # HOME test sırasında geçici klasöre yönlenir
 ```

@@ -66,7 +66,7 @@ LANGUAGE_EXTENSIONS = {
 EXCLUDED_DIRS = {
     ".git", ".venv", "venv", "node_modules", "__pycache__",
     ".pytest_cache", "dist", "build", ".next", ".cache",
-    ".claude", ".cursor", ".beyin", ".gemini", "target",
+    ".claude", ".cursor", ".gemini", "target",
 }
 
 ENTRY_POINT_NAMES = {

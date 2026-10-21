@@ -9,7 +9,6 @@ yerel ağa (LAN), localhost'a, intranet adreslerine veya özel portlara
 from __future__ import annotations
 
 import argparse
-import hashlib
 import ipaddress
 import re
 import socket
@@ -261,12 +260,6 @@ def validate_safe_url(url: str, require_resolvable: bool = False) -> tuple[bool,
     return True, "URL güvenli"
 
 
-def is_safe_url(url: str, require_resolvable: bool = False) -> bool:
-    """Boolean dönen pratik güvenlik kalkanı."""
-    safe, _ = validate_safe_url(url, require_resolvable=require_resolvable)
-    return safe
-
-
 def normalize_canonical_text(text: str) -> str:
     """Temizlenmiş kanonik metin gövdesi oluşturur.
 
@@ -283,17 +276,6 @@ def normalize_canonical_text(text: str) -> str:
     clean = re.sub(r"^\s*[\*\+]\s+", "- ", clean, flags=re.MULTILINE)
     clean = re.sub(r"\s+", " ", clean).strip()
     return clean
-
-
-def canonical_content_hash(text: str) -> str:
-    """Kanonik metnin ilk 16 karakterlik SHA-256 özetini döndürür.
-
-    Web ve dosya içeriklerinde mükerrer kaydı önlemek için kullanılır.
-    """
-    canonical = normalize_canonical_text(text)
-    if not canonical:
-        return ""
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
 
 
 def main() -> int:

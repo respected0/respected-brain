@@ -110,7 +110,7 @@ def main(argv=None):
     try:
         from respectedbrain.installation.payload import validate_package
         document=validate_package(package, require_provenance=not args.unsigned_fixture)
-        record("clean-environment-has-no-product-bypass",all(key not in env for key in ("RESPECTED_ALLOW_UNSIGNED","BEYIN_LLM_COMMAND","PYTHONPATH")))
+        record("clean-environment-has-no-product-bypass",all(key not in env for key in ("RESPECTED_ALLOW_UNSIGNED","RESPECTED_LLM_COMMAND","PYTHONPATH")))
         record("strict-provenance-consumer-path",not args.unsigned_fixture)
         expected_platform="windows" if os.name=="nt" else "macos" if sys.platform=="darwin" else "linux"
         record("host-matching-real-distribution",document.get("platform")==expected_platform,str(document.get("platform")))
@@ -141,7 +141,7 @@ def main(argv=None):
         ctx=build_context(Roots(app,data,vault),ConfigStore(data),vault=vault,vault_id=None,env={})
         code,output,elapsed=lifecycle("repair")
         record("strict-frozen-repair",code==0,output,elapsed)
-        record("uuid-state-separated-from-pure-vault",ctx.paths.state_dir.is_relative_to(data) and not (vault / ".beyin").exists())
+        record("uuid-state-separated-from-pure-vault",ctx.paths.state_dir.is_relative_to(data))
         backend=NativeBackend(data,user_home=home)
         profile=IntegrationProfile(profile_name,(str(launcher),),home)
         prior=read_manifest(data / "install-manifest.json")

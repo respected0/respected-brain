@@ -50,7 +50,6 @@ class FoundationFeaturesTest(unittest.TestCase):
         self.assertEqual(fake.calls, calls)
         self.assertTrue(any(self.ctx.paths.cache_dir.rglob("*.db")))
         self.assertTrue(any(self.ctx.paths.state_dir.iterdir()))
-        self.assertFalse((self.vault / ".beyin").exists())
         self.assertFalse(any(self.vault.rglob("*.db")))
         self.assertEqual(snapshot(self.root / "app"), before_app)
         self.assertEqual(snapshot(self.vault2), before_other)
@@ -162,15 +161,15 @@ class FoundationFeaturesTest(unittest.TestCase):
                 saved_cache.rename(cache)
 
     def test_skills_map_uses_uuid_overrides_without_touching_package(self):
-        custom = self.ctx.paths.overrides_dir / "skills/beyin-doktor/SKILL.md"
+        custom = self.ctx.paths.overrides_dir / "skills/secondbrain-doktor/SKILL.md"
         custom.parent.mkdir(parents=True)
-        custom.write_text("---\nname: beyin-doktor\ndescription: Kişisel kontrol.\n---\n", encoding="utf-8")
+        custom.write_text("---\nname: secondbrain-doktor\ndescription: Kişisel kontrol.\n---\n", encoding="utf-8")
         before_app = snapshot(self.root / "app")
         rebuild_maps(self.ctx)
         skills = (self.vault / "🎯 100-Command-Center/Skills-Map.md").read_text(encoding="utf-8")
         self.assertIn("Kişisel kontrol.", skills)
         self.assertIn("ajan-gecmis-tara", skills)
-        self.assertEqual(skills.count("`beyin-doktor`"), 1)
+        self.assertEqual(skills.count("`secondbrain-doktor`"), 1)
         self.assertEqual(snapshot(self.root / "app"), before_app)
 
     def test_dashboard_user_collision_fails_without_final_or_note_changes(self):

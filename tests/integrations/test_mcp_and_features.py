@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[2]
 from respectedbrain.integrations.mcp.server import RespectedMcpServer
 from respectedbrain.maintenance.ingestion.mine_agent_history import AgentHistoryMiner
 
-from respectedbrain.search.engine import SearchEngine, read_head, parse_frontmatter_head
+from respectedbrain.search.engine import SearchEngine
 from tests.support.files import make_context
 
 
@@ -397,7 +397,7 @@ class TemplateAndSkillsTest(unittest.TestCase):
         self.assertIn("Gelecek Ajan İçin", content)
 
     def test_new_skills_exist_and_valid(self) -> None:
-        skills_to_check = ["beyin-meydan-oku", "beyin-oruntu", "ajan-gecmis-tara"]
+        skills_to_check = ["secondbrain-meydan-oku", "secondbrain-oruntu", "ajan-gecmis-tara"]
         for s in skills_to_check:
             for skill_dir in [ROOT / "src/respectedbrain/resources/skills"]:
                 skill_file = skill_dir / s / "SKILL.md"
@@ -424,25 +424,6 @@ class TemplateAndSkillsTest(unittest.TestCase):
         self.assertIn("scope:", content)
         self.assertIn("confidence:", content)
         self.assertIn("supersedes:", content)
-
-    def test_read_head_and_frontmatter_head(self) -> None:
-        with tempfile.TemporaryDirectory() as td:
-            test_file = Path(td) / "big_note.md"
-            header = "---\ntitle: Büyük Not\nscope: platform\ntags: [a, b]\n---\n"
-            # 50.000 karakterlik gövde
-            body = "# Başlık\n" + ("Uzun satır metni.\n" * 2000)
-            test_file.write_text(header + body, encoding="utf-8")
-
-            # Yalnızca ilk 1200 karakter okunmalı
-            head = read_head(test_file, max_chars=1200)
-            self.assertLessEqual(len(head), 1200)
-            self.assertIn("title: Büyük Not", head)
-
-            fm, valid = parse_frontmatter_head(test_file, max_chars=1200)
-            self.assertTrue(valid)
-            self.assertEqual(fm["title"], "Büyük Not")
-            self.assertEqual(fm["scope"], "platform")
-            self.assertEqual(fm["tags"], ["a", "b"])
 
     def test_scan_open_loops(self) -> None:
         from respectedbrain.briefing.service import _scan_open_loops

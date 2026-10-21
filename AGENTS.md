@@ -11,7 +11,7 @@ Kullanıcının canlı programını veya not kasasını kaynak işi sırasında 
 - Testler `tests/` altında `src/respectedbrain` ile aynı alana konur (`test_*.py`); ortak sahteler `tests/support/`.
   `python -m unittest discover -s tests -t .` geçmeden tamamlandı deme. Test paketi HOME'u geçici klasöre yönlendirir;
   bunu atlatan test yazma.
-- Paket değişikliğinde `tools/build_installer.py` ile build al ve `tools/verify_distribution.py` ile doğrula.
+- Paket değişikliğinde `tools/build_dist.py` ile build al ve `tools/verify_distribution.py` ile doğrula.
 
 ## Kaynak ve kurulu ürün sınırları
 

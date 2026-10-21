@@ -168,29 +168,6 @@ class EventLogTest(unittest.TestCase):
             self.assertIn("Thread 1", th_text)
             self.assertIn("İlerleme kaydedildi.", th_text)
 
-    def test_initial_migration_preserves_existing_last_session_and_threads(self):
-        """If events are absent, initial migration must capture existing markdown files without data loss."""
-        with tempfile.TemporaryDirectory() as temp_dir:
-            vault_root = Path(temp_dir).resolve()
-            companion = vault_root / "🔮 850-Companion"
-            companion.mkdir(parents=True, exist_ok=True)
-
-            # Create existing historical files
-            (companion / "Last-Session.md").write_text("# Tarihsel Son Oturum\nEski bağlam verisi.", encoding="utf-8")
-            (companion / "Threads.md").write_text("# Eski Konular\nEski açık işler.", encoding="utf-8")
-
-            migrated = self.events.ensure_migration(vault_root)
-            self.assertTrue(migrated)
-
-            events_dir = companion / "events"
-            self.assertTrue(events_dir.is_dir())
-            migration_files = list(events_dir.glob("*migration*.json"))
-            self.assertEqual(len(migration_files), 1)
-
-            data = json.loads(migration_files[0].read_text(encoding="utf-8"))
-            self.assertIn("Eski bağlam verisi", data["context"])
-
-
     def test_event_rotation_archives_excess_files_and_preserves_limit(self):
         """When event count exceeds keep_limit, older events must move to archive/ without data loss."""
         import datetime as dt

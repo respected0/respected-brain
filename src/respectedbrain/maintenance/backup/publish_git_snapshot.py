@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from respectedbrain.core.context import AppContext
-from respectedbrain.maintenance import selected_vault, mutable_target
+from respectedbrain.maintenance import selected_vault
 
 import argparse
 import datetime as dt
@@ -12,7 +12,6 @@ import json
 import os
 from pathlib import Path
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -61,10 +60,6 @@ class SecretFinding(str):
         if key == "category":
             return self.category
         return default
-
-    def to_dict(self) -> dict[str, str]:
-        return {"path": self.path, "category": self.category}
-
 
 FORBIDDEN_NAME_PATTERNS = (
     re.compile(r"^\.env(\..+)?$", re.IGNORECASE),

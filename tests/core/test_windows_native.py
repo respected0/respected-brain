@@ -17,7 +17,7 @@ from respectedbrain.core.paths import Roots
 from respectedbrain.core.config import ConfigStore
 from respectedbrain.vault.registry import build_context
 from respectedbrain.integrations.backend import IntegrationProfile
-from respectedbrain.integrations.rendering import render_project_integrations
+from tests.support.render import render_project_integrations
 from tests.support.files import make_context, snapshot
 from tests.support.packages import seed_package
 from tests.support.fakes import Backend
@@ -38,8 +38,8 @@ class WindowsNativeTest(unittest.TestCase):
         self.state = self.ctx.paths.state_dir
         self.home = self.root / "home"
         self.home.mkdir()
-        self.environment = {**os.environ, "RESPECTED_APP_DIR": str(self.ctx.paths.app_root), "RESPECTED_DATA_DIR": str(self.ctx.paths.data_root), "HOME": str(self.home), "USERPROFILE": str(self.home), "BEYIN_INVOKED_BY": "", "BEYIN_RECURSION_DEPTH": "0", "PYTHONUTF8": "1"}
-        self.environment.pop("BEYIN_LLM_COMMAND", None)
+        self.environment = {**os.environ, "RESPECTED_APP_DIR": str(self.ctx.paths.app_root), "RESPECTED_DATA_DIR": str(self.ctx.paths.data_root), "HOME": str(self.home), "USERPROFILE": str(self.home), "RESPECTED_INVOKED_BY": "", "RESPECTED_RECURSION_DEPTH": "0", "PYTHONUTF8": "1"}
+        self.environment.pop("RESPECTED_LLM_COMMAND", None)
         self.profile = IntegrationProfile("windows-native", (str(self.ctx.paths.app_root / "respectedbrain.exe"),), self.home)
         memory = self.vault / "🔮 850-Companion"
         (memory / "Last-Session.md").write_text("## Session: Native\nİlk provider kararı.\n## Previous Sessions\n", encoding="utf-8")
@@ -96,7 +96,7 @@ class WindowsNativeTest(unittest.TestCase):
             encoding="utf-8",
         )
         self.environment["PATH"] = str(bin_dir) + os.pathsep + self.environment.get("PATH", "")
-        self.environment.pop("BEYIN_LLM_COMMAND", None)
+        self.environment.pop("RESPECTED_LLM_COMMAND", None)
         ConfigStore(self.ctx.paths.data_root).update(
             lambda config: config["preferences"].update(summary_provider="claude", provider_fallback=False)
         )
@@ -113,7 +113,6 @@ class WindowsNativeTest(unittest.TestCase):
         else:
             self.fail("Detached package flush did not write the fake-model summary")
         self.assertFalse(any(self.state.glob("hookin-*.json")))
-        self.assertFalse((self.vault / ".beyin").exists())
 
     def test_provider_first_retryable_failure_uses_the_next_real_cli_stub(self):
         from respectedbrain.providers import runner
@@ -123,7 +122,7 @@ class WindowsNativeTest(unittest.TestCase):
         (bin_dir / "codex.cmd").write_text('@echo off\necho codex>>"%RESPECTED_STUB_LOG%"\necho 429 quota exceeded 1>&2\nexit /b 1\n', encoding="utf-8")
         (bin_dir / "cursor-agent.cmd").write_text('@echo off\necho cursor>>"%RESPECTED_STUB_LOG%"\necho fallback-summary\nexit /b 0\n', encoding="utf-8")
         self.ctx.config["preferences"].update(summary_provider="codex", provider_priority=["codex", "cursor"])
-        with mock.patch.dict(os.environ, {"PATH": str(bin_dir), "RESPECTED_STUB_LOG": str(log), "BEYIN_LLM_COMMAND": "", "BEYIN_RECURSION_DEPTH": "0"}):
+        with mock.patch.dict(os.environ, {"PATH": str(bin_dir), "RESPECTED_STUB_LOG": str(log), "RESPECTED_LLM_COMMAND": "", "RESPECTED_RECURSION_DEPTH": "0"}):
             output, error, provider = runner.run_model("native prompt", self.vault, "workspace", 15, preferred="codex", ctx=self.ctx)
         self.assertEqual((output, error, provider), ("fallback-summary", None, "cursor"))
         self.assertEqual(log.read_text(encoding="utf-8").splitlines(), ["codex", "cursor"])

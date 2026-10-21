@@ -22,7 +22,7 @@ modülleri CLI'ı import etmez. Kaynak `src/respectedbrain`, paket tarifleri `pa
 ## 3. Dondurulmuş build
 
 ```powershell
-.venv\Scripts\python.exe tools/build_installer.py --platform windows --output dist
+.venv\Scripts\python.exe tools/build_dist.py --platform windows --output dist
 .venv\Scripts\python.exe tools/verify_distribution.py --platform windows --distribution dist/RespectedBrain
 ```
 

@@ -123,7 +123,7 @@ class ProviderPermissionsAndBoundariesTest(unittest.TestCase):
         )
         ctx = AppContext(paths=paths, config={}, resources=ResourceCatalog())
 
-        with patch.dict("os.environ", {"BEYIN_LLM_COMMAND": "my-llm --dangerously-skip-permissions"}):
+        with patch.dict("os.environ", {"RESPECTED_LLM_COMMAND": "my-llm --dangerously-skip-permissions"}):
             stdout, err, prov = run_model("prompt", Path("C:/test/vault"), mode="text", timeout=5, ctx=ctx)
             self.assertIsNone(stdout)
             self.assertEqual(err, "custom-isolation-required")
@@ -148,7 +148,7 @@ class ProviderPermissionsAndBoundariesTest(unittest.TestCase):
                 vault_id="00000000-0000-0000-0000-000000000001",
             )
             ctx = AppContext(paths=paths, config={}, resources=ResourceCatalog())
-            with patch.dict("os.environ", {"BEYIN_LLM_COMMAND": command, "BEYIN_RECURSION_DEPTH": "0"}):
+            with patch.dict("os.environ", {"RESPECTED_LLM_COMMAND": command, "RESPECTED_RECURSION_DEPTH": "0"}):
                 stdout, err, prov = run_model("prompt", vault_dir, mode="text", timeout=5, ctx=ctx)
             self.assertIsNone(stdout)
             self.assertEqual(err, "custom-isolation-required")
@@ -175,7 +175,7 @@ class ProviderIsolationTest(unittest.TestCase):
             for target in (existing,nested/'inside.md',outside/'outside.md'):
                 script = f'from pathlib import Path;Path({str(target)!r}).write_text(\'changed\');print(\'ok\')'
                 command = subprocess.list2cmdline([sys.executable,'-c',script])
-                with mock.patch.dict(os.environ,{'BEYIN_LLM_COMMAND':command}), mock.patch('respectedbrain.providers.runner._run_process_tree') as call:
+                with mock.patch.dict(os.environ,{'RESPECTED_LLM_COMMAND':command}), mock.patch('respectedbrain.providers.runner._run_process_tree') as call:
                     output, error, provider = run_model('prompt',vault,'text',5,ctx=ctx)
                 self.assertIsNone(output); self.assertEqual(error,'custom-isolation-required'); self.assertEqual(provider,'custom'); call.assert_not_called()
             self.assertEqual(existing.read_text(),'human content')

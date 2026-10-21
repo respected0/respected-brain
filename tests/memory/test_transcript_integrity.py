@@ -39,7 +39,7 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         self.sessions = self.home / '.codex/sessions'
         self.sessions.mkdir(parents=True)
         self.daily = self.vault / 'daily/2026-10-08.md'
-        self.env = mock.patch.dict(os.environ, {'BEYIN_PROVIDER': 'codex'})
+        self.env = mock.patch.dict(os.environ, {'RESPECTED_PROVIDER': 'codex'})
         self.env.start()
         self.addCleanup(self.env.stop)
         self.unrelated = [self.root / "human.txt", self.vault / "knowledge/human.md"]
@@ -117,23 +117,12 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         with mock.patch.object(F, '_classify_catch_up_candidate', side_effect=classify):
             count = self.catch(Model('FOREIGN SNAPSHOT'))
         self.assertEqual(count, 0)
-    def test_last_flush_only_owner_preserved(self):
-        first = self.write(self.root / 'first.jsonl', marker='FIRST')
-        self.assertEqual(self.run_flush(first), 0)
-        state = F._session_state_path(self.state, SID)
-        state.unlink()  # Legacy installation with only the supported compatibility state.
-        old_daily, old_last = self.daily.read_bytes(), (self.state / 'last-flush.json').read_bytes()
-        second = self.write(self.root / 'second.jsonl', marker='SECOND')
-        status = self.run_flush(second, Model('SECOND'), NOW + dt.timedelta(minutes=1))
-        self.assertEqual(self.daily.read_bytes(), old_daily)
-        self.assertEqual(status, 1)
     def test_real_lock_timeout_cannot_transfer_ownership(self):
         first = self.write(self.root / 'first.jsonl', marker='FIRST')
         second = self.write(self.root / 'second.jsonl', marker='SECOND')
         self.assertEqual(self.run_flush(first), 0)
         state = F._session_state_path(self.state, SID)
-        last = self.state / 'last-flush.json'
-        old_state, old_daily, old_last = state.read_bytes(), self.daily.read_bytes(), last.read_bytes()
+        old_state, old_daily = state.read_bytes(), self.daily.read_bytes()
         locked, release = threading.Event(), threading.Event()
         real_lock = F.runtime_platform.exclusive_lock
         def owner():
@@ -161,12 +150,11 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         self.assertFalse(changed or owner_transferred)
         self.assertEqual(state.read_bytes(), old_state)
         self.assertEqual(self.daily.read_bytes(), old_daily)
-        self.assertEqual(last.read_bytes(), old_last)
     def test_rejected_different_path_preserves_all_content(self):
         p = self.transcript({'id': SID, 'cwd': str(self.vault)})
         self.assertEqual(self.run_flush(p), 0)
-        state, last = F._session_state_path(self.state, SID), self.state / 'last-flush.json'
-        old = {x: x.read_bytes() for x in (state, last, self.daily)}
+        state = F._session_state_path(self.state, SID)
+        old = {x: x.read_bytes() for x in (state, self.daily)}
         p2 = self.write(self.root / 'second.jsonl', marker='SECOND')
         model = Model('SECOND')
         self.assertEqual(self.run_flush(p2, model, NOW + dt.timedelta(minutes=1)), 1)
@@ -248,33 +236,18 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         first = self.transcript({'id': SID, 'cwd': str(self.vault)})
         self.assertEqual(self.run_flush(first), 0)
         F._session_state_path(self.state, SID).unlink()
-        (self.state / 'last-flush.json').unlink()
         before = self.daily.read_bytes()
         second = self.write(self.root / 'second.jsonl', marker='SECOND')
         self.assertEqual(self.run_flush(second, Model('SECOND'), NOW + dt.timedelta(minutes=1)), 1)
         self.assertEqual(self.daily.read_bytes(), before)
         self.assertFalse(F._session_state_path(self.state, SID).exists())
 
-    def test_compatibility_only_same_path_cannot_adopt_ownership(self):
-        path = self.transcript({'id': SID, 'cwd': str(self.vault)})
-        self.assertEqual(self.run_flush(path), 0)
-        state = F._session_state_path(self.state, SID)
-        state.unlink()
-        last = self.state / 'last-flush.json'
-        before = {p: p.read_bytes() for p in (last, self.daily)}
-        self.write(path, {'id': SID, 'cwd': str(self.vault)}, 'REVISION')
-        model = Model('REVISION')
-        self.assertEqual(self.run_flush(path, model, NOW + dt.timedelta(minutes=1)), 1)
-        self.assertEqual(model.calls, 0)
-        self.assertFalse(state.exists())
-        self.assertTrue(all(p.read_bytes() == content for p, content in before.items()))
-
     def test_metadata_rejections_preserve_existing_state_and_notes(self):
         foreign = make_context(self.root, self.root / 'vault-b')
         path = self.transcript({'id': SID, 'cwd': str(self.vault)})
         self.assertEqual(self.run_flush(path), 0)
-        state, last = F._session_state_path(self.state, SID), self.state / 'last-flush.json'
-        before = {p: p.read_bytes() for p in (state, last, self.daily)}
+        state = F._session_state_path(self.state, SID)
+        before = {p: p.read_bytes() for p in (state, self.daily)}
         for payload in ({'id': OTHER, 'cwd': str(self.vault)},
                         {'id': SID, 'cwd': str(foreign.paths.vault_root)},
                         {'id': SID, 'workspace': []}, {'id': 42, 'cwd': str(self.vault)}):
@@ -285,14 +258,13 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
                 self.assertEqual(model.calls, 0)
                 self.assertTrue(all(p.read_bytes() == content for p, content in before.items()))
 
-    def test_failure_retry_keeps_ownership_and_compatibility_consistent(self):
+    def test_failure_retry_keeps_ownership(self):
         class Failure(Model):
             def run(self, prompt, **kwargs):
                 return ModelResult(None, 'codex', 'provider-timeout')
         path = self.transcript({'id': SID, 'cwd': str(self.vault)})
         self.assertEqual(self.run_flush(path, Failure()), 1)
-        state, last = F._session_state_path(self.state, SID), self.state / 'last-flush.json'
-        self.assertEqual(state.read_bytes(), last.read_bytes())
+        state = F._session_state_path(self.state, SID)
         self.assertEqual(json.loads(state.read_text(encoding='utf-8'))['transcript_path'], str(path))
         self.assertEqual(self.run_flush(path, Model('RETRY'), NOW + dt.timedelta(minutes=1)), 0)
         self.assertIn('RETRY', self.daily.read_text(encoding='utf-8'))
@@ -438,8 +410,7 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         foreign = make_context(self.root, self.root / 'vault-b')
         path = self.transcript({'id': SID, 'cwd': str(self.vault)})
         self.assertEqual(self.run_flush(path), 0)
-        before = {p: p.read_bytes() for p in (F._session_state_path(self.state, SID),
-                  self.state / 'last-flush.json', self.daily)}
+        before = {p: p.read_bytes() for p in (F._session_state_path(self.state, SID), self.daily)}
         for fields in ({'sessionId': OTHER, 'cwd': str(self.vault)},
                        {'sessionId': SID, 'cwd': str(foreign.paths.vault_root)},
                        {'sessionId': 42, 'cwd': str(self.vault)}):
@@ -479,11 +450,10 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
     def test_provider_change_cannot_reinterpret_owned_session(self):
         path = self.transcript({'id': SID, 'cwd': str(self.vault)})
         self.assertEqual(self.run_flush(path), 0)
-        before = {p: p.read_bytes() for p in (F._session_state_path(self.state, SID),
-                  self.state / 'last-flush.json', self.daily)}
+        before = {p: p.read_bytes() for p in (F._session_state_path(self.state, SID), self.daily)}
         self.write(path, {'id': SID, 'cwd': str(self.vault)}, 'REVISION')
         model = Model('REJECTED')
-        with mock.patch.dict(os.environ, {'BEYIN_PROVIDER': 'claude'}):
+        with mock.patch.dict(os.environ, {'RESPECTED_PROVIDER': 'claude'}):
             self.assertEqual(self.run_flush(path, model, NOW + dt.timedelta(minutes=1)), 1)
         self.assertEqual(model.calls, 0)
         self.assertTrue(all(p.read_bytes() == content for p, content in before.items()))
@@ -491,7 +461,7 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
     def test_native_provider_path_cannot_be_mislabeled(self):
         path = self.transcript({'id': SID, 'cwd': str(self.vault)})
         model = Model()
-        with mock.patch.dict(os.environ, {'BEYIN_PROVIDER': 'claude'}):
+        with mock.patch.dict(os.environ, {'RESPECTED_PROVIDER': 'claude'}):
             self.assertEqual(self.run_flush(path, model), 1)
         self.assertEqual(model.calls, 0)
         self.assertFalse(F._session_state_path(self.state, SID).exists())
@@ -626,7 +596,7 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         def launch(ctx, provider, *, payload=None, **kwargs):
             hook_input = self.state / 'hookin-antigravity.json'
             hook_input.write_text(json.dumps(payload), encoding='utf-8')
-            with mock.patch.dict(os.environ, {'BEYIN_PROVIDER': provider}), \
+            with mock.patch.dict(os.environ, {'RESPECTED_PROVIDER': provider}), \
                  mock.patch.object(cli, 'bootstrap', return_value=ctx), \
                  mock.patch.object(cli, 'datetime', wraps=dt.datetime) as clock, \
                  mock.patch('respectedbrain.providers.runner.ModelRunner', return_value=model):
@@ -723,7 +693,6 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
             'reason': ('unknown', '', None, [], missing),
             'summary': ('invalid', 'FLUSH_BOS', '', None, [], missing),
         }
-        compatibility = (self.state / 'last-flush.json').read_bytes()
         for field, values in cases.items():
             for value in values:
                 with self.subTest(field=field, value=value):
@@ -739,7 +708,6 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
                     self.assertEqual(model.calls, 0)
                     self.assertFalse(self.daily.exists())
                     self.assertEqual(state_path.read_bytes(), before)
-                    self.assertEqual((self.state / 'last-flush.json').read_bytes(), compatibility)
 
     def test_invalid_owned_state_fields_cannot_be_overwritten(self):
         path = self.transcript({'id': SID, 'cwd': str(self.vault)})

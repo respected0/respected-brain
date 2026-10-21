@@ -24,7 +24,7 @@ o dört bulgunun kapanışını da kapsar.
   Object / POSIX process group üzerinden süreç ağacı ile birlikte sonlandırılır.
 - Timeout, nonzero çıkış, kısmi stdout/stderr ve kopuk/detached descendant
   davranışları kalıcı regresyon testleriyle korunur.
-- `BEYIN_LLM_COMMAND` için doğrulanmış bir OS sandbox sözleşmesi bulunmadığından
+- `RESPECTED_LLM_COMMAND` için doğrulanmış bir OS sandbox sözleşmesi bulunmadığından
   child başlatılmadan önce koşulsuz `custom-isolation-required` ile fail-closed
   olunur. `_custom_argv` yalnız komut ayrıştırma/Windows quoting uyumluluğu için
   korunur; çalıştırma yetkisi vermez.

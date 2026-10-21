@@ -63,12 +63,11 @@ class VaultRegistry:
                 if Path(entry["path"]).resolve() == path and other_id != identity:
                     raise IdentityConflict("A registered vault cannot silently change identity")
             updated = copy.deepcopy(marker)
-            machine = {key: updated.pop(key) for key in MACHINE_FIELDS if key in updated}
+            for key in MACHINE_FIELDS:
+                updated.pop(key, None)
             updated.update({"schema_version": 3, "vault_id": identity})
             entry = copy.deepcopy(current) if current else {"settings": {}}
             entry["path"] = str(path)
-            if machine:
-                entry.setdefault("legacy_metadata", {}).update(machine)
             if updated != marker:
                 if original is not None:
                     transaction = datetime.now(timezone.utc).strftime("registration-%Y%m%dT%H%M%S-") + uuid4().hex
@@ -148,7 +147,7 @@ class VaultRegistry:
             raise SelectionError(f"Vault directory does not exist: {path}")
         marker = _read_marker(path / ".respected.json")
         if marker.get("schema_version") != 3 or "vault_id" not in marker:
-            raise SelectionError("Vault must be registered or migrated before use")
+            raise SelectionError("Vault must be registered before use")
         return _identity(marker["vault_id"])
 
 

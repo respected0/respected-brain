@@ -45,7 +45,7 @@ assert sys.path == before
                 self.assertEqual(checked.stdout, '')
 
     def test_project_renderer_keeps_notes_and_technical_state_separate(self):
-        from respectedbrain.integrations.rendering import render_project_integrations
+        from tests.support.render import render_project_integrations
         before = snapshot(self.root)
         output = render_project_integrations(self.ctx, self.profile)
         self.assertEqual(snapshot(self.root), before)
@@ -58,17 +58,6 @@ assert sys.path == before
         with mock.patch.object(cli, "_dispatch", return_value=0) as dispatch:
             self.assertEqual(cli.main(["configure", "--summary-provider", "cursor"]), 0)
         self.assertEqual(dispatch.call_args.args[0].summary_provider, "cursor")
-        self.assertFalse((self.vault / ".beyin").exists())
-
-    def test_instruction_resources_point_to_canonical_instructions(self):
-        from respectedbrain.core.resources import ResourceCatalog
-        for relative in ("AGENTS.md", "CLAUDE.md", ".agents/rules/beyin.md", ".gemini/GEMINI.md", ".cursor/rules/beyin.mdc"):
-            with self.subTest(relative=relative):
-                text = ResourceCatalog().read_text("integrations/" + relative)
-                self.assertIn("src/respectedbrain/resources/instructions/default.md", text)
-                self.assertNotIn("runtime/instructions.md", text)
-                self.assertNotIn("python scripts/", text)
-
 
 if __name__ == "__main__":
     unittest.main()

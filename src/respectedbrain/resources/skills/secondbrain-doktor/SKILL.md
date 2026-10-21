@@ -1,5 +1,5 @@
 ---
-name: beyin-doktor
+name: secondbrain-doktor
 description: Beynin sağlık kontrolü; hook, hafıza ve vault hijyenini denetler. "beyin doktor", "sağlık kontrolü" için kullan.
 ---
 
@@ -61,7 +61,7 @@ ilgisiz JSON/TOML anahtarlarını koru, hash çakışmasında üzerine yazma.
 ### 3. Özyineleme koruması
 
 Hook komutunun native hook girişine bağlı olduğunu doğrula. İç model çağrılarında
-BEYIN_INVOKED_BY koruması motor içinde uygulanır; shell dosyalarına elle guard ekleme.
+RESPECTED_INVOKED_BY koruması motor içinde uygulanır; shell dosyalarına elle guard ekleme.
 Aynı olayı iki bağlantı tetikliyorsa ayrı bulgu yap. Eksik/eski bağlantıyı kullanıcı onayıyla
 native repair üzerinden düzelt.
 
@@ -71,7 +71,7 @@ Configure çıktısındaki preferences.summary_provider, provider_priority ve pr
 alanlarını oku. İşletim sisteminin salt okunur executable keşfiyle claude, codex, agy, gemini
 ve cursor-agent erişimini kontrol et. Native motor var ama seçili provider ve izinli fallback'ler
 yoksa kırmızı. auto kaynak provider'ı önce dener, geçici kota/timeout/5xx hatalarında izinli
-fallback'e geçebilir; BEYIN_LLM_COMMAND özel komutu olabilir. Onaylanan tercih değişikliği:
+fallback'e geçebilir; RESPECTED_LLM_COMMAND özel komutu olabilir. Onaylanan tercih değişikliği:
 
 ```text
 respectedbrain configure --summary-provider auto

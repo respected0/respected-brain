@@ -276,16 +276,6 @@ class _DeadlineSocket:
         return getattr(self.sock, name)
 
 
-class SafeRedirectHandler(urllib.request.HTTPRedirectHandler):
-    """Geriye dönük uyumluluk için yönlendirme kalkanı."""
-
-    def redirect_request(self, req: Any, fp: Any, code: int, msg: str, headers: Any, newurl: str) -> Any:
-        safe, reason = validate_safe_url(newurl, require_resolvable=True)
-        if not safe:
-            raise ValueError(f"Yönlendirme engellendi (güvenlik kalkanı): {reason}")
-        return super().redirect_request(req, fp, code, msg, headers, newurl)
-
-
 def safe_fetch_url(
     url: str,
     timeout: float = 15.0,

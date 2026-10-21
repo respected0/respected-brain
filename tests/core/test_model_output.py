@@ -156,7 +156,7 @@ class OutputNormalizationTest(unittest.TestCase):
                 self.assertIn("Faz 1 kapsamında model çıktısı normalizasyonu", daily_content)
 
                 # State file should indicate success
-                state_file = state_dir / "last-flush.json"
+                state_file = self.flush._session_state_path(state_dir, "repair-test-1")
                 self.assertTrue(state_file.exists())
                 import json
                 state_data = json.loads(state_file.read_text(encoding="utf-8"))

@@ -43,7 +43,7 @@ respectedbrain vault register "<mevcut kasa yolu>"
 | RESPECTED_DATA_DIR | Mutlak teknik veri kökü; başka kayıt alanına geçer |
 | RESPECTED_VAULT_PATH | Kayıtlı kasanın açık yol seçimi |
 | XDG_DATA_HOME | Linux varsayılan teknik veri tabanı |
-| BEYIN_LLM_COMMAND | Eski özel komut anahtarı. Tanımlandığında `custom-isolation-required` ile child başlatılmadan reddedilir |
+| RESPECTED_LLM_COMMAND | Eski özel komut anahtarı. Tanımlandığında `custom-isolation-required` ile child başlatılmadan reddedilir |
 
 Environment override'ları farklı DataRoot/registry seçebilir; “notlar kayboldu” sanmadan kullanılan kökü kontrol edin. Özel model komutu doğrulanmış bir OS sandbox sınırı sunmadığı için çalıştırılmaz; bu değişken yalnız uyumsuz çağrıyı güvenli biçimde reddetmek için okunur.
 

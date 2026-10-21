@@ -111,11 +111,6 @@ class BriefingScheduleTest(IntegrationFixture, TestCase):
         self.assertIn("RunAtLoad", rows[0].after.decode())
         self.assertTrue(rows[-1].key.startswith("launchd:"))
 
-    def test_windows_oem_output_decoder_preserves_turkish_diagnostics(self):
-        text = "Görev başarıyla kaydedildi."
-        self.assertEqual(SCHEDULE.decode_windows_output(text.encode("cp857")), text)
-        self.assertEqual(SCHEDULE.decode_windows_output(text.encode("utf-16")), text)
-
     def test_wsl_task_launches_validated_linux_launcher_and_translates_only_cwd(self):
         profile = IntegrationProfile("windows-wsl", ("/opt/Respected Brain/respectedbrain",), self.home)
         backend = mock.Mock()

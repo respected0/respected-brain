@@ -10,6 +10,7 @@ from respectedbrain.memory import lifecycle
 from respectedbrain.core.coordination import writer_lease
 from respectedbrain.core.errors import BusyError
 from respectedbrain.core.platform import path_within_vault
+from .transcripts import resolve_codex_transcript
 def _parse_payload(argv: list[str]) -> dict:
     for arg in argv:
         if not arg:
@@ -144,7 +145,6 @@ def dispatch(ctx, *, argv, stdin):
     thread_id = payload.get("thread-id") or payload.get("thread_id") or payload.get("session_id")
     if not thread_id:
         return ""
-    from .bridge import resolve_codex_transcript
     transcript = resolve_codex_transcript(str(thread_id))
     if not transcript:
         return ""

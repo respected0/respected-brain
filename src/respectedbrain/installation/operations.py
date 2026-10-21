@@ -48,7 +48,7 @@ def activate_package(roots, package, tx, previous, *, require_provenance=None, r
     return document, tuple(OwnedFile(path, digest(path), "application", stat.S_IMODE(path.stat().st_mode)) for path in sorted(next_paths))
 
 
-def _undo(prior, current):
+def undo_external(prior, current):
     """Our registration undone inside what the client/user has since written; refuses only when they changed our own entry."""
     try:
         return prior.undo(current)
@@ -78,7 +78,7 @@ def plan_connections(ctx, backend, previous):
             current = backend.read(prior.kind, prior.key)
             if prior.restored(current):
                 continue
-            disabled.append(ExternalChange(prior.kind, prior.key, current, _undo(prior, current)))
+            disabled.append(ExternalChange(prior.kind, prior.key, current, undo_external(prior, current)))
         else:
             retained.append(prior)
     if not any(desired.get(key, False) for key in ("global", "mcp", "schedule", "shortcut")):
@@ -95,12 +95,12 @@ def plan_connections(ctx, backend, previous):
             current = backend.read(prior.kind, prior.key)
             if prior.restored(current):
                 continue
-            disabled.append(ExternalChange(prior.kind, prior.key, current, _undo(prior, current)))
+            disabled.append(ExternalChange(prior.kind, prior.key, current, undo_external(prior, current)))
         retained = [prior for prior in retained if prior not in dropped]
     owned = {(change.kind, change.key): change for change in retained}
     for change in changes:
         prior = owned.get((change.kind, change.key))
-        owned[(change.kind, change.key)] = ExternalChange(change.kind, change.key, _undo(prior, change.before) if prior else change.before, change.after)
+        owned[(change.kind, change.key)] = ExternalChange(change.kind, change.key, undo_external(prior, change.before) if prior else change.before, change.after)
     return (*disabled, *changes), tuple(owned.values())
 
 

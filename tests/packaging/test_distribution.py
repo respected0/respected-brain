@@ -15,7 +15,7 @@ class FoundationDistributionTest(unittest.TestCase):
         platform = "windows" if os.name == "nt" else "macos" if __import__("sys").platform == "darwin" else "linux"
         distribution = ROOT / "dist" / ("RespectedBrain.app" if platform == "macos" else "RespectedBrain")
         if not distribution.exists() and not os.environ.get("CI"):
-            self.skipTest("no frozen build in dist/ (python tools/build_installer.py); CI builds it and requires this test")
+            self.skipTest("no frozen build in dist/ (python tools/build_dist.py); CI builds it and requires this test")
         document = validate_package(distribution, require_provenance=False)
         with tempfile.TemporaryDirectory(prefix="Türkçe 🧠 ") as temporary:
             env = {**os.environ, "PATH": str(Path(os.environ["SystemRoot"]) / "System32") if os.name == "nt" else "/usr/bin:/bin", "RESPECTED_APP_DIR": str(distribution), "RESPECTED_DATA_DIR": str(Path(temporary) / "data"), "PYTHONPATH": ""}

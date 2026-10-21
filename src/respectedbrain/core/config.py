@@ -44,7 +44,7 @@ def atomic_write_json(path: Path, document: dict[str, Any]) -> None:
 
 def validate_config(document: dict[str, Any]) -> None:
     if not isinstance(document, dict) or document.get("schema_version") != 3:
-        raise SelectionError("User configuration requires schema 3; migrate the legacy configuration first")
+        raise SelectionError("User configuration requires schema 3")
     for field in ("vaults", "preferences", "integrations"):
         if not isinstance(document.get(field), dict):
             raise SelectionError(f"Config {field} must be an object")

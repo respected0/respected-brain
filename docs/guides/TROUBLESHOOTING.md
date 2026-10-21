@@ -30,7 +30,7 @@ Module/console/native komutu aynı kaynak/kurulum değildir. Doğru executable'�
 
 ## 3. Sağlık araçları
 
-`beyin-doktor` paket skill'i ajan tarafından uygulanabilen talimat setidir; native programda `respectedbrain doctor` adlı komut yoktur. Not denetimleri dispatcher üzerinden yapılabilir:
+`secondbrain-doktor` paket skill'i ajan tarafından uygulanabilen talimat setidir; native programda `respectedbrain doctor` adlı komut yoktur. Not denetimleri dispatcher üzerinden yapılabilir:
 
 ```text
 respectedbrain maintenance --vault-id <UUID> vault_linter --help

@@ -7,30 +7,8 @@ import subprocess
 import sys
 from xml.sax.saxutils import escape
 from ..backend import ExternalChange, canonical_json, canonical_task_xml
-from ..rendering import launch_argv, validate_profile, _Planner, _assert_owned_replacement
+from ..planning import launch_argv, validate_profile, _Planner, _assert_owned_replacement
 from respectedbrain.core.errors import OwnershipConflict
-def decode_windows_output(value: bytes) -> str:
-    if value.startswith((b"\xff\xfe", b"\xfe\xff")):
-        return value.decode("utf-16")
-    for encoding in ("utf-8", "cp857"):
-        try:
-            return value.decode(encoding)
-        except UnicodeDecodeError:
-            continue
-    return value.decode("utf-8", errors="replace")
-
-
-def _decode_windows_xml(value: bytes) -> str:
-    if value.startswith((b"\xff\xfe", b"\xfe\xff")):
-        return value.decode("utf-16")
-    for encoding in ("utf-8-sig", "utf-8", "cp857", "cp1254", "cp1252"):
-        try:
-            return value.decode(encoding)
-        except UnicodeDecodeError:
-            continue
-    return value.decode("utf-8", errors="replace")
-
-
 def _parse_time(time_str: str) -> tuple[int, int]:
     parts = time_str.split(":")
     if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():

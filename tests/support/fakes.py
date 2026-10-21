@@ -61,7 +61,7 @@ class IntegrationFixture:
         self.profile = IntegrationProfile('windows-native', (str(self.app / 'respectedbrain.exe'),), self.home)
 
     def wsl_registry_output(self):
-        from respectedbrain.integrations.rendering import wsl_path
+        from respectedbrain.integrations.planning import wsl_path
         return json.dumps({self.ctx.paths.vault_id: {"path": wsl_path(self.vault)}})
 
     def backend(self):

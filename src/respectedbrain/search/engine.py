@@ -22,22 +22,6 @@ from respectedbrain.core.platform import path_within_vault
 _FRONTMATTER = re.compile(r"\A\ufeff?---\r?\n(.*?)^---[ \t]*(?:\r?\n|$)", re.MULTILINE | re.DOTALL)
 
 
-def read_head(path: Path, max_chars: int = 1200) -> str:
-    """Dosyanın yalnızca ilk max_chars karakterini okur (frontmatter ve başlık I/O optimizasyonu)."""
-    try:
-        with path.open("r", encoding="utf-8", errors="replace") as handle:
-            return handle.read(max_chars)
-    except OSError:
-        return ""
-
-
-def parse_frontmatter_head(path: Path, max_chars: int = 1200) -> tuple[dict[str, Any], bool]:
-    """Büyük dosyaları tamamen belleğe okumadan, ilk 1200 karakterden frontmatter ayrıştırır."""
-    head = read_head(path, max_chars=max_chars)
-    metadata, _ = parse_markdown_meta(head)
-    return metadata, _FRONTMATTER.match(head) is not None
-
-
 def parse_markdown_meta(content: str) -> tuple[dict[str, Any], str]:
     """Basit frontmatter ayrıştırıcı ve metin gövdesi."""
     frontmatter: dict[str, Any] = {}
@@ -76,7 +60,6 @@ class SearchEngine:
 
     EXCLUDED_DIRS = {
         ".git",
-        ".beyin/cache",
         "cache",
         "node_modules",
         ".claude",

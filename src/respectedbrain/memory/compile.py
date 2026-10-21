@@ -797,10 +797,10 @@ def compile_pending(ctx: AppContext, *, model: ModelService, now: dt.datetime,
                     trigger_claim: Path | None = None, before_date: dt.date | None = None,
                     max_calls: int = DEFAULT_MAX_CALLS, dry_run: bool = False) -> int:
     state_dir = ctx.paths.state_dir
-    if os.environ.get("BEYIN_INVOKED_BY"):
+    if os.environ.get("RESPECTED_INVOKED_BY"):
         return 0
     try:
-        depth = int(os.environ.get("BEYIN_RECURSION_DEPTH", "0"))
+        depth = int(os.environ.get("RESPECTED_RECURSION_DEPTH", "0"))
     except ValueError:
         depth = 0
     if depth >= 1:

@@ -105,25 +105,27 @@ def build(*, platform: str, output: Path) -> Path:
         raise ValueError("Frozen distributions must be built on their native platform")
     output = output.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    runtime_root = Path(sys.base_prefix)
-    tkinter_extension = runtime_root / "DLLs" / "_tkinter.pyd"
-    tcl_library = runtime_root / "tcl" / "tcl8.6"
-    tk_library = runtime_root / "tcl" / "tk8.6"
-    if not tkinter_extension.is_file() or not tcl_library.is_dir() or not tk_library.is_dir():
-        raise RuntimeError("This interpreter does not provide a complete Tcl/Tk runtime")
     command = [
         sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean", "--onedir",
         "--contents-directory", "app", "--name", "RespectedBrain",
         "--distpath", str(output), "--workpath", str(ROOT / "build/frozen"),
         "--specpath", str(ROOT / "build"), "--paths", str(ROOT / "src"),
         "--collect-all", "tkinter", "--hidden-import", "_tkinter",
-        "--add-binary", f"{tkinter_extension}{os.pathsep}.",
-        "--add-data", f"{tcl_library}{os.pathsep}tcl8.6",
-        "--add-data", f"{tk_library}{os.pathsep}tk8.6",
         "--collect-submodules", "respectedbrain", "--copy-metadata", "respectedbrain",
         "--add-data", str(ROOT / "src/respectedbrain/resources") + os.pathsep + "respectedbrain/resources",
         str(ROOT / "packaging/entrypoint.py"),
     ]
+    if platform == "windows":  # the python.org layout keeps Tcl/Tk next to the interpreter: ship it explicitly
+        runtime_root = Path(sys.base_prefix)
+        tkinter_extension = runtime_root / "DLLs" / "_tkinter.pyd"
+        tcl_library = runtime_root / "tcl" / "tcl8.6"
+        tk_library = runtime_root / "tcl" / "tk8.6"
+        if not tkinter_extension.is_file() or not tcl_library.is_dir() or not tk_library.is_dir():
+            raise RuntimeError("This interpreter does not provide a complete Tcl/Tk runtime")
+        command[command.index("--collect-submodules"):command.index("--collect-submodules")] = [
+            "--add-binary", f"{tkinter_extension}{os.pathsep}.",
+            "--add-data", f"{tcl_library}{os.pathsep}tcl8.6",
+            "--add-data", f"{tk_library}{os.pathsep}tk8.6"]
     subprocess.run(command, cwd=ROOT, check=True)
     app = output / "RespectedBrain"
     launcher = app / ("RespectedBrain.exe" if platform == "windows" else "RespectedBrain")

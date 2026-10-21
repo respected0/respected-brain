@@ -105,7 +105,6 @@ class FoundationPosixInstallTest(unittest.TestCase):
         self.assertTrue(any(item.role == "launcher" and item.path == self.launcher for item in manifest.files))
         self.assertTrue(prove_ownership(self.launcher, manifest))
         self.assertEqual(ConfigStore(ctx.paths.data_root).read()["integrations"], self.flags)
-        self.assertFalse((self.vault / ".beyin").exists())
     def test_unknown_launcher_collision_is_retained_and_install_rolls_back(self):
         self.launcher.parent.mkdir(parents=True)
         self.launcher.write_bytes(b"user launcher")

@@ -12,10 +12,6 @@ class IdentityConflict(SelectionError):
     """Two live vault locations claim the same identity."""
 
 
-class StateConflict(FoundationError):
-    """State sources contain incompatible values."""
-
-
 class OwnershipConflict(FoundationError):
     """A destination no longer matches the recorded ownership."""
 

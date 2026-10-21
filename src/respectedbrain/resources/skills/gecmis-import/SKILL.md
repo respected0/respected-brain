@@ -495,4 +495,4 @@ respectedbrain vault list
 respectedbrain compile --vault-id UUID --dry-run
 ```
 
-Son adım olarak `beyin-doktor` çalıştırmayı öner. Derleme durumu satırından ilerleme izlenebilir.
+Son adım olarak `secondbrain-doktor` çalıştırmayı öner. Derleme durumu satırından ilerleme izlenebilir.

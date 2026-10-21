@@ -7,9 +7,9 @@ Kanonik kaynak: `skills/`
 | Skill | Ne zaman kullanılır |
 | --- | --- |
 | `ajan-gecmis-tara` | Yerel AI ajan (Antigravity, Codex) loglarını tarar. "ajan geçmiş", "geçmiş tara" dendiğinde kullan. |
-| `beyin-doktor` | Beynin sağlık kontrolü; hook, hafıza ve vault hijyenini denetler. "beyin doktor", "sağlık kontrolü" için kullan. |
-| `beyin-meydan-oku` | Kararları geçmiş hata ve verilerle eleştirel test eder. "meydan oku", "challenge", "bu karar doğru mu" için kullan. |
-| `beyin-oruntu` | Örtük sürtünme ve darboğaz örüntülerini çıkarır. "örüntü", "trend", "nerede takılıyoruz" için kullan. |
+| `secondbrain-doktor` | Beynin sağlık kontrolü; hook, hafıza ve vault hijyenini denetler. "beyin doktor", "sağlık kontrolü" için kullan. |
+| `secondbrain-meydan-oku` | Kararları geçmiş hata ve verilerle eleştirel test eder. "meydan oku", "challenge", "bu karar doğru mu" için kullan. |
+| `secondbrain-oruntu` | Örtük sürtünme ve darboğaz örüntülerini çıkarır. "örüntü", "trend", "nerede takılıyoruz" için kullan. |
 | `gecmis-import` | Eski sohbetleri (ChatGPT, Claude) daily/ altına aktarır. "geçmiş import", "chatgpt geçmişi" dendiğinde kullan. |
 | `inbox-duzenle` | Gelen kutusu ve Dump notlarını tasnif edip düzenler. "inbox düzenle", "dump temizle", "triyaj" dendiğinde kullan. |
 | `obsidian-layout` | Obsidian görsel temasını ve CSS snippetlarını düzenler. "obsidian tema", "css düzenle", "görünüm" için kullan. |

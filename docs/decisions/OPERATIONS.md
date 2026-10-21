@@ -44,7 +44,7 @@ adaptörüyle korur. Event normalizasyonu oturumun idempotency anahtarını
 değiştirip eski konuşmayı tekrar kaydetmez.
 
 Global hook, MCP, zamanlayıcı ve kısayol mevcut `respectedbrain` başlatıcısını
-çağırır. `.py` dosyasının kurulu konumunu, sistem Python'ını, `.beyin` veya
+çağırır. `.py` dosyasının kurulu konumunu, sistem Python'ını veya
 `runtime/scripts` yolunu sabitlemez. Native Windows `.exe`, POSIX kurulum
 native CLI kullanır. WSL seçilmişse kayıt sırasında WSL içinde mevcut
 başlatıcı doğrulanır ve Windows/WSL sınırındaki argv yolları dönüştürülür;
@@ -125,7 +125,7 @@ Kullanıcı tarafından değiştirilmiş harici kayıt başka uygulamayı silece
 - Kaynakta tek `respectedbrain` paketi; kurulumda tek aktif motor dağıtımı.
 - Wheel/frozen paket kaynakları ve template dahil; repo checkout'una bağımlı değil.
 - Program salt okunur hedefte çalışır; AppRoot'a teknik veri yazmaz.
-- Yeni kasa `.beyin`, scripts, engine, kaldırıcı veya arama DB'si içermez.
+- Yeni kasa scripts, engine, kaldırıcı veya arama DB'si içermez.
 - Install/update/repair CLI ve platform kabuklarından aynı son yerleşimi üretir.
 - Hook/compile/briefing/search/MCP aynı AppPaths ve UUID'yi kullanır.
 - Farklı CWD, Türkçe/emoji/boşluklu yollar, seçilmiş kasa, iki kasa ve kasa

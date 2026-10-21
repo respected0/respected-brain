@@ -9,7 +9,6 @@ from respectedbrain.core.config import ConfigStore
 from respectedbrain.core.errors import FoundationError, OwnershipConflict
 from respectedbrain.core.paths import Roots
 from respectedbrain.core.resources import ResourceCatalog
-from respectedbrain.integrations.backend import ExternalChange
 from respectedbrain.vault.registry import VaultRegistry
 from .common import installed_profile, installation_context, ensure_linux_launcher
 from .ownership import OwnedFile, OwnershipManifest, digest, manifest_document, read_manifest, safe_path

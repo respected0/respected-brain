@@ -2,7 +2,6 @@
 # secrets inside note bodies need a separate review before publishing snapshots.
 .claude/settings.local.json
 *settings.local.json
-.beyin/backups/
 .env
 .env.*
 *.env
@@ -20,11 +19,9 @@
 auth.json
 
 # Local runtime state & databases
-.beyin/engine/.state/
 .claude/hooks/.state/
 .claude/scripts/.state/*
 !.claude/scripts/.state/.gitkeep
-🔮 850-Companion/Session-Logs/
 *.db
 *.db-journal
 *.db-wal
@@ -44,6 +41,5 @@ ehthumbs.db
 .obsidian/cache
 __pycache__/
 *.py[cod]
-.beyin/cache/
 .pytest_cache/
 *.log

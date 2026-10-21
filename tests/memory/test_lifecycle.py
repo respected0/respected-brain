@@ -5,6 +5,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+import sys
 import importlib.util
 import json
 import os
@@ -64,11 +65,11 @@ class LifecycleTest(unittest.TestCase):
         self.assertEqual(target.read_text(encoding="utf-8"), "30\n")
 
     def test_frozen_flush_launch_uses_executable_without_module_flags(self):
-        with mock.patch.object(LIFECYCLE.sys, "frozen", True, create=True), \
+        with mock.patch.object(sys, "frozen", True, create=True), \
              mock.patch.object(LIFECYCLE.subprocess, "Popen", return_value=SimpleNamespace(wait=lambda: 0)) as launch:
             self.assertTrue(LIFECYCLE._launch_flush(self.ctx, "codex", maybe_compile=True))
         self.assertEqual(launch.call_args.args[0],
-                         [LIFECYCLE.sys.executable, "flush", "--vault-id", self.ctx.paths.vault_id, "--maybe-compile"])
+                         [sys.executable, "flush", "--vault-id", self.ctx.paths.vault_id, "--maybe-compile"])
         self.assertEqual(launch.call_args.kwargs["env"]["RESPECTED_DATA_DIR"], str(self.ctx.paths.data_root))
 
     def _write_fixture_memory(self):
@@ -99,10 +100,10 @@ class LifecycleTest(unittest.TestCase):
             payload={**payload, "provider": provider}, now=now)
 
     def _record_process(self, command, **kwargs):
-        self.assertEqual(command[:4], [LIFECYCLE.sys.executable, "-m", "respectedbrain", "flush"])
+        self.assertEqual(command[:4], [sys.executable, "-m", "respectedbrain", "flush"])
         self.assertEqual(command[4:6], ["--vault-id", self.ctx.paths.vault_id])
         argv = command[6:]
-        record = {"argv": argv, "provider": kwargs["env"].get("BEYIN_PROVIDER")}
+        record = {"argv": argv, "provider": kwargs["env"].get("RESPECTED_PROVIDER")}
         if "--hook-input" in argv:
             source = Path(argv[argv.index("--hook-input") + 1])
             record["payload"] = json.loads(source.read_text(encoding="utf-8"))
@@ -132,7 +133,7 @@ class LifecycleTest(unittest.TestCase):
                 "[Hafıza: Aktif Konular]",
                 "[Hafıza: Kurallar]",
                 "[Hafıza: Son Journal]",
-                "[Beyin Haritası]",
+                "[Hafıza Haritası]",
                 "[Skills Haritası]",
                 "[Bilgi Tabanı: İndeks]",
                 "[Bugünün Logu]",
@@ -160,7 +161,7 @@ class LifecycleTest(unittest.TestCase):
         self.assertLessEqual(len(context), 16_000)
         self.assertIn("[Hafıza: Son Oturum]", context)
         self.assertIn("[Hafıza: Kurallar]", context)
-        self.assertIn("[Beyin Haritası]", context)
+        self.assertIn("[Hafıza Haritası]", context)
         self.assertIn("[Skills Haritası]", context)
         self.assertIn("[not: son oturum 4.000 karakterde kırpıldı", context)
         self.assertIn("[not: kurallar 4.000 karakterde kırpıldı", context)
@@ -197,7 +198,6 @@ class LifecycleTest(unittest.TestCase):
         transcript = self.vault / "transcript.jsonl"
         transcript.write_text('{"role":"user","content":"private sk-ABCDEFGHIJKLMNOPQRSTUVWX"}\n', encoding="utf-8")
         self.handle("precompact", {"session_id": "nocopy", "transcript_path": str(transcript)}, self.vault, "codex")
-        self.assertFalse((self.memory / "Session-Logs").exists())
         self.assertFalse((self.state.parent / "session-archive").exists())
 
     def test_concurrent_prompts_are_not_lost(self):

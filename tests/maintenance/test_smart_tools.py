@@ -1,12 +1,11 @@
-"""Tests for Respected Brain Smart Tools (Bounded Recall, Smart Merge, Architect Scanner).
+"""Tests for the maintenance tools (Smart Merge, Architect Scanner, Vault Linter, URL safety, templates).
 
 Covers:
-1. Bounded Recall (bounded_recall.py): Abstention gate, token bounding, FTS fallback.
-2. Smart Note Merge (smart_merge.py): Metadata union, redirect callout, wikilink rewriting.
-3. Codebase Architect Scanner (architect_scan.py): Architecture extraction, module discovery, markdown/json output.
-4. Vault Linter (vault_linter.py): En/Em-dash filename rule and freshness claim linting.
-5. URL Safety Canonical Hashing (url_safety.py): Content normalization and hashing.
-6. Note Template & Rules: Bi-temporal timeline schema and future agent preamble.
+1. Smart Note Merge (smart_merge.py): Metadata union, redirect callout, wikilink rewriting.
+2. Codebase Architect Scanner (architect_scan.py): Architecture extraction, module discovery, markdown/json output.
+3. Vault Linter (vault_linter.py): En/Em-dash filename rule and freshness claim linting.
+4. URL Safety Canonical Hashing (url_safety.py): Content normalization and hashing.
+5. Note Template & Rules: Bi-temporal timeline schema and future agent preamble.
 """
 
 from __future__ import annotations
@@ -23,124 +22,8 @@ from respectedbrain.maintenance.ingestion import url_safety
 from respectedbrain.maintenance import vault_linter
 from respectedbrain.maintenance import architect_scan
 from respectedbrain.maintenance import smart_merge
-from respectedbrain.memory import bounded_recall
 from tests.support.files import make_context
 from respectedbrain.core.resources import ResourceCatalog
-
-
-class TestBoundedRecall(unittest.TestCase):
-    """Bounded Recall & Abstention Gate tests."""
-
-    def test_abstention_gate_on_short_or_conversational_prompts(self):
-        self.assertTrue(bounded_recall.should_abstain("merhaba"))
-        self.assertTrue(bounded_recall.should_abstain("selam companion"))
-        self.assertTrue(bounded_recall.should_abstain("teşekkürler"))
-        self.assertTrue(bounded_recall.should_abstain("ok"))
-        self.assertTrue(bounded_recall.should_abstain("tamam anladım"))
-        self.assertTrue(bounded_recall.should_abstain(""))
-        self.assertTrue(bounded_recall.should_abstain("tamam devam et"))
-
-    def test_abstention_gate_passes_substantive_prompts(self):
-        self.assertFalse(bounded_recall.should_abstain("Next.js auth mimarisi ve session yönetimi nasıl olmalı?"))
-        self.assertFalse(bounded_recall.should_abstain("İkinci beyin graphrag indexleme kararları neydi?"))
-        self.assertFalse(bounded_recall.should_abstain("PostgreSQL connection pooling ayarları"))
-
-    def test_bounded_recall_produces_budgeted_output(self):
-        from respectedbrain.search.engine import SearchEngine
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            vault = Path(temp_dir)
-            (vault / "500-Knowledge").mkdir(parents=True)
-            doc = vault / "500-Knowledge" / "Auth.md"
-            doc.write_text(
-                "---\ntitle: Auth Notu\n---\n# Auth\nNext.js auth session ve token doğrulama mimarisi.\n" * 20,
-                encoding="utf-8",
-            )
-            technical = tempfile.TemporaryDirectory()
-            self.addCleanup(technical.cleanup)
-            ctx = make_context(Path(technical.name), vault)
-            engine = SearchEngine(ctx)
-            engine.index_vault()
-
-            result = bounded_recall.get_bounded_recall(
-                "Next.js auth mimarisi token",
-                ctx=ctx,
-                max_chars=200,
-            )
-            # Must return substantive bounded recall, never empty when matches exist
-            self.assertTrue(result.startswith("[Hafıza Fısıltısı]"))
-            self.assertIn("Auth.md", result)
-            self.assertLessEqual(len(result), 200)
-            self.assertGreater(len(result), 30)
-
-    def test_bounded_recall_handles_fts_syntax_and_special_chars(self):
-        from respectedbrain.search.engine import SearchEngine
-
-        with tempfile.TemporaryDirectory() as temp_dir:
-            vault = Path(temp_dir)
-            (vault / "500-Knowledge").mkdir(parents=True)
-            (vault / "500-Knowledge" / "Syntax.md").write_text("# Syntax\nFTS5 test query syntax handling.", encoding="utf-8")
-            technical = tempfile.TemporaryDirectory()
-            self.addCleanup(technical.cleanup)
-            ctx = make_context(Path(technical.name), vault)
-            engine = SearchEngine(ctx)
-            engine.index_vault()
-
-            # Queries with unbalanced quotes and FTS5 operators must not raise exceptions
-            res1 = bounded_recall.get_bounded_recall('"unclosed quote in query', ctx=ctx)
-            self.assertIsInstance(res1, str)
-            res2 = bounded_recall.get_bounded_recall("AND OR NOT * near", ctx=ctx)
-            self.assertIsInstance(res2, str)
-
-    def test_bounded_recall_boundary_max_chars(self):
-        with tempfile.TemporaryDirectory() as temp_dir:
-            vault = Path(temp_dir)
-            technical = tempfile.TemporaryDirectory()
-            self.addCleanup(technical.cleanup)
-            ctx = make_context(Path(technical.name), vault)
-            # max_chars <= 0 must return empty string safely (fail-closed)
-            result = bounded_recall.get_bounded_recall("substantive query about architecture", ctx=ctx, max_chars=0)
-            self.assertEqual(result, "")
-
-    def test_abstention_gate_on_slash_commands(self):
-        self.assertTrue(bounded_recall.should_abstain("/plan"))
-        self.assertTrue(bounded_recall.should_abstain("/help"))
-        self.assertTrue(bounded_recall.should_abstain("/goal"))
-
-    def test_bounded_recall_fails_closed_on_invalid_vault_or_error(self):
-        non_existent_vault = Path(tempfile.gettempdir()) / "non_existent_vault_12345"
-        # Must fail-closed: return empty string, never raise exception to the caller
-        from types import SimpleNamespace
-        result = bounded_recall.get_bounded_recall("substantive query about architecture", ctx=SimpleNamespace(paths=None))
-        self.assertEqual(result, "")
-
-    def test_hard_budget_clamps_and_nonpositive_budget_abstains_before_search(self):
-        from unittest import mock
-        engine = mock.Mock()
-        engine.search.return_value = [{'path':'note.md','snippet':'content '*1000}] * 20
-        with mock.patch.object(bounded_recall, '_get_search_engine', return_value=engine):
-            result = bounded_recall.get_bounded_recall('substantive architecture query', ctx=None, max_notes=99, max_chars=9999)
-            self.assertLessEqual(len(result), bounded_recall.MAX_CHARS)
-            self.assertLessEqual(result.count('- [['), bounded_recall.MAX_NOTES)
-            self.assertEqual(engine.search.call_args.kwargs['limit'], bounded_recall.MAX_NOTES)
-            engine.reset_mock()
-            self.assertEqual(bounded_recall.get_bounded_recall('substantive architecture query', ctx=None, max_notes=-1), '')
-            engine.search.assert_not_called()
-
-    @unittest.skipUnless(sys.platform == 'win32', 'Windows junction boundary')
-    def test_recall_rejects_cache_junction_without_creating_external_database(self):
-        import os
-        import subprocess
-        with tempfile.TemporaryDirectory() as tech, tempfile.TemporaryDirectory() as vault, tempfile.TemporaryDirectory() as outside:
-            ctx = make_context(Path(tech), Path(vault))
-            ctx.paths.cache_dir.parent.mkdir(parents=True, exist_ok=True)
-            link = ctx.paths.cache_dir
-            subprocess.run(['cmd','/c','mklink','/J',str(link),outside], check=True, capture_output=True)
-            try:
-                self.assertEqual(bounded_recall.get_bounded_recall('architecture substantive query',ctx), '')
-                self.assertEqual(list(Path(outside).iterdir()), [])
-            finally:
-                os.rmdir(link)
 
 
 class TestSmartMerge(unittest.TestCase):
@@ -317,15 +200,6 @@ class TestUrlSafety(unittest.TestCase):
         self.assertNotIn("<p>", normalized)
         self.assertNotIn("</p>", normalized)
         self.assertIn("hello world!", normalized.lower())
-
-    def test_canonical_content_hash_consistency(self):
-        t1 = "<p>Hello world</p>"
-        t2 = "Hello   world"
-        h1 = url_safety.canonical_content_hash(t1)
-        h2 = url_safety.canonical_content_hash(t2)
-        self.assertEqual(h1, h2)
-        self.assertEqual(len(h1), 16)
-
 
 class TestTemplatesAndRules(unittest.TestCase):
     """Timeline schema and future agent preamble in templates & companion rules."""

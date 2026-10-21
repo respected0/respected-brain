@@ -25,7 +25,6 @@ from typing import Any
 
 EXCLUDED_DIRS = {
     ".git",
-    ".beyin",
     "cache",
     ".claude",
     ".gemini",
@@ -43,11 +42,6 @@ STOP_WORDS = {
     "olarak", "gibi", "kadar", "daha", "en", "çok", "her", "şey", "the", "and", "or",
     "is", "in", "at", "of", "to", "a", "an", "it", "that", "this", "for", "with", "on"
 }
-
-
-def resolve_vault_root(candidate: Path | None = None) -> Path:
-    """Resolve only an explicitly supplied vault; selection belongs to bootstrap."""
-    return selected_vault(None, candidate)
 
 
 def tokenize(text: str) -> set[str]:

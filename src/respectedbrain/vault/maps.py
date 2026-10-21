@@ -19,7 +19,6 @@ VAULT_MAP = "Vault-Map.md"
 SKILLS_MAP = "Skills-Map.md"
 EXCLUDED_TOP_LEVEL = {
     ".agents",
-    ".beyin",
     ".claude",
     ".codex",
     ".cursor",

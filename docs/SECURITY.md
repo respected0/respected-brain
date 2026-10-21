@@ -23,7 +23,7 @@ uygulaması değildir.
 | Cursor | desteklenmiyor, fail-closed | `--output-format text` |
 | Gemini | `--sandbox --approval-mode plan` | `--sandbox --approval-mode auto_edit` |
 
-`BEYIN_LLM_COMMAND` child başlatılmadan önce daima `custom-isolation-required`
+`RESPECTED_LLM_COMMAND` child başlatılmadan önce daima `custom-isolation-required`
 döndürür. `_custom_argv` yalnız Windows/POSIX quoting uyumluluk testleri içindir ve
 çalıştırma yetkisi değildir. Runner önceki dosya silme/tab farkı cleanup'ını yapmaz;
 iç ve dış insan notlarına dokunmaz.

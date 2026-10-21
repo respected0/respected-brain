@@ -29,11 +29,3 @@ def redact(text: str) -> str:
         text = pattern.sub(replacement, text)
     return text
 
-
-def categories(text: str) -> set[str]:
-    """Which secret shapes `text` still contains (used by tests and the archive guard)."""
-    found = set()
-    for category, pattern, _ in _PATTERNS:
-        if pattern.search(text):
-            found.add(category)
-    return found

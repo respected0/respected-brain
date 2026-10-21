@@ -142,7 +142,6 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(len(counts), 1)
         self.assertEqual(counts[0].read_text(encoding='utf-8').strip(), '1')
         self.assertEqual(snapshot(self.app), before_app)
-        self.assertFalse((self.vault / '.beyin').exists())
 
     def test_mcp_stdout_is_protocol_only(self):
         module = importlib.import_module('respectedbrain.integrations.mcp.server')
@@ -155,7 +154,6 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(payload['jsonrpc'], '2.0')
         self.assertEqual(payload['id'], 1)
         self.assertNotIn('DEBUG', output.getvalue())
-        self.assertFalse((self.vault / '.beyin').exists())
 
     def test_schedule_uses_stable_uuid_and_provider_free_launcher(self):
         from respectedbrain.integrations.scheduling.service import plan_schedule
@@ -290,7 +288,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
     def test_reentrant_hook_does_not_create_any_technical_state(self):
         from respectedbrain.integrations.hooks.bridge import dispatch
         before = snapshot(self.root)
-        with mock.patch.dict("os.environ", {"BEYIN_INVOKED_BY": "codex"}):
+        with mock.patch.dict("os.environ", {"RESPECTED_INVOKED_BY": "codex"}):
             self.assertEqual(dispatch(self.ctx, provider="cursor", event="prompt", argv=[], stdin="{}"), "")
         self.assertEqual(snapshot(self.root), before)
 
@@ -323,7 +321,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
     def test_global_skills_never_replace_unowned_or_user_changed_content(self):
         from respectedbrain.integrations.rendering import plan_integrations
         from respectedbrain.installation.ownership import OwnershipManifest, manifest_document
-        path = self.home / ".agents/skills/beyin-doktor/SKILL.md"
+        path = self.home / ".agents/skills/secondbrain-doktor/SKILL.md"
         path.parent.mkdir(parents=True)
         path.write_bytes(b"user custom skill")
         for owned in (False, True):
@@ -339,9 +337,9 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
     def test_skill_upgrade_accepts_unchanged_recorded_ownership_and_package_baseline(self):
         from respectedbrain.integrations.rendering import plan_integrations
         from respectedbrain.installation.ownership import OwnershipManifest, manifest_document
-        path = self.home / ".agents/skills/beyin-doktor/SKILL.md"
+        path = self.home / ".agents/skills/secondbrain-doktor/SKILL.md"
         path.parent.mkdir(parents=True)
-        baseline = self.ctx.resources.read_text("skills/beyin-doktor/SKILL.md").encode()
+        baseline = self.ctx.resources.read_text("skills/secondbrain-doktor/SKILL.md").encode()
         path.write_bytes(baseline)
         rows = plan_integrations(self.ctx,self.profile,{"global":True},self.backend())
         self.assertNotIn(str(path),{row.key for row in rows})
