@@ -1,6 +1,6 @@
 # 🏗️ Respected Brain — Güncel Mimari
 
-> Tek program paketi, ayrı teknik veri alanı ve kullanıcıya ait not kasası. Bu rehber mevcut kaynak düzenini açıklar; onaylı tasarımın geçmişi [karar kaydında](decisions/MODULAR_FOUNDATION.md), aktif durum [proje durumunda](PROJECT_STATUS.md) bulunur.
+> Tek program paketi, ayrı teknik veri alanı ve kullanıcıya ait not kasası. Bu rehber mevcut kaynak düzenini açıklar; aktif durum [proje durumunda](PROJECT_STATUS.md) bulunur.
 
 ## 1. Üç ayrı kök
 
@@ -26,20 +26,22 @@ DataRoot'ta `config.json`, `install-manifest.json`, log/işlem yedekleri ve `vau
 | `providers/` | Yerel CLI çalıştırma, çıktı normalizasyonu ve fallback |
 | `memory/` | Transcript özetleme, daily upsert, derleme, olaylar/Companion projeksiyonu, graph/recall |
 | `briefing/` | Zamanı gelmiş günlük sabah brifingi |
-| `search/` | SQLite FTS5/BM25 tam metin arama ve indeks |
+| `search/` | SQLite FTS5/BM25 tam metin arama, indeks tazeliği ve isteğe bağlı yerel anlamsal arama |
 | `integrations/` | Provider hook/adaptörleri, MCP, global bağlantı, scheduler ve backend |
 | `installation/` | Setup, update, repair, uninstall, hash sahipliği, WAL/recovery |
 | `rpp/` | Hub ve Orchestrator ile konuşulan RPP sunucusu: `server` istekleri dağıtır; lifecycle, integrations ve memory.* işlemleri |
 | `maintenance/` | Not bakım/onarım, ingestion, Restic ve Git snapshot yardımcıları |
 | `resources/` | Immutable defaults, instructions, skills, provider şablonları, vault-template |
 
-Paket yolu `src/respectedbrain/` olur. `packaging/` OS kurulum tarifleri, `tools/` geliştirici araçları, `tests/` doğrulama, `docs/` belgelerdir. Her dosyanın tam işi [atlasın dosya kayıtlarında](REPOSITORY_MAP.md).
+Paket yolu `src/respectedbrain/` olur. `packaging/` OS paket tarifleri, `tools/` build ve dağıtım doğrulama, `tests/` (aynı alanlara bölünmüş) doğrulama, `docs/` belgelerdir.
+
+Sınırlar: core özellik modüllerini import etmez; vault program kurmaz, sağlayıcı çağırmaz; providers kasa temizlemez, global ayar yazmaz; search veritabanını kasaya yazmaz; integrations özellik algoritmalarını ikinci kez içermez; installation not içeriğini paket dosyası saymaz; resources canlı config veya state değildir.
 
 ## 3. Bağımlılık ve veri akışı
 
 ```mermaid
 flowchart TD
-    CLI[CLI / Kurucu GUI] --> BOOT[bootstrap: Roots + UUID + AppContext]
+    CLI[CLI / RPP / hook] --> BOOT[bootstrap: Roots + UUID + AppContext]
     BOOT --> FEAT[memory / briefing / search]
     BOOT --> INT[integrations]
     INT --> TX[installation: WAL + sahiplik + backend]
@@ -64,7 +66,7 @@ Bu akış modelin çıkardığı bilgilerin doğru olduğunu kanıtlamaz. Stagin
 
 ## 5. Kurulum, template ve override
 
-Yeni boş kasaya başlangıç template'i bir kez uygulanır. Yeniden kurulum/güncelleme mevcut notları template ile yenilemez. Paket instructions/skills varsayılanı tek kaynaktır; migration ile korunan kişiselleştirmeler UUID `overrides/` alanında öncelik kazanır. İnsan kimlik ve hafıza notları kasada kalır.
+Yeni boş kasaya başlangıç template'i bir kez uygulanır. Yeniden kurulum/güncelleme mevcut notları template ile yenilemez. Paket instructions/skills varsayılanı tek kaynaktır; kişiselleştirmeler UUID `overrides/` alanında öncelik kazanır. İnsan kimlik ve hafıza notları kasada kalır.
 
 Kurulum işlemleri ortak installation hizmetlerini kullanır. İsim veya `.py` uzantısı sahiplik kanıtı değildir; manifest, hash ve external registration kanıtları kullanılır. Recovery sonradan değişmiş kullanıcı dosyasını zorla ezmez. Ayrıntılı [davranış sözleşmesi](SPECIFICATION.md) ve [işletim kararı](decisions/OPERATIONS.md) ayrı tutulur.
 

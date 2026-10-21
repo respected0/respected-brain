@@ -63,7 +63,7 @@ Windows'ta SecondBrain bağımsız bir kurucuyla değil, **Respected Hub** üzer
 | Windows program ve kasa seçimi | [Windows kurulumu](docs/guides/SETUP-WINDOWS.md) |
 | macOS / Linux paket ve konumları | [POSIX kurulumu](docs/guides/SETUP-POSIX.md) |
 | Kurulumdan sonraki ilk konuşma | [İlk çalıştırma](docs/guides/BOOTSTRAP.md) |
-| Notlar, günlük, brifing, arama, panel | [Günlük kullanım](docs/guides/DAILY_USE.md) |
+| Notlar, günlük, brifing, arama | [Günlük kullanım](docs/guides/DAILY_USE.md) |
 | Claude Code, Codex, Cursor, Antigravity, Gemini CLI bağlantıları | [Çoklu AI](docs/guides/MULTI_AI.md) |
 | Ayarların yeri ve kasa seçimi | [Yapılandırma](docs/guides/CONFIGURATION.md) |
 | Güncelleme / onarım / eski kurulum | [Güncelleme](docs/guides/UPDATE.md) |
@@ -81,11 +81,11 @@ Paket üretim tarifi, indirilebilir bir sürümün yayımlandığı kanıtı de�
 
 **İki ajan aynı kasayı kullanabilir mi?** Evet; program yazıcıları ortak kilit protokolünü kullanır. Aynı notu iki editörde elle değiştirmek yine çakışabilir. Başka programların kilit protokolüne uyduğu garanti edilmez.
 
-**Arama anlamsal mı?** Mevcut motor SQLite FTS5/BM25 tam metin aramasıdır; embedding/vector veritabanı değildir. Model derlemesi ve bilgi bağlantıları, aramanın kendisini embedding araması yapmaz.
+**Arama anlamsal mı?** Varsayılan motor SQLite FTS5/BM25 tam metin aramasıdır. İsteğe bağlı yerel anlamsal arama Hub'dan açılır: sabitlenmiş bir llama.cpp çalışma ortamı ve bge-m3 modeli ürünün veri klasörüne indirilir, her sorguda yerelde çalışır; açılmadıkça hiçbir şey indirilmez.
 
 **Programı güncellersem/kaldırırsam?** Güncelleme sahipli program dosyalarını yönetir. Kaldırma not kasasını hedeflemez; teknik veri varsayılan korunur. Çakışmış veya sonradan değişmiş dosyalarda işlem durabilir; “her durumda hiçbir hata olmaz” garantisi verilmez.
 
-**Platform doğrulandı mı?** Tarihli [test kanıtına](docs/TEST-MATRIX.md) bakın. CI'da gerçek OS çalıştırması, fixture ve giriş yapılmış sağlayıcı oturumu farklı doğrulamalardır. Sadece Windows testi fiziksel macOS/Linux/WSL kanıtı sayılmaz.
+**Platform doğrulandı mı?** Beta yalnız Windows'u destekler; CI Windows'ta çalışır. Test düzeni ve sınırları [test matrisinde](docs/TEST-MATRIX.md). macOS/Linux/WSL kodu durur ama doğrulanmış sayılmaz.
 
 ## 5. Geliştirici için
 
@@ -93,9 +93,9 @@ Paket üretim tarifi, indirilebilir bir sürümün yayımlandığı kanıtı de�
 secondbrain/
 ├── src/respectedbrain/     Program modülleri ve resources
 ├── packaging/             Windows / macOS / Linux paket tarifleri
-├── tools/                 Build, dağıtım doğrulama, atlas araçları
-├── tests/                 Kaynak / paket / platform testleri
-├── docs/                  Kullanım, mimari, kanıt ve tarihli kayıtlar
+├── tools/                 Build ve dağıtım doğrulama
+├── tests/                 src ile aynı alanlara bölünmüş testler 
+├── docs/                  Kullanım, mimari, güvenlik ve kararlar
 └── pyproject.toml         Paket sürümü ve bağımlılık tanımı
 ```
 
@@ -106,11 +106,12 @@ python -m pip install -e ".[dev]"
 python -m respectedbrain --version
 python tools/build_installer.py --platform windows --output dist
 python tools/verify_distribution.py --distribution dist/RespectedBrain --platform windows
+python -m unittest discover -s tests -t .   # HOME test sırasında geçici klasöre yönlenir
 ```
 
 Bu build komutlarını uygun Windows geliştirme ortamında çalıştırın; çıktı Hub kataloğunun kullandığı native dağıtımdır. Diğer platformların native paketi o platformda üretilir. Geliştirme ayrıntıları [geliştirici rehberinde](docs/development/README.md).
 
-[📚 Belge merkezi](docs/README.md) · [🗺️ Eksiksiz dosya atlası](docs/REPOSITORY_MAP.md) · [🔐 Güvenlik sınırları](docs/SECURITY.md)
+[📚 Belge merkezi](docs/README.md) · [🔐 Güvenlik sınırları](docs/SECURITY.md)
 
 ## Atıf ve lisans
 

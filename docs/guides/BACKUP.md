@@ -38,7 +38,7 @@ Uygulamak için aynı komuta `--apply` eklenir. Varsayılan restore verification
 respectedbrain maintenance --vault-id <UUID> publish_git_snapshot
 ```
 
-Varsayılan preview'dir; dal kontrolü için fetch yapabilir. `--apply` gerçek commit/push işidir ve veri dışarı gönderir. Private repo olması notların içinde secret olmadığı anlamına gelmez. Mevcut guard dosya adı kalıplarını sınar; önceden tracked dosyalar ve not gövdesindeki sırları eksiksiz taramaz. [Güvenlik sınırları](../SECURITY.md) ve tarihli denetim [kayıt denetiminde](../records/2026-10-installer-release/REPOSITORY_AUDIT.md).
+Varsayılan preview'dir; dal kontrolü için fetch yapabilir. `--apply` gerçek commit/push işidir ve veri dışarı gönderir. Private repo olması notların içinde secret olmadığı anlamına gelmez. Yayından önce sır taraması dosya adlarını, not içeriğini ve daha önce izlenen dosyaları (.gitignore'a sonradan girenler dahil) tarar; tanınmayan bir sır biçimini kaçırabilir. [Güvenlik sınırları](../SECURITY.md).
 
 ## SSS
 

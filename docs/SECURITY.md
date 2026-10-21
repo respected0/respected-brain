@@ -86,7 +86,7 @@ Normal doğrulayıcı checksum-pinlenmiş `gh 2.102.0`'dır. Kullanılan doğru 
 
 Testlerdeki synthetic attestation ve fake `gh`, yalnız `verifier_callable`/PATH fixture
 olarak çağrının içine açıkça yerleştirilir. Prodüksiyon consumer sahte fixture imzasını
-kabul etmez. `tests/smoke/platform_smoke.py` temiz ortamdan unsigned/provider/PYTHONPATH
+kabul etmez. `tests/native/smoke/platform_smoke.py` temiz ortamdan unsigned/provider/PYTHONPATH
 bypass'larını ayıklar.
 
 Release workflow sırası: native build → manifest attestation → exactly one bundle
@@ -99,20 +99,8 @@ Secret scanner yalnız güvenli path/category raporlar. Snapshot receipt'leri tr
 commit, remote ve zaman bilgisini tutar; sır değeri tutmaz. İşlemler manifest/hash ve
 transaction journal üzerinden geri alınabilir. Human-owned not silinmez.
 
-## 7. Yerel panel sınırı
+## 7. Dış önkoşullar
 
-Panel yalnız yetkili/yerel kullanıcıya yöneliktir; internet exposure veya kimlik/doğrulama
-koruması vaat edilmez. Panel üzerinden gelen içerik güvenilmeyen veridir.
-
-## 8. Regresyon ve dış önkoşullar
-
-Dördüncü inceleme düzeltme paketi `8/8`, gerçek Inno install/update/uninstall
-zinciri `1/1`, frozen GUI smoke `exit 0`, strict frozen lifecycle `23/23` kontrol
-ve kritik paket/source modülleri `5/5` semantic eşliğle doğrulandı. Tam yerel
-Python suite son düzeltme öncesi `875` testte `2` transient error ve `16` skip
-koştu; concurrency düzeltmesi sonrası `50/50` stress ve `36/36` modül testi geçti.
-testi kaynak `PYTHONPATH` düzeltmesinden sonra `8/8` geçti.
-
-**NOT VERIFIED:** gerçek GitHub Actions OIDC attestation/signature, Authenticode
-sertifikası/imzalı outer installer ve canlı provider oturumu. Gerçek imza/auth
+**NOT VERIFIED:** gerçek GitHub Actions OIDC attestation/signature (beta paketleri Hub'ın Ed25519 imzasıyla doğrulanır),
+Authenticode imzası ve canlı provider oturumu. Gerçek imza/auth
 sonuçları yalnız dış release altyapısında doğrulanabilir.

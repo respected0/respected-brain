@@ -17,7 +17,7 @@ Module/console/native komutu aynı kaynak/kurulum değildir. Doğru executable'�
 | Belirti | Önce bakılacak |
 | --- | --- |
 | Kasa bulunamadı / UUID conflict | Marker, registry path, açık selector; [CONFIGURATION](CONFIGURATION.md) |
-| Dolu hedef kurulamıyor | Boş yeni hedef, kayıtlı modern kasa veya migration; bilinmeyen hedefi zorlamayın |
+| Dolu hedef kurulamıyor | Boş yeni hedef veya kayıtlı kasa seçin; bilinmeyen hedefi zorlamayın |
 | Daily yazılmıyor | İlgili hook etkin/güvenilmiş mi, doğru profile/CLI login mi, transkript/session ve DataRoot logları |
 | Auto fallback beklenenden farklı | Genel auto ile açık preferred davranışı; [MULTI_AI](MULTI_AI.md) |
 | Sabah brifingi yok | Schedule desired-state/OS görevi, yerel saat, günlük başarı receipt'i, CLI kota/ağ |

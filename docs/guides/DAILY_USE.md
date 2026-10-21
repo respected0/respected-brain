@@ -46,7 +46,7 @@ Not arama (tam metin, hazırsa anlamsal), not okuma, hızlı not yakalama ve "br
 
 ## 5. Bakım ve kod işçisi
 
-Bakım dispatcher'ı `maintenance <araç>` üzerinden çalışır. Linter/architect_scan/tiling_check ile onarım/merge/ingestion/yayın araçları aynı yan etki sınıfında değildir. Tüm mevcut isim/komutlar [CLI kataloğunda](../development/CLI.md); dosya işleri [atlasta](../REPOSITORY_MAP.md).
+Bakım dispatcher'ı `maintenance <araç>` üzerinden çalışır. Linter/architect_scan/tiling_check ile onarım/merge/ingestion/yayın araçları aynı yan etki sınıfında değildir. Tüm mevcut isim/komutlar [CLI kataloğunda](../development/CLI.md).
 
 Kod orkestrasyonu (`orchestrate` komutu ve panel sekmesi) SecondBrain'den kaldırıldı; Respected Orchestrator ürününü Hub'dan veya MCP ile kullanın. Bu rehber yeni AI modellerinin hesabını otomatik açmaz.
 

@@ -8,7 +8,7 @@ Genel seçim/argüman hatası 2; Foundation/OS hatası 1; normal başarı 0. Set
 
 ## 2. Genel seçenekler
 
-`respectedbrain --version`, `respectedbrain --help`; komut help örneği `respectedbrain setup --help`. Kasa selector destekleyen komutlarda --vault ile --vault-id birbirini dışlar. Configure/vault/recover/setup/migrate farklı seçim arayüzlerine sahiptir; her komuta aynı flag uygulanmaz.
+`respectedbrain --version`, `respectedbrain --help`; komut help örneği `respectedbrain setup --help`. Kasa selector destekleyen komutlarda --vault ile --vault-id birbirini dışlar. Configure/vault/recover/setup farklı seçim arayüzlerine sahiptir; her komuta aynı flag uygulanmaz.
 
 ### vault
 

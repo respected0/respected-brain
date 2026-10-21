@@ -1,53 +1,50 @@
 # ✅ Test Matrisi ve Kanıtın Sınırları
 
-> Bu belge bir test koşusu çalıştırmaz. Sonuçlar tarih ve ürün kodu ile belirtilir; aktif durum [PROJECT_STATUS](PROJECT_STATUS.md), ayrıntı [çalışma kayıtlarında](records/README.md).
+> Bu belge test düzenini ve neyin neyi kanıtladığını anlatır; aktif durum [PROJECT_STATUS](PROJECT_STATUS.md) içindedir.
 
-## 1. Son doğrulanmış ürün kodu
+## 1. Düzen
 
-2026-10-05 kapanışında `631c37eda13f569072e0436984cbf19f6b709ba8` için [CI 37318525236](https://github.com/respected0/respectedbrain/actions/runs/37318525236) **12/12 job başarılı** kaydedildi. Bu, eski Eylül testlerinin yeni sayıya çevrilmesi değildir. Sonraki doküman değişiklikleri bu commit'in native binary testine dahilmiş gibi sunulmaz.
+`tests/` paketi `src/respectedbrain` ile aynı alanlara bölünmüştür; dosya adları `test_*.py` biçimindedir.
 
-| Kapı | OS / Python | Kayıtlı sonuç |
-| --- | --- | --- |
-| Early compatibility | Windows, Linux, macOS / 3.10 | 3 başarılı iş |
-| Native build/verify/host kabul ve yayın biçimi | Windows, Linux, macOS / 3.13 | 3 başarılı iş |
-| Full source | Windows, Linux, macOS × 3.10 / 3.13 | 6 başarılı iş |
+| Klasör | Kapsam |
+| --- | --- |
+| `core/` | bağlam, yollar, kilitler, platform, CLI dağıtımı, Windows süreç/dosya korumaları |
+| `vault/`, `briefing/`, `search/` | kasa kayıt defteri ve haritalar, sabah brifingi, FTS ve indeks tazeliği |
+| `installation/` | setup, sihirbaz, update/repair/uninstall, transaction, ertelenmiş işlem, sınır regresyonları |
+| `integrations/` | istemci entegrasyonları, hook'lar, MCP kaydı, yapılandırma delta'sı, zamanlama, sağlayıcı izinleri |
+| `memory/` | hafıza sözleşmeleri, olay günlüğü, transcript bütünlüğü, oturum betikleri, maskeleme |
+| `maintenance/` | bakım araçları, restic yedeği/geri yükleme, git snapshot, sır tarama, kasa hijyeni |
+| `rpp/` | Hub protokolü: sunucu, lifecycle, entegrasyon planı, hafıza op'ları ve izinleri |
+| `security/` | ağ taşıması (DNS pinning, SSRF, son tarihler), girdi sınırları, yayın provenance'ı |
+| `packaging/` | paket sözleşmesi, dondurulmuş dağıtım, build içeriği, POSIX paket sözleşmeleri, adlandırma |
+| `scenarios/` | çapraz senaryo, sağlayıcı ve adversarial matrisler |
+| `support/` | paylaşılan sahteler ve dosya yardımcıları (test değil) |
+| `native/` | fiziksel paket smoke'u ve WSL köprü smoke'u (elle/CI'da paketle çalışır) |
 
-Bu job sayısı birleştirilmiş tek bir toplam test sayısı değildir. Adım/host skip kapsamı ayrıntılı kayıtlarda korunur. Windows gerçek Inno/launcher/scheduler; macOS mounted DMG; Linux extracted makeself kapıları workflow ve native kayıtlarda yer alır.
+`tests/__init__.py` her koşucu için HOME, USERPROFILE, APPDATA ve LOCALAPPDATA'yı geçici klasöre yönlendirir; hiçbir test
+gerçek AI istemci ayarına veya kasa kayıt defterine ulaşamaz.
 
-## 2. Neyi hangi test kanıtlar?
+## 2. Çalıştırma
+
+```powershell
+python -m unittest discover -s tests -t .
+python tools/build_installer.py --platform windows --output dist
+python tools/verify_distribution.py --platform windows --distribution dist/RespectedBrain
+python tests/native/smoke/platform_smoke.py --package dist/RespectedBrain --output native-smoke.json
+```
+
+`dist/` yoksa dağıtım testi yerelde açıklamalı atlanır; CI önce build alır ve testi zorunlu tutar (`CI` ortam değişkeni).
+
+## 3. Neyi hangi test kanıtlar?
 
 | Test sınıfı | Kanıtlar | Tek başına kanıtlamaz |
 | --- | --- | --- |
-| Unit/fixture | Algoritma ve arayüz/assertion davranışı | Gerçek provider hesabı veya her OS |
-| Wheel isolation | Checkout/PYTHONPATH'ten bağımsız paket import'u | Native kurucu veya Windows receipt |
-| Frozen verify | Paket launcher/resources/CLI smoke | Yayıncı imzası veya gerçek AI cevap kalitesi |
-| Native kabul | İlgili hostta geçici install/update/uninstall, sahiplik ve rollback | Kullanıcının mevcut canlı kasasının kurulduğu |
-| Shell/WSL smoke | İlgili çalıştırıcı/köprü akışı | Giriş yapılmış bütün sağlayıcılar |
-| Provider adapter testi | Hook/JSON/argv sözleşmesi | Güncel dış ürün sürümündeki gerçek login/kota/izin |
+| Birim/fixture | algoritma ve arayüz davranışı | gerçek sağlayıcı hesabı veya her OS |
+| Paket sözleşmesi | checkout/PYTHONPATH'ten bağımsız import | native kurulum |
+| Dondurulmuş dağıtım | launcher, kaynaklar, CLI smoke, hash ile kurcalama reddi | yayıncı imzası, AI cevap kalitesi |
+| Fiziksel smoke | geçici köklerde kurulum, beş adaptör, update, sahipli uninstall | kullanıcının canlı kasası |
+| Sağlayıcı adaptörü | hook/JSON/argv sözleşmesi | dış ürünün güncel sürümündeki gerçek login/kota |
 
-CI runner'da gerçek OS yürütülmesi yalnız fixture OS taklidinden güçlüdür; kullanıcı masaüstündeki GUI/onay/giriş kabulüyle yine aynı şey değildir. Sadece Windows'ta geçen test fiziksel macOS/Linux/WSL kanıtı sayılmaz.
-
-## 3. Gerçek sağlayıcı kabulü
-
-Codex/Antigravity ile bu geliştirme sürecinde oturum akışı gözlemleri bulunur; bütün ajanların son native sürümde kullanıcı hesabıyla acceptance'ı topluca doğrulanmış sayılmaz. Gerçek kabul, doğru UUID ile test konuşmasının hook/daily/ikinci ajan bağlamına yansımasıdır. [BOOTSTRAP](guides/BOOTSTRAP.md) kontrol sırasını anlatır.
-
-## 4. Tarihli kanıt kayıtları
-
-| Kayıt | Kapsam |
-| --- | --- |
-| [Modüler temel doğrulaması](records/2026-10-modular-foundation/VERIFICATION.md) | İlk source/Windows native ve salt okunur eski canlı envanter; o tarihin platform sınırları |
-| [Kaynak temizliği doğrulaması](records/2026-10-source-cleanup/VERIFICATION.md) | Eski kaynak kapanışı ve paket/shell/yedek kanıtı |
-| [Installer/atlas/yayın kaydı](records/2026-10-installer-release/EXECUTION.md) | Son gerçek CI, Python sürüm/alias/race araştırmaları ve worktree kapanışı |
-| [Dördüncü inceleme düzeltmesi](records/2026-10-security-hardening/FOURTH_REVIEW_REMEDIATION.md) | 2026-10-07 yerel güvenlik düzeltmeleri, frozen GUI, Inno ve tam yerel suite kanıtları |
-| `records/2026-09-legacy/TEST-MATRIX.md` | Yerel arşiv yedeğinde; önceki layout, 370 test ve eski host/provider gözlemleri (tarihsel referans) |
-| [Belge düzenleme doğrulaması](records/2026-10-documentation/REORGANIZATION.md) | Doküman yolları, atlas, komut örnekleri ve yerel yedek arşivi |
-
-## 5. Çalıştırma girişleri
-
-```text
-python tests/run_all.py --python-only
-python tools/verify_distribution.py --platform windows --distribution dist/RespectedBrain
-python tests/smoke/platform_smoke.py --package dist/RespectedBrain --output native-smoke.json
-```
-
-İlgili OS/native artifact gerekir. Windows kabul `tests/install_windows_test.ps1`, `windows_launchers_test.ps1`, `briefing_schedule_windows_test.ps1`; POSIX hook/upstream testleri shell girişleridir. [Smoke rehberi](../tests/smoke/README.md) komutları, workflow gerçek CI sırasını tanımlar. Çalıştırılmayan testler başarılı diye kaydedilmez. Token/maliyet tercihi nedeniyle push sonrası sonuç bekleme döngüsü kurulmaz.
+Hub tarafındaki uçtan uca testler (`respected-hub/src-tauri/tests/brain_e2e.rs` vb.) aynı dondurulmuş paketi Hub'ın
+yaşam döngüsünden geçirir. Gerçek kabul, doğru kasa ile bir test konuşmasının hook → daily → ikinci ajan bağlamına
+yansımasıdır; [BOOTSTRAP](guides/BOOTSTRAP.md) kontrol sırasını anlatır. Çalıştırılmayan test başarılı diye yazılmaz.

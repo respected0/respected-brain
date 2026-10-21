@@ -1,6 +1,6 @@
 # 📐 Respected Brain — Davranış Sözleşmesi
 
-> Bu belge güncel kodun temel sözleşmelerine giriş sağlar. Kullanıcının onaylı tasarım kararları [modüler temel](decisions/MODULAR_FOUNDATION.md) ve [işletim ekinde](decisions/OPERATIONS.md) korunur. Son durum/kanıt burada tekrarlanmaz: [proje durumu](PROJECT_STATUS.md), [test matrisi](TEST-MATRIX.md).
+> Bu belge güncel kodun temel sözleşmelerine giriş sağlar. Onaylı kurulum sözleşmesi [OPERATIONS](decisions/OPERATIONS.md), modül düzeni [ARCHITECTURE](ARCHITECTURE.md) içindedir. Son durum/kanıt burada tekrarlanmaz: [proje durumu](PROJECT_STATUS.md), [test matrisi](TEST-MATRIX.md).
 
 ## 1. Paket ve kimlik
 
@@ -38,10 +38,10 @@ Transaction journal/byte yedeği, kilit, compare-and-swap ve faz kontrolleri kul
 
 Hook/MCP stdout protokol çıktısıdır; tanı stderr veya teknik log alanındadır. Özet çıktı biçimi doğrulanır, daily yönetilen session bloğu kilit altında upsert edilir. Format doğrulaması içeriğin gerçeği yansıttığını kanıtlamaz. Kapanış/catch-up, desteklenmeyen veya devre dışı her hook olayının eksiksiz yakalandığı garantisi değildir.
 
-Derleme terfisi allowlist knowledge yolları, path/symlink/reparse, kaynak/hedef hash ve eşzamanlı değişiklik kontrollerine bağlıdır. Sağlayıcı süreç izinleri eşdeğer değildir. FTS5 araması, harici web alımı, Git snapshot ve yerel panel ayrı güvenlik sınırları taşır; [SECURITY](SECURITY.md) uygulanmış kontrol ile kalan açığı ayırır.
+Derleme terfisi allowlist knowledge yolları, path/symlink/reparse, kaynak/hedef hash ve eşzamanlı değişiklik kontrollerine bağlıdır. Sağlayıcı süreç izinleri eşdeğer değildir. FTS5 araması, harici web alımı ve Git snapshot ayrı güvenlik sınırları taşır; [SECURITY](SECURITY.md) uygulanmış kontrol ile kalan açığı ayırır.
 
 ## 5. Doğrulama dürüstlüğü
 
 Kaynak unit test, gerçek frozen binary, native OS kabul, WSL köprüsü ve giriş yapılmış sağlayıcı kabulü ayrı kanıtlardır. Birindeki başarı diğerinin otomatik kanıtı değildir. CI yeşil olması snapshot secret taraması, OS sandbox veya yayıncı imzasını eklemez. Çalıştırılmamış platform başarılı diye yazılmaz.
 
-Komutların tüm seçenekleri [CLI kataloğunda](development/CLI.md), dosya sorumlulukları [atlasta](REPOSITORY_MAP.md) bulunur. Kod değişince bu belge aynı görevde incelenir.
+Komutların tüm seçenekleri [CLI kataloğunda](development/CLI.md), modül sorumlulukları [mimaride](ARCHITECTURE.md) bulunur. Kod değişince bu belge aynı görevde incelenir.

@@ -78,26 +78,14 @@ o dört bulgunun kapanışını da kapsar.
   başlamadan önce `TCL_LIBRARY` ve `TK_LIBRARY` forward-slash olarak ayarlanır.
 - Eski, çağrılmayan snapshot implementation bloğu kaldırılmıştır.
 
-## 3. Doğrulama kararı
+## 3. Doğrulama
 
-- Odak provider/provenance/HTTP/process regression paketi `22/22` geçti.
-- Frozen paket/source semantic karşılaştırması beş kritik modülün opcode, sabit,
-  çağrı, argüman ve nested code düzeyinde `5/5` eşleştiğini doğruladı.
-- Temiz ortam strict fixture-provenance yaşam döngüsü `23/23` kontrolle geçti:
-  setup, repair, iki update, deferred update/receipt, turn upsert ve owned uninstall.
-- Yeni tam unittest/per-test kanıtı `records/2026-10-security-hardening/IMPLEMENTATION.md`
-  ve final local handoff raporundadır; eski `FINAL_*` sayıları yeni paket kanıtı
-  olarak kullanılmaz.
-- Dördüncü inceleme düzeltme paketi `8/8` test, gerçek Inno zinciri `1/1`,
-  frozen GUI smoke `exit 0` ve package/source semantic compare `5/5` ile geçti.
-  Tam Python suite son concurrency düzeltmesi öncesi `875` testte `2` transient
-  error verdi; düzeltme sonrası `50/50` stress ve `36/36` modül testi geçti.
-  Ayrıntılı kanıt tablosu
-  `records/2026-10-security-hardening/FOURTH_REVIEW_REMEDIATION.md` içindedir.
+Kararların regresyon testleri `tests/security/`, `tests/maintenance/test_snapshot_publish.py` ve
+`tests/integrations/test_provider_permissions.py` içindedir.
+
 ## 4. Dış önkoşullar
 
 Gerçek GitHub OIDC/Sigstore attestation'ı, Authenticode sertifikası ve GitHub tag
 yayını yerel kaynak değişikliğiyle üretilemez. Bu ortamda gerçek imzalı bundle
-doğrulaması ve imzalı Windows installer **NOT VERIFIED**dır. Frozen GUI ve gerçek
-Inno zinciri bu teslimde yerel olarak doğrulandı; canlı provider oturumu ve dış
-release altyapısı ayrı dış kabul konusudur.
+doğrulaması ve imzalı Windows paketi **NOT VERIFIED**dır; beta paketleri Hub'ın Ed25519
+imzasıyla doğrulanır. Canlı provider oturumu ve dış release altyapısı ayrı dış kabul konusudur.

@@ -34,7 +34,6 @@ Three ops, protocol 1.1 only (a 1.0 request gets `UNSUPPORTED_OP`; the 1.0 manif
 - `index_state` walks the vault (stat only); on very large vaults it reports `unknown`.
 - No audit log of recalls (kept out on purpose: recall writes nothing).
 - Orchestrator does not call `memory.recall` yet.
-- Repository inventory (`docs/repository_inventory.json`) was already stale for the RPP files; the new files are not described there yet.
 
 ## Index refresh (`memory.index.status`, `memory.index.refresh`) — added 2026-10-15
 `memory.recall` stays read-only and never builds or repairs the index. Making the index current is a separate, explicitly authorized operation (protocol 1.1, capability `memory_index`):

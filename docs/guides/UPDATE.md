@@ -1,8 +1,10 @@
-# 🔄 Güncelleme, Onarım ve Eski Kurulum
+# 🔄 Güncelleme ve Onarım
 
 > Paket güncellemesi program dosyalarını değiştirir; notların yerini ve kimliğini korur. Önce [yedekleme](BACKUP.md), sözleşme için [SPECIFICATION](../SPECIFICATION.md).
 
-## 1. Güncel native programı güncelleme
+## 1. Programı güncelleme
+
+Windows'ta güncellemeyi Respected Hub sunar ("Güncelle / Sonra") ve aşağıdaki komutu doğrulanmış paketle kendisi çalıştırır; elle çalıştırmak geliştirme ve sorun giderme içindir.
 
 ```text
 respectedbrain update --vault-id <UUID> --package "<yeni doğrulanmış native dağıtım>"

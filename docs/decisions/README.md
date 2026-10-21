@@ -1,10 +1,11 @@
 # 🏛️ Mimari Kararlar
 
-Bu bölüm, modüler temel için kabul edilen tasarımı ve işlem sözleşmelerini korur. Kararın gerekçesi ile bugün uygulanmış davranış aynı şey değildir: mevcut kodun açıklaması [mimari rehberinde](../ARCHITECTURE.md), güncel işler [proje durumunda](../PROJECT_STATUS.md) yer alır.
-
 | Belge | İçerik |
 | --- | --- |
-| [Modüler temel](MODULAR_FOUNDATION.md) | AppRoot / DataRoot / VaultRoot ayrımı, modül sınırları, kurulum ve kasa kimliği tasarımı |
-| [İşlem sözleşmeleri](OPERATIONS.md) | Kilit, transaction, sahiplik, recovery, Windows helper ve platform backend kararları |
+| [OPERATIONS](OPERATIONS.md) | Tek CLI, template, kurulum/güncelleme/onarım/kaldırma sözleşmesi, kabul kriterleri, restic geri yükleme |
+| [PRIVACY_AND_CLIENT_CONFIG](PRIVACY_AND_CLIENT_CONFIG.md) | MCP yazma izni, transcript arşivi ve maskeleme, istemci ayarında girdi düzeyinde geri alma |
+| [RPP_V1](RPP_V1.md) | Hub ile konuşulan protokolün SecondBrain tarafı |
+| [RPP_MEMORY_RECALL](RPP_MEMORY_RECALL.md) | Hafıza erişim izinleri, recall, indeks, anlamsal arama ve yetkili yazım |
+| [SECURITY_HARDENING](SECURITY_HARDENING.md) | Sağlayıcı süreç sınırı, snapshot yayını, provenance zinciri, HTTP son tarihleri |
 
-Belgeler 2026-10-03 tasarımının tarihli kayıtlarıdır. Yeniden düzenleme sırasında bağlantıları güncellendi; eski ham kopyaları yerel belge yedeğinde tutuldu. Kabul edilmiş bir tasarım maddesi, kendi başına o özelliğin bütün platformlarda test edildiği kanıtı değildir. Uygulama ve doğrulama kayıtları [kayıtlar dizininde](../records/README.md) bulunur.
+Karar maddesi o özelliğin bütün platformlarda test edildiğinin kanıtı değildir; durum [PROJECT_STATUS](../PROJECT_STATUS.md) içindedir.
