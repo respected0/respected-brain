@@ -2,12 +2,15 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
+import re
 import uuid
 
 from respected_brain.core.platform import path_within_vault
 
 MAX_NOTE_BYTES = 5 * 1024 * 1024
+# Windows device names (also with an extension); PurePath.is_reserved is deprecated in 3.13 and removed in 3.15.
+_RESERVED = re.compile(r'(?i)(con|prn|aux|nul|conin\$|conout\$|(com|lpt)[0-9¹²³])(\..*)?$')
 
 
 def note_path(root: Path, relative: str) -> Path | None:
@@ -16,7 +19,7 @@ def note_path(root: Path, relative: str) -> Path | None:
     relative = relative.replace('\\', '/')
     parts = relative.split('/')
     if any(not part or part in {'.', '..'} or part.rstrip(' .') != part
-           or PureWindowsPath(part).is_reserved() for part in parts):
+           or _RESERVED.match(part) for part in parts):
         return None
     target = root.joinpath(*parts)
     if target.suffix.lower() != '.md' or not path_within_vault(target, root):
