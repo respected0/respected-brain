@@ -38,3 +38,8 @@
   indirme dahil); `config set` ya da ürün komutuyla aynı iş yapılabilmeli.
 - [ ] Hata ve ipucu metinleri Hub kuruluysa "Hub'dan açın", değilse ürünün kendi komutunu söylemeli
   (`search/semantic.py`, `rpp/memory.py`, `rpp/memory_grants.py`, `rpp/memory_write.py`).
+
+## Güncelleme
+
+- [ ] `repair` içinde veri taşıma adımı yok: ayar/kayıt dosyaları `schema_version` farklıysa hata veriyor. Biçim değişen
+  ilk sürümden önce eski biçimi yerinde taşıyan adım eklenmeli (sözleşme §başı, "kişinin verisi" istisnası).
