@@ -33,7 +33,5 @@
 
 ## Ürün ve yayın
 
-- [ ] GitHub deposunu `respected0/respected-secondbrain` → `respected0/respected-brain` olarak yeniden adlandırmak
-  (ürün adı 2026-10-22'de "Respected Brain" olarak kesinleşti; kod ve belgeler buna göre).
 - [ ] Kurucuyu Authenticode ile imzalamak (SmartScreen uyarısı).
 - [ ] macOS / Linux / WSL: kod ve betikler var, derlenmiyor ve CI'da sınanmıyor.
