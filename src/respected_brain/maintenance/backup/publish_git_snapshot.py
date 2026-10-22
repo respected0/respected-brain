@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from respected_brain.core.config import atomic_write_text
 from respected_brain.core.context import AppContext
 from respected_brain.maintenance import selected_vault
 
@@ -13,33 +14,10 @@ import os
 from pathlib import Path
 import re
 import subprocess
-import tempfile
 import time
 from typing import Any
 
 
-
-
-
-
-def _atomic_write(path: Path, content: str) -> None:
-    """Write text atomically via temporary file and replace."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
-    temporary = Path(temporary_name)
-    try:
-        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
-            handle.write(content)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temporary, path)
-    except BaseException:
-        try:
-            os.close(descriptor)
-        except OSError:
-            pass
-        temporary.unlink(missing_ok=True)
-        raise
 
 
 
@@ -520,7 +498,7 @@ def _publish_immutable_snapshot(
         remote_sha = remote_proc.stdout.split()[0] if remote_proc.returncode == 0 and remote_proc.stdout.split() else ''
         if remote_sha != commit_sha:
             return {'status': 'halted:published_ref_mismatch', 'detail': 'Remote ref does not match the verified snapshot commit.'}
-        _atomic_write(receipt_file, json.dumps({'ts': now_epoch, 'stamp': stamp, 'remote': remote, 'branch': branch, 'tree': tree_sha, 'commit': commit_sha}, indent=2) + '\n')
+        atomic_write_text(receipt_file, json.dumps({'ts': now_epoch, 'stamp': stamp, 'remote': remote, 'branch': branch, 'tree': tree_sha, 'commit': commit_sha}, indent=2) + '\n')
         return {'status': 'ok', 'stamp': stamp, 'tree': tree_sha, 'commit': commit_sha}
     except (OSError, subprocess.SubprocessError) as exc:
         return {'status': 'error', 'detail': str(exc)}

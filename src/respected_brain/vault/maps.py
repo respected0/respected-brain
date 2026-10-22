@@ -3,14 +3,13 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 import stat
-import tempfile
 import time
 
 
 from respected_brain.core import platform as runtime_platform
+from respected_brain.core.config import atomic_write_text
 from respected_brain.core.context import AppContext
 
 
@@ -106,21 +105,8 @@ def render_skills_map(ctx: AppContext) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-def _atomic_write(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(
-        prefix=f".{path.name}.", suffix=".tmp", dir=path.parent
-    )
-    temporary = Path(temporary_name)
-    try:
-        os.chmod(temporary, 0o600)
-        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
-            handle.write(content)
-            handle.flush()
-            os.fsync(handle.fileno())
-        os.replace(temporary, path)
-    finally:
-        temporary.unlink(missing_ok=True)
+def _atomic_write(path: Path, value: str) -> None:
+    atomic_write_text(path, value, mode=0o600)
 
 
 def _validate_map_target(vault_root: Path, path: Path) -> None:

@@ -15,11 +15,13 @@ from .locking import exclusive_lock
 from .resources import ResourceCatalog
 
 
-def atomic_write_bytes(path: Path, payload: bytes) -> None:
+def atomic_write_bytes(path: Path, payload: bytes, *, mode: int | None = None) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     descriptor, name = tempfile.mkstemp(prefix=f".{path.name}-", suffix=".tmp", dir=path.parent)
     temporary = Path(name)
     try:
+        if mode is not None:
+            os.chmod(temporary, mode)
         with os.fdopen(descriptor, "wb") as handle:
             handle.write(payload)
             handle.flush()
@@ -35,6 +37,10 @@ def atomic_write_bytes(path: Path, payload: bytes) -> None:
     finally:
         if temporary.exists():
             temporary.unlink()
+
+
+def atomic_write_text(path: Path, text: str, *, mode: int | None = None) -> None:
+    atomic_write_bytes(path, text.encode("utf-8"), mode=mode)
 
 
 def atomic_write_json(path: Path, document: dict[str, Any]) -> None:

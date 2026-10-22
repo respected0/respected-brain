@@ -245,8 +245,8 @@ def _config(args) -> int:
 
 
 def _health() -> int:
-    from .rpp.server import serve
-    result = serve(json.dumps({"rpp": "1", "op": "health"}))["result"]
+    from .rpp.server import RPP, serve
+    result = serve(json.dumps({"rpp": RPP, "op": "health"}))["result"]
     _print(result)
     return 0 if result["status"] == "healthy" else 1
 

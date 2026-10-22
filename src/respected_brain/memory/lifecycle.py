@@ -11,7 +11,6 @@ import json
 import os
 from pathlib import Path
 import subprocess
-import tempfile
 import threading
 import time
 from typing import Any
@@ -19,6 +18,7 @@ import uuid
 
 
 from ..core import platform as runtime_platform
+from ..core.config import atomic_write_text
 from ..core.context import AppContext
 
 
@@ -38,31 +38,8 @@ def session_key(session_id: str) -> str:
     return hashlib.sha256(session_id.encode("utf-8")).hexdigest()
 
 
-def _atomic_write(path: Path, value: str, mode: int = 0o600) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
-    temporary = Path(temporary_name)
-    try:
-        os.chmod(temporary, mode)
-        with os.fdopen(descriptor, "w", encoding="utf-8", newline="") as handle:
-            handle.write(value)
-            handle.flush()
-            os.fsync(handle.fileno())
-        for attempt in range(5):
-            try:
-                os.replace(temporary, path)
-                break
-            except PermissionError:
-                if attempt == 4:
-                    raise
-                time.sleep(0.02 * (attempt + 1))
-    except BaseException:
-        try:
-            os.close(descriptor)
-        except OSError:
-            pass
-        temporary.unlink(missing_ok=True)
-        raise
+def _atomic_write(path: Path, value: str) -> None:
+    atomic_write_text(path, value, mode=0o600)
 
 
 def _read_lines(path: Path, limit: int | None = None) -> list[str]:

@@ -293,7 +293,7 @@ class FoundationMaintenanceToolsTest(unittest.TestCase):
             self.assertEqual(staging.parent, destination.parent)
             commit_temps.append(staging)
             return real_replace(staging, destination)
-        with mock.patch.object(module.os, 'replace', side_effect=replace), contextlib.redirect_stdout(io.StringIO()):
+        with mock.patch.object(os, 'replace', side_effect=replace), contextlib.redirect_stdout(io.StringIO()):
             code = maintenance.run_tool(self.ctx, name='smart_merge', argv=['--source', str(source), '--target', str(target)])
         self.assertEqual(code, 0)
         merged = target.read_text(encoding='utf-8')

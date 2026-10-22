@@ -29,3 +29,26 @@ def replace_staged(staging: Path, destination: Path) -> None:
         staging.unlink(missing_ok=True)
     finally:
         commit.unlink(missing_ok=True)
+
+
+def write_text_staged(path: Path, content: str, *, temp_dir: Path | None = None) -> None:
+    """Write text atomically via temporary file and atomic rename."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if temp_dir is not None:
+        temp_dir.mkdir(parents=True, exist_ok=True)
+    safe_prefix = "".join(c if c.isalnum() or c in ("-", "_", ".") else "_" for c in path.name)
+    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{safe_prefix}.", dir=temp_dir or path.parent)
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        replace_staged(temporary, path)
+    except BaseException:
+        try:
+            os.close(descriptor)
+        except OSError:
+            pass
+        temporary.unlink(missing_ok=True)
+        raise

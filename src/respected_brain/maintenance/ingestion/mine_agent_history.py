@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from respected_brain.core.context import AppContext
 from respected_brain.maintenance import selected_vault, mutable_target, safe_walk
-from respected_brain.maintenance._atomic import replace_staged
+from respected_brain.maintenance._atomic import write_text_staged as _atomic_write_text
 
 import argparse
 import datetime as dt
@@ -18,34 +18,9 @@ import json
 import os
 from pathlib import Path
 import re
-import tempfile
 from typing import Any
 
 
-
-
-
-def _atomic_write_text(path: Path, content: str, *, temp_dir: Path | None = None) -> None:
-    """Write text atomically via temporary file and atomic rename."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    if temp_dir is not None:
-        temp_dir.mkdir(parents=True, exist_ok=True)
-    safe_prefix = "".join(c if c.isalnum() or c in ("-", "_", ".") else "_" for c in path.name)
-    descriptor, temporary_name = tempfile.mkstemp(prefix=f".{safe_prefix}.", dir=temp_dir or path.parent)
-    temporary = Path(temporary_name)
-    try:
-        with os.fdopen(descriptor, "w", encoding="utf-8", newline="\n") as handle:
-            handle.write(content)
-            handle.flush()
-            os.fsync(handle.fileno())
-        replace_staged(temporary, path)
-    except BaseException:
-        try:
-            os.close(descriptor)
-        except OSError:
-            pass
-        temporary.unlink(missing_ok=True)
-        raise
 
 
 

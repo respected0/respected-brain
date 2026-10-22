@@ -27,11 +27,14 @@
 - [ ] Rakip analizi ve araştırma belgesi: Mem0, Letta, Zep, Obsidian eklentileri gibi hafıza ürünleriyle karşılaştırma ve
   kararların dayandığı makaleler/ölçümler yazılı değil.
 
-## Ölü kod
-
-- [ ] Fonksiyon düzeyinde kullanılmayan kod taraması (modül düzeyinde temiz; fonksiyon düzeyine bakılmadı).
-
 ## Ürün ve yayın
 
 - [ ] Kurucuyu Authenticode ile imzalamak (SmartScreen uyarısı).
 - [ ] macOS / Linux / WSL: kod ve betikler var, derlenmiyor ve CI'da sınanmıyor.
+
+## Hub'dan bağımsızlık
+
+- [ ] Anlamsal aramayı Hub'sız açıp kapatmak: bugün yalnızca Hub'ın `memory.semantic.*` komutlarıyla açılıyor (model
+  indirme dahil); `config set` ya da ürün komutuyla aynı iş yapılabilmeli.
+- [ ] Hata ve ipucu metinleri Hub kuruluysa "Hub'dan açın", değilse ürünün kendi komutunu söylemeli
+  (`search/semantic.py`, `rpp/memory.py`, `rpp/memory_grants.py`, `rpp/memory_write.py`).
