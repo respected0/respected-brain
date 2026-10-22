@@ -300,7 +300,45 @@ def start_context(vault_root: Path, state_dir: Path, session_id: str, now: datet
         1_000,
         "[not: hafıza uyarıları 1.000 karakterde kırpıldı, brain-doktor çalıştır]",
     )
-    return _fit_context(sections, reflection)
+    context = _fit_context(sections, reflection)
+    record_context_usage(state_dir, key, len(context), now)
+    return context
+
+
+USAGE_FILE = "context-usage.jsonl"
+USAGE_KEEP = 2000  # newest records kept; the file is rewritten when it grows past twice this
+
+
+def record_context_usage(state_dir: Path, key: str, chars: int, now: datetime) -> None:
+    """One line per session start: how much memory context was sent. Best effort, never blocks the hook."""
+    path = state_dir / USAGE_FILE
+    try:
+        with path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps({"at": int(now.timestamp()), "session": key[:12], "chars": chars}) + "\n")
+        lines = path.read_text(encoding="utf-8").splitlines()
+        if len(lines) > 2 * USAGE_KEEP:
+            _atomic_write(path, "\n".join(lines[-USAGE_KEEP:]) + "\n")
+    except (OSError, UnicodeError):
+        pass
+
+
+def usage_report(state_dir: Path, now: datetime, days: int = 30) -> dict:
+    """What the session-start context cost over the last `days`. Tokens are an estimate (about 4 characters each)."""
+    since = int(now.timestamp()) - days * 86400
+    rows = []
+    path = state_dir / USAGE_FILE
+    for line in path.read_text(encoding="utf-8").splitlines() if path.is_file() else ():
+        try:
+            row = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(row, dict) and isinstance(row.get("chars"), int) and isinstance(row.get("at"), int) and row["at"] >= since:
+            rows.append(row)
+    chars = [row["chars"] for row in rows]
+    total = sum(chars)
+    return {"days": days, "sessions": len(rows), "context_chars_total": total, "context_chars_mean": round(total / len(rows)) if rows else 0,
+            "context_chars_max": max(chars, default=0), "limit_chars": MAX_CONTEXT, "estimated_tokens_total": round(total / 4),
+            "estimated_tokens_per_session": round(total / 4 / len(rows)) if rows else 0}
 
 
 def count_prompt(state_dir: Path, session_id: str) -> str:

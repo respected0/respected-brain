@@ -12,6 +12,7 @@ from typing import Any
 
 from . import memory_grants as grants
 from ..memory.inbox import MemoryOpError, check_op_id, clean_text, create_note, revert_note
+from ..hints import hint
 from .integrations import _context
 from .memory import _active_vault_id, _bad, _from_grant
 
@@ -33,7 +34,7 @@ def _authorize(data_root: Path, token: Any) -> dict[str, Any]:
     active = _active_vault_id(data_root)
     if not active or row.get("vault_id") != active or row.get("write") is not True:
         raise MemoryOpError("PERMISSION_DENIED", "Memory access is not authorized.",
-                            "Create a memory grant with write access in the Hub and use its token.")
+                            hint("Hub'da yazma izinli hafıza izni oluşturun", "respected-orchestrator memory connect --write") + " ve belirtecini kullanın")
     return row
 
 

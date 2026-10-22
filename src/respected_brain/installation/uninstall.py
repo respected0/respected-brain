@@ -4,6 +4,7 @@ from pathlib import Path
 
 from respected_brain.core.errors import FoundationError
 from respected_brain.integrations.backend import ExternalChange
+from respected_brain.integrations.plugin import bundle_root, remove_plugins
 from .ownership import read_manifest, prove_ownership
 from .operations import validate_manifest_roots
 from .transaction import Transaction, OperationResult, recover_transactions, scrub_committed_journals
@@ -69,6 +70,9 @@ def uninstall(ctx, *, backend, purge_data=False) -> OperationResult:
                 else:
                     conflicts.append(str(manifest_path))
                     return OperationResult(False, result.tx_id, tuple(conflicts))
+            if not conflicts and any(Path(change.key).is_relative_to(bundle_root(ctx)) for change in manifest.external):
+                settings = ctx.config.get("vaults", {}).get(ctx.paths.vault_id, {}).get("settings", {})
+                remove_plugins(Path(settings.get("user_home", str(Path.home()))))  # the config entries are gone; drop what the CLIs installed
             # Unknown files and backup journals are deliberately retained.
             return OperationResult(not conflicts, result.tx_id, tuple(conflicts))
     except (FoundationError, OSError, ValueError) as error:

@@ -788,7 +788,8 @@ def _transcript_provider(path: Path) -> str | None:
     if ".codex" in parts or path.name.startswith("rollout-"):
         return "codex"
     if ".gemini" in parts:
-        return "antigravity" if "antigravity-ide" in parts else "gemini"
+        # the Antigravity IDE and its `agy` CLI both keep transcripts under ~/.gemini/antigravity-*; the Gemini CLI does not
+        return "antigravity" if any(part.startswith("antigravity-") for part in parts) else "gemini"
     if ".claude" in parts:
         return "claude"
     if ".cursor" in parts:

@@ -77,7 +77,9 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(snapshot(self.root), before)
         after = {row.key: row.after.decode('utf-8') for row in changes if row.after is not None}
         self.assertTrue(after[str(codex / 'AGENTS.md')].startswith(original))
-        hooks = json.loads(after[str(codex / 'hooks.json')])
+        self.assertNotIn(str(codex / 'hooks.json'), after)
+        bundle = next(text for key, text in after.items() if key.replace(chr(92), '/').endswith('plugin/plugin/hooks/codex.json'))
+        hooks = json.loads(bundle)
         command = hooks['hooks']['SessionStart'][-1]['hooks'][0]['command']
         self.assertIn(str(self.app / 'respected-brain.exe'), command)
         self.assertIn(self.ctx.paths.vault_id, command)
@@ -318,37 +320,29 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         row = next(row for row in rows if row.key == str(path))
         self.assertEqual(json.loads(row.after)["mcpServers"]["respected-vault"]["env"], {"USER_SETTING": "keep"})
 
-    def test_global_skills_never_replace_unowned_or_user_changed_content(self):
+    def test_loose_skill_copies_changed_by_the_user_are_left_alone(self):
         from respected_brain.integrations.rendering import plan_integrations
-        from respected_brain.installation.ownership import OwnershipManifest, manifest_document
         path = self.home / ".agents/skills/brain-doktor/SKILL.md"
         path.parent.mkdir(parents=True)
         path.write_bytes(b"user custom skill")
-        for owned in (False, True):
-            if owned:
-                self.data.mkdir(parents=True,exist_ok=True)
-                record = ExternalChange("file",str(path),None,b"previous owned")
-                (self.data / "install-manifest.json").write_text(json.dumps(manifest_document(OwnershipManifest(3,(),(record,)))),encoding="utf-8")
-            before = snapshot(self.root)
-            with self.subTest(owned=owned), self.assertRaises(OwnershipConflict):
-                plan_integrations(self.ctx,self.profile,{"global":True},self.backend())
-            self.assertEqual(snapshot(self.root),before)
+        before = snapshot(self.root)
+        self.assertNotIn(str(path), {row.key for row in plan_integrations(self.ctx, self.profile, {"global": True}, self.backend())})
+        self.assertEqual(snapshot(self.root), before)
 
-    def test_skill_upgrade_accepts_unchanged_recorded_ownership_and_package_baseline(self):
+    def test_loose_skill_copies_from_before_the_plugin_are_retired(self):
         from respected_brain.integrations.rendering import plan_integrations
         from respected_brain.installation.ownership import OwnershipManifest, manifest_document
         path = self.home / ".agents/skills/brain-doktor/SKILL.md"
         path.parent.mkdir(parents=True)
-        baseline = self.ctx.resources.read_text("skills/brain-doktor/SKILL.md").encode()
-        path.write_bytes(baseline)
-        rows = plan_integrations(self.ctx,self.profile,{"global":True},self.backend())
-        self.assertNotIn(str(path),{row.key for row in rows})
+        path.write_bytes(self.ctx.resources.read_text("skills/brain-doktor/SKILL.md").encode())
+        rows = plan_integrations(self.ctx, self.profile, {"global": True}, self.backend())
+        self.assertIsNone(next(row.after for row in rows if row.key == str(path)))
         path.write_bytes(b"previous owned version")
-        self.data.mkdir(parents=True,exist_ok=True)
-        record=ExternalChange("file",str(path),None,b"previous owned version")
-        (self.data / "install-manifest.json").write_text(json.dumps(manifest_document(OwnershipManifest(3,(),(record,)))),encoding="utf-8")
-        rows=plan_integrations(self.ctx,self.profile,{"global":True},self.backend())
-        self.assertEqual(next(row.after for row in rows if row.key==str(path)),baseline)
+        self.data.mkdir(parents=True, exist_ok=True)
+        record = ExternalChange("file", str(path), None, b"previous owned version")
+        (self.data / "install-manifest.json").write_text(json.dumps(manifest_document(OwnershipManifest(3, (), (record,)))), encoding="utf-8")
+        rows = plan_integrations(self.ctx, self.profile, {"global": True}, self.backend())
+        self.assertIsNone(next(row.after for row in rows if row.key == str(path)))
 
     def test_global_hooks_refuse_spoofed_managed_flags_and_preserve_empty_user_groups(self):
         from respected_brain.integrations.rendering import plan_integrations

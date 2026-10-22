@@ -7,8 +7,9 @@ import subprocess
 import sys
 from .backend import canonical_json
 from .global_config import *
+from .plugin import bundle_root, bundle_writes, register_claude, register_codex
 from .mcp.tools import WRITE_TOOLS, tool_definitions
-from .planning import _Planner, _assert_owned_replacement, _recorded_owner, _runtime_path, bridge_argv, command_text, launch_argv, validate_profile
+from .planning import _Planner, _assert_owned_replacement, _recorded_owner, _runtime_path, bare_command_text, bridge_argv, command_text, launch_argv, validate_profile
 from respected_brain.core.errors import FoundationError, OwnershipConflict
 from respected_brain.core.platform import path_within_vault
 
@@ -48,13 +49,16 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED) -> tuple[list[tup
     touched: list[Path] = []
     vault, home, platform = ctx.paths.vault_root, profile.user_home, profile.platform
     rule = managed_rule(ctx)
+    def bridge_command(vault, provider, event, platform):
+        render = bare_command_text if provider == "antigravity" else command_text
+        return render(profile, bridge_argv(ctx, profile, provider, event, global_hook=True))
     def load_object(path):
         document = planner.object(path)
         current = planner.read(path)
         if current is None:
             return document
         owned = _recorded_owner(ctx, planner, path, current)
-        expected = {command_text(profile, bridge_argv(ctx, profile, provider, event, global_hook=True)) for provider in SUPPORTED for event in ("start", "prompt", "turn", "end", "precompact", "postcompact", "notify")}
+        expected = {bridge_command(vault, provider, event, platform) for provider in SUPPORTED for event in ("start", "prompt", "turn", "end", "precompact", "postcompact", "notify")}
         def check(value, namespace=False):
             if isinstance(value, dict):
                 for key, item in value.items():
@@ -68,8 +72,6 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED) -> tuple[list[tup
                     check(item, namespace)
         check(document)
         return document
-    def bridge_command(vault, provider, event, platform):
-        return command_text(profile, bridge_argv(ctx, profile, provider, event, global_hook=True))
     def codex_notify_argv(vault, platform):
         return bridge_argv(ctx, profile, "codex", "notify")
     def _managed_codex_notify(argv):
@@ -87,6 +89,32 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED) -> tuple[list[tup
                 baseline = None
             _assert_owned_replacement(ctx, planner, target, baseline)
         return writes
+
+    claude_commands = {
+        "SessionStart": (bridge_command(vault, "claude", "start", platform), 15),
+        "UserPromptSubmit": (bridge_command(vault, "claude", "prompt", platform), 5),
+        "SessionEnd": (bridge_command(vault, "claude", "end", platform), 3),
+        "PreCompact": (bridge_command(vault, "claude", "precompact", platform), 10),
+        "Stop": (bridge_command(vault, "claude", "turn", platform), 10),
+    }
+    codex_commands = {
+        "SessionStart": (bridge_command(vault, "codex", "start", platform), 15),
+        "UserPromptSubmit": (bridge_command(vault, "codex", "prompt", platform), 5),
+        "SessionEnd": (bridge_command(vault, "codex", "end", platform), 3),
+        "Stop": (bridge_command(vault, "codex", "turn", platform), 10),
+        "PreCompact": (bridge_command(vault, "codex", "precompact", platform), 10),
+    }
+    root = bundle_root(ctx)
+    if {"claude", "codex"} & set(providers):
+        writes += bundle_writes(ctx, merge_grouped_hooks({}, "claude", claude_commands, async_events=frozenset({"Stop"})), merge_grouped_hooks({}, "codex", codex_commands), skill_writes(ctx, [root / "plugin/skills"]))
+    def retire_skills(roots):
+        """Loose skill copies from before the plugin: remove only the ones still byte-identical to the package."""
+        retired = []
+        for target, content in skill_writes(ctx, roots):
+            current = planner.read(target)
+            if current is not None and (current == content.encode("utf-8") or _recorded_owner(ctx, planner, target, current)):
+                retired.append((target, None))
+        return retired
 
     if "antigravity" in providers:
         config = home / ".gemini/config"
@@ -130,20 +158,13 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED) -> tuple[list[tup
     if "codex" in providers:
         config = home / ".codex"
         hooks_path = config / "hooks.json"
-        hooks = load_object(hooks_path)
-        commands = {
-            "SessionStart": (bridge_command(vault, "codex", "start", platform), 15),
-            "UserPromptSubmit": (bridge_command(vault, "codex", "prompt", platform), 5),
-            "SessionEnd": (bridge_command(vault, "codex", "end", platform), 3),
-            "Stop": (bridge_command(vault, "codex", "turn", platform), 10),
-            "PreCompact": (bridge_command(vault, "codex", "precompact", platform), 10),
-        }
-        merge_grouped_hooks(hooks, "codex", commands)
-        hooks_path_content = json.dumps(hooks, ensure_ascii=False, indent=2) + "\n"
         rule_path = config / "AGENTS.md"
-        writes += [(hooks_path, hooks_path_content), (rule_path, merge_managed(planner.text(rule_path), rule))]
-        writes += copy_skills(vault, [home / ".agents/skills"])
-        touched += [hooks_path, rule_path]
+        writes += [(rule_path, merge_managed(planner.text(rule_path), rule))]
+        if planner.read(hooks_path) is not None:
+            writes += [(hooks_path, json.dumps(strip_grouped_hooks(load_object(hooks_path), "codex"), ensure_ascii=False, indent=2) + "\n")]
+            touched += [hooks_path]
+        writes += retire_skills([home / ".agents/skills"])
+        touched += [rule_path]
 
         config_toml_path = config / "config.toml"
         notify_cmd = codex_notify_argv(vault, platform)
@@ -165,7 +186,7 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED) -> tuple[list[tup
             if not isinstance(chain_argv, list) or not chain_argv or not all(isinstance(item, str) for item in chain_argv):
                 raise ValueError(f"geçersiz Codex notify zinciri: {chain_path}")
             notify_cmd += ["--chain-file", _runtime_path(chain_path, platform)]
-        updated_toml = update_codex_config_toml(existing_toml, notify_cmd)
+        updated_toml = register_codex(update_codex_config_toml(existing_toml, notify_cmd), str(root))
         writes += [(config_toml_path, updated_toml)]
         touched += [config_toml_path]
 
@@ -183,7 +204,7 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED) -> tuple[list[tup
         }
         merge_simple_hooks(hooks, "cursor", additions)
         rule_path = config / "rules" / CURSOR_RULE
-        cursor_rule = merge_managed(planner.text(rule_path), rule) if planner.read(rule_path) is not None else "---\ndescription: Global second-brain memory\nalwaysApply: true\n---\n\n" + rule + "\n"
+        cursor_rule = merge_managed(planner.text(rule_path), rule) if planner.read(rule_path) is not None else "---\ndescription: Respected Brain global memory\nalwaysApply: true\n---\n\n" + rule + "\n"
         writes += [(hooks_path, json.dumps(hooks, ensure_ascii=False, indent=2) + "\n"), (rule_path, cursor_rule)]
         writes += copy_skills(vault, [config / "skills"])
         touched += [hooks_path, rule_path]
@@ -192,17 +213,10 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED) -> tuple[list[tup
         config = home / ".claude"
         settings_path = config / "settings.json"
         settings = load_object(settings_path)
-        commands = {
-            "SessionStart": (bridge_command(vault, "claude", "start", platform), 15),
-            "UserPromptSubmit": (bridge_command(vault, "claude", "prompt", platform), 5),
-            "SessionEnd": (bridge_command(vault, "claude", "end", platform), 3),
-            "PreCompact": (bridge_command(vault, "claude", "precompact", platform), 10),
-            "Stop": (bridge_command(vault, "claude", "turn", platform), 10),
-        }
-        merge_grouped_hooks(settings, "claude", commands, async_events=frozenset({"Stop"}))
+        register_claude(strip_grouped_hooks(settings, "claude"), str(root))
         rule_path = config / "CLAUDE.md"
         writes += [(settings_path, json.dumps(settings, ensure_ascii=False, indent=2) + "\n"), (rule_path, merge_managed(planner.text(rule_path), rule))]
-        writes += copy_skills(vault, [config / "skills"])
+        writes += retire_skills([config / "skills"])
         touched += [settings_path, rule_path]
 
     return writes, touched
@@ -264,7 +278,8 @@ def detect_clients(profile):
             "windsurf": (home / ".codeium").is_dir(), "claude-desktop": (appdata / "Claude").is_dir(), "vscode-agents": storage_hit}
 
 
-def plan_integrations(ctx, profile, desired, backend):
+def plan_integrations(ctx, profile, desired, backend, planned_keys=None):
+    """Planned external changes; `planned_keys`, when given, also receives every (kind, key) the plan owns, changed or not."""
     if not any(desired.get(key, False) for key in ("global", "mcp", "schedule", "shortcut")):
         return ()
     validate_profile(ctx, profile)
@@ -322,5 +337,7 @@ def plan_integrations(ctx, profile, desired, backend):
             if (document.get("target") != argv[0] or document.get("arguments") != subprocess.list2cmdline(argv[1:]) or document.get("description") != "Respected Brain " + ctx.paths.vault_id):
                 raise OwnershipConflict("Existing shortcut does not target the selected vault launcher")
         planner.put("shortcut", key, canonical_json({"target": argv[0], "arguments": subprocess.list2cmdline(argv[1:]), "working_directory": str(ctx.paths.app_root), "description": "Respected Brain " + ctx.paths.vault_id, "icon_location": "", "window_style": 1, "hotkey": ""}))
+    if planned_keys is not None:
+        planned_keys.update(planner.after)
     return planner.changes()
 

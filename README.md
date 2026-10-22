@@ -82,7 +82,7 @@ python packaging/build_installer.py                         # dist\RespectedBrai
 
 Kaynak `src/respected_brain/`, paketle gelen içerik (kasa şablonu, beceriler, talimatlar) `src/respected_brain/resources/`,
 kurucu `packaging/windows/brain_setup.iss`. Mimari ve güvenlik sınırları: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Üç ürünün
-ortak sözleşmesi ekosistem kökündeki `docs/PRODUCT_CONTRACT.md` dosyasındadır.
+ortak sözleşmesi `docs/PRODUCT_CONTRACT.md` dosyasındadır.
 
 ## Atıf ve lisans
 

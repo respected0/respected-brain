@@ -3,7 +3,7 @@
 Kurulu program: `%LOCALAPPDATA%\Respected\RespectedBrain\app\respected-brain.exe` (PATH'e eklenmez; tam yolu kullanın).
 Kaynaktan: `python -m respected_brain`. Linux'ta `~/.local/bin/respected-brain`.
 
-Ortak kurallar (üç ürün aynı, bkz. ekosistem kökündeki `docs/PRODUCT_CONTRACT.md`):
+Ortak kurallar (üç ürün aynı, bkz. [PRODUCT_CONTRACT.md](PRODUCT_CONTRACT.md)):
 
 - Çıktı UTF-8 JSON'dur. Hata: `{"error": {"code", "message", "hint"}}`.
 - Çıkış kodu: `0` başarı, `1` işlem başarısız, `2` kullanım ya da geçersiz ayar.
@@ -45,7 +45,11 @@ Ortak kurallar (üç ürün aynı, bkz. ekosistem kökündeki `docs/PRODUCT_CONT
 | `briefing` | Zamanı gelmişse günlük derleme ve sabah özetini üretir. |
 | `flush` | Bir oturum dökümünü özetleyip `daily`'ye yazar. Hook'ların kullandığı iç komuttur. |
 | `hook --provider P --event E` | AI aracının hook giriş noktası (`claude`, `codex`, `cursor`, `antigravity`, `gemini`; olay `start`, `prompt`, `precompact`, `postcompact`, `turn`, `end`, `notify`). Elle çalıştırılmaz. |
+| `semantic status\|enable\|disable\|pull [--provider llama\|ollama] [--model M]` | Yerel anlamsal aramayı Hub'sız yönetir: durum, aç/kapat, modeli indir (`pull`, tek ağ kullanan işlem). Hub'ın `memory.semantic.*` işlemleriyle aynı kod. |
+| `stats [--days N]` | Oturum başlarında AI araçlarına gönderilen hafıza bağlamının boyutu: oturum sayısı, toplam/ortalama/en çok karakter, tahmini token (yaklaşık 4 karakter). Kayıt `state/context-usage.jsonl`. Tasarruf karşılaştırması yapmaz: bağlamsız bir temel yoktur. |
 | `maintenance ARAÇ [argümanlar]` | Bakım aracı (aşağıda). |
+
+**Tanı:** `RESPECTED_HOOK_TRACE=<dosya>` ortam değişkeni ya da veri klasöründeki `hook-trace.txt` (ilk satırı bir dosya yolu) her hook çağrısının girdisini ve çıktısını o dosyaya ekler. AI araçları hook'ları kısıtlı ortamla başlatabildiği için dosya biçimi gerekir; işin bitince dosyayı silin.
 
 ## Protokol ve MCP
 

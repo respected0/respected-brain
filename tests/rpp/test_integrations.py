@@ -81,7 +81,8 @@ class IntegrationPlanTest(unittest.TestCase):
         everything = self.plan({"global": True, "mcp": True})["result"]
         only = self.plan({"global": True, "mcp": True, "clients": ["claude"]})["result"]
         targets = [c["target"].replace("\\", "/") for c in only["changes"]]
-        self.assertTrue(targets and all("/.claude" in t for t in targets), targets)
+        self.assertTrue(targets and all("/.claude" in t or "/plugin/" in t for t in targets), targets)
+        self.assertFalse(any("/.codex/" in t or "/.gemini/" in t for t in targets), targets)
         self.assertGreater(len(everything["changes"]), len(only["changes"]))
         self.assertEqual(only["desired"]["clients"], ["claude"])
         detected = {c["id"]: c["detected"] for c in only["clients"]}

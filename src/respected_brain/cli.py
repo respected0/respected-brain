@@ -40,8 +40,15 @@ def _parser():
     config.add_argument("action", nargs="?", choices=("get", "set"))
     config.add_argument("items", nargs="*")
     commands.add_parser("health", help="Sağlık kontrolü")
+    semantic = commands.add_parser("semantic", help="Yerel anlamsal aramayı göster, aç/kapat ya da modeli indir (Hub'sız)")
+    semantic.add_argument("action", choices=("status", "enable", "disable", "pull"))
+    semantic.add_argument("--provider", choices=("llama", "ollama"))
+    semantic.add_argument("--model")
     for name in ("briefing", "maps", "index-refresh"):
         _selector(commands.add_parser(name))
+    stats = commands.add_parser("stats", help="Oturum başlarında AI araçlarına gönderilen hafıza bağlamının boyutu")
+    _selector(stats)
+    stats.add_argument("--days", type=int, default=30)
     compile_parser = commands.add_parser("compile")
     _selector(compile_parser)
     compile_parser.add_argument("--trigger-claim", type=Path)
@@ -94,10 +101,15 @@ def _dispatch(args) -> int:
         return rpp_main()
     if args.command in ("config", "health"):
         return _config(args) if args.command == "config" else _health()
+    if args.command == "semantic":
+        return _semantic(args)
     if args.command in ("compile", "flush"):
         from .memory.lifecycle import _is_reentrant
         if _is_reentrant():
             return 0
+    if args.command in ("setup", "repair"):
+        from .installation.migrate import migrate_data
+        migrate_data(application_roots().data_root)  # an update moves old-format data first; nothing below reads it before this
     if args.command in ("setup", "recover"):
         roots = application_roots()
         from .integrations.backend import NativeBackend
@@ -193,6 +205,10 @@ def _dispatch(args) -> int:
         from .search.freshness import refresh_now
         print(json.dumps(refresh_now(ctx), ensure_ascii=False))
         return 0
+    if args.command == "stats":
+        from .memory.lifecycle import usage_report
+        _print(usage_report(ctx.paths.state_dir, datetime.now().astimezone(), max(1, args.days)))
+        return 0
     if args.command == "maps":
         from .vault.maps import rebuild_maps
         rebuild_maps(ctx)
@@ -244,6 +260,25 @@ def _config(args) -> int:
     raise ValueError("Kullanım: config | config get <anahtar> | config set <anahtar>=<değer>...")
 
 
+def _semantic(args) -> int:
+    from .rpp import memory_semantic
+    from .memory.inbox import MemoryOpError
+    data_root = application_roots().data_root
+    try:
+        if args.action == "status":
+            result = memory_semantic.status(data_root)
+        elif args.action == "pull":
+            result = memory_semantic.pull(data_root, {"confirm": True})
+        else:
+            payload = {"confirm": True, "enabled": args.action == "enable", **{k: v for k, v in (("provider", args.provider), ("model", args.model)) if v}}
+            result = memory_semantic.configure(data_root, payload)
+    except MemoryOpError as error:
+        _print({"error": {"code": error.code, "message": error.message, "hint": error.hint}})
+        return 2 if error.code in ("BAD_REQUEST", "NO_VAULT") else 1
+    _print(result)
+    return 0
+
+
 def _health() -> int:
     from .rpp.server import RPP, serve
     result = serve(json.dumps({"rpp": RPP, "op": "health"}))["result"]
@@ -258,6 +293,8 @@ def _operation_output(result) -> int:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    from .core.platform import ensure_user_environment
+    ensure_user_environment()  # hooks may run with a trimmed environment
     if sys.platform == "win32":
         for stream in (sys.stdin, sys.stdout, sys.stderr):  # RPP requests arrive as UTF-8 on stdin; the console code page must not change note names
             configure = getattr(stream, "reconfigure", None)

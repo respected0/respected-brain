@@ -2,7 +2,7 @@
 
 Programın nasıl kurulduğu, verinin nerede durduğu, başka ürünlerin hafızaya nasıl eriştiği ve hangi güvenlik
 sınırlarının uygulandığı. Kullanım: [USAGE.md](USAGE.md). Komutlar: [COMMANDS.md](COMMANDS.md). Üç ürünün ortak
-kuralları (kurucu, komutlar, ayarlar, protokol) ekosistem kökündeki `docs/PRODUCT_CONTRACT.md` dosyasındadır; burada
+kuralları (kurucu, komutlar, ayarlar, protokol) [PRODUCT_CONTRACT.md](PRODUCT_CONTRACT.md) dosyasındadır; burada
 tekrarlanmaz.
 
 ## 1. Üç ayrı kök
@@ -31,7 +31,7 @@ tekrarlanmaz.
 | `memory/` | Döküm özetleme, `daily` yazımı, derleme, olay günlüğü, asistan bağlamı, maskeleme |
 | `briefing/` | Sabah özeti |
 | `search/` | FTS5 araması, dizin tazeliği, isteğe bağlı yerel anlamsal arama |
-| `integrations/` | AI aracı hook'ları ve uyarlayıcıları, MCP sunucusu, bağlantı kaydı, zamanlayıcı, değişiklik farkı |
+| `integrations/` | AI aracı hook'ları ve uyarlayıcıları, Claude/Codex yerel eklenti paketi (`plugin.py`: `DataRoot/vaults/<UUID>/plugin`), MCP sunucusu, bağlantı kaydı, zamanlayıcı, değişiklik farkı |
 | `installation/` | `setup`, `repair`, `uninstall`, ayar değişikliğinde yeniden yapılandırma, sahiplik kaydı, işlem günlüğü |
 | `rpp/` | RPP sunucusu: ayarlar, bağlantı planı, hafıza izinleri, arama, yazma, dizin, anlamsal arama |
 | `maintenance/` | Kasa denetimi ve onarımı, içe alma, Restic ve Git yedekleri |
@@ -190,7 +190,7 @@ sistemini kanıtlamaz. Hub tarafındaki uçtan uca testler gerçek kurucuyu kull
 |---|---|
 | Kod imzası (Authenticode) | yok; SmartScreen uyarır |
 | macOS, Linux, WSL | kod ve betikler var; derlenmez, CI'da test edilmez |
-| Codex, Gemini, Cursor, Antigravity | yalnızca test verileriyle; gerçek oturumla sınanan yalnızca Claude Code |
+| Codex, Gemini CLI, Cursor | yalnızca test verileriyle; Claude Code ve Antigravity gerçek oturumla sınandı (Windows). Codex'te `notify` köprüsü gerçek oturumda çalıştı, eklenti hook'larının tetiklendiği doğrulanamadı |
 | Dizin anlık değil | oturum dışı düzenlemeler sonraki oturumda ya da günlük görevde dizine girer |
 | Hafıza izni | `settings.apply` yapabilen herkes izin oluşturabilir (aynı kullanıcı hesabı) |
 | Anlamsal arama | her sorguda sunucu başlar; karma sonuçlarda alaka eşiği yok; yalnızca Windows x64 çalışma ortamı |

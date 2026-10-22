@@ -60,8 +60,10 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
 
     def test_all_provider_configs_point_to_bridge(self):
         artifacts = render_project_integrations(self.ctx, self.profile)
-        for content in artifacts.values():
-            self.assertIn('respected-brain.exe\\" hook', content.decode())  # the program path is quoted (Git Bash eats bare backslashes)
+        for name, content in artifacts.items():
+            quoted = 'respected-brain.exe\\" hook'  # quoted program path: Git Bash eats bare backslashes
+            bare = "respected-brain.exe hook"  # Antigravity re-escapes quotes, so its commands carry none
+            self.assertIn(bare if name == ".agents/hooks.json" else quoted, content.decode(), name)
             self.assertIn(self.ctx.paths.vault_id, content.decode())
             self.assertNotIn("bridge.py", content.decode())
 
@@ -513,8 +515,20 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
             backend.apply(row)
         self.assertEqual(RENDER.plan_integrations(self.ctx, self.profile, {"global": True}, backend), ())
         self.assertIn(self.vault.name, (self.home / ".codex/AGENTS.md").read_text(encoding="utf-8"))
-        for path in (".gemini/config/hooks.json", ".claude/settings.json", ".cursor/hooks.json", ".codex/hooks.json"):
+        for path in (".gemini/config/hooks.json", ".claude/settings.json", ".cursor/hooks.json", ".codex/config.toml"):
             self.assertTrue((self.home / path).is_file())
+        bundle = self.ctx.paths.data_root / "vaults" / self.ctx.paths.vault_id / "plugin"
+        for path in ("plugin/hooks/claude.json", "plugin/hooks/codex.json", ".claude-plugin/marketplace.json", ".agents/plugins/marketplace.json"):
+            self.assertTrue((bundle / path).is_file(), path)
+        self.assertIn("[plugins.\"respected-brain@respected-brain\"]", (self.home / ".codex/config.toml").read_text(encoding="utf-8"))
+
+    def test_up_to_date_registrations_stay_in_the_planned_keys(self):
+        backend = self.backend()
+        for row in RENDER.plan_integrations(self.ctx, self.profile, {"global": True}, backend):
+            backend.apply(row)
+        keys = set()
+        self.assertEqual(RENDER.plan_integrations(self.ctx, self.profile, {"global": True}, backend, keys), ())
+        self.assertIn(("file", str(self.home / ".codex/AGENTS.md")), keys)
 
     def test_global_codex_installer_chains_existing_notify_without_losing_it(self):
         codex = self.home / ".codex"
@@ -581,7 +595,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
         profile = IntegrationProfile("windows-wsl", ("/opt/respected-brain",), self.home)
         with mock.patch.object(RENDER.subprocess, "run", return_value=mock.Mock(returncode=0, stdout=self.wsl_registry_output())):
             rows = RENDER.plan_integrations(self.ctx, profile, {"global": True}, self.backend())
-        self.assertTrue(any(row.key.startswith(str(self.home / ".agents/skills")) for row in rows))
+        self.assertTrue(any(row.key.replace("\\", "/").endswith("plugin/plugin/skills/brain-doktor/SKILL.md") for row in rows))
         self.assertFalse(any(row.key.startswith(str(self.vault)) for row in rows))
 
     def test_global_installer_rejects_missing_extra_home_before_writes(self):

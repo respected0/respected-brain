@@ -36,7 +36,7 @@ class ProfileRenderTest(IntegrationFixture, TestCase):
             with self.subTest(platform=platform), mock.patch.object(RENDER.subprocess, "run", return_value=mock.Mock(returncode=0, stdout=self.wsl_registry_output())):
                 profile = IntegrationProfile(platform, launcher, self.home)
                 rows = RENDER.plan_integrations(self.ctx, profile, {"global": True}, self.backend())
-                text = " ".join(row.after.decode() for row in rows if row.after and __import__("pathlib").Path(row.key).name in {"hooks.json", "settings.json", "config.toml"})
+                text = " ".join(row.after.decode() for row in rows if row.after and __import__("pathlib").Path(row.key).name in {"hooks.json", "settings.json", "config.toml", "claude.json", "codex.json"})
                 for provider in ("antigravity", "gemini", "codex", "claude", "cursor"):
                     self.assertIn("--provider " + provider, text)
                 self.assertNotIn("bridge.py", text)
@@ -44,6 +44,15 @@ class ProfileRenderTest(IntegrationFixture, TestCase):
                     self.assertIn("wsl.exe --cd", text)
                 else:
                     self.assertNotIn("wsl.exe", text)
+
+    def test_antigravity_hook_commands_carry_no_quote_characters(self):
+        # Antigravity on Windows re-escapes quotes to \" before cmd.exe, so a quoted program path is never found
+        rows = RENDER.plan_integrations(self.ctx, self.profile, {"global": True, "clients": ["antigravity"]}, self.backend())
+        hooks = json.loads(next(row.after for row in rows if row.key.endswith("hooks.json")))["respected-brain"]
+        for event, definitions in hooks.items():
+            for definition in definitions:
+                self.assertNotIn('"', definition["command"], event)
+                self.assertTrue(definition["command"].startswith(str(self.app / "respected-brain.exe")))
 
     def test_render_preview_is_deterministic_without_mutating_vault(self):
         before = snapshot(self.root)

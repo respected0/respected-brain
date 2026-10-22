@@ -96,8 +96,9 @@ class ScenarioMatrixTest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(set(handler), {"name", "type", "command", "timeout", "description"})
 
     def test_claude_global_stop_hook_is_async(self):
-        settings = self.global_output(".claude/settings.json")
-        self.assertTrue(settings["hooks"]["Stop"][0]["hooks"][0].get("async"))
+        changes = RENDERER.plan_integrations(self.ctx, self.profile, {"global": True}, self.backend())
+        hooks = json.loads(next(row.after for row in changes if row.key.replace("\\", "/").endswith("plugin/hooks/claude.json")))
+        self.assertTrue(hooks["hooks"]["Stop"][0]["hooks"][0].get("async"))
 
 
 if __name__ == "__main__":

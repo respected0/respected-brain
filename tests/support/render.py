@@ -4,7 +4,9 @@ import json
 from respected_brain.integrations.backend import IntegrationProfile
 from respected_brain.integrations.rendering import _Planner, _global_writes, validate_profile
 
-_FILES = {".claude/settings.json": ".claude/settings.json", ".codex/hooks.json": ".codex/hooks.json", ".cursor/hooks.json": ".cursor/hooks.json",
+# Claude and Codex hooks ship in the plugin bundle; a vault's project files carry the same definitions locally.
+_PLUGIN_HOOKS = {"plugin/hooks/claude.json": ".claude/settings.json", "plugin/hooks/codex.json": ".codex/hooks.json"}
+_FILES = {".cursor/hooks.json": ".cursor/hooks.json",
           ".gemini/config/hooks.json": ".agents/hooks.json", ".gemini/settings.json": ".gemini/settings.json"}
 
 
@@ -28,7 +30,11 @@ def render_project_integrations(ctx, profile):
     writes, _ = _global_writes(ctx, local_profile, _Planner(_EmptyBackend()))
     result = {}
     for path, content in writes:
-        relative = path.relative_to(ctx.paths.vault_root).as_posix()
+        hook = next((target for suffix, target in _PLUGIN_HOOKS.items() if path.as_posix().endswith(suffix)), None)
+        if hook:
+            result[hook] = (json.dumps(local_commands(json.loads(content)), ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+            continue
+        relative = path.relative_to(ctx.paths.vault_root).as_posix() if path.is_relative_to(ctx.paths.vault_root) else ""
         if relative in _FILES:
             result[_FILES[relative]] = (json.dumps(local_commands(json.loads(content)), ensure_ascii=False, indent=2) + "\n").encode("utf-8")
     return result

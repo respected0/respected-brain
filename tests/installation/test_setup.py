@@ -39,7 +39,7 @@ class FoundationSetupTest(unittest.TestCase):
     def global_hooks(self):
         # hooks are global only (vault keeps notes + .obsidian), so they are read from the fake home
         self.assertFalse((self.vault / ".claude").exists())
-        return (self.root / "home/.claude/settings.json").read_text(encoding="utf-8")
+        return "".join(path.read_text(encoding="utf-8") for path in (self.root / "data/vaults").glob("*/plugin/plugin/hooks/claude.json"))
 
     def test_fresh_setup_is_pure_vault(self):
         result = self.install()

@@ -236,7 +236,27 @@ def _dispatch_event(ctx, *, provider, event, argv, stdin):
     return result.getvalue()
 
 
+TRACE_ENV = "RESPECTED_HOOK_TRACE"
+TRACE_FILE = "hook-trace.txt"
+
+
+def _trace(ctx, provider, event, stdin, result):
+    """Diagnostics. The target file comes from RESPECTED_HOOK_TRACE or, because AI tools start hooks with a trimmed
+    environment, from the first line of `<data>/hook-trace.txt`; every hook call appends what the tool sent and what came back."""
+    path = os.environ.get(TRACE_ENV)
+    try:
+        if not path and (ctx.paths.data_root / TRACE_FILE).is_file():
+            path = (ctx.paths.data_root / TRACE_FILE).read_text(encoding="utf-8").strip().splitlines()[0]
+        if path:
+            with open(path, "a", encoding="utf-8") as handle:
+                handle.write(json.dumps({"at": datetime.now().astimezone().isoformat(), "provider": provider, "event": event, "stdin": stdin, "stdout": result}, ensure_ascii=False) + "\n")
+    except (OSError, IndexError, UnicodeError):
+        pass
+
+
 def dispatch(ctx, *, provider, event, argv, stdin):
     if LIFECYCLE._is_reentrant():
         return ""
-    return _dispatch_event(ctx, provider=provider, event=event, argv=argv, stdin=stdin)
+    result = _dispatch_event(ctx, provider=provider, event=event, argv=argv, stdin=stdin)
+    _trace(ctx, provider, event, stdin, result)
+    return result

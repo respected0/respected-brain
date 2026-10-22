@@ -140,12 +140,38 @@ def merge_grouped_hooks(
             "type": "command",
             "command": command,
             "timeout": timeout,
-            "statusMessage": f"Loading {provider} second-brain memory",
+            "statusMessage": f"Respected Brain: {provider} hafızası yükleniyor",
         }
         if event in async_events:
             handler["async"] = True
         cleaned.append({"hooks": [handler]})
         hooks[event] = cleaned
+    return document
+
+
+def strip_grouped_hooks(document: dict, provider: str) -> dict:
+    """Drop Brain's loose hook handlers (they now ship in the plugin); user handlers and groups stay."""
+    hooks = document.get("hooks")
+    if not isinstance(hooks, dict):
+        return document
+    for event, groups in list(hooks.items()):
+        if not isinstance(groups, list):
+            continue
+        kept = []
+        for group in groups:
+            handlers = group.get("hooks") if isinstance(group, dict) else None
+            if not isinstance(handlers, list):
+                kept.append(group)
+                continue
+            rest = [item for item in handlers if not managed_command(item.get("command") if isinstance(item, dict) else None, provider)]
+            if rest or not handlers:
+                kept.append(dict(group, hooks=rest))
+        if kept:
+            hooks[event] = kept
+        else:
+            del hooks[event]
+    if not hooks:
+        del document["hooks"]
     return document
 
 

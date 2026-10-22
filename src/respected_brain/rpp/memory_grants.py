@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Any
 
 from respected_brain.core.config import atomic_write_json
+from respected_brain.hints import hint
 from respected_brain.core.locking import exclusive_lock
 
 GRANTS_FILE = "memory-grants.json"
@@ -37,7 +38,7 @@ class GrantError(Exception):
 
 
 def _denied() -> GrantError:
-    return GrantError("PERMISSION_DENIED", _DENIED, "Create a memory grant in the Hub and use its token.")
+    return GrantError("PERMISSION_DENIED", _DENIED, hint("Hub'da hafıza izni oluşturun", "respected-orchestrator memory connect") + " ve belirtecini kullanın")
 
 
 def _hash(token: str) -> str:

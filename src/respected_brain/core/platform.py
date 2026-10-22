@@ -11,6 +11,21 @@ from typing import ContextManager, IO
 from uuid import UUID
 
 
+def ensure_user_environment(env=None, read=None) -> None:
+    """AI tools start hooks with a trimmed environment (no USERPROFILE/APPDATA/LOCALAPPDATA); Python's home lookup and the
+    summarizer CLIs we start need them. Fill what is missing from the Windows Known Folders; never override what is set."""
+    env = os.environ if env is None else env
+    read = known_folder if read is None else read
+    if os.name != "nt" and read is known_folder:
+        return
+    for variable, folder in (("USERPROFILE", "Profile"), ("APPDATA", "RoamingAppData"), ("LOCALAPPDATA", "LocalAppData")):
+        if not env.get(variable):
+            try:
+                env[variable] = str(read(folder))
+            except OSError:
+                pass
+
+
 def known_folder(name: str) -> Path:
     """Read Windows Known Folders, including redirected Documents.
 
@@ -26,7 +41,9 @@ def known_folder(name: str) -> Path:
                     ("data3", wintypes.WORD), ("data4", ctypes.c_ubyte * 8)]
 
     ids = {"LocalAppData": "F1B32785-6FBA-4FCF-9D55-7B8E7F157091",
-           "Documents": "FDD39AD0-238F-46AF-ADB4-6C85480369C7"}
+           "Documents": "FDD39AD0-238F-46AF-ADB4-6C85480369C7",
+           "Profile": "5E6C858F-0E22-4760-9AFE-EA3317B67173",
+           "RoamingAppData": "3EB685DB-65F9-4CF6-A03A-E3EF65729F3D"}
     guid = GUID.from_buffer_copy(UUID(ids[name]).bytes_le)
     shell = ctypes.WinDLL("shell32", use_last_error=True)
     read = shell.SHGetKnownFolderPath

@@ -33,6 +33,20 @@ class TestUninstall(unittest.TestCase):
         for row in rows:
             self.assertEqual(self.backend.read(row.kind,row.key),row.before)
 
+    def test_plugin_is_left_in_the_clients_when_no_bundle_was_registered(self):
+        from unittest import mock
+        with mock.patch("respected_brain.installation.uninstall.remove_plugins") as remove:
+            self.assertTrue(uninstall(self.ctx,backend=self.backend).success)
+            remove.assert_not_called()
+
+    def test_plugin_is_removed_from_the_clients_when_the_bundle_was_registered(self):
+        from unittest import mock
+        bundle=self.roots.data_root / "vaults" / self.ctx.paths.vault_id / "plugin/.claude-plugin/marketplace.json"
+        self.own("file",bundle,None,b"{}")
+        with mock.patch("respected_brain.installation.uninstall.remove_plugins") as remove:
+            self.assertTrue(uninstall(self.ctx,backend=self.backend).success)
+            remove.assert_called_once()
+
     def test_uninstall_works_after_the_vault_folder_was_moved_or_deleted(self):
         import shutil
         shutil.rmtree(self.vault)

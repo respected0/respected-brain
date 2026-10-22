@@ -94,13 +94,18 @@ def setup(roots: Roots, vault: Path, *, values: Mapping[str, object], backend, p
             ctx = installation_context(roots, vault, identity, config)
             # Hooks are global only (home-level); the vault keeps just its notes and .obsidian (no .claude/.cursor/.agents/...).
             from .operations import refresh_integrations, write_manifest
-            launchers, external = refresh_integrations(ctx, backend, tx, previous, installed_profile(roots, config["vaults"][identity]["settings"]))
+            profile = installed_profile(roots, config["vaults"][identity]["settings"])
+            launchers, external = refresh_integrations(ctx, backend, tx, previous, profile)
             tx.checkpoint("integrations")
             owned = application_files(roots.app_root, document) + (OwnedFile(store.path, digest(store.path), "technical"),) + launchers
             write_manifest(ctx, tx, owned, external, previous)
             tx.checkpoint("health")
             payload.validate_installed_health(roots.app_root, document, roots.data_root)
             tx.checkpoint("cleanup")
-            return tx.commit()
+            result = tx.commit()
+            if result.success:
+                from respected_brain.integrations.plugin import install_plugins
+                install_plugins(ctx, profile, config["integrations"])
+            return result
     except (FoundationError, OSError, ValueError) as error:
         return OperationResult.failed(tx, error)

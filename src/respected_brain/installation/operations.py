@@ -60,9 +60,9 @@ def plan_connections(ctx, backend, previous):
         return tuple(disabled), tuple(retained)
     from respected_brain.integrations.rendering import plan_integrations
     roots = Roots(ctx.paths.app_root, ctx.paths.data_root, ctx.paths.vault_root)
-    changes = plan_integrations(fresh, installed_profile(roots, settings), desired, backend)
+    planned = set()
+    changes = plan_integrations(fresh, installed_profile(roots, settings), desired, backend, planned)
     if "clients" in desired or "mcp_clients" in desired:  # a client that is no longer selected gets its previous registrations restored
-        planned = {(change.kind, change.key) for change in changes}
         dropped = [prior for prior in retained if prior.kind in ("file", "mcp") and prior.key not in schedule_paths
                    and not Path(prior.key).is_relative_to(ctx.paths.vault_root) and (prior.kind, prior.key) not in planned]
         for prior in dropped:

@@ -73,6 +73,28 @@ def command_text(profile, argv):
     return " ".join([head, *([subprocess.list2cmdline(argv[1:])] if len(argv) > 1 else [])])
 
 
+def _short_path(path):
+    """The 8.3 form of an existing Windows path (no spaces), or the path itself when there is none."""
+    if not path.startswith(("\\\\", "/")) and __import__("os").name == "nt":
+        import ctypes
+        buffer = ctypes.create_unicode_buffer(32768)
+        if ctypes.windll.kernel32.GetShortPathNameW(path, buffer, len(buffer)):
+            return buffer.value
+    return path
+
+
+def bare_command_text(profile, argv):
+    """A hook command with no quote characters. Antigravity on Windows re-escapes quotes (`\\"`) before cmd.exe sees them,
+    so a quoted program path is "not recognized"; a path with spaces goes in its 8.3 form. Falls back to the quoted
+    form when quotes cannot be avoided (the hook then fails visibly in Antigravity's log, as before)."""
+    if profile.platform != "windows-native":
+        return command_text(profile, argv)
+    head, rest = _short_path(argv[0]) if " " in argv[0] else argv[0], subprocess.list2cmdline(argv[1:])
+    if " " in head or '"' in rest:
+        return command_text(profile, argv)
+    return " ".join([head, rest])
+
+
 class _Planner:
     def __init__(self, backend):
         self.backend = backend

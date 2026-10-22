@@ -15,6 +15,6 @@ if not os.environ.get("RESPECTED_TEST_SANDBOX"):
     for _sub in ("AppData/Roaming", "AppData/Local"):
         (_home / _sub).mkdir(parents=True)
     os.environ.update(USERPROFILE=str(_home), HOME=str(_home), APPDATA=str(_home / "AppData/Roaming"),
-                      LOCALAPPDATA=str(_home / "AppData/Local"), RESPECTED_TEST_SANDBOX=str(_home))
+                      LOCALAPPDATA=str(_home / "AppData/Local"), RESPECTED_TEST_SANDBOX=str(_home), RESPECTED_SKIP_CLIENT_PLUGINS="1")
     os.environ.setdefault("PYTHONUTF8", "1")
     atexit.register(shutil.rmtree, _home, ignore_errors=True)

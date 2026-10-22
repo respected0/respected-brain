@@ -161,13 +161,17 @@ yedekleri).
 
 | Araç | Yakalama noktası |
 |---|---|
-| Claude Code | hook'lar, `Stop` |
-| Codex | hook/notify köprüsü (mevcut notify zinciriniz korunur) |
+| Claude Code | yerel `respected-brain` eklentisi (hook'lar, `Stop`, beceriler); ayarlarda doğrudan hook kalmaz |
+| Codex | yerel `respected-brain` eklentisi (hook'lar, beceriler) ve notify köprüsü (mevcut notify zinciriniz korunur) |
 | Cursor | hook'lar, `afterAgentResponse` |
 | Antigravity | Antigravity/Gemini uyarlayıcısı, `Stop` |
 | Gemini CLI | hook'lar, `AfterAgent` |
 
-Yalnızca Claude Code gerçek oturumlarla doğrulandı; diğerleri test verileriyle sınandı, deneysel sayın. Bağlantı açıkken
+Eklenti paketi veri klasöründe durur ve kaldırınca silinir. Kurulum ve onarım sonunda `claude plugin marketplace add`/`install` ve
+`codex plugin add` komutlarını da çalıştırır (araç yoksa atlanır, başarısızlık kurulumu bozmaz). Claude eklentiyi ilk açılışta yükler; Codex eklenti hook'ları için
+güven onayı isteyebilir. Eklenti kaydı biçimi gerçek araçlarda henüz doğrulanmadı.
+
+Claude Code ve Antigravity gerçek oturumlarla doğrulandı (Windows); Codex'te yalnızca `notify` köprüsü gerçek oturumda görüldü, Gemini CLI ve Cursor test verileriyle sınandı: deneysel sayın. Bağlantı açıkken
 ürün o aracın ayar dosyasına yalnızca kendi girdilerini ekler; sizin ve başka araçların girdileri korunur, kapatınca
 yalnızca kendi girdileri geri alınır.
 

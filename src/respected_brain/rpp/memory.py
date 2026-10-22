@@ -15,6 +15,7 @@ from typing import Any
 from . import memory_grants as grants
 from ..core.config import ConfigStore
 from ..core.platform import path_within_vault
+from ..hints import hint
 from ..memory.inbox import MemoryOpError, clean_text as _clean
 from .integrations import _context
 from ..search.engine import IndexUnavailable, SearchEngine
@@ -133,7 +134,7 @@ def _find(ctx, engine, data_root, query, limit, category, mode, snippet_chars):
     want_semantic = mode in ("semantic", "hybrid") or (mode == "auto" and cfg["enabled"])
     info = {"mode": "fts", "semantic": "off" if not cfg["enabled"] else "not_used"}
     if mode in ("semantic", "hybrid") and not cfg["enabled"]:
-        raise MemoryOpError("SEMANTIC_OFF", "Semantic search is not enabled.", "Enable it from the Hub, or use mode fts.")
+        raise MemoryOpError("SEMANTIC_OFF", "Semantic search is not enabled.", hint("Hub'dan açın", "respected-brain semantic enable") + " (ya da fts kipini kullanın)")
     ranked: list[tuple[str, float]] = []
     if want_semantic and cfg["enabled"]:
         try:
@@ -182,7 +183,7 @@ def recall(data_root: Path, payload: Any) -> dict[str, Any]:
     active = _active_vault_id(data_root)
     if not active or grant_row.get("vault_id") != active:
         raise MemoryOpError("PERMISSION_DENIED", "Memory access is not authorized.",
-                            "Create a memory grant in the Hub and use its token.")
+                            hint("Hub'da hafıza izni oluşturun", "respected-orchestrator memory connect") + " ve belirtecini kullanın")
     effective = min(limit, int(grant_row.get("max_results", 20)))
     result = run_query(data_root, active, query, effective, snippet_chars, category, mode)
     return {**result, "grant_id": grant_row["grant_id"]}

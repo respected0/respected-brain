@@ -1,20 +1,25 @@
 # Brain: gelecekte yapılacaklar
 
-Ürün beklentisiyle bugünkü durum arasındaki açıklar (2026-10-22 değerlendirmesi). Yapılan madde işaretlenir ya da silinir.
+Ürün beklentisiyle bugünkü durum arasındaki açıklar (2026-10-22 değerlendirmesi, aynı gün güncellendi). Yapılan madde silinir.
 
 ## Tüm AI'lar tek hafıza
 
-- [ ] **OpenCode** desteği: hook ve MCP kaydı (`integrations/`), özetleyici olarak `providers/runner.py`.
+- [ ] **OpenCode** desteği: hook ve MCP kaydı (`integrations/`), özetleyici olarak `providers/runner.py`. Bu makinede OpenCode
+  kurulu değil; gerçek oturumla doğrulanamadığı için yazılmadı.
 - [ ] **OpenRouter / API tabanlı modeller**: bugün özetleme yalnızca kurulu AI aracının komut satırıyla yapılıyor; API
-  anahtarıyla doğrudan model çağırma yok. Çin modelleri (DeepSeek, Qwen, GLM, Kimi) de bu yoldan gelir.
+  anahtarıyla doğrudan model çağırma yok. Anahtarın nerede saklanacağı (ayar şeması `secret` alanı mı, Windows kimlik
+  kasası mı) ve fiyat/sağlayıcı seçimi karar bekliyor. Çin modelleri (DeepSeek, Qwen, GLM, Kimi) de bu yoldan gelir.
 - [ ] **ChatGPT** (masaüstü/web): hook yok; yalnızca MCP üzerinden ne kadar bağlanabileceği araştırılmalı.
-- [ ] **Gerçek oturumla doğrulama**: bugün gerçek oturumla sınanan yalnızca Claude Code. Codex, Gemini, Cursor, Antigravity
-  yalnızca test verisiyle sınandı (`ARCHITECTURE.md` §9).
+- [ ] **Codex eklenti hook'ları**: Codex `exec` oturumunda `SessionStart/UserPromptSubmit/Stop` için dört hook çalışıyor ve biri
+  "Failed" görünüyor; Brain'in hook'larından hiçbiri iz bırakmıyor (eklentiyi kapatmak sayıyı değiştirmiyor, yani bu dört
+  hook başka kaynaktan geliyor). `notify` köprüsü gerçek oturumda çalışıyor. Hook'ların Codex'te hangi koşulda tetiklendiği
+  bulunmalı; tanı için `<veri>/hook-trace.txt` (ilk satırı bir dosya yolu) hook çağrılarını o dosyaya yazar.
+- [ ] **Gemini CLI ve Cursor gerçek oturumla doğrulama**: yalnızca test verisiyle sınandı (`ARCHITECTURE.md` §9).
 
 ## Token tasarrufu
 
-- [ ] Harcanan token'ı ölçmek ve raporlamak: bugün yalnızca üst sınırlar var (oturum başı bağlam 16.000 karakter,
-  `memory/lifecycle.py`), oturum başına ne kadar bağlam gönderildiği ve ne kadar tasarruf edildiği görünmüyor.
+- [ ] Tasarruf karşılaştırması: `stats` oturum başına gönderilen bağlamı ölçer, ama "bağlamsız" bir temel olmadığı için
+  tasarruf hesaplamaz. Anlamlı bir temel (örneğin aynı işin hafızasız tekrarı) tanımlanmalı.
 
 ## Dosyayı kolay bulma
 
@@ -29,17 +34,10 @@
 
 ## Ürün ve yayın
 
-- [ ] Kurucuyu Authenticode ile imzalamak (SmartScreen uyarısı).
-- [ ] macOS / Linux / WSL: kod ve betikler var, derlenmiyor ve CI'da sınanmıyor.
-
-## Hub'dan bağımsızlık
-
-- [ ] Anlamsal aramayı Hub'sız açıp kapatmak: bugün yalnızca Hub'ın `memory.semantic.*` komutlarıyla açılıyor (model
-  indirme dahil); `config set` ya da ürün komutuyla aynı iş yapılabilmeli.
-- [ ] Hata ve ipucu metinleri Hub kuruluysa "Hub'dan açın", değilse ürünün kendi komutunu söylemeli
-  (`search/semantic.py`, `rpp/memory.py`, `rpp/memory_grants.py`, `rpp/memory_write.py`).
+- [ ] Kurucuyu Authenticode ile imzalamak (SmartScreen uyarısı). Kod imzalama sertifikası gerekir; yok.
+- [ ] macOS / Linux / WSL: kod ve betikler var, derlenmiyor ve CI'da sınanmıyor. Bu geliştirme makinesi Windows.
 
 ## Güncelleme
 
-- [ ] `repair` içinde veri taşıma adımı yok: ayar/kayıt dosyaları `schema_version` farklıysa hata veriyor. Biçim değişen
-  ilk sürümden önce eski biçimi yerinde taşıyan adım eklenmeli (sözleşme §başı, "kişinin verisi" istisnası).
+- [ ] Biçimi değiştiren ilk sürümde `installation/migrate.py` içindeki `STEPS` tablosuna eski sürüm için taşıma adımı
+  eklenmeli (mekanizma ve test hazır; bugün gönderilmiş tüm biçimler güncel olduğu için adım yok).

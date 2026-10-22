@@ -32,6 +32,7 @@ from urllib.parse import urlparse
 from ..core import platform as runtime_platform
 from ..core.config import atomic_write_json
 from ..core.context import AppContext
+from ..hints import hint
 from ..core.coordination import writer_lease
 
 CONFIG_FILE = "semantic.json"
@@ -105,7 +106,7 @@ def _call(endpoint: str, path: str, body: dict[str, Any] | None = None, timeout:
             return json.loads(response.read().decode("utf-8"))
     except (urllib.error.URLError, OSError, ValueError, TimeoutError) as exc:
         raise SemanticError("PROVIDER_UNAVAILABLE", "The local embedding service is not reachable.",
-                            "Enable semantic search again from the Hub.") from exc
+                            hint("Hub'dan anlamsal aramayı yeniden açın", "respected-brain semantic enable")) from exc
 
 
 def provider_state(data_root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
@@ -187,7 +188,7 @@ def embedder(data_root: Path, cfg: dict[str, Any]):
         return
     exe, model = _paths(data_root, cfg)
     if not exe.is_file() or not _model_ok(model, cfg):
-        raise SemanticError("PROVIDER_UNAVAILABLE", "The local embedding model is not installed.", "Enable semantic search again from the Hub (downloads it).")
+        raise SemanticError("PROVIDER_UNAVAILABLE", "The local embedding model is not installed.", hint("Hub'dan anlamsal aramayı yeniden açın (modeli indirir)", "respected-brain semantic pull"))
     with socket.socket() as probe:
         probe.bind(("127.0.0.1", 0))
         port = probe.getsockname()[1]
@@ -199,7 +200,7 @@ def embedder(data_root: Path, cfg: dict[str, Any]):
         deadline = time.monotonic() + 180
         while True:
             if process.poll() is not None:
-                raise SemanticError("RUNTIME_FAILED", "The embedding server stopped while starting.", "Enable semantic search again from the Hub.")
+                raise SemanticError("RUNTIME_FAILED", "The embedding server stopped while starting.", hint("Hub'dan anlamsal aramayı yeniden açın", "respected-brain semantic enable"))
             try:
                 _call(endpoint, "/health", timeout=2.0)
                 break
@@ -256,7 +257,7 @@ def build(ctx: AppContext, cfg: dict[str, Any], engine) -> dict[str, int]:
         return {"embedded": 0, "kept": 0, "removed": 0}
     state = provider_state(ctx.paths.data_root, cfg)
     if state["provider"] != "up" or not state["model_installed"]:
-        raise SemanticError("PROVIDER_UNAVAILABLE", "The local embedding model is not ready.", "Enable it again from the Hub (downloads the model).")
+        raise SemanticError("PROVIDER_UNAVAILABLE", "The local embedding model is not ready.", hint("Hub'dan yeniden açın (modeli indirir)", "respected-brain semantic pull"))
     with engine._get_connection() as fts:
         rows = [(r["rel_path"], r["sha256"], r["title"]) for r in fts.execute("SELECT rel_path, sha256, title FROM files_meta")]
     with writer_lease(ctx):

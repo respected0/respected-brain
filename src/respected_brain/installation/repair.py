@@ -5,6 +5,7 @@ distribution.json, not the previous record. Damaged program files are the instal
 """
 from respected_brain.core.errors import FoundationError, OwnershipConflict
 from respected_brain.core.paths import Roots
+from respected_brain.integrations.plugin import install_plugins
 from .common import installed_profile
 from .operations import validate_manifest_roots, refresh_integrations, write_manifest
 from .ownership import read_manifest
@@ -27,9 +28,13 @@ def repair(ctx, *, backend) -> OperationResult:
             validate_manifest_roots(ctx, previous)
             roots = Roots(ctx.paths.app_root, ctx.paths.data_root, ctx.paths.vault_root)
             settings = ctx.config["vaults"][ctx.paths.vault_id].get("settings", {})
-            launchers, external = refresh_integrations(ctx, backend, tx, previous, installed_profile(roots, settings))
+            profile = installed_profile(roots, settings)
+            launchers, external = refresh_integrations(ctx, backend, tx, previous, profile)
             write_manifest(ctx, tx, (*application_files(ctx.paths.app_root, document), *launchers), external, previous)
             payload.validate_installed_health(ctx.paths.app_root, document, ctx.paths.data_root)
-            return tx.commit()
+            result = tx.commit()
+            if result.success:
+                install_plugins(ctx, profile, ctx.config["integrations"])
+            return result
     except (FoundationError, OSError, ValueError) as error:
         return OperationResult.failed(tx, error)
