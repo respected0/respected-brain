@@ -89,7 +89,30 @@ class CaptureModeTest(unittest.TestCase):
 
 
 class OpenCommandTest(unittest.TestCase):
-    """`open` opens the vault folder; no local server exists any more."""
+    """`open` opens the vault (in Obsidian when it is installed, else the folder); no local server exists any more."""
+
+
+    @unittest.skipUnless(os.name == "nt", "the desktop shortcut is a Windows feature")
+    def test_open_asks_obsidian_for_the_vault_and_falls_back_to_the_folder(self):
+        import io
+        from contextlib import redirect_stdout
+        from unittest.mock import patch
+        from urllib.parse import quote
+        from respected_brain import cli
+        vault = Path("C:/Notes/My Vault")
+        for obsidian_installed in (True, False):
+            def start(target, calls=[]):
+                calls.append(str(target))
+                if not obsidian_installed and str(target).startswith("obsidian://"):
+                    raise OSError("no handler")
+            with patch.object(cli.os, "startfile", side_effect=start, create=True) as startfile, patch.object(cli, "bootstrap") as boot, redirect_stdout(io.StringIO()):
+                boot.return_value.paths.vault_root = vault
+                self.assertEqual(cli.main(["open", "--vault-id", "00000000-0000-0000-0000-000000000000"]), 0)
+            asked = [call.args[0] for call in startfile.call_args_list]
+            self.assertEqual(asked[0], "obsidian://open?path=" + quote(str(vault), safe=""))
+            self.assertEqual(len(asked), 1 if obsidian_installed else 2)
+            if not obsidian_installed:
+                self.assertEqual(asked[1], vault)
 
     def test_open_opens_the_vault_folder_and_nothing_else(self):
         import io

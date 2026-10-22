@@ -304,7 +304,7 @@ begin
   IntegrationPage.Add('AI araçlarının oturumlarını hafızaya yakala (Claude, Codex, Gemini... hook ve kuralları)');
   IntegrationPage.Add('AI araçları hafızayı MCP sunucusu olarak kullanabilsin');
   IntegrationPage.Add('Sabah özeti zamanlanmış görevi (Windows Görev Zamanlayıcı)');
-  IntegrationPage.Add('Masaüstüne not kasası kısayolu');
+  IntegrationPage.Add('Masaüstüne not kasasını Obsidian''da açan kısayol');
 end;
 
 // the answers of the identity and integrations pages as the product's own --set arguments
