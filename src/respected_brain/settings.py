@@ -47,7 +47,7 @@ FIELDS = (
     {"key": "integrations.schedule", "type": "boolean", "label": "Sabah özeti görevi", "default": False,
      "help": "İşletim sisteminin görev zamanlayıcısına günlük bir görev eklenir."},
     {"key": "integrations.shortcut", "type": "boolean", "label": "Masaüstü kısayolu", "default": False,
-     "help": "Masaüstüne not kasasını Obsidian'da açan bir kısayol konur (Obsidian yoksa klasörü açar)."},
+     "help": "Masaüstüne not kasasını Obsidian'da açan bir kısayol konur (obsidian:// bağlantısı; Obsidian'ın kasayı tanıması için kasayı bir kez Obsidian'da açmış olmanız gerekir)."},
 )
 SCHEMA = {field["key"]: field for field in FIELDS}
 

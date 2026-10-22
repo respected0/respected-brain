@@ -283,6 +283,9 @@ $shell=New-Object -ComObject WScript.Shell; $item=$shell.CreateShortcut($env:RES
             return path.read_bytes() if path.exists() else None
         if kind == "task":
             return self._task_read(key)
+        if kind == "shortcut" and key.lower().endswith(".url"):   # an Internet Shortcut is a small text file
+            path = self._path(key)
+            return path.read_bytes() if path.exists() else None
         if kind == "shortcut":
             return self._shortcut_read(key)
         return self._registry_read(key)
@@ -312,6 +315,9 @@ else { $null=$folder.RegisterTask($env:RESPECTED_EXTERNAL_KEY, $env:RESPECTED_EX
                 path.unlink(missing_ok=True)
                 return
             path.parent.mkdir(parents=True, exist_ok=True)
+            if key.lower().endswith(".url"):
+                atomic_write_bytes(path, content)
+                return
             self._powershell(r"""
 $value=$env:RESPECTED_EXTERNAL_JSON | ConvertFrom-Json; $shell=New-Object -ComObject WScript.Shell; $item=$shell.CreateShortcut($env:RESPECTED_EXTERNAL_KEY)
 $item.TargetPath=$value.target; $item.Arguments=$value.arguments; $item.WorkingDirectory=$value.working_directory; $item.Description=$value.description; if ($value.icon_location) { $item.IconLocation=$value.icon_location }; $item.WindowStyle=$value.window_style; $item.Hotkey=$value.hotkey; $item.Save()

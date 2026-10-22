@@ -32,7 +32,7 @@ Ortak kurallar (üç ürün aynı, bkz. [PRODUCT_CONTRACT.md](PRODUCT_CONTRACT.m
 | `vault list` | Kayıtlı kasaları ve UUID'lerini gösterir. |
 | `vault register YOL [--new-identity]` | Mevcut bir kasayı kaydeder (kimlik dosyası ve ayarlar yazılabilir). `--new-identity` kopyaya yeni UUID verir. |
 | `vault discover YOL` | Klasörde kasa kimliği arar; hiçbir şey kurmaz. |
-| `open` | Kasayı Obsidian'da açar (`obsidian://` bağlantısı); Obsidian kurulu değilse klasörü dosya yöneticisinde açar. Masaüstü kısayolu bunu çağırır. |
+| `open` | Kasa klasörünü dosya yöneticisinde açar (masaüstü kısayolu bunu çağırır). |
 | `maps` | Kasa ve beceri haritalarını üretir (not yazar). |
 
 ## Hafıza

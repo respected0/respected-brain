@@ -304,11 +304,19 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
 
     def test_shortcut_planner_refuses_unrelated_existing_user_shortcut(self):
         from respected_brain.integrations.rendering import plan_integrations
-        from respected_brain.integrations.backend import canonical_json
         backend = mock.Mock()
-        backend.read.return_value = canonical_json({"target": "third-party.exe", "arguments": "user shortcut"})
+        backend.read.return_value = b"[InternetShortcut]\r\nURL=https://example.com/mine\r\n"   # the person's own file under our name
         with self.assertRaises(OwnershipConflict):
             plan_integrations(self.ctx, self.profile, {"shortcut": True}, backend)
+
+    def test_the_shortcut_is_a_direct_obsidian_link_named_after_the_vault(self):
+        from urllib.parse import quote
+        from respected_brain.integrations.rendering import plan_integrations
+        rows = plan_integrations(self.ctx, self.profile, {"shortcut": True}, self.backend())
+        row = next(row for row in rows if row.kind == "shortcut")
+        name = self.ctx.paths.vault_root.name
+        self.assertEqual(Path(row.key).name, f"Obsidian - {name}.url")
+        self.assertEqual(row.after.decode("utf-8").splitlines()[:2], ["[InternetShortcut]", "URL=obsidian://open?vault=" + quote(name, safe="")])
 
     def test_mcp_registration_preserves_unknown_entry_fields(self):
         from respected_brain.integrations.rendering import plan_integrations
@@ -368,14 +376,25 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
             plan_integrations(self.ctx,self.profile,{"mcp":True},self.backend())
         self.assertEqual(snapshot(self.root),before)
 
-    def test_native_shortcut_opens_the_vault_through_the_public_open_command(self):
-        from respected_brain.integrations.rendering import plan_integrations
-        backend=mock.Mock()
-        backend.read.return_value=None
-        rows=plan_integrations(self.ctx,self.profile,{"shortcut":True},backend)
-        descriptor=json.loads(rows[0].after)
-        self.assertEqual(descriptor["arguments"],"open --vault-id " + self.ctx.paths.vault_id)
+    def test_native_obsidian_shortcut_is_written_read_back_and_removed_as_a_plain_file(self):
+        from respected_brain.integrations.backend import ExternalChange, NativeBackend
+        from respected_brain.integrations.rendering import obsidian_shortcut
+        backend = NativeBackend(self.root / "data")
+        path = self.home / "Desktop" / "Obsidian - Vault.url"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        text = obsidian_shortcut("Vault", self.home / "no-obsidian.exe").encode("utf-8")
+        backend.apply(ExternalChange("shortcut", str(path), None, text))
+        self.assertEqual(backend.read("shortcut", str(path)), text)
+        self.assertEqual(path.read_bytes(), text)
+        backend.restore(ExternalChange("shortcut", str(path), None, text))
+        self.assertFalse(path.exists())
 
+    def test_the_shortcut_gets_obsidians_icon_when_obsidian_is_installed(self):
+        from respected_brain.integrations.rendering import obsidian_shortcut
+        exe = self.home / "Obsidian.exe"
+        exe.write_bytes(b"MZ")
+        self.assertIn(f"IconFile={exe}", obsidian_shortcut("Vault", exe))
+        self.assertNotIn("IconFile", obsidian_shortcut("Vault", self.home / "missing.exe"))
 
 if __name__ == '__main__':
     unittest.main()

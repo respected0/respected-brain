@@ -151,7 +151,9 @@ class FoundationSetupTest(unittest.TestCase):
         self.assertTrue(result.success, result.conflicts)
         rows = [value for (kind, key), value in self.backend.records.items() if kind == "shortcut"]
         self.assertEqual(len(rows), 1)
-        self.assertIn("open --vault-id", json.loads(rows[0])["arguments"])
+        keys = [key for (kind, key) in self.backend.records if kind == "shortcut"]
+        self.assertTrue(keys[0].endswith(".url"), keys)
+        self.assertIn("URL=obsidian://open?vault=", rows[0].decode("utf-8"))
 
     def test_requested_global_failure_is_reported_and_existing_notes_retained(self):
         self.assertTrue(self.install().success)

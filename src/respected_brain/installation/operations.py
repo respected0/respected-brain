@@ -58,12 +58,13 @@ def plan_connections(ctx, backend, previous):
             retained.append(prior)
     if not any(desired.get(key, False) for key in ("global", "mcp", "schedule", "shortcut")):
         return tuple(disabled), tuple(retained)
-    from respected_brain.integrations.rendering import LEGACY_MCP_SERVER, plan_integrations
+    from respected_brain.integrations.rendering import LEGACY_MCP_SERVER, LEGACY_SHORTCUT, plan_integrations
     roots = Roots(ctx.paths.app_root, ctx.paths.data_root, ctx.paths.vault_root)
     planned = set()
     changes = plan_integrations(fresh, installed_profile(roots, settings), desired, backend, planned)
-    legacy = [prior for prior in retained if prior.kind == "mcp" and LEGACY_MCP_SERVER in Path(prior.key).parts and (prior.kind, prior.key) not in planned]
-    for prior in legacy:   # files of the old 'respected-vault' registration (beta.2 and older) go away; the new ones are planned above
+    legacy = [prior for prior in retained if (prior.kind, prior.key) not in planned
+              and ((prior.kind == "mcp" and LEGACY_MCP_SERVER in Path(prior.key).parts) or (prior.kind == "shortcut" and Path(prior.key).name == LEGACY_SHORTCUT))]
+    for prior in legacy:   # the old 'respected-vault' registration and the old launcher shortcut (beta.2 and older) go away; the new ones are planned above
         current = backend.read(prior.kind, prior.key)
         if not prior.restored(current):
             disabled.append(ExternalChange(prior.kind, prior.key, current, undo_external(prior, current)))

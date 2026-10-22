@@ -58,6 +58,23 @@ class FoundationOperationsTest(unittest.TestCase):
         self.assertEqual(ConfigStore(self.roots.data_root).read(), config)
         self.assertEqual((note_hashes(self.vault), snapshot(self.other)), (notes, other))
 
+    def test_the_old_launcher_shortcut_is_replaced_by_the_obsidian_link(self):
+        """Beta.2 and older put 'Respected Brain.lnk' (it started `respected-brain open`) on the desktop; now it is a direct Obsidian link."""
+        from respected_brain.installation.operations import plan_connections
+        home = self.root / "home"
+        (home / "Desktop").mkdir(parents=True)
+        legacy = str(home / "Desktop" / "Respected Brain.lnk")
+        self.backend.records[("shortcut", legacy)] = b"owned"
+        ConfigStore(self.roots.data_root).update(lambda value: (value["integrations"].update(shortcut=True),
+                                                                value["vaults"][self.ctx.paths.vault_id]["settings"].update(user_home=str(home))))
+        self.owned_external(ExternalChange("shortcut", legacy, None, b"owned"))
+        changes, owned = plan_connections(self.ctx, self.backend, read_manifest(self.manifest_path))
+        by_name = {Path(change.key).name: change for change in changes if change.kind == "shortcut"}
+        self.assertIsNone(by_name["Respected Brain.lnk"].after, "the old shortcut is taken away")
+        link = next(change for name, change in by_name.items() if name.endswith(".url"))
+        self.assertIn(b"URL=obsidian://open?vault=", link.after)
+        self.assertEqual([Path(row.key).name for row in owned if row.kind == "shortcut"], [Path(link.key).name])
+
     def test_repair_refuses_a_damaged_program_and_leaves_it_to_the_installer(self):
         target = self.roots.app_root / "respected-brain.exe"
         target.write_bytes(b"damaged")

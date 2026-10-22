@@ -278,6 +278,18 @@ def detect_clients(profile):
             "windsurf": (home / ".codeium").is_dir(), "claude-desktop": (appdata / "Claude").is_dir(), "vscode-agents": storage_hit}
 
 
+LEGACY_SHORTCUT = "Respected Brain.lnk"   # up to beta.2 the desktop shortcut started `respected-brain open`; it is replaced by a direct Obsidian link
+
+
+def obsidian_shortcut(vault_name, obsidian_exe):
+    """The text of an Internet Shortcut (.url) that opens the vault in Obsidian; with Obsidian's own icon when it is installed."""
+    from urllib.parse import quote
+    lines = ["[InternetShortcut]", "URL=obsidian://open?vault=" + quote(vault_name, safe="")]
+    if Path(obsidian_exe).is_file():
+        lines += [f"IconFile={obsidian_exe}", "IconIndex=0"]
+    return "\r\n".join(lines) + "\r\n"
+
+
 # The MCP server is registered under the product's name. Up to beta.2 it was 'respected-vault'; that entry (ours, same program) is moved.
 MCP_SERVER = "respected-brain"
 LEGACY_MCP_SERVER = "respected-vault"
@@ -339,14 +351,12 @@ def plan_integrations(ctx, profile, desired, backend, planned_keys=None):
     if desired.get("shortcut"):
         if profile.platform != "windows-native":
             raise FoundationError("Native shortcut registration is unavailable for this profile")
-        key = profile.user_home / "Desktop/Respected Brain.lnk"
-        argv = launch_argv(ctx, profile, "open")
-        previous = planner.read(key, "shortcut")
-        if previous is not None:
-            document = json.loads(previous)
-            if (document.get("target") != argv[0] or document.get("arguments") != subprocess.list2cmdline(argv[1:]) or document.get("description") != "Respected Brain " + ctx.paths.vault_id):
-                raise OwnershipConflict("Existing shortcut does not target the selected vault launcher")
-        planner.put("shortcut", key, canonical_json({"target": argv[0], "arguments": subprocess.list2cmdline(argv[1:]), "working_directory": str(ctx.paths.app_root), "description": "Respected Brain " + ctx.paths.vault_id, "icon_location": "", "window_style": 1, "hotkey": ""}))
+        # a plain Obsidian shortcut (what Explorer's New > Shortcut with obsidian://open?vault=NAME makes); Obsidian names a vault after its folder
+        name = ctx.paths.vault_root.name
+        key = profile.user_home / "Desktop" / f"Obsidian - {name}.url"
+        text = obsidian_shortcut(name, profile.user_home / "AppData/Local/Programs/Obsidian/Obsidian.exe")
+        _assert_owned_replacement(ctx, planner, key, text.encode("utf-8"), kind="shortcut")
+        planner.put("shortcut", key, text)
     if planned_keys is not None:
         planned_keys.update(planner.after)
     return planner.changes()

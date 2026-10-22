@@ -62,7 +62,7 @@ def _parser():
     flush.add_argument("--session-id")
     flush.add_argument("--reason", default="sessionend")
     flush.add_argument("--maybe-compile", action="store_true")
-    _selector(commands.add_parser("open", help="Not kasasını Obsidian'da aç (Obsidian yoksa klasörü dosya yöneticisinde aç)"))
+    _selector(commands.add_parser("open", help="Not kasası klasörünü dosya yöneticisinde aç"))
     search = commands.add_parser("search")
     _selector(search)
     search.add_argument("query", nargs="?", default="")
@@ -217,11 +217,7 @@ def _dispatch(args) -> int:
         vault = ctx.paths.vault_root
         print(vault)
         if sys.platform == "win32":
-            from urllib.parse import quote
-            try:
-                os.startfile("obsidian://open?path=" + quote(str(vault), safe=""))  # noqa: S606 Obsidian's own link: the desktop shortcut opens the vault there
-            except OSError:  # Obsidian is not installed: nothing handles the link, so the folder opens instead
-                os.startfile(vault)  # noqa: S606 the user's own vault folder
+            os.startfile(vault)  # noqa: S606 the user's own vault folder
         else:
             subprocess.Popen(["open" if sys.platform == "darwin" else "xdg-open", str(vault)], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return 0
