@@ -77,6 +77,17 @@ class IntegrationPlanTest(unittest.TestCase):
         path.write_text(json.dumps({"counter": 7, **json.loads(after)}), encoding="utf-8")
         self.assertTrue(self.plan({})["ok"])
 
+    def test_the_obsidian_shortcut_warns_while_obsidian_does_not_know_the_vault(self):
+        obsidian = self.home / "AppData/Roaming/obsidian"
+        warned = lambda: self.plan({"shortcut": True}, vault_path=str(self.vault))["result"]["warnings"]
+        self.assertIn("Obsidian bu bilgisayarda bulunamadı", warned()[0])
+        obsidian.mkdir(parents=True)
+        (obsidian / "obsidian.json").write_text(json.dumps({"vaults": {"abc": {"path": str(self.base / "elsewhere"), "ts": 1}}}), encoding="utf-8")
+        self.assertIn("henüz tanımıyor", warned()[0])
+        (obsidian / "obsidian.json").write_text(json.dumps({"vaults": {"abc": {"path": str(self.vault), "ts": 1}}}), encoding="utf-8")
+        self.assertEqual(warned(), [])
+        self.assertEqual(self.plan({"mcp": True})["result"]["warnings"], [], "no warning when the shortcut is not asked for")
+
     def test_clients_limit_the_plan_to_the_selected_ai_tools(self):
         everything = self.plan({"global": True, "mcp": True})["result"]
         only = self.plan({"global": True, "mcp": True, "clients": ["claude"]})["result"]

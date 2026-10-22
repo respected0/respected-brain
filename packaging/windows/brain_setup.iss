@@ -301,7 +301,7 @@ begin
   VaultPage.Add('');
   VaultPage.Values[0] := CommandValue('VAULT', ExpandConstant('{userdocs}\RespectedOS'));
   IntegrationPage := CreateInputOptionPage(VaultPage.ID, 'Bağlantılar', 'Brain hangi araçlarla çalışsın?',
-    'Hepsi isteğe bağlı; diğer AI aracı ayarların korunur ve her biri sonradan kapatılabilir.', False, False);
+    'Hepsi isteğe bağlı; diğer AI aracı ayarların korunur ve her biri sonradan kapatılabilir. Masaüstü kısayolunun çalışması için not kasasını Obsidian''da en az bir kez açmış olmalısın.', False, False);
   IntegrationPage.Add('AI araçlarının oturumlarını hafızaya yakala (Claude, Codex, Gemini... hook ve kuralları)');
   IntegrationPage.Add('AI araçları hafızayı MCP sunucusu olarak kullanabilsin');
   IntegrationPage.Add('Sabah özeti zamanlanmış görevi (Windows Görev Zamanlayıcı)');

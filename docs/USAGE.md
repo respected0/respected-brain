@@ -141,7 +141,7 @@ respected-brain config set user_name=Ayşe briefing_time=07:30
 | `integrations.mcp` | Hafıza AI araçlarına MCP sunucusu olarak sunulsun | `false` |
 | `integrations.mcp_clients` | MCP izni olan araçlar; boş: yakalanan araçlarla aynı | boş |
 | `integrations.schedule` | İşletim sisteminin zamanlayıcısına günlük sabah özeti görevi | `false` |
-| `integrations.shortcut` | Masaüstüne kasayı Obsidian'da açan kısayol | `false` |
+| `integrations.shortcut` | Masaüstüne kasayı Obsidian'da açan kısayol (kasanın Obsidian'da bir kez açılmış olması gerekir) | `false` |
 
 Ad, bağlantı ya da sabah özeti saati değişince ürün AI araçlarındaki ve zamanlayıcıdaki kendi kayıtlarını aynı işlemde
 günceller. Kapalı bir bağlantıyı onarım ya da güncelleme açmaz.

@@ -28,6 +28,12 @@ _EXPLAIN = {
 }
 
 
+_OBSIDIAN_WARNING = {
+    "not-installed": "Obsidian bu bilgisayarda bulunamadı; masaüstü kısayolu Obsidian kurulduktan sonra çalışır.",
+    "unknown-vault": "Obsidian bu kasayı henüz tanımıyor: kısayolun çalışması için kasayı Obsidian'da bir kez açın (Obsidian > Klasörü kasa olarak aç).",
+}
+
+
 class PlanError(Exception):
     def __init__(self, code, message, hint=""):
         super().__init__(message)
@@ -147,8 +153,13 @@ def plan(data_root, target):
                         "Resolve or remove the conflicting entry, or leave this integration off.")
     except (FoundationError, SelectionError, ValueError, OSError) as error:
         raise PlanError("BAD_REQUEST", f"Integration plan failed: {error}", "Check the selected options.")
-    from ..integrations.rendering import detect_clients
-    return {"desired": desired, "current": ConfigStore(Path(data_root)).read().get("integrations", {}),
+    from ..integrations.rendering import detect_clients, obsidian_state
+    warnings = []
+    if desired["shortcut"]:
+        state = obsidian_state(ctx.paths.vault_root, profile.user_home)
+        if state != "ready":
+            warnings.append(_OBSIDIAN_WARNING[state])
+    return {"desired": desired, "warnings": warnings, "current": ConfigStore(Path(data_root)).read().get("integrations", {}),
             "launcher": list(profile.launcher), "discovered": discovered,
             "clients": [{"id": key, "detected": found} for key, found in detect_clients(profile).items()], "changes": changes,
             "writes_nothing": True, "external_effects": ["Windows Görev Zamanlayıcı"] if desired["schedule"] else []}

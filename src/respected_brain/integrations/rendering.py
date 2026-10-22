@@ -290,6 +290,21 @@ def obsidian_shortcut(vault_name, obsidian_exe):
     return "\r\n".join(lines) + "\r\n"
 
 
+def obsidian_state(vault_root, home):
+    """Whether the Obsidian link can open this vault: `not-installed`, `unknown-vault` (Obsidian has never opened it) or `ready`. Read-only."""
+    import os
+    exe = Path(home) / "AppData/Local/Programs/Obsidian/Obsidian.exe"
+    config = Path(home) / "AppData/Roaming/obsidian/obsidian.json"
+    if not exe.is_file() and not config.is_file():
+        return "not-installed"
+    try:
+        vaults = json.loads(config.read_text(encoding="utf-8")).get("vaults", {})
+        known = {os.path.normcase(os.path.realpath(row["path"])) for row in vaults.values() if isinstance(row, dict) and "path" in row}
+    except (OSError, ValueError, AttributeError):
+        return "unknown-vault"
+    return "ready" if os.path.normcase(os.path.realpath(vault_root)) in known else "unknown-vault"
+
+
 # The MCP server is registered under the product's name. Up to beta.2 it was 'respected-vault'; that entry (ours, same program) is moved.
 MCP_SERVER = "respected-brain"
 LEGACY_MCP_SERVER = "respected-vault"
