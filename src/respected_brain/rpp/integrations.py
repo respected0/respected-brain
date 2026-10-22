@@ -21,7 +21,7 @@ FLAGS = ("global", "mcp", "schedule", "shortcut")
 
 _EXPLAIN = {
     "file": "Hook/kural dosyası (yalnızca Respected'ın bölümü yönetilir; diğer içerik korunur)",
-    "mcp": "MCP sunucu kaydı 'respected-vault' (diğer sunucu kayıtları korunur)",
+    "mcp": "MCP sunucu kaydı 'respected-brain' (diğer sunucu kayıtları korunur)",
     "task": "Zamanlanmış sabah özeti görevi",
     "shortcut": "Masaüstü kısayolu",
     "registry": "Kayıt defteri girdisi",

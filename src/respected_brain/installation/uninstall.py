@@ -62,7 +62,7 @@ def uninstall(ctx, *, backend, purge_data=False) -> OperationResult:
                     continue
                 tx.remove(item.path, expected_hash=item.sha256)
             result = tx.commit()
-            prune_empty_client_dirs(change.key for change in manifest.external if change.kind == "file")
+            prune_empty_client_dirs(change.key for change in manifest.external if change.kind in ("file", "mcp"))
             scrub_committed_journals(ctx.paths.data_root)
             if not conflicts:  # the install record always goes with the program; settings stay unless purged
                 if manifest_path.is_file() and manifest_path.read_bytes() == manifest_before:

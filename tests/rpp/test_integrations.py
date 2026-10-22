@@ -50,7 +50,7 @@ class IntegrationPlanTest(unittest.TestCase):
         self.assertEqual(self.plan({"mcp": True}, vault_path="relative")["error"]["code"], "BAD_REQUEST")
 
     def test_an_unknown_respected_entry_is_reported_as_a_conflict_not_overwritten(self):
-        bad = {"mcpServers": {"respected-vault": {"command": "not-ours", "args": []}}}
+        bad = {"mcpServers": {"respected-brain": {"command": "not-ours", "args": []}}}
         (self.home / ".claude.json").write_text(json.dumps(bad), encoding="utf-8")
         response = self.plan({"mcp": True})
         self.assertFalse(response["ok"])
@@ -60,7 +60,7 @@ class IntegrationPlanTest(unittest.TestCase):
     def test_switching_off_an_owned_entry_is_planned_as_a_restore_and_user_edits_are_conflicts(self):
         import base64
         path = self.home / ".claude.json"
-        after = json.dumps({"mcpServers": {"someone-elses": {"command": "x", "args": []}, "respected-vault": {"command": "ours", "args": []}}})
+        after = json.dumps({"mcpServers": {"someone-elses": {"command": "x", "args": []}, "respected-brain": {"command": "ours", "args": []}}})
         path.write_text(after, encoding="utf-8")
         self.data.mkdir(parents=True, exist_ok=True)
         encode = lambda text: base64.b64encode(text.encode("utf-8")).decode("ascii")

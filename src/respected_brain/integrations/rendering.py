@@ -278,6 +278,11 @@ def detect_clients(profile):
             "windsurf": (home / ".codeium").is_dir(), "claude-desktop": (appdata / "Claude").is_dir(), "vscode-agents": storage_hit}
 
 
+# The MCP server is registered under the product's name. Up to beta.2 it was 'respected-vault'; that entry (ours, same program) is moved.
+MCP_SERVER = "respected-brain"
+LEGACY_MCP_SERVER = "respected-vault"
+
+
 def plan_integrations(ctx, profile, desired, backend, planned_keys=None):
     """Planned external changes; `planned_keys`, when given, also receives every (kind, key) the plan owns, changed or not."""
     if not any(desired.get(key, False) for key in ("global", "mcp", "schedule", "shortcut")):
@@ -299,19 +304,24 @@ def plan_integrations(ctx, profile, desired, backend, planned_keys=None):
             servers = document.setdefault("mcpServers", {})
             if not isinstance(servers, dict):
                 raise ValueError(f"Invalid mcpServers: {path}")
-            previous = servers.get("respected-vault")
+            legacy = servers.get(LEGACY_MCP_SERVER)
+            if isinstance(legacy, dict) and legacy.get("command") == entry["command"] and legacy.get("args") == entry["args"]:
+                servers.pop(LEGACY_MCP_SERVER)   # our own entry under the old name: it moves to the new one
+                previous = legacy
+            else:
+                previous = servers.get(MCP_SERVER)
             if previous is not None:
                 same_target = isinstance(previous, dict) and previous.get("command") == entry["command"] and previous.get("args") == entry["args"]
                 if not same_target:
-                    raise OwnershipConflict(f"Unknown respected-vault MCP registration: {path}")
+                    raise OwnershipConflict(f"Unknown {MCP_SERVER} MCP registration: {path}")
                 entry_for_path = dict(previous, **entry) if isinstance(previous, dict) else entry
             else:
                 entry_for_path = entry
-            servers["respected-vault"] = entry_for_path
+            servers[MCP_SERVER] = entry_for_path
             planner.put("mcp", path, json.dumps(document, ensure_ascii=False, indent=2) + "\n")
     if desired.get("mcp") and "antigravity" in selected_clients(desired, "mcp_clients") and (profile.user_home / ".gemini").is_dir():
         settings = identity_settings(ctx)
-        directory = profile.user_home / ".gemini/antigravity-ide/mcp/respected-vault"
+        directory = profile.user_home / ".gemini/antigravity-ide/mcp" / MCP_SERVER
         instructions = f"# Respected Brain MCP Server\n\nBu sunucu, kalıcı ikinci beyin vault'una ({ctx.paths.vault_root.name}) doğrudan erişim sağlar.\nBaşka projelerde çalışırken mimari kararları, kuralları veya geçmiş bilgileri sorgulamak için bu araçları kullan.\n"
         _assert_owned_replacement(ctx, planner, directory / "instructions.md", instructions.encode("utf-8"), kind="mcp")
         planner.put("mcp", directory / "instructions.md", instructions)

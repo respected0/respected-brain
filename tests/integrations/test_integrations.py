@@ -99,7 +99,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         document = json.loads(row.after)
         self.assertEqual(document['mcpServers']['other'], {'command': 'other.exe'})
         self.assertEqual(document['setting'], {'keep': True})
-        entry = document['mcpServers']['respected-vault']
+        entry = document['mcpServers']['respected-brain']
         self.assertEqual(entry['command'], str(self.app / 'respected-brain.exe'))
         self.assertEqual(entry['args'], ['mcp', '--vault-id', self.ctx.paths.vault_id])
 
@@ -315,10 +315,10 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         path = self.home / ".cursor/mcp.json"
         path.parent.mkdir()
         entry = {"command": str(self.app / "respected-brain.exe"), "args": ["mcp", "--vault-id", self.ctx.paths.vault_id], "env": {"USER_SETTING": "keep"}, "disabled": False}
-        path.write_text(json.dumps({"mcpServers": {"respected-vault": entry}}), encoding="utf-8")
+        path.write_text(json.dumps({"mcpServers": {"respected-brain": entry}}), encoding="utf-8")
         rows = plan_integrations(self.ctx, self.profile, {"mcp": True}, self.backend())
         row = next(row for row in rows if row.key == str(path))
-        self.assertEqual(json.loads(row.after)["mcpServers"]["respected-vault"]["env"], {"USER_SETTING": "keep"})
+        self.assertEqual(json.loads(row.after)["mcpServers"]["respected-brain"]["env"], {"USER_SETTING": "keep"})
 
     def test_loose_skill_copies_changed_by_the_user_are_left_alone(self):
         from respected_brain.integrations.rendering import plan_integrations
@@ -360,7 +360,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
 
     def test_generated_mcp_tool_files_cannot_replace_unowned_content(self):
         from respected_brain.integrations.rendering import plan_integrations
-        path=self.home / ".gemini/antigravity-ide/mcp/respected-vault/instructions.md"
+        path=self.home / ".gemini/antigravity-ide/mcp/respected-brain/instructions.md"
         path.parent.mkdir(parents=True)
         path.write_bytes(b"my own MCP instructions")
         before=snapshot(self.root)

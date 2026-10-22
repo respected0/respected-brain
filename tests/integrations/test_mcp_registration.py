@@ -22,7 +22,7 @@ class TestMcpRegistration(IntegrationFixture, TestCase):
         loaded = json.loads(path.read_text(encoding="utf-8"))
         self.assertTrue(loaded["other_setting"])
         self.assertEqual(loaded["mcpServers"]["existing_mcp"], original["mcpServers"]["existing_mcp"])
-        entry = loaded["mcpServers"]["respected-vault"]
+        entry = loaded["mcpServers"]["respected-brain"]
         self.assertEqual(entry["command"], str(self.app / "respected-brain.exe"))
         self.assertEqual(entry["args"], ["mcp", "--vault-id", self.ctx.paths.vault_id])
 
@@ -33,7 +33,7 @@ class TestMcpRegistration(IntegrationFixture, TestCase):
         roo.mkdir()
         self.apply(plan_integrations(self.ctx, self.profile, {"mcp": True}, self.backend()))
         for path in (self.home / ".claude.json", self.home / ".cursor/mcp.json", self.home / ".codeium/windsurf/mcp_config.json", self.home / "AppData/Roaming/Claude/claude_desktop_config.json", cline / "settings/cline_mcp_settings.json", roo / "settings/roo_mcp_settings.json"):
-            self.assertIn("respected-vault", json.loads(path.read_text(encoding="utf-8"))["mcpServers"])
+            self.assertIn("respected-brain", json.loads(path.read_text(encoding="utf-8"))["mcpServers"])
 
     def test_disabled_client_registration_leaves_every_user_file_unchanged(self):
         before = snapshot(self.root)
@@ -54,9 +54,44 @@ class TestMcpRegistration(IntegrationFixture, TestCase):
         rows = plan_integrations(self.ctx, self.profile, {"mcp": True}, self.backend())
         self.apply(rows)
         path = self.home / ".gemini/config/mcp_config.json"
-        self.assertIn("respected-vault", json.loads(path.read_text(encoding="utf-8"))["mcpServers"])
-        directory = self.home / ".gemini/antigravity-ide/mcp/respected-vault"
+        self.assertIn("respected-brain", json.loads(path.read_text(encoding="utf-8"))["mcpServers"])
+        directory = self.home / ".gemini/antigravity-ide/mcp/respected-brain"
         self.assertTrue((directory / "instructions.md").is_file())
         tool = json.loads((directory / "respected_search.json").read_text(encoding="utf-8"))
         self.assertEqual(tool["name"], "respected_search")
         self.assertEqual(tool["parameters"]["type"], "object")
+
+
+class TestMcpNameMigration(IntegrationFixture, TestCase):
+    """Beta.2 and older registered the server as 'respected-vault'; it is now 'respected-brain' (the product's name)."""
+
+    def apply(self):
+        backend = self.backend()
+        for row in plan_integrations(self.ctx, self.profile, {"mcp": True}, backend):
+            backend.apply(row)
+
+    def entry(self):
+        return {"command": str(self.app / "respected-brain.exe"), "args": ["mcp", "--vault-id", self.ctx.paths.vault_id]}
+
+    def test_our_old_entry_moves_to_the_new_name_and_other_servers_stay(self):
+        path = self.home / ".cursor/mcp.json"
+        path.parent.mkdir()
+        path.write_text(json.dumps({"mcpServers": {"respected-vault": self.entry(), "existing_mcp": {"command": "npx", "args": []}}}), encoding="utf-8")
+        self.apply()
+        servers = json.loads(path.read_text(encoding="utf-8"))["mcpServers"]
+        self.assertEqual(sorted(servers), ["existing_mcp", "respected-brain"])
+        self.assertEqual(servers["respected-brain"]["args"], self.entry()["args"])
+
+    def test_an_entry_under_the_old_name_that_is_not_ours_is_left_alone(self):
+        path = self.home / ".cursor/mcp.json"
+        path.parent.mkdir()
+        theirs = {"command": "C:/somebody/else.exe", "args": ["serve"]}
+        path.write_text(json.dumps({"mcpServers": {"respected-vault": theirs}}), encoding="utf-8")
+        self.apply()
+        servers = json.loads(path.read_text(encoding="utf-8"))["mcpServers"]
+        self.assertEqual(servers["respected-vault"], theirs)
+        self.assertIn("respected-brain", servers)
+
+    def test_the_server_introduces_itself_by_the_product_name(self):
+        from respected_brain.integrations.mcp.server import RespectedMcpServer
+        self.assertEqual(RespectedMcpServer.SERVER_NAME, "Respected Brain")

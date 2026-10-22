@@ -58,10 +58,16 @@ def plan_connections(ctx, backend, previous):
             retained.append(prior)
     if not any(desired.get(key, False) for key in ("global", "mcp", "schedule", "shortcut")):
         return tuple(disabled), tuple(retained)
-    from respected_brain.integrations.rendering import plan_integrations
+    from respected_brain.integrations.rendering import LEGACY_MCP_SERVER, plan_integrations
     roots = Roots(ctx.paths.app_root, ctx.paths.data_root, ctx.paths.vault_root)
     planned = set()
     changes = plan_integrations(fresh, installed_profile(roots, settings), desired, backend, planned)
+    legacy = [prior for prior in retained if prior.kind == "mcp" and LEGACY_MCP_SERVER in Path(prior.key).parts and (prior.kind, prior.key) not in planned]
+    for prior in legacy:   # files of the old 'respected-vault' registration (beta.2 and older) go away; the new ones are planned above
+        current = backend.read(prior.kind, prior.key)
+        if not prior.restored(current):
+            disabled.append(ExternalChange(prior.kind, prior.key, current, undo_external(prior, current)))
+    retained = [prior for prior in retained if prior not in legacy]
     if "clients" in desired or "mcp_clients" in desired:  # a client that is no longer selected gets its previous registrations restored
         dropped = [prior for prior in retained if prior.kind in ("file", "mcp") and prior.key not in schedule_paths
                    and not Path(prior.key).is_relative_to(ctx.paths.vault_root) and (prior.kind, prior.key) not in planned]
@@ -92,6 +98,9 @@ def refresh_integrations(ctx, backend, tx, previous, profile):
     changes, external = plan_connections(ctx, backend, previous)
     for change in changes:
         tx.apply_external(change)
+    from respected_brain.integrations.rendering import LEGACY_MCP_SERVER
+    from .uninstall import prune_empty_client_dirs
+    prune_empty_client_dirs(change.key for change in changes if LEGACY_MCP_SERVER in Path(change.key).parts)   # the old Antigravity tool folder, now empty
     return launchers, external
 
 

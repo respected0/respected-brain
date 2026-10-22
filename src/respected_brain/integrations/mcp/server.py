@@ -25,7 +25,7 @@ WRITE_OFF = "Hata: Not yazma izni kapalı. Kullanıcı, Brain ayarlarında 'MCP 
 class RespectedMcpServer:
     """Respected Brain Vault MCP stdio Sunucusu."""
 
-    SERVER_NAME = "respected-vault-mcp"
+    SERVER_NAME = "Respected Brain"
     SERVER_VERSION = __version__
     PROTOCOL_VERSION = "2024-11-05"
 
@@ -291,7 +291,7 @@ class RespectedMcpServer:
             try:
                 if method == 'initialize':
                     result = {'protocolVersion': self.PROTOCOL_VERSION, 'capabilities': {'tools': {}},
-                              'serverInfo': {'name': self.SERVER_NAME, 'version': self.SERVER_VERSION}}
+                              'serverInfo': {'name': self.SERVER_NAME, 'title': self.SERVER_NAME, 'version': self.SERVER_VERSION}}
                 elif method == 'ping':
                     result = {}
                 elif method == 'tools/list':
