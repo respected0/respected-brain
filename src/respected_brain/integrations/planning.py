@@ -85,7 +85,8 @@ def _short_path(path):
 
 def bare_command_text(profile, argv):
     """A hook command with no quote characters. Antigravity on Windows re-escapes quotes (`\\"`) before cmd.exe sees them,
-    so a quoted program path is "not recognized"; a path with spaces goes in its 8.3 form. Falls back to the quoted
+    and Codex runs hooks through PowerShell, where a command starting with a quoted path is a parse error (exit 1);
+    a path with spaces goes in its 8.3 form. Falls back to the quoted
     form when quotes cannot be avoided (the hook then fails visibly in Antigravity's log, as before)."""
     if profile.platform != "windows-native":
         return command_text(profile, argv)

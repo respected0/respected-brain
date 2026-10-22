@@ -50,7 +50,7 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED) -> tuple[list[tup
     vault, home, platform = ctx.paths.vault_root, profile.user_home, profile.platform
     rule = managed_rule(ctx)
     def bridge_command(vault, provider, event, platform):
-        render = bare_command_text if provider == "antigravity" else command_text
+        render = bare_command_text if provider in ("antigravity", "codex") else command_text  # their shells (Antigravity re-escapes quotes, Codex runs PowerShell) reject a quoted program path
         return render(profile, bridge_argv(ctx, profile, provider, event, global_hook=True))
     def load_object(path):
         document = planner.object(path)

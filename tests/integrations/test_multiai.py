@@ -62,8 +62,8 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
         artifacts = render_project_integrations(self.ctx, self.profile)
         for name, content in artifacts.items():
             quoted = 'respected-brain.exe\\" hook'  # quoted program path: Git Bash eats bare backslashes
-            bare = "respected-brain.exe hook"  # Antigravity re-escapes quotes, so its commands carry none
-            self.assertIn(bare if name == ".agents/hooks.json" else quoted, content.decode(), name)
+            bare = "respected-brain.exe hook"  # Antigravity re-escapes quotes and Codex runs PowerShell, so their commands carry none
+            self.assertIn(bare if name in (".agents/hooks.json", ".codex/hooks.json") else quoted, content.decode(), name)
             self.assertIn(self.ctx.paths.vault_id, content.decode())
             self.assertNotIn("bridge.py", content.decode())
 

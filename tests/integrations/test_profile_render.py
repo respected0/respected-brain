@@ -45,6 +45,16 @@ class ProfileRenderTest(IntegrationFixture, TestCase):
                 else:
                     self.assertNotIn("wsl.exe", text)
 
+    def test_codex_hook_commands_carry_no_quote_characters(self):
+        # Codex runs hooks through PowerShell: a command that starts with a quoted path is a parse error (exit 1)
+        from respected_brain.integrations import rendering
+        rows = RENDER.plan_integrations(self.ctx, self.profile, {"global": True, "clients": ["codex"]}, self.backend())
+        hooks = json.loads(next(row.after for row in rows if row.key.replace(chr(92), "/").endswith("plugin/plugin/hooks/codex.json")))["hooks"]
+        for event, groups in hooks.items():
+            command = groups[0]["hooks"][0]["command"]
+            self.assertNotIn('"', command, event)
+            self.assertTrue(command.startswith(str(self.app / "respected-brain.exe")), event)
+
     def test_antigravity_hook_commands_carry_no_quote_characters(self):
         # Antigravity on Windows re-escapes quotes to \" before cmd.exe, so a quoted program path is never found
         rows = RENDER.plan_integrations(self.ctx, self.profile, {"global": True, "clients": ["antigravity"]}, self.backend())
