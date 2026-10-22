@@ -81,7 +81,7 @@ class SemanticTest(unittest.TestCase):
         self.endpoint = f"http://127.0.0.1:{self.server.server_port}"
 
     def call(self, op, payload=None, operation_id=None):
-        request = {"rpp": "1.1", "op": op, "payload": payload or {}}
+        request = {"rpp": "1", "op": op, "payload": payload or {}}
         if operation_id:
             request["operation_id"] = operation_id
         return rpp.serve(json.dumps(request), data_root=str(self.data))

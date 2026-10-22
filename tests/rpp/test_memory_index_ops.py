@@ -51,7 +51,7 @@ class MemoryIndexOpTest(unittest.TestCase):
             document["active_vault_id"] = vault_id
         ConfigStore(self.data).update(mutate)
 
-    def call(self, op, payload=None, version="1.1", operation_id=None):
+    def call(self, op, payload=None, version="1", operation_id=None):
         request = {"rpp": version, "op": op}
         if payload is not None:
             request["payload"] = payload
@@ -62,19 +62,8 @@ class MemoryIndexOpTest(unittest.TestCase):
     def refresh(self, operation_id="op-refresh-0001", payload=None):
         return self.call("memory.index.refresh", payload or {"confirm": True}, operation_id=operation_id)
 
-    def test_ops_require_protocol_11(self):
-        for op in OPS:
-            response = self.call(op, {"confirm": True}, version="1.0", operation_id="op-refresh-0001")
-            self.assertFalse(response["ok"])
-            self.assertEqual(response["error"]["code"], "UNSUPPORTED_OP")
-
     def test_manifest_capability_visibility(self):
-        old = self.call("manifest", version="1.0")["result"]
-        self.assertNotIn("memory_index", old["capabilities"])
-        new = self.call("manifest")["result"]
-        self.assertIn("memory_index", new["capabilities"])
-        detail = {item["id"]: item for item in new["capability_details"]}["memory_index"]
-        self.assertEqual((detail["since"], detail["ops"]), ("1.1", OPS))
+        self.assertTrue(set(OPS) <= set(self.call("manifest")["result"]["capabilities"]))
 
     def test_unknown_op_hint_lists_index_ops(self):
         response = self.call("nope")
@@ -136,9 +125,9 @@ class MemoryIndexOpTest(unittest.TestCase):
         self.assertNotIn("crosses the road", json.dumps(fresh))
 
     def test_earlier_ops_still_answer(self):
-        self.assertTrue(self.call("health", version="1.0")["ok"])
-        self.assertTrue(self.call("settings.schema", version="1.0")["ok"])
-        readback = self.call("settings.readback", version="1.0")
+        self.assertTrue(self.call("health", version="1")["ok"])
+        self.assertTrue(self.call("settings.schema", version="1")["ok"])
+        readback = self.call("settings.readback", version="1")
         self.assertTrue(readback["ok"])
         self.assertIn("summary_provider", readback["result"]["settings"])
         denied = self.call("memory.recall", {"token": "x" * 40, "query": "zebra"})

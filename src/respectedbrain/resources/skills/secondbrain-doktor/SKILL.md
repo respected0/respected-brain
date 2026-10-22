@@ -26,7 +26,7 @@ loglar tazeliğini koruyor mu, vault kirlenmiş mi. Amaç sessiz arızayı gör�
 
 ```text
 respectedbrain vault list
-respectedbrain configure
+respectedbrain config
 respectedbrain --version
 ```
 
@@ -74,7 +74,7 @@ yoksa kırmızı. auto kaynak provider'ı önce dener, geçici kota/timeout/5xx 
 fallback'e geçebilir; RESPECTED_LLM_COMMAND özel komutu olabilir. Onaylanan tercih değişikliği:
 
 ```text
-respectedbrain configure --summary-provider auto
+respectedbrain config set summary_provider=auto
 ```
 
 ### 5. UUID ve teknik durum sınırı

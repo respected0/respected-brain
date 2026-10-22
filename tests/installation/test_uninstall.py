@@ -33,6 +33,15 @@ class TestUninstall(unittest.TestCase):
         for row in rows:
             self.assertEqual(self.backend.read(row.kind,row.key),row.before)
 
+    def test_uninstall_works_after_the_vault_folder_was_moved_or_deleted(self):
+        import shutil
+        shutil.rmtree(self.vault)
+        with self.assertRaises(Exception):  # every other command still needs the notes folder
+            build_context(self.roots,ConfigStore(self.roots.data_root),vault=None,vault_id=None,env={})
+        ctx=build_context(self.roots,ConfigStore(self.roots.data_root),vault=None,vault_id=None,env={},allow_missing_vault=True)
+        self.assertEqual(ctx.paths.vault_root,self.vault.resolve())
+        self.assertTrue(uninstall(ctx,backend=self.backend,purge_data=False).success)
+
     def test_notify_without_previous_chain_removes_only_owned_registration(self):
         key=self.home / ".codex/config.toml"
         original=b'model = "my-model"\n'
@@ -88,7 +97,7 @@ class TestUninstall(unittest.TestCase):
         self.assertEqual(snapshot(self.vault),before)
         self.assertEqual(unknown.read_bytes(),b"user")
 
-    def test_default_uninstall_removes_owned_technical_records_and_preserves_audit_and_unknown_data(self):
+    def test_default_uninstall_keeps_settings_and_drops_only_the_install_record(self):
         before=snapshot(self.vault)
         unknown=self.roots.data_root / "user-file.txt"
         unknown.write_bytes(b"user")
@@ -96,25 +105,25 @@ class TestUninstall(unittest.TestCase):
         result=uninstall(self.ctx,backend=self.backend)
 
         self.assertTrue(result.success,result.conflicts)
-        self.assertFalse((self.roots.data_root / "config.json").exists())
+        self.assertTrue((self.roots.data_root / "config.json").exists())
         self.assertFalse((self.roots.data_root / "install-manifest.json").exists())
         self.assertTrue((self.roots.data_root / "backups").is_dir())
         self.assertEqual(snapshot(self.vault),before)
         self.assertEqual(unknown.read_bytes(),b"user")
 
-    def test_cli_defaults_to_technical_purge_and_keep_data_opts_out_and_repair_accepts_package(self):
+    def test_cli_keeps_data_unless_purge_and_repair_takes_no_package(self):
         from respectedbrain.installation.transaction import OperationResult
         success = OperationResult(True, "fixture", ())
         with mock.patch("respectedbrain.cli.bootstrap", return_value=self.ctx), \
-             mock.patch("respectedbrain.installation.deferred.defer_operation", return_value=None), \
              mock.patch("respectedbrain.installation.uninstall.uninstall", return_value=success) as remove, \
-             mock.patch("respectedbrain.installation.repair.repair", return_value=success) as fix:
+             mock.patch("respectedbrain.installation.repair.repair", return_value=success):
             self.assertEqual(cli.main(["uninstall"]), 0)
-            self.assertTrue(remove.call_args.kwargs["purge_data"])
-            self.assertEqual(cli.main(["uninstall", "--keep-data"]), 0)
             self.assertFalse(remove.call_args.kwargs["purge_data"])
-            self.assertEqual(cli.main(["repair", "--package", str(self.root / "package")]), 0)
-            self.assertEqual(fix.call_args.kwargs["package"], self.root / "package")
+            self.assertEqual(cli.main(["uninstall", "--purge"]), 0)
+            self.assertTrue(remove.call_args.kwargs["purge_data"])
+            self.assertEqual(cli.main(["repair"]), 0)
+            for retired in (["uninstall", "--keep-data"], ["uninstall", "--purge-data"], ["repair", "--package", "x"], ["update"]):
+                self.assertEqual(cli.main(retired), 2, retired)
 
     def test_busy_writer_prevents_application_removal(self):
         before=snapshot(self.roots.app_root)

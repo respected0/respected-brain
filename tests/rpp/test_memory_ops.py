@@ -52,7 +52,7 @@ class MemoryOpTest(unittest.TestCase):
         _, ctx = _context(self.data, {})
         SearchEngine(ctx).index_vault()
 
-    def call(self, op, payload=None, version="1.1", operation_id=None):
+    def call(self, op, payload=None, version="1", operation_id=None):
         request = {"rpp": version, "op": op}
         if payload is not None:
             request["payload"] = payload
@@ -72,21 +72,6 @@ class MemoryOpTest(unittest.TestCase):
             self.assertTrue(response["ok"], response)
             self.assertNotIn("token_sha256", json.dumps(response))
         self.assertNotIn(granted["result"]["token"], json.dumps(revoked))
-
-    def test_manifest_hides_memory_recall_from_v10(self):
-        old = self.call("manifest", version="1.0")["result"]
-        self.assertNotIn("memory_recall", old["capabilities"])
-        self.assertIn("recall", old["capabilities"])
-        new = self.call("manifest")["result"]
-        self.assertIn("memory_recall", new["capabilities"])
-        detail = {item["id"]: item for item in new["capability_details"]}["memory_recall"]
-        self.assertEqual((detail["since"], detail["ops"]), ("1.1", OPS))
-
-    def test_ops_require_protocol_11(self):
-        for op in OPS:
-            response = self.call(op, {}, version="1.0", operation_id="op-grant-0001")
-            self.assertFalse(response["ok"])
-            self.assertEqual(response["error"]["code"], "UNSUPPORTED_OP")
 
     def test_unknown_op_hint_lists_memory_ops(self):
         response = self.call("nope")
@@ -121,9 +106,9 @@ class MemoryOpTest(unittest.TestCase):
         self.assertEqual(after["error"]["code"], "PERMISSION_DENIED")
 
     def test_earlier_ops_still_answer(self):
-        self.assertTrue(self.call("health", version="1.0")["ok"])
-        self.assertTrue(self.call("settings.schema", version="1.0")["ok"])
-        readback = self.call("settings.readback", version="1.0")
+        self.assertTrue(self.call("health", version="1")["ok"])
+        self.assertTrue(self.call("settings.schema", version="1")["ok"])
+        readback = self.call("settings.readback", version="1")
         self.assertTrue(readback["ok"])
         self.assertIn("summary_provider", readback["result"]["settings"])
 

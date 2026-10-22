@@ -48,7 +48,7 @@ class FoundationPackagedCommandsTest(unittest.TestCase):
                         self.assertIsNotNone(args.vault_id,"Installed examples must select the registered UUID")
                     found.append((name,args.command))
         self.assertGreaterEqual(len(found),12,"Installed workflows need actionable native CLI examples")
-        self.assertTrue({"compile","maps","search","maintenance","configure","vault"}.issubset({command for name,command in found}))
+        self.assertTrue({"compile","maps","search","maintenance","config","vault"}.issubset({command for name,command in found}))
     def test_instructions_explain_registered_identity_and_separate_state(self):
         text=self.documents()["instructions/default.md"]
         for token in ("DataRoot", "VaultRoot", "AppRoot", "--vault-id", "RESPECTED_DATA_DIR", "vaults/<UUID>/state", "vaults/<UUID>/cache"):

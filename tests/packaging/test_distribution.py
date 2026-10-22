@@ -17,7 +17,7 @@ class FoundationDistributionTest(unittest.TestCase):
         distribution = ROOT / "dist" / ("RespectedBrain.app" if platform == "macos" else "RespectedBrain")
         if not distribution.exists() and not os.environ.get("CI"):
             self.skipTest("no frozen build in dist/ (python packaging/build_dist.py); CI builds it and requires this test")
-        document = validate_package(distribution, require_provenance=False)
+        document = validate_package(distribution)
         self.assertEqual(document["platform"], platform)
         return distribution, document
 
@@ -30,7 +30,7 @@ class FoundationDistributionTest(unittest.TestCase):
     def test_frozen_runs_without_checkout_or_python(self):
         distribution, document = self.frozen()
         with tempfile.TemporaryDirectory(prefix="Türkçe 🧠 ") as temporary:
-            self.assertEqual(self.launcher(distribution, document, temporary, "--version").strip(), document["version"])
+            self.assertEqual(self.launcher(distribution, document, temporary, "--version").strip(), "respected-secondbrain " + document["version"])
             self.assertFalse((Path(temporary) / "data").exists())
         self.assertFalse((distribution / "runtime").exists())
         resources = [name for name in document["files"] if name.endswith("respectedbrain/resources/defaults.json")]
@@ -60,4 +60,4 @@ class FoundationDistributionTest(unittest.TestCase):
             package = seed_package(Path(temporary))
             (package / "respectedbrain.exe").write_bytes(b"changed")
             with self.assertRaises(OwnershipConflict):
-                validate_package(package, require_provenance=False)
+                validate_package(package)

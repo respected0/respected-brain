@@ -1,19 +1,20 @@
-# Physical Host Smoke
+# Fiziksel paket smoke'u
 
-Runner yalnız geçici bir HOME ve vault kullanır. Gerçek vault'a, profile veya ajan ayarlarına yazmaz.
-Kurulum, beş sağlayıcı adaptörü, iki turn upsert, iki update ve managed-only uninstall kapılarını sınar.
+Derlenmiş paketi gerçek işletim sisteminde, yalnızca geçici bir HOME ve geçici bir kasa ile sınar; gerçek kasaya,
+profile ya da AI aracı ayarlarına yazmaz. Kapılar: kurulum, beş sağlayıcı uyarlayıcısı, iki tur yazımı, kurucu ile
+güncelleme ve onarım, yalnızca sahipli girdileri kaldıran kaldırma.
 
 ```powershell
-# Windows Native
+# Windows
 .\tests\native\smoke\windows-native.ps1 --output .\smoke-windows.json
 ```
 
 ```sh
-# Saf WSL / Linux / macOS
+# WSL / Linux / macOS (doğrulanmadı)
 sh ./tests/native/smoke/wsl.sh --output ./smoke-wsl.json
 sh ./tests/native/smoke/linux.sh --output ./smoke-linux.json
 sh ./tests/native/smoke/macos.sh --output ./smoke-macos.json
 ```
 
-Başarı için süreç kodu `0`, JSON içindeki `overall` değeri `VERIFIED` ve her kontrol `VERIFIED`
-olmalıdır. Kanıt dosyası sistem bilgisi ve süreleri içerir; prompt/transkript gövdesini içermez.
+Başarı: çıkış kodu `0`, JSON'daki `overall` değeri `VERIFIED` ve her kontrol `VERIFIED`. Kanıt dosyası sistem bilgisi ve
+süreleri içerir; istem ya da döküm metni içermez.

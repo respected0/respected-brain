@@ -76,14 +76,7 @@ def main(argv=None):
     parser.add_argument("--output",type=Path)
     parser.add_argument("--package",type=Path,default=Path(os.environ.get("RESPECTED_SMOKE_PACKAGE",str(ROOT / "dist" / distribution_name()))))
     parser.add_argument("--keep",action="store_true")
-    parser.add_argument("--unsigned-fixture",action="store_true")
-    parser.add_argument("--fixture-provenance",action="store_true")
-    parser.add_argument("--strict-lifecycle",action="store_true")
     args=parser.parse_args(argv)
-    if args.unsigned_fixture and args.fixture_provenance:
-        raise ValueError("Unsigned and fixture-provenance modes are mutually exclusive")
-    if args.strict_lifecycle and args.unsigned_fixture:
-        raise ValueError("Strict lifecycle cannot use an unsigned fixture")
     host="windows-native" if os.name=="nt" else "wsl" if os.environ.get("WSL_DISTRO_NAME") else "macos" if sys.platform=="darwin" else "linux"
     profile_name="windows-native" if os.name=="nt" else "posix"
     root=Path(tempfile.mkdtemp(prefix="respected-package-smoke-")).resolve()
@@ -93,43 +86,29 @@ def main(argv=None):
     env=clean_environment(package,root)
     env.update({"RESPECTED_APP_DIR":str(app),"RESPECTED_DATA_DIR":str(data),"HOME":str(home),"USERPROFILE":str(home)})
     env=provider_fixture(root,env)
-    if args.fixture_provenance:
-        if str(ROOT) not in sys.path:
-            sys.path.insert(0, str(ROOT))
-        from tests.support.packages import fixture_gh_path, write_fixture_attestation
-        package=root / "fixture-package"
-        shutil.copytree(args.package.resolve(),package)
-        write_fixture_attestation(package)
-        fixture_path=str(fixture_gh_path(root))
-        env["PATH"]=fixture_path+os.pathsep+env.get("PATH","")
-        os.environ["PATH"]=fixture_path+os.pathsep+os.environ.get("PATH","")
     checks=[]
     def record(name,passed,detail="",duration=0):
         checks.append({"name":name,"status":"VERIFIED" if passed else "FAILED","detail":detail[:500],"duration_seconds":round(duration,3)})
         if not passed: raise RuntimeError(name+": "+detail)
     try:
         from respectedbrain.installation.payload import validate_package
-        document=validate_package(package, require_provenance=not args.unsigned_fixture)
-        record("clean-environment-has-no-product-bypass",all(key not in env for key in ("RESPECTED_ALLOW_UNSIGNED","RESPECTED_LLM_COMMAND","PYTHONPATH")))
-        record("strict-provenance-consumer-path",not args.unsigned_fixture)
+        document=validate_package(package)
+        record("clean-environment-has-no-product-bypass",all(key not in env for key in ("RESPECTED_LLM_COMMAND","PYTHONPATH")))
         expected_platform="windows" if os.name=="nt" else "macos" if sys.platform=="darwin" else "linux"
         record("host-matching-real-distribution",document.get("platform")==expected_platform,str(document.get("platform")))
         lifecycle_driver=ROOT / "tests" / "native" / "smoke" / "lifecycle_driver.py"
         def lifecycle(action):
             command=[sys.executable,str(lifecycle_driver),action,"--app-root",str(app),"--data-root",str(data),"--vault",str(vault),"--home",str(home)]
-            if action in ("setup","update","deferred-update"): command += ["--package",str(package)]
-            if action == "setup":
-                command += ["--summary-provider","claude"]
-            else:
-                command += ["--vault-id",ctx.paths.vault_id]
-            if args.unsigned_fixture: command += ["--allow-unsigned-fixture"]
+            command += ["--summary-provider","claude"] if action == "setup" else ["--vault-id",ctx.paths.vault_id]
             return _run(command,env=env,cwd=root)
+        def lay_down():  # what the platform installer does: the program files are its, not the product's
+            shutil.copytree(package,app,dirs_exist_ok=True)
+        lay_down()
         code,output,elapsed=lifecycle("setup")
-        record("transactional-fresh-package-install",code==0,output,elapsed)
-        if args.strict_lifecycle: record("strict-default-provenance-policy",True)
+        record("transactional-fresh-setup",code==0,output,elapsed)
         launcher=app / document["launcher"]
         code,output,elapsed=_run([str(launcher),"--version"],env=env,cwd=root)
-        record("installed-frozen-launcher-version",code==0 and output.strip()==document["version"],output,elapsed)
+        record("installed-frozen-launcher-version",code==0 and output.strip()=="respected-secondbrain "+document["version"],output,elapsed)
         from respectedbrain.core.config import ConfigStore
         from respectedbrain.core.paths import Roots
         from respectedbrain.vault.registry import build_context
@@ -171,26 +150,10 @@ def main(argv=None):
         record("turn-flush-upserts-one-complete-session",body.count("### Oturum")==1 and body.count("<!-- RESPECTED-SESSION:")==2 and "Smoke bağlam" in body)
         daily_hash=_sha256(daily)
         for number in (1,2):
-            code,output,elapsed=lifecycle("update")
-            record("transactional-update-"+str(number),code==0,output,elapsed)
+            lay_down()
+            code,output,elapsed=lifecycle("repair")
+            record("installer-update-then-repair-"+str(number),code==0,output,elapsed)
         record("update-preserves-daily-byte-for-byte",_sha256(daily)==daily_hash)
-        if os.name=="nt":
-            if args.unsigned_fixture:
-                code,output,elapsed=lifecycle("deferred-update")
-                pending={}
-            else:
-                code,output,elapsed=_run([str(launcher),"update","--vault-id",ctx.paths.vault_id,"--package",str(package)],env=env,cwd=root)
-                pending=json.loads(output) if code==0 else {}
-            record("strict-deferred-package-update",code==0 and '"pending": true' in output,output,elapsed)
-            receipt=data / "backups" / pending.get("tx_id","missing") / "result.json"
-            # Deferred self-update stages the full product tree and journals ~2000 files with
-            # fsync (plus real-time AV scanning), so allow several minutes on Windows.
-            deadline=time.monotonic()+300
-            while time.monotonic()<deadline and not receipt.is_file(): time.sleep(.1)
-            receipt_document=json.loads(receipt.read_text(encoding="utf-8")) if receipt.is_file() else {}
-            record("deferred-receipt-success",bool(receipt_document.get("success")),str(receipt_document),0)
-        else:
-            record("strict-deferred-package-update",True,"NOT APPLICABLE: deferred self-update is Windows-only",0)
         sentinel=home / "keep-user-file.txt"
         sentinel.write_bytes(b"keep")
         code,output,elapsed=lifecycle("uninstall")
@@ -201,8 +164,7 @@ def main(argv=None):
         record("uninstall-removes-owned-project-hooks",all(not (vault / name).exists() for name in local_hooks))
     except Exception as error:
         if not checks or checks[-1]["status"]!="FAILED": checks.append({"name":"smoke-runner","status":"FAILED","detail":str(error),"duration_seconds":0})
-    provenance_mode="fixture-policy" if args.fixture_provenance else "unsigned-fixture" if args.unsigned_fixture else "production"
-    report={"schema_version":3,"host":host,"profile":profile_name,"platform":platform.platform(),"python":{"version":platform.python_version(),"executable":sys.executable},"wsl_distribution":os.environ.get("WSL_DISTRO_NAME"),"providers":list(PROVIDERS),"package":str(package),"provenance_mode":provenance_mode,"workspace":str(root) if args.keep else "deleted-after-run","checks":checks,"overall":"VERIFIED" if checks and all(row["status"]=="VERIFIED" for row in checks) else "FAILED"}
+    report={"schema_version":3,"host":host,"profile":profile_name,"platform":platform.platform(),"python":{"version":platform.python_version(),"executable":sys.executable},"wsl_distribution":os.environ.get("WSL_DISTRO_NAME"),"providers":list(PROVIDERS),"package":str(package),"workspace":str(root) if args.keep else "deleted-after-run","checks":checks,"overall":"VERIFIED" if checks and all(row["status"]=="VERIFIED" for row in checks) else "FAILED"}
     rendered=json.dumps(report,ensure_ascii=False,indent=2)+"\n"
     if args.output:
         target=args.output.expanduser().resolve()

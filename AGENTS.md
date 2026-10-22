@@ -1,31 +1,32 @@
-# Respected Brain kaynak deposu çalışma kuralları
+# Respected Brain (SecondBrain) deposu: çalışma kuralları
 
-Proje gerçeğini güncel dosyalardan doğrula. Onaylı tasarım `docs/decisions/`, aktif ürün durumu yalnız
-`docs/PROJECT_STATUS.md` içindedir. Bu bilgisayara özel devreye alma kararı Git dışındaki `.local/ROLLOUT.md` kaydındadır.
-Kullanıcının canlı programını veya not kasasını kaynak işi sırasında değiştirme.
+Gerçeği kod ve testlerden doğrula. Belgeler: `README.md` (giriş), `docs/USAGE.md`, `docs/COMMANDS.md`, `docs/ARCHITECTURE.md`.
+Üç ürünün ortak sözleşmesi ekosistem kökündeki `docs/PRODUCT_CONTRACT.md` dosyasındadır ve `conformance/` ile ölçülür.
+Bu bilgisayara özel devreye alma kararı Git dışındaki `.local/ROLLOUT.md` kaydındadır.
+
+## Yasaklar
+
+- Kişinin kurulu programını, gerçek not kasasını ve AI araçlarının gerçek ayarlarını değiştirme.
+- Global araç kurma. Kullanıcı istemedikçe commit, push ya da paralel ajan yok.
+- Geçiş dönemi, eski sürüm desteği, takma ad ya da uyumluluk katmanı ekleme: bir şey değişiyorsa her yerde değişir.
+
+## Sınırlar
+
+- Program dosyaları kurucunundur (`packaging/windows/secondbrain_setup.iss`; Orchestrator kurucusunun ortak bölümü
+  buradan üretilir). Ürün `setup`, `repair`, `uninstall [--purge]`, `config`, `health`, `rpp`, `mcp` ile kaydı, veriyi,
+  kasayı ve bağlantıları yönetir. `update` komutu, kendini güncelleme ve protokol üzerinden kurma yoktur.
+- Kişinin ayarlarının tek kaynağı `src/respectedbrain/settings.py`; RPP, `config` ve kurucu (`--set`) aynı kodu kullanır.
+- Program, veri ve kasa kökleri ayrıdır. Kaldırma ve onarım insan notlarının üzerine yazmaz; sahiplik kaydı, işlem
+  günlüğü ve geri alma korunur.
+- Kaynak `src/respectedbrain/`, değişmez paket içeriği `src/respectedbrain/resources/`, paket tarifleri `packaging/`.
 
 ## Değişiklik disiplini
 
-- Kod değişince ilgili rehber, karar ve durum belgesini aynı değişiklikte güncelle; hedefi uygulanmış, uygulanmışı
-  doğrulanmış diye yazma.
-- Testler `tests/` altında `src/respectedbrain` ile aynı alana konur (`test_*.py`); ortak sahteler `tests/support/`.
-  `python -m unittest discover -s tests -t .` geçmeden tamamlandı deme. Test paketi HOME'u geçici klasöre yönlendirir;
-  bunu atlatan test yazma.
-- Paket değişikliğinde `packaging/build_dist.py` ile build al ve `tests.packaging.test_distribution` ile doğrula.
-
-## Kaynak ve kurulu ürün sınırları
-
-Ürün kodu `src/respectedbrain/`, immutable hazır içerik `resources/`, paket tarifleri `packaging/`, build betiği
-altında bulunur. AppRoot, DataRoot ve VaultRoot birbirinden ayrıdır. Güncelleme/kaldırma insan notlarını üzerine
-yazmaz; sahiplik, işlem günlüğü ve geri alma korumaları korunur.
-
-## Push sonrası CI takibi
-
-Kullanıcı tercihi (2026-10-05): push sonrasında CI sonucunu sürekli sorgulayarak bekleme; bunun için ajan veya otomasyon
-başlatma. Sonuç çıktığında kullanıcı yeniden çağırır, o çağrıda sonucu incele. Doğrulanmamış CI sonucunu başarılı bildirme.
-
-## Belge düzeni
-
-Süreç aracı adı taşıyan repo/yerel klasör kullanılmaz. Kararlar `docs/decisions`, kullanım rehberleri `docs/guides`,
-geliştirici belgeleri `docs/development` altındadır; tarihli çalışma kayıtları tutulmaz (Git geçmişi yeterlidir). Yerel
-ikili yedek ve test kanıtları `.local/archives` içindedir. Kullanıcı istemedikçe paralel ajan çalıştırma.
+- Testler `tests/` altında `src/respectedbrain` ile aynı alanda (`test_*.py`); ortak sahteler `tests/support/`. Test
+  takımı HOME'u geçici klasöre yönlendirir; bunu atlatan test yazma.
+- Tamamlandı demeden önce: `python -m unittest discover -s tests -t .`. Paket değişikliğinde
+  `python packaging/build_dist.py --platform windows --output dist` ve `python -m unittest tests.packaging.test_distribution`.
+- Kod değişince ilgili belgeyi aynı değişiklikte güncelle. Hedefi uygulanmış, uygulanmışı doğrulanmış diye yazma.
+  Belgeler Türkçedir; tarihli çalışma kaydı tutulmaz (Git geçmişi yeterli). Testler belge cümlelerine bağlanmaz.
+- Push sonrasında CI sonucunu sorgulayarak bekleme; kişi yeniden çağırınca incele. Doğrulanmamış CI'ı başarılı bildirme.
+- Süreç aracı adını taşıyan klasör açma. Yerel ikili yedek ve kanıtlar `.local/archives` içinde, Git dışında.

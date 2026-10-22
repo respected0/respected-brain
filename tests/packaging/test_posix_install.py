@@ -10,8 +10,7 @@ from unittest.mock import patch
 from respectedbrain.core.config import ConfigStore
 from respectedbrain.core.paths import Roots
 from respectedbrain.vault.registry import build_context
-from respectedbrain.installation.setup import setup
-from respectedbrain.installation.update import update
+from respectedbrain.installation.setup import setup as production_setup
 from respectedbrain.installation.repair import repair
 from respectedbrain.installation.uninstall import uninstall
 from respectedbrain.installation.ownership import read_manifest, prove_ownership
@@ -19,21 +18,6 @@ from tests.support.packages import seed_package
 from tests.support.files import note_hashes
 from tests.support.fakes import Backend
 
-from respectedbrain.installation.setup import setup as production_setup
-from respectedbrain.installation.update import update as production_update
-from respectedbrain.installation.repair import repair as production_repair
-
-def setup(*args, **kwargs):
-    kwargs.setdefault("require_provenance", False)
-    return production_setup(*args, **kwargs)
-
-def update(*args, **kwargs):
-    kwargs.setdefault("require_provenance", False)
-    return production_update(*args, **kwargs)
-
-def repair(*args, **kwargs):
-    kwargs.setdefault("require_provenance", False)
-    return production_repair(*args, **kwargs)
 
 class FoundationPosixInstallTest(unittest.TestCase):
     def setUp(self):
@@ -47,7 +31,7 @@ class FoundationPosixInstallTest(unittest.TestCase):
         self.backend = Backend()
         self.flags = dict.fromkeys(("global", "mcp", "schedule", "shortcut"), False)
         self.profile = {"platform":"posix", "user_home":str(self.home)}
-        self.package = seed_package(self.root / "package")
+        self.package = seed_package(self.roots.app_root)  # setup.sh copied the program here
         executable = self.package / "respectedbrain.exe"
         executable.rename(self.package / "respectedbrain")
         manifest = json.loads((self.package / "distribution.json").read_text())
@@ -60,16 +44,18 @@ class FoundationPosixInstallTest(unittest.TestCase):
             fake.start()
             self.addCleanup(fake.stop)
         self.launcher = self.home / ".local/bin/respectedbrain"
+    def setup(self):
+        return production_setup(self.roots, self.vault, values={"integrations." + key: value for key, value in self.flags.items()},
+                                backend=self.backend, platform=self.profile.get("platform"), home=self.home)
+
     def install(self):
-        result = setup(self.roots, self.vault, profile=self.profile, desired=self.flags, backend=self.backend, package=self.package)
+        result = self.setup()
         self.assertTrue(result.success, result.conflicts)
         return build_context(self.roots, ConfigStore(self.roots.data_root), vault=self.vault, vault_id=None, env={})
-    def test_unknown_distribution_manifest_is_never_overwritten(self):
-        self.roots.app_root.mkdir()
+    def test_unreadable_distribution_manifest_fails_and_is_left_alone(self):
         target = self.roots.app_root / "distribution.json"
         target.write_bytes(b"user-owned-sentinel")
-        result = setup(self.roots, self.vault, profile=self.profile, desired=self.flags, backend=self.backend, package=self.package)
-        self.assertFalse(result.success)
+        self.assertFalse(self.setup().success)
         self.assertEqual(target.read_bytes(), b"user-owned-sentinel")
 
     def test_default_linux_profile_persists_resolved_platform(self):
@@ -108,14 +94,13 @@ class FoundationPosixInstallTest(unittest.TestCase):
     def test_unknown_launcher_collision_is_retained_and_install_rolls_back(self):
         self.launcher.parent.mkdir(parents=True)
         self.launcher.write_bytes(b"user launcher")
-        result = setup(self.roots, self.vault, profile=self.profile, desired=self.flags, backend=self.backend, package=self.package)
-        self.assertFalse(result.success)
+        self.assertFalse(self.setup().success)
         self.assertEqual(self.launcher.read_bytes(), b"user launcher")
-        self.assertFalse((self.roots.app_root / "respectedbrain").exists())
-    def test_update_repair_and_uninstall_keep_notes_and_manage_launcher(self):
+        self.assertTrue((self.roots.app_root / "respectedbrain").exists(), "the program is setup.sh's, not the product's")
+    def test_repair_and_uninstall_keep_notes_and_manage_launcher(self):
         ctx = self.install()
         before = note_hashes(self.vault)
-        self.assertTrue(update(ctx, package=self.package, backend=self.backend).success)
+        self.assertTrue(repair(ctx, backend=self.backend).success)
         self.assertTrue(self.launcher.is_file())
         self.launcher.unlink()
         result = repair(ctx, backend=self.backend)
@@ -138,7 +123,7 @@ class FoundationPosixInstallTest(unittest.TestCase):
         ctx = self.install()
         self.assertTrue(self.launcher.is_file(), "Required launcher missing")
         self.launcher.write_bytes(b"user edit")
-        result = update(ctx, package=self.package, backend=self.backend)
+        result = repair(ctx, backend=self.backend)
         self.assertFalse(result.success)
         self.assertEqual(self.launcher.read_bytes(), b"user edit")
         result = uninstall(ctx, backend=self.backend)
@@ -160,7 +145,7 @@ class FoundationPosixInstallTest(unittest.TestCase):
         sentinel = self.home / "sentinel"
         sentinel.write_bytes(b"user")
         with patch("respectedbrain.installation.payload.validate_installed_health", side_effect=OSError("fault")):
-            result = setup(self.roots, self.vault, profile=self.profile, desired=self.flags, backend=self.backend, package=self.package)
+            result = self.setup()
         self.assertFalse(result.success)
         self.assertFalse(self.launcher.exists())
         self.assertEqual(sentinel.read_bytes(), b"user")
@@ -173,14 +158,14 @@ class FoundationPosixInstallTest(unittest.TestCase):
         self.assertEqual(shlex.split(command)[:2], ["exec", str(self.roots.app_root / "respectedbrain")])
 
 class PosixPackagingEntrypointsTest(unittest.TestCase):
-    def test_native_setup_entrypoints_exist_and_forward_to_shared_frozen_cli(self):
+    def test_native_setup_scripts_copy_the_program_and_forward_to_the_product(self):
         root = Path(__file__).resolve().parents[2]
         for name in ("packaging/linux/setup.sh", "packaging/macos/setup.command"):
             path = root / name
             self.assertTrue(path.is_file(), name)
             self.assertNotIn(b"\r", path.read_bytes(), "POSIX shebang files require LF line endings")
             text = path.read_text()
-            self.assertIn("setup", text)
-            self.assertIn("--package", text)
-            self.assertIn('"$@"', text)
+            for token in ("cp -R", " setup --platform posix", " repair", " uninstall", "--uninstall", '"$@"'):
+                self.assertIn(token, text)
+            self.assertNotIn("--package", text)
             self.assertNotIn("python", text.lower())

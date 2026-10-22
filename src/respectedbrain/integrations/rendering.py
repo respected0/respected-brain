@@ -309,7 +309,7 @@ def plan_integrations(ctx, profile, desired, backend):
             planner.put("mcp", path, content)
     if desired.get("schedule"):
         from .scheduling.service import plan_schedule
-        for row in plan_schedule(ctx, profile, backend):
+        for row in plan_schedule(ctx, profile, backend, time_str=ctx.config.get("preferences", {}).get("briefing_time", "08:00")):
             planner.put(row.kind, row.key, row.after)
     if desired.get("shortcut"):
         if profile.platform != "windows-native":

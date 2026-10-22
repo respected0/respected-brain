@@ -483,7 +483,7 @@ formatında yeniden dışa aktarmasını iste.
   tüketir.
 - Kullanıcı içeriği hiçbir harici modele göndermek istemezse derleyiciyi çalıştırmamalı ve ilgili
   aylık parça dosyalarını akşam derlemesinden önce silmelidir. Belirli bir sağlayıcıyı istemiyorsa
-  derlemeden önce `respectedbrain configure --summary-provider codex` ile başka bir ilk tercih seçebilir.
+  derlemeden önce `respectedbrain config set summary_provider=codex` ile başka bir ilk tercih seçebilir.
 - 50 MB sınırı nedeniyle daha eski arşiv atlandıysa bunu açıkça söyle ve ayrı bir tarih aralığıyla
   ikinci tur isteyip istemediğini sor.
 

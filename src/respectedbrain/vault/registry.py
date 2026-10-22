@@ -113,7 +113,7 @@ class VaultRegistry:
                 return candidate
         return None
 
-    def select(self, *, vault: Path | None, vault_id: str | None, env: Mapping[str, str]) -> tuple[str, Path]:
+    def select(self, *, vault: Path | None, vault_id: str | None, env: Mapping[str, str], allow_missing_vault: bool = False) -> tuple[str, Path]:
         if vault is not None and vault_id is not None:
             raise SelectionError("Choose either --vault or --vault-id")
         config = self.store.read()
@@ -137,6 +137,8 @@ class VaultRegistry:
         registered = Path(entry["path"]).resolve()
         if selected is not None and selected != registered:
             raise IdentityConflict("Selected path is not the registered path for this UUID")
+        if allow_missing_vault and not registered.is_dir():  # removing the product must work after the notes folder was moved or deleted
+            return identity, registered
         if self._selected_marker(registered) != identity:
             raise IdentityConflict("Registered path has a different vault UUID")
         return identity, registered
@@ -152,6 +154,6 @@ class VaultRegistry:
 
 
 def build_context(roots: Roots, store: ConfigStore, *, vault: Path | None, vault_id: str | None,
-                  env: Mapping[str, str]) -> AppContext:
-    identity, path = VaultRegistry(store).select(vault=vault, vault_id=vault_id, env=env)
+                  env: Mapping[str, str], allow_missing_vault: bool = False) -> AppContext:
+    identity, path = VaultRegistry(store).select(vault=vault, vault_id=vault_id, env=env, allow_missing_vault=allow_missing_vault)
     return AppContext(AppPaths(roots.app_root, roots.data_root, path, identity), store.read(), ResourceCatalog())

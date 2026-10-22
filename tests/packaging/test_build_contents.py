@@ -1,4 +1,4 @@
-"""What the frozen build and the installable package must contain (provenance module, clean UTF-8 sources)."""
+"""What the frozen build and the installable package must contain (installation package, clean UTF-8 sources)."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -39,15 +39,8 @@ class EncodingRegressionTest(unittest.TestCase):
         self._assert_clean("src/respectedbrain/cli.py")
 
 
-class PackagingIncludesProvenanceTest(unittest.TestCase):
-    """The provenance verifier must ship in the package and the frozen build."""
-
-    def test_provenance_module_is_part_of_installation_package(self):
-        import respectedbrain.installation.provenance as module
-        module_path = Path(module.__file__).resolve()
-        self.assertEqual(module_path.name, "provenance.py")
-        self.assertEqual(module_path.parent.name, "installation")
-        self.assertEqual(module_path.parent.parent.name, "respectedbrain")
+class PackagingIncludesInstallationTest(unittest.TestCase):
+    """The installation package must ship in the package and the frozen build."""
 
     def test_frozen_build_collects_all_respectedbrain_submodules(self):
         build_source = (REPO_ROOT / "packaging/build_dist.py").read_text(encoding="utf-8")

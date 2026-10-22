@@ -39,7 +39,7 @@ class WorkspaceTest(unittest.TestCase):
         freshness.refresh_now(ctx)
 
     def call(self, op, payload=None, operation_id=None):
-        request = {"rpp": "1.1", "op": op, "payload": payload or {}}
+        request = {"rpp": "1", "op": op, "payload": payload or {}}
         if operation_id:
             request["operation_id"] = operation_id
         return rpp.serve(json.dumps(request), data_root=str(self.data))
@@ -80,8 +80,8 @@ class WorkspaceTest(unittest.TestCase):
         (self.vault / "notes" / "hızlı not.md").write_text("# Hızlı\nçalışıyor\n", encoding="utf-8")
         env = {k: v for k, v in os.environ.items() if k not in ("PYTHONUTF8", "PYTHONIOENCODING")}
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2] / "src")
-        request = json.dumps({"rpp": "1.1", "op": "memory.note.read", "payload": {"path": "notes/hızlı not.md"}}, ensure_ascii=False)
-        done = subprocess.run([sys.executable, "-m", "respectedbrain", "rpp", "--data-root", str(self.data)], input=request.encode("utf-8"), capture_output=True, env=env, timeout=60)
+        request = json.dumps({"rpp": "1", "op": "memory.note.read", "payload": {"path": "notes/hızlı not.md"}}, ensure_ascii=False)
+        done = subprocess.run([sys.executable, "-m", "respectedbrain", "rpp"], input=request.encode("utf-8"), capture_output=True, env=env, timeout=60)
         reply = json.loads(done.stdout.decode("utf-8").strip().splitlines()[-1])
         self.assertTrue(reply["ok"], reply)
         self.assertIn("çalışıyor", reply["result"]["content"])
@@ -109,11 +109,6 @@ class WorkspaceTest(unittest.TestCase):
         self.assertEqual(self.call("memory.briefing.run", {})["error"]["code"], "BAD_REQUEST")
         with patch("respectedbrain.briefing.service.run_if_due", return_value=0), patch("respectedbrain.providers.runner.ModelRunner"):
             self.assertEqual(self.call("memory.briefing.run", {"confirm": True})["result"], {"status": 0})
-
-    def test_v10_manifest_hides_the_workspace_capability(self):
-        old = rpp.serve(json.dumps({"rpp": "1.0", "op": "manifest"}), data_root=str(self.data))["result"]
-        self.assertNotIn("memory_workspace", old["capabilities"])
-
 
 if __name__ == "__main__":
     unittest.main()

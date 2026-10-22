@@ -69,10 +69,25 @@ class FoundationCliTest(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(out.strip(), str(self.ctx.paths.vault_root))
         self.assertEqual(snapshot(self.root), before)
-        self.assertEqual(self.call(["configure", "--summary-provider", "codex"])[0], 0)
+
+    def test_config_reads_writes_and_refuses_with_the_shared_error_shape(self):
+        code, out, _ = self.call(["config"])
+        self.assertEqual(code, 0)
+        self.assertEqual(json.loads(out)["summary_provider"], "auto")
+        code, out, _ = self.call(["config", "set", "summary_provider=codex", "briefing_time=07:15"])
+        self.assertEqual((code, json.loads(out)), (0, {"summary_provider": "codex", "briefing_time": "07:15"}))
+        self.assertEqual(json.loads(self.call(["config", "get", "summary_provider"])[1]), {"summary_provider": "codex"})
         config = json.loads((self.root / "data/config.json").read_text(encoding="utf-8"))
         self.assertEqual(config["preferences"]["summary_provider"], "codex")
         self.assertFalse(config["integrations"]["schedule"])
+        for args in (["config", "set", "summary_provider=nope"], ["config", "set", "nope=1"], ["config", "get", "nope"], ["config", "set"]):
+            code, out, _ = self.call(args)
+            self.assertEqual(code, 2, args)
+            self.assertEqual(set(json.loads(out)["error"]), {"code", "message", "hint"})
+
+    def test_version_names_the_product(self):
+        from respectedbrain import __version__
+        self.assertEqual(self.call(["--version"])[1].strip(), f"respected-secondbrain {__version__}")
 
     def test_flush_child_command_uses_selected_context_and_keeps_unmanaged_input(self):
         payload = self.root / "input.json"
@@ -85,37 +100,22 @@ class FoundationCliTest(unittest.TestCase):
         self.assertEqual(service.call_args.kwargs["transcript"], transcript)
         self.assertTrue(payload.exists())
 
-    def test_setup_dispatches_shared_service_and_preserves_disabled_defaults(self):
-        from respectedbrain.installation.transaction import OperationResult
-        with patch("respectedbrain.installation.setup.setup", return_value=OperationResult(False, "test", ("fault",))) as service:
-            self.assertEqual(self.call(["setup", "--vault", str(self.ctx.paths.vault_root), "--user-name", "Ada"])[0], 1)
-        self.assertEqual(service.call_args.args[1], self.ctx.paths.vault_root)
-        self.assertFalse(service.call_args.kwargs["desired"]["schedule"])
-        self.assertEqual(service.call_args.kwargs["profile"]["USER_NAME"], "Ada")
-
-    def test_setup_passes_chosen_clients_and_refuses_unknown_ones(self):
+    def test_setup_takes_settings_through_set_and_refuses_unknown_ones(self):
         from respectedbrain.installation.transaction import OperationResult
         vault = str(self.ctx.paths.vault_root)
-        with patch("respectedbrain.installation.setup.setup", return_value=OperationResult(True, "test", ())) as service:
-            self.call(["setup", "--vault", vault, "--clients", "claude,codex", "--mcp-clients", "claude"])
-        desired = service.call_args.kwargs["desired"]
-        self.assertEqual((desired["clients"], desired["mcp_clients"]), (["claude", "codex"], ["claude"]))
+        with patch("respectedbrain.installation.setup.setup", return_value=OperationResult(False, "test", ("fault",))) as service:
+            self.assertEqual(self.call(["setup", "--vault", vault, "--set", "user_name=Ada", "--set", "integrations.mcp=true",
+                                        "--set", "integrations.clients=claude,codex"])[0], 1)
+        self.assertEqual(service.call_args.args[1], self.ctx.paths.vault_root)
+        self.assertEqual(service.call_args.kwargs["values"], {"user_name": "Ada", "integrations.mcp": True, "integrations.clients": "claude,codex"})
         with patch("respectedbrain.installation.setup.setup") as service:
-            code, _, err = self.call(["setup", "--vault", vault, "--clients", "claude,nope"])
-        self.assertNotEqual(code, 0)
-        self.assertIn("nope", err)
+            for retired in (["--user-name", "Ada"], ["--clients", "claude"], ["--package", "x"], ["--set", "integrations.mcp=yes"]):
+                self.assertEqual(self.call(["setup", "--vault", vault, *retired])[0], 2, retired)
         service.assert_not_called()
 
-    def test_deferred_and_direct_uninstall_keep_the_same_data_choice(self):
+    def test_uninstall_keeps_data_unless_purged(self):
         from respectedbrain.installation.transaction import OperationResult
-        for flags, purge in (([], True), (["--keep-data"], False), (["--purge-data"], True)):
-            for deferred in (True, False):
-                with self.subTest(flags=flags, deferred=deferred):
-                    result = OperationResult(True, "test", ())
-                    with patch('respectedbrain.installation.deferred.defer_operation',
-                               return_value=result if deferred else None) as queue, \
-                         patch('respectedbrain.installation.uninstall.uninstall', return_value=result) as service:
-                        self.assertEqual(self.call(['uninstall', '--vault-id', self.ctx.paths.vault_id, *flags])[0], 0)
-                    self.assertEqual(queue.call_args.kwargs['purge_data'], purge)
-                    if not deferred:
-                        self.assertEqual(service.call_args.kwargs['purge_data'], purge)
+        for flags, purge in (([], False), (["--purge"], True)):
+            with patch('respectedbrain.installation.uninstall.uninstall', return_value=OperationResult(True, "test", ())) as service:
+                self.assertEqual(self.call(['uninstall', '--vault-id', self.ctx.paths.vault_id, *flags])[0], 0)
+            self.assertEqual(service.call_args.kwargs['purge_data'], purge)

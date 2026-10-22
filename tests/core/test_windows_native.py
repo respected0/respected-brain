@@ -169,20 +169,21 @@ class WindowsNativeTest(unittest.TestCase):
         finally:
             command_center.rmdir()
 
-    def test_transactional_updater_runs_with_native_paths_and_external_backup(self):
+    def test_repair_after_an_installer_update_runs_with_native_paths_and_external_backup(self):
         from respectedbrain.installation.setup import setup
-        from respectedbrain.installation.update import update
+        from respectedbrain.installation.repair import repair
         vault = self.root / "Update 🧠 Brain"
         roots = Roots(self.root / "installed", self.root / "installation-data", vault)
         backend = Backend()
-        disabled = dict.fromkeys(("global", "mcp", "schedule", "shortcut"), False)
+        seed_package(roots.app_root)
         with mock.patch("respectedbrain.installation.payload.validate_installed_health"):
-            self.assertTrue(setup(roots, vault, profile={}, desired=disabled, backend=backend, package=seed_package(self.root / "package"), require_provenance=False).success)
+            self.assertTrue(setup(roots, vault, values={}, backend=backend).success)
             ctx = build_context(roots, ConfigStore(roots.data_root), vault=vault, vault_id=None, env={})
             personal = vault / "🔮 850-Companion/Core.md"
             personal.write_bytes(b"native personal identity\n")
             before = snapshot(vault)
-            result = update(ctx, package=seed_package(self.root / "next", content=b"MZ-next"), backend=backend, require_provenance=False)
+            seed_package(roots.app_root, content=b"MZ-next")  # the installer laid down the next version
+            result = repair(ctx, backend=backend)
         self.assertTrue(result.success, result.conflicts)
         self.assertEqual(snapshot(vault), before)
         self.assertTrue((roots.data_root / "backups" / result.tx_id / "journal.json").exists())

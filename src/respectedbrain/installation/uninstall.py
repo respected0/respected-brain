@@ -1,4 +1,5 @@
-"""Delete only unchanged owned files; purge proven technical records by default, never notes."""
+"""Remove the integrations and records the product owns; with purge also its data. Never notes, never the program:
+the installer that laid the program files down removes them."""
 from pathlib import Path
 
 from respectedbrain.core.errors import FoundationError
@@ -31,7 +32,7 @@ def prune_empty_client_dirs(files) -> None:
             directory = directory.parent
 
 
-def uninstall(ctx, *, backend, purge_data=True) -> OperationResult:
+def uninstall(ctx, *, backend, purge_data=False) -> OperationResult:
     tx = None
     try:
         if any(result.conflicts for result in recover_transactions(ctx.paths.data_root, backend)):
@@ -53,7 +54,7 @@ def uninstall(ctx, *, backend, purge_data=True) -> OperationResult:
                     continue
                 tx.apply_external(ExternalChange(change.kind, change.key, current, restored))
             for item in manifest.files:
-                if item.role == "technical" and not purge_data or not item.path.exists():
+                if item.role == "application" or item.role == "technical" and not purge_data or not item.path.exists():
                     continue
                 if not prove_ownership(item.path, manifest):
                     conflicts.append(str(item.path))
@@ -61,8 +62,8 @@ def uninstall(ctx, *, backend, purge_data=True) -> OperationResult:
                 tx.remove(item.path, expected_hash=item.sha256)
             result = tx.commit()
             prune_empty_client_dirs(change.key for change in manifest.external if change.kind == "file")
-            scrub_committed_journals(ctx.paths.data_root)   # journals of earlier operations (older versions) lose their complete config copies
-            if purge_data and not conflicts:
+            scrub_committed_journals(ctx.paths.data_root)
+            if not conflicts:  # the install record always goes with the program; settings stay unless purged
                 if manifest_path.is_file() and manifest_path.read_bytes() == manifest_before:
                     manifest_path.unlink()
                 else:

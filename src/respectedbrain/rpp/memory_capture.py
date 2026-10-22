@@ -1,4 +1,4 @@
-"""RPP 1.1 `memory.capture.run`: process pending AI sessions now (the manual counterpart of capture_mode = manual)."""
+"""RPP `memory.capture.run`: process pending AI sessions now (the manual counterpart of capture_mode = manual)."""
 
 from __future__ import annotations
 

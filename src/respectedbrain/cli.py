@@ -14,6 +14,7 @@ from . import __version__
 from .bootstrap import application_roots, bootstrap
 from .core.config import ConfigStore
 from .core.errors import FoundationError, SelectionError
+from .settings import SettingsError
 from .vault.registry import VaultRegistry
 
 
@@ -25,7 +26,7 @@ def _selector(parser):
 
 def _parser():
     parser = argparse.ArgumentParser(prog="respectedbrain", description="Respected Brain")
-    parser.add_argument("--version", action="version", version=__version__)
+    parser.add_argument("--version", action="version", version=f"respected-secondbrain {__version__}")
     commands = parser.add_subparsers(dest="command")
     vault = commands.add_parser("vault", help="Kasa kaydı ve açık keşif")
     actions = vault.add_subparsers(dest="action", required=True)
@@ -35,8 +36,10 @@ def _parser():
     actions.add_parser("list")
     discover = actions.add_parser("discover")
     discover.add_argument("path", type=Path)
-    configure = commands.add_parser("configure", help="Kullanıcı tercihlerini göster veya değiştir")
-    configure.add_argument("--summary-provider", choices=("auto", "codex", "claude", "antigravity", "gemini", "cursor"))
+    config = commands.add_parser("config", help="Ayarları göster veya değiştir (config, config get <anahtar>, config set <anahtar>=<değer>...)")
+    config.add_argument("action", nargs="?", choices=("get", "set"))
+    config.add_argument("items", nargs="*")
+    commands.add_parser("health", help="Sağlık kontrolü")
     for name in ("briefing", "maps", "index-refresh"):
         _selector(commands.add_parser(name))
     compile_parser = commands.add_parser("compile")
@@ -64,33 +67,16 @@ def _parser():
     _selector(maintenance)
     maintenance.add_argument("name")
     maintenance.add_argument("argv", nargs=argparse.REMAINDER)
-    setup_parser = commands.add_parser("setup")
+    setup_parser = commands.add_parser("setup", help="Kurucunun yazdığı programı kaydet, kasayı ve ayarları hazırla")
     setup_parser.add_argument("--vault", type=Path)
-    setup_parser.add_argument("--package", type=Path)
-    setup_parser.add_argument("--allow-unattested", action="store_true", help="Accept a local package without a release attestation (development builds)")
-    setup_parser.add_argument("--user-name")
-    setup_parser.add_argument("--user-bio")
-    setup_parser.add_argument("--companion")
-    setup_parser.add_argument("--os-name")
-    setup_parser.add_argument("--summary-provider", choices=("auto", "codex", "claude", "antigravity", "gemini", "cursor"))
     setup_parser.add_argument("--platform", choices=("windows-native", "posix", "windows-wsl"))
-    setup_parser.add_argument("--mcp-clients", dest="mcp_clients", help="Comma separated AI clients for --mcp only (default: the --clients selection)")
-    setup_parser.add_argument("--clients", help="Comma separated AI clients for --global/--mcp (claude,codex,gemini,antigravity,cursor,windsurf,claude-desktop,vscode-agents); default: all")
-    for flag in ("global", "mcp", "schedule", "shortcut"):
-        setup_parser.add_argument("--" + flag, dest="desired_" + flag, action=argparse.BooleanOptionalAction, default=None)
-    for name in ("update", "repair", "uninstall"):
-        operation = commands.add_parser(name)
-        _selector(operation)
-        if name in ("update", "repair"):
-            operation.add_argument("--package", type=Path, required=name == "update")
-        operation.add_argument("--allow-unattested", action="store_true", help="Accept a local package without a release attestation (development builds)")
-        if name == "uninstall":
-            operation.add_argument("--keep-data", action="store_true")
-            operation.add_argument("--purge-data", dest="keep_data", action="store_false", help=argparse.SUPPRESS)
-            operation.set_defaults(keep_data=False)
+    setup_parser.add_argument("--set", dest="assignments", action="append", default=[], metavar="ANAHTAR=DEĞER", help="Ayar (config set ile aynı anahtarlar); tekrarlanabilir")
+    _selector(commands.add_parser("repair", help="Program dosyalarını doğrula, kayıtları ve bağlantıları onar"))
+    uninstall = commands.add_parser("uninstall", help="Bağlantıları ve kayıtları kaldır; --purge ayarları ve verileri de siler (kasa asla)")
+    _selector(uninstall)
+    uninstall.add_argument("--purge", action="store_true")
     commands.add_parser("recover")
-    rpp_parser = commands.add_parser("rpp", help=argparse.SUPPRESS)
-    rpp_parser.add_argument("--data-root", type=Path)
+    commands.add_parser("rpp", help="Respected Product Protocol sunucusu (stdin/stdout)")
     hook = commands.add_parser("hook")
     _selector(hook)
     hook.add_argument("--provider", required=True, choices=("claude", "codex", "cursor", "antigravity", "gemini"))
@@ -99,23 +85,19 @@ def _parser():
     hook.add_argument("--chain-file", type=Path)
     hook.add_argument("payload", nargs=argparse.REMAINDER)
     _selector(commands.add_parser("mcp"))
-    resume = commands.add_parser("_resume-operation", help=argparse.SUPPRESS)
-    resume.add_argument("--request", type=Path, required=True)
-    resume.add_argument("--request-hash", required=True)
     return parser
 
 
 def _dispatch(args) -> int:
     if args.command == "rpp":
         from .rpp.server import main as rpp_main
-        return rpp_main(data_root=args.data_root)
+        return rpp_main()
+    if args.command in ("config", "health"):
+        return _config(args) if args.command == "config" else _health()
     if args.command in ("compile", "flush"):
         from .memory.lifecycle import _is_reentrant
         if _is_reentrant():
             return 0
-    if args.command == "_resume-operation":
-        from .installation.deferred import resume_operation
-        return resume_operation(args.request, expected_hash=args.request_hash)
     if args.command in ("setup", "recover"):
         roots = application_roots()
         from .integrations.backend import NativeBackend
@@ -126,33 +108,14 @@ def _dispatch(args) -> int:
             results = recover_transactions(roots.data_root, backend)
             print(json.dumps([asdict(result) for result in results], ensure_ascii=False, indent=2))
             return 1 if any(result.conflicts for result in results) else 0
-        desired_overrides = {key: getattr(args, "desired_" + key) for key in ("global", "mcp", "schedule", "shortcut") if getattr(args, "desired_" + key) is not None}
-        profile = {key: value for key, value in {"USER_NAME": args.user_name, "USER_BIO": args.user_bio, "COMPANION": args.companion, "OS_NAME": args.os_name, "summary_provider": args.summary_provider, "platform": args.platform}.items() if value is not None}
-        vault = args.vault.resolve() if args.vault is not None else None
-        package = args.package.resolve() if args.package is not None else None
+        from . import settings as product_settings
         from .installation.setup import setup
-        desired = ConfigStore(roots.data_root).read()["integrations"]
-        stored = {key: desired.get(key) for key in ("clients", "mcp_clients")}
-        desired = {key: desired_overrides.get(key, desired.get(key, False)) for key in ("global", "mcp", "schedule", "shortcut")}
-        from .integrations.rendering import CLIENTS
-        for key, given in (("clients", args.clients), ("mcp_clients", args.mcp_clients)):
-            chosen = [item for item in given.split(",") if item] if given is not None else stored[key]
-            unknown = sorted(set(chosen or ()) - set(CLIENTS))
-            if unknown:
-                raise SelectionError(f"Unknown AI client(s): {', '.join(unknown)}")
-            if chosen is not None:
-                desired[key] = chosen
-        return _operation_output(setup(roots, vault if vault is not None else roots.default_vault, profile=profile, desired=desired, backend=backend, package=package, require_provenance=False if args.allow_unattested else None))
-    if args.command in ("vault", "configure"):
+        values = dict(product_settings.parse(item) for item in args.assignments)
+        vault = args.vault.resolve() if args.vault is not None else roots.default_vault
+        return _operation_output(setup(roots, vault, values=values, backend=backend, platform=args.platform))
+    if args.command == "vault":
         roots = application_roots()
         store = ConfigStore(roots.data_root)
-        if args.command == "configure":
-            if args.summary_provider is not None:
-                config = store.update(lambda value: value["preferences"].update(summary_provider=args.summary_provider))
-            else:
-                config = store.read()
-            print(json.dumps(config, ensure_ascii=False, indent=2))
-            return 0
         registry = VaultRegistry(store)
         if args.action == "register":
             print(registry.register(args.path, new_identity=args.new_identity))
@@ -164,7 +127,7 @@ def _dispatch(args) -> int:
                 raise SelectionError("Kayıtlı kasa bulunamadı; vault register ile kaydedin.")
             print(found)
         return 0
-    ctx = bootstrap(vault=args.vault, vault_id=args.vault_id)
+    ctx = bootstrap(vault=args.vault, vault_id=args.vault_id, allow_missing_vault=args.command == "uninstall")
     if args.command == "hook":
         from .integrations.hooks.bridge import dispatch
         arguments = (["--global-hook"] if args.global_hook else []) + args.payload
@@ -176,28 +139,14 @@ def _dispatch(args) -> int:
     if args.command == "mcp":
         from .integrations.mcp.server import serve
         return serve(ctx)
-    if args.command in ("update", "repair", "uninstall"):
+    if args.command in ("repair", "uninstall"):
         from .integrations.backend import NativeBackend
         backend = NativeBackend(ctx.paths.data_root)
-        if args.command in ("update", "uninstall"):
-            from .installation.deferred import defer_operation
-            queued = defer_operation(ctx, mode=args.command, package=args.package.resolve() if args.command == "update" else None, purge_data=args.command == "uninstall" and not args.keep_data,
-                                     require_provenance=False if getattr(args, "allow_unattested", False) else None)
-            if queued is not None:
-                return _operation_output(queued)
-        if args.command == "update":
-            from .installation.update import update
-            return _operation_output(update(ctx, package=args.package.resolve(), backend=backend, require_provenance=False if args.allow_unattested else None))
         if args.command == "repair":
             from .installation.repair import repair
-            return _operation_output(repair(
-                ctx,
-                backend=backend,
-                package=args.package.resolve() if args.package is not None else None,
-                require_provenance=False if args.allow_unattested else None,
-            ))
+            return _operation_output(repair(ctx, backend=backend))
         from .installation.uninstall import uninstall
-        return _operation_output(uninstall(ctx, backend=backend, purge_data=not args.keep_data))
+        return _operation_output(uninstall(ctx, backend=backend, purge_data=args.purge))
     now = datetime.now().astimezone()
     if args.command in ("compile", "briefing", "flush"):
         from .providers.runner import ModelRunner
@@ -270,10 +219,42 @@ def _dispatch(args) -> int:
     return run_tool(ctx, name=args.name, argv=args.argv)
 
 
+def _print(document) -> None:
+    print(json.dumps(document, ensure_ascii=False, indent=2))
+
+
+def _config(args) -> int:
+    from . import settings as product_settings
+    data_root = application_roots().data_root
+    if args.action is None and not args.items:
+        _print(product_settings.readback(data_root))
+        return 0
+    if args.action == "get" and len(args.items) == 1:
+        values = product_settings.readback(data_root)
+        if args.items[0] not in values:
+            raise product_settings.SettingsError([{"key": args.items[0], "message": f"Bilinmeyen ayar: {args.items[0]}"}])
+        _print({args.items[0]: values[args.items[0]]})
+        return 0
+    if args.action == "set" and args.items:
+        values = dict(product_settings.parse(item) for item in args.items)
+        product_settings.apply(data_root, values)
+        current = product_settings.readback(data_root)
+        _print({key: current[key] for key in values})
+        return 0
+    raise ValueError("Kullanım: config | config get <anahtar> | config set <anahtar>=<değer>...")
+
+
+def _health() -> int:
+    from .rpp.server import serve
+    result = serve(json.dumps({"rpp": "1", "op": "health"}))["result"]
+    _print(result)
+    return 0 if result["status"] == "healthy" else 1
+
+
 def _operation_output(result) -> int:
     from dataclasses import asdict
     print(json.dumps(asdict(result), ensure_ascii=False, indent=2))
-    return 0 if result.success or result.pending else 1
+    return 0 if result.success else 1
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -291,9 +272,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _dispatch(args)
     except SystemExit as error:
         return int(error.code)
+    except SettingsError as error:
+        _print({"error": {"code": "INVALID_SETTINGS", "message": str(error), "hint": "Geçerli anahtarlar ve değerler için: respectedbrain config"}})
+        return 2
     except (SelectionError, ValueError) as error:
-        print(str(error), file=sys.stderr)
+        _print({"error": {"code": "USAGE", "message": str(error), "hint": "respectedbrain --help"}})
         return 2
     except (FoundationError, OSError) as error:
-        print(str(error), file=sys.stderr)
+        _print({"error": {"code": "FAILED", "message": str(error), "hint": "İşlem geri alındı; ayrıntı için mesaja bakın."}})
         return 1

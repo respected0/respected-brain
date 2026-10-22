@@ -1,4 +1,4 @@
-"""RPP 1.1 `memory.semantic.status|configure|pull`: opt-in local semantic search (FTS keeps working without it)."""
+"""RPP `memory.semantic.status|configure|pull`: opt-in local semantic search (FTS keeps working without it)."""
 
 from __future__ import annotations
 

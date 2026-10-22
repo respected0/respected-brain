@@ -1,13 +1,12 @@
 """Common ownership and integration handling for maintenance operations."""
 from dataclasses import replace
 from pathlib import Path
-import stat
 from respectedbrain.core.config import ConfigStore
 from respectedbrain.core.errors import OwnershipConflict
 from respectedbrain.core.paths import Roots
 from respectedbrain.integrations.backend import ExternalChange
 from .common import ensure_linux_launcher, installed_profile, linux_launcher_path
-from .ownership import safe_path, OwnedFile, OwnershipManifest, digest, manifest_document, prove_ownership
+from .ownership import safe_path, OwnedFile, OwnershipManifest, digest, manifest_document
 
 
 def validate_manifest_roots(ctx, manifest):
@@ -19,33 +18,9 @@ def validate_manifest_roots(ctx, manifest):
             if profile.platform != "posix" or item.path != linux_launcher_path(ctx, profile):
                 raise OwnershipConflict(f"Ownership manifest exceeds launcher boundary: {item.path}")
             continue
-        root = ctx.paths.app_root if item.role in ("application", "uninstaller") else ctx.paths.data_root
-        if item.role not in ("application", "uninstaller", "technical") or not item.path.is_relative_to(root) or item.path.is_relative_to(ctx.paths.vault_root):
+        root = ctx.paths.app_root if item.role == "application" else ctx.paths.data_root
+        if item.role not in ("application", "technical") or not item.path.is_relative_to(root) or item.path.is_relative_to(ctx.paths.vault_root):
             raise OwnershipConflict(f"Ownership manifest exceeds application/data boundary: {item.path}")
-
-
-def activate_package(roots, package, tx, previous, *, require_provenance=None, repair_owned=False):
-    from .payload import package_members, validate_package
-    document = validate_package(package, require_provenance=require_provenance)
-    members = package_members(package, document)
-    existing = {item.path: item for item in previous.files if item.role == "application"}
-    for name in members:
-        target = roots.app_root / name
-        item = existing.get(target)
-        source = safe_path(package / name)
-        expected = digest(source)
-        if item is not None:
-            if target.exists() and not prove_ownership(target, previous) and not repair_owned:
-                raise OwnershipConflict(f"Application file changed or unowned: {target}")
-        elif target.exists() and digest(safe_path(target)) != expected:
-            raise OwnershipConflict(f"Application file changed or unowned: {target}")
-    for name in members:
-        tx.replace(safe_path(package / name), roots.app_root / name)
-    next_paths = {roots.app_root / name for name in members}
-    for target, item in existing.items():
-        if target not in next_paths and target.exists():
-            tx.remove(target, expected_hash=item.sha256)
-    return document, tuple(OwnedFile(path, digest(path), "application", stat.S_IMODE(path.stat().st_mode)) for path in sorted(next_paths))
 
 
 def undo_external(prior, current):

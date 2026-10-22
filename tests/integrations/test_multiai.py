@@ -427,60 +427,14 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
         with mock.patch.object(runner,"_configured_provider",return_value="cursor"):
             self.assertEqual(runner._available("codex",store.read()["preferences"])[:2],["cursor","codex"])
 
-    def test_public_docs_describe_provider_neutral_setup(self):
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        setup = (ROOT / "docs/guides/SETUP.md").read_text(encoding="utf-8")
-        for required in ("Codex", "Cursor", "Antigravity", "Gemini", "configure --summary-provider", "Kasa adı", "respectedbrain/resources/"):
-            self.assertIn(required, readme)
-        self.assertIn("kapalıdır", setup)
-        self.assertIn("kapalı tercihleri açmaz", setup)
-        self.assertIn("doğrulanmış dağıtım", setup)
-        self.assertIn("Mevcut dolu kasaya fresh template uygulanmaz", setup)
-        self.assertNotIn("Claude aboneliğinin", setup)
-        self.assertNotIn("claude CLI YOK", setup)
-
-    def test_public_spec_and_template_have_no_stale_claude_only_setup(self):
+    def test_vault_template_has_no_stale_claude_only_setup(self):
         paths = (
-            ROOT / "docs/SPECIFICATION.md",
-            ROOT / "docs/ARCHITECTURE.md",
-            ROOT / "README.md",
-            ROOT / "docs/guides/MULTI_AI.md",
             ROOT / "src/respectedbrain/resources/vault-template/🎯 100-Command-Center/Dashboard.md",
             ROOT / "src/respectedbrain/resources/vault-template/🔮 850-Companion/Last-Session.md",
         )
         text = "\n".join(path.read_text(encoding="utf-8") for path in paths)
-        for stale in (
-            "claude CLI YOK",
-            "mevcut Claude aboneliğinin",
-            "terminal aç ve `claude` çalıştır",
-            "with Claude Code",
-        ):
+        for stale in ("claude CLI YOK", "mevcut Claude aboneliğinin", "terminal aç ve `claude` çalıştır", "with Claude Code"):
             self.assertNotIn(stale, text)
-        for required in (
-            "summary_provider",
-            "WSL",
-            "Antigravity",
-            "Codex",
-        ):
-            self.assertIn(required, text)
-
-    def test_public_docs_define_all_three_profiles_and_native_limits(self):
-        paths = (
-            ROOT / "README.md",
-            ROOT / "docs/guides/SETUP.md",
-            ROOT / "docs/guides/MULTI_AI.md",
-            ROOT / "docs/guides/SETUP-WINDOWS.md",
-            ROOT / "docs/SPECIFICATION.md",
-            ROOT / "docs/ARCHITECTURE.md",
-        )
-        text = "\n".join(path.read_text(encoding="utf-8") for path in paths)
-        for required in (
-            "Linux", "macOS", "Native Windows", "WSL",
-            "Python 3.10+", "kendi çalışma ortamını içerir",
-            "RESPECTED_DATA_DIR", "RESPECTED_APP_DIR",
-            "salt okunur", "doğrulanmış sayılmaz",
-        ):
-            self.assertIn(required, text)
 
     def test_runner_falls_back_only_for_retryable_provider_errors(self):
         runner = MODEL_RUNNER

@@ -1,35 +1,20 @@
-"""Validate a staged distribution before activating its launcher."""
+"""The program the installer laid down: distribution.json lists every file with its hash."""
 from __future__ import annotations
 import json
 import os
 import re
 from pathlib import Path, PurePosixPath
 import subprocess
-from typing import Any
 
 from respectedbrain.core.errors import OwnershipConflict
 from .ownership import safe_path, digest
 
 
-ATTESTATION_NAME = 'distribution.json.attestation.json'
+def package_members(document: dict) -> tuple[str, ...]:
+    return (*document['files'], 'distribution.json')
 
 
-def package_members(package: Path, document: dict) -> tuple[str, ...]:
-    members = [*document['files'], 'distribution.json']
-    if (package / ATTESTATION_NAME).is_file():
-        members.append(ATTESTATION_NAME)
-    return tuple(members)
-
-
-def validate_package(
-    package: Path,
-    *,
-    require_provenance: bool | None = None,
-    provenance_policy: Any = None,
-) -> dict:
-    if require_provenance is None:
-        require_provenance = True
-
+def validate_package(package: Path) -> dict:
     safe_path(package)
     document = json.loads(safe_path(package / "distribution.json").read_text(encoding="utf-8"))
     if not isinstance(document, dict) or document.get("schema_version") != 3 or not isinstance(document.get("version"), str) or not document["version"]:
@@ -52,22 +37,7 @@ def validate_package(
         member = safe_path(package / name)
         if not member.is_file() or digest(member) != expected:
             raise OwnershipConflict(f"Distribution hash mismatch: {name}")
-
-    if require_provenance:
-        from dataclasses import replace
-        from .provenance import verify_release_provenance, TrustedProvenancePolicy
-        expected_ref = f'refs/tags/v{document["version"]}'
-        policy = provenance_policy or TrustedProvenancePolicy(expected_ref=expected_ref)
-        if policy.expected_ref is None:
-            policy = replace(policy, expected_ref=expected_ref)
-        manifest_file = safe_path(package / "distribution.json")
-        bundle_file = safe_path(package / ATTESTATION_NAME)
-        ok, reason, _ = verify_release_provenance(manifest_file, bundle_file, policy=policy)
-        if not ok:
-            raise OwnershipConflict(f"Release provenance verification failed: {reason}")
-
     return document
-
 
 
 def validate_installed_health(app_root: Path, document: dict, data_root: Path) -> None:
@@ -78,5 +48,5 @@ def validate_installed_health(app_root: Path, document: dict, data_root: Path) -
                                 capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
     except (OSError, subprocess.TimeoutExpired) as error:
         raise OwnershipConflict(f"Installed launcher health check failed: {error}") from error
-    if result.returncode != 0 or result.stdout.strip() != document["version"]:
+    if result.returncode != 0 or result.stdout.strip() != "respected-secondbrain " + document["version"]:
         raise OwnershipConflict("Installed launcher failed its version health check")

@@ -1,4 +1,4 @@
-"""RPP v1.1 ``integrations.plan``: a read-only Safe Integration Layer preview.
+"""RPP ``integrations.plan``: a read-only Safe Integration Layer preview.
 
 Discover -> Inspect -> Plan -> Explain: for the requested integrations it reports which AI-client
 configuration files exist, exactly which ones Respected would create or change, and why a change

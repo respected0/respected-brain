@@ -34,7 +34,7 @@ class MemoryWriteTest(unittest.TestCase):
         ConfigStore(self.data).update(mutate)
 
     def call(self, op, payload, operation_id=None):
-        request = {"rpp": "1.1", "op": op, "payload": payload}
+        request = {"rpp": "1", "op": op, "payload": payload}
         if operation_id:
             request["operation_id"] = operation_id
         return rpp.serve(json.dumps(request), data_root=str(self.data))
@@ -93,11 +93,6 @@ class MemoryWriteTest(unittest.TestCase):
         refused = self.call("memory.write.revert", {"token": token, "operation_id": "op-write-0003"})
         self.assertEqual(refused["error"]["code"], "NOTE_CHANGED")
         self.assertTrue(path.exists())
-
-    def test_v10_manifest_does_not_list_write(self):
-        old = rpp.serve(json.dumps({"rpp": "1.0", "op": "manifest"}), data_root=str(self.data))["result"]
-        self.assertNotIn("memory_write", old["capabilities"])
-
 
 if __name__ == "__main__":
     unittest.main()

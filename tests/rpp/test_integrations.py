@@ -27,7 +27,7 @@ class IntegrationPlanTest(unittest.TestCase):
         self.addCleanup(patcher.stop)
 
     def plan(self, desired, **target):
-        request = {"rpp": "1.1", "op": "integrations.plan", "operation_id": None,
+        request = {"rpp": "1", "op": "integrations.plan", "operation_id": None,
                    "payload": {"target": {"vault_path": str(self.vault), "desired": desired, **target}}}
         return rpp.serve(json.dumps(request), data_root=self.data)
 
@@ -103,11 +103,6 @@ class IntegrationPlanTest(unittest.TestCase):
         dropped = self.plan({"global": True, "clients": ["claude"]})["result"]["changes"]
         self.assertEqual([c["target"] for c in dropped if c["action"] == "restore"], [str(codex)])
         self.assertEqual(codex.read_text(encoding="utf-8"), '{"owned": true}')
-
-    def test_v10_clients_cannot_use_it(self):
-        response = rpp.serve(json.dumps({"rpp": "1.0", "op": "integrations.plan", "operation_id": None, "payload": {}}), data_root=self.data)
-        self.assertEqual(response["error"]["code"], "UNSUPPORTED_OP")
-
 
 if __name__ == "__main__":
     unittest.main()

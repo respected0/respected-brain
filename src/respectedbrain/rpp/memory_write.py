@@ -1,4 +1,4 @@
-"""Authorized memory writes for other products (RPP 1.1 `memory.write`, `memory.write.revert`).
+"""Authorized memory writes for other products (RPP `memory.write`, `memory.write.revert`).
 
 A caller needs a grant token created with ``write: true``. The note storage itself lives in ``memory.inbox``;
 this module only authorizes the caller and validates the payload. Paths and vault identities are never accepted.

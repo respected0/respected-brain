@@ -1,4 +1,4 @@
-"""RPP 1.1 memory workspace ops for the Hub: `memory.search`, `memory.note.read`, `memory.capture.note`, `memory.briefing.run`.
+"""RPP memory workspace ops for the Hub: `memory.search`, `memory.note.read`, `memory.capture.note`, `memory.briefing.run`.
 
 These are the user's own actions (no grant token). The Hub's webview bridge blocks every `memory.*` op, so only the Hub's
 trusted commands reach them. Search shares the read-only, hash-verified pipeline of `memory.recall`; notes are only read or

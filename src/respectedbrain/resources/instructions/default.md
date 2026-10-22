@@ -13,7 +13,7 @@ Python veya kaynak checkout istemez. Önce kayıtlı kimliği doğrula:
 
 ```text
 respectedbrain vault list
-respectedbrain configure
+respectedbrain config
 ```
 
 Skill komutlarındaki `UUID` yer tutucusunu bu listedeki gerçek kimlikle değiştir. Birden fazla

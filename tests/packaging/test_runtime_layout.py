@@ -36,7 +36,7 @@ with mock.patch.object(Path, 'home', side_effect=AssertionError('home lookup')),
     importlib.import_module('respectedbrain.' + sys.argv[1])
 assert sys.path == before
 '''
-        for name in ("core.paths", "installation.setup", "installation.update", "installation.uninstall", "integrations.rendering"):
+        for name in ("core.paths", "installation.setup", "installation.uninstall", "integrations.rendering"):
             with self.subTest(name=name):
                 checked = subprocess.run([sys.executable, '-c', probe, name], cwd=ROOT,
                                          capture_output=True, text=True, timeout=30)
@@ -52,11 +52,6 @@ assert sys.path == before
         for value in output.values():
             self.assertIn(self.ctx.paths.vault_id.encode(), value)
             self.assertNotIn(b".py", value)
-
-    def test_summary_configure_retains_provider_without_legacy_write(self):
-        with mock.patch.object(cli, "_dispatch", return_value=0) as dispatch:
-            self.assertEqual(cli.main(["configure", "--summary-provider", "cursor"]), 0)
-        self.assertEqual(dispatch.call_args.args[0].summary_provider, "cursor")
 
 if __name__ == "__main__":
     unittest.main()

@@ -43,7 +43,7 @@ def prove_ownership(path: Path, manifest: OwnershipManifest) -> bool:
     try:
         safe_path(path)
         return path.is_file() and any(item.path == path and item.sha256 == digest(path)
-                                      and item.role in ("application", "technical", "uninstaller", "launcher")
+                                      and item.role in ("application", "technical", "launcher")
                                       and (item.mode is None and item.role != "launcher" or item.mode == stat.S_IMODE(path.stat().st_mode))
                                       for item in manifest.files)
     except (OSError, OwnershipConflict):
@@ -98,7 +98,7 @@ def read_manifest(path: Path) -> OwnershipManifest:
             mode = row.get("mode")
             if (not target.is_absolute() or ".." in target.parts
                     or not isinstance(row["sha256"], str) or not re.fullmatch(r"[0-9a-f]{64}", row["sha256"])
-                    or row["role"] not in ("application", "technical", "uninstaller", "launcher")
+                    or row["role"] not in ("application", "technical", "launcher")
                     or mode is not None and (type(mode) is not int or not 0 <= mode <= 0o7777)
                     or target in file_paths):
                 raise ValueError("Invalid or duplicate owned file")

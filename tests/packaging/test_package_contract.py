@@ -120,7 +120,7 @@ print(respectedbrain.__version__)
             launcher = isolated / ('Scripts/respectedbrain.exe' if os.name == 'nt' else 'bin/respectedbrain')
             entry = run_package_step('console-cli', [str(launcher), '--version'], cwd=home, env=env,
                                    capture_output=True, text=True, encoding='utf-8')
-            self.assertEqual((module.returncode, module.stdout), (0, EXPECTED_VERSION + '\n'))
+            self.assertEqual((module.returncode, module.stdout), (0, 'respected-secondbrain ' + EXPECTED_VERSION + '\n'))
             self.assertEqual((entry.returncode, entry.stdout), (module.returncode, module.stdout))
 
     def test_materialized_resource_canonicalizes_its_owned_temp_allocation(self):

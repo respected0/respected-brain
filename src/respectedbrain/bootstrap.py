@@ -22,10 +22,10 @@ def application_roots(*, env: Mapping[str, str] | None = None) -> Roots:
 
 
 def bootstrap(*, vault: Path | None = None, vault_id: str | None = None,
-              env: Mapping[str, str] | None = None) -> AppContext:
+              env: Mapping[str, str] | None = None, allow_missing_vault: bool = False) -> AppContext:
     values = os.environ if env is None else env
     roots = application_roots(env=values)
-    return build_context(roots, ConfigStore(roots.data_root), vault=vault, vault_id=vault_id, env=values)
+    return build_context(roots, ConfigStore(roots.data_root), vault=vault, vault_id=vault_id, env=values, allow_missing_vault=allow_missing_vault)
 
 
 def launcher_argv(*, env: Mapping[str, str] | None = None) -> tuple[str, ...]:

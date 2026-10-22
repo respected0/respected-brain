@@ -124,7 +124,6 @@ class OperationResult:
     success: bool
     tx_id: str
     conflicts: tuple[str, ...]
-    pending: bool = False
 
     @classmethod
     def failed(cls, tx, error) -> "OperationResult":
