@@ -9,7 +9,7 @@ from .backend import canonical_json
 from .global_config import *
 from .plugin import bundle_root, bundle_writes, register_claude, register_codex
 from .mcp.tools import WRITE_TOOLS, tool_definitions
-from .planning import _Planner, _assert_owned_replacement, _recorded_owner, _runtime_path, bare_command_text, bridge_argv, command_text, launch_argv, validate_profile
+from .planning import _Planner, _assert_owned_replacement, _recorded_owner, _runtime_path, bare_command_text, bridge_argv, codex_command_text, command_text, launch_argv, validate_profile
 from respected_brain.core.errors import FoundationError, OwnershipConflict
 from respected_brain.core.platform import path_within_vault
 
@@ -50,7 +50,7 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED) -> tuple[list[tup
     vault, home, platform = ctx.paths.vault_root, profile.user_home, profile.platform
     rule = managed_rule(ctx)
     def bridge_command(vault, provider, event, platform):
-        render = bare_command_text if provider in ("antigravity", "codex") else command_text  # their shells (Antigravity re-escapes quotes, Codex runs PowerShell) reject a quoted program path
+        render = {"antigravity": bare_command_text, "codex": codex_command_text}.get(provider, command_text)  # their shells (Antigravity re-escapes quotes, Codex runs PowerShell) reject a quoted program path
         return render(profile, bridge_argv(ctx, profile, provider, event, global_hook=True))
     def load_object(path):
         document = planner.object(path)

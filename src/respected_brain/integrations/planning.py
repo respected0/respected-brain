@@ -96,6 +96,13 @@ def bare_command_text(profile, argv):
     return " ".join([head, rest])
 
 
+def codex_command_text(profile, argv):
+    """Codex runs hooks through PowerShell. Without a quote-free form (a spaced path with no 8.3 name) the quoted path
+    still runs behind PowerShell's call operator."""
+    text = bare_command_text(profile, argv)
+    return "& " + text if profile.platform == "windows-native" and text.startswith('"') else text
+
+
 class _Planner:
     def __init__(self, backend):
         self.backend = backend

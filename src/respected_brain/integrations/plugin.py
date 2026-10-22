@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import subprocess
+from pathlib import Path
 from respected_brain import __version__
 
 PLUGIN = "respected-brain"
@@ -72,6 +73,8 @@ SKIP_ENV = "RESPECTED_SKIP_CLIENT_PLUGINS"  # set by the test sandbox so no suit
 def _run_cli(client, commands, home, which, run, *, stop_on_failure):
     executable = which(client)
     env = {**os.environ, "HOME": str(home), "USERPROFILE": str(home)}
+    if client == "codex":  # Codex on Windows reads the Known Folder, not USERPROFILE: name its home explicitly
+        env["CODEX_HOME"] = str(Path(home) / ".codex")
     failed = []
     for args in commands if executable else ():
         try:

@@ -59,6 +59,8 @@ class InstallPluginsTest(unittest.TestCase):
         self.assertEqual([c[1:3] for c in commands], [["plugin", "marketplace"], ["plugin", "install"], ["plugin", "add"]])
         self.assertEqual(commands[1][3], "respected-brain@respected-brain")
         self.assertEqual(run.call_args.kwargs["env"]["USERPROFILE"], str(self.home))
+        self.assertEqual(run.call_args.kwargs["env"]["CODEX_HOME"], str(self.home / ".codex"))
+        self.assertNotEqual(run.call_args_list[0].kwargs["env"].get("CODEX_HOME"), str(self.home / ".codex"))  # only Codex gets it
 
     def test_missing_cli_unselected_client_and_disabled_global_are_skipped(self):
         from unittest import mock

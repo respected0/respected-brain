@@ -191,6 +191,7 @@ sistemini kanıtlamaz. Hub tarafındaki uçtan uca testler gerçek kurucuyu kull
 | Kod imzası (Authenticode) | yok; SmartScreen uyarır |
 | macOS, Linux, WSL | kod ve betikler var; derlenmez, CI'da test edilmez |
 | Gemini CLI, Cursor | yalnızca test verileriyle; Claude Code, Codex ve Antigravity gerçek oturumla sınandı (Windows). Codex eklenti hook'ları kişinin onayından (`/hooks`) sonra çalışır ve içerik değişince onay düşer |
+| Boşluklu program yolu | Codex ve Antigravity hook komutları tırnaksız olmalı: boşluklu yol Windows'un 8.3 kısa adıyla yazılır. Kısa ad yoksa Codex `& "yol"` biçimine döner, Antigravity (tırnakları yeniden kaçırır) ve WSL profili çalışmaz |
 | Dizin anlık değil | oturum dışı düzenlemeler sonraki oturumda ya da günlük görevde dizine girer |
 | Hafıza izni | `settings.apply` yapabilen herkes izin oluşturabilir (aynı kullanıcı hesabı) |
 | Anlamsal arama | her sorguda sunucu başlar; karma sonuçlarda alaka eşiği yok; yalnızca Windows x64 çalışma ortamı |
