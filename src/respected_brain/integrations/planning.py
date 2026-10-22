@@ -152,7 +152,15 @@ def _recorded_owner(ctx, planner, path, current, kind="file"):
         raise OwnershipConflict("Invalid integration ownership manifest") from error
 
 
+def _same_json(current, baseline):
+    """The client only reformatted our JSON file (Antigravity minifies its tool definitions): same data is not a user change."""
+    try:
+        return json.loads(current.decode("utf-8-sig")) == json.loads(baseline.decode("utf-8-sig"))
+    except (ValueError, UnicodeDecodeError):
+        return False
+
+
 def _assert_owned_replacement(ctx, planner, path, baseline, *, kind="file"):
     current = planner.read(path, kind)
-    if current is not None and current != baseline and not _recorded_owner(ctx, planner, path, current, kind):
+    if current is not None and current != baseline and not _same_json(current, baseline) and not _recorded_owner(ctx, planner, path, current, kind):
         raise OwnershipConflict(f"Unowned or user-changed integration file: {path}")
