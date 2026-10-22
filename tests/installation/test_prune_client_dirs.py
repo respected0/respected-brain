@@ -1,7 +1,7 @@
 import tempfile, unittest
 from pathlib import Path
 
-from respectedbrain.installation.uninstall import prune_empty_client_dirs
+from respected_brain.installation.uninstall import prune_empty_client_dirs
 
 
 class PruneClientDirsTest(unittest.TestCase):

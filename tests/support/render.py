@@ -1,8 +1,8 @@
 """Fresh-vault project hook files for tests that need a vault carrying real provider manifests."""
 import json
 
-from respectedbrain.integrations.backend import IntegrationProfile
-from respectedbrain.integrations.rendering import _Planner, _global_writes, validate_profile
+from respected_brain.integrations.backend import IntegrationProfile
+from respected_brain.integrations.rendering import _Planner, _global_writes, validate_profile
 
 _FILES = {".claude/settings.json": ".claude/settings.json", ".codex/hooks.json": ".codex/hooks.json", ".cursor/hooks.json": ".cursor/hooks.json",
           ".gemini/config/hooks.json": ".agents/hooks.json", ".gemini/settings.json": ".gemini/settings.json"}

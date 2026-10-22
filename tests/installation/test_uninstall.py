@@ -2,14 +2,14 @@
 import json
 import unittest
 from unittest import mock
-from respectedbrain.core.config import ConfigStore
-from respectedbrain.vault.registry import build_context
-from respectedbrain.installation.uninstall import uninstall
-from respectedbrain.installation.ownership import OwnershipManifest,read_manifest,manifest_document
-from respectedbrain.integrations.backend import ExternalChange
+from respected_brain.core.config import ConfigStore
+from respected_brain.vault.registry import build_context
+from respected_brain.installation.uninstall import uninstall
+from respected_brain.installation.ownership import OwnershipManifest,read_manifest,manifest_document
+from respected_brain.integrations.backend import ExternalChange
 from tests.installation import test_setup as setup_support
 from tests.support.files import snapshot
-from respectedbrain import cli
+from respected_brain import cli
 
 class TestUninstall(unittest.TestCase):
     def setUp(self):
@@ -45,7 +45,7 @@ class TestUninstall(unittest.TestCase):
     def test_notify_without_previous_chain_removes_only_owned_registration(self):
         key=self.home / ".codex/config.toml"
         original=b'model = "my-model"\n'
-        row=self.own("file",key,original,b'model = "my-model"\nnotify = ["respectedbrain.exe"]\n')
+        row=self.own("file",key,original,b'model = "my-model"\nnotify = ["respected-brain.exe"]\n')
         self.assertTrue(uninstall(self.ctx,backend=self.backend).success)
         self.assertEqual(self.backend.read(row.kind,row.key),original)
 
@@ -112,11 +112,11 @@ class TestUninstall(unittest.TestCase):
         self.assertEqual(unknown.read_bytes(),b"user")
 
     def test_cli_keeps_data_unless_purge_and_repair_takes_no_package(self):
-        from respectedbrain.installation.transaction import OperationResult
+        from respected_brain.installation.transaction import OperationResult
         success = OperationResult(True, "fixture", ())
-        with mock.patch("respectedbrain.cli.bootstrap", return_value=self.ctx), \
-             mock.patch("respectedbrain.installation.uninstall.uninstall", return_value=success) as remove, \
-             mock.patch("respectedbrain.installation.repair.repair", return_value=success):
+        with mock.patch("respected_brain.cli.bootstrap", return_value=self.ctx), \
+             mock.patch("respected_brain.installation.uninstall.uninstall", return_value=success) as remove, \
+             mock.patch("respected_brain.installation.repair.repair", return_value=success):
             self.assertEqual(cli.main(["uninstall"]), 0)
             self.assertFalse(remove.call_args.kwargs["purge_data"])
             self.assertEqual(cli.main(["uninstall", "--purge"]), 0)
@@ -140,7 +140,7 @@ class TestUninstall(unittest.TestCase):
 
     def test_cli_rejects_retired_purge_vault_and_wsl_worker_flags(self):
         before=snapshot(self.vault)
-        with mock.patch("respectedbrain.cli._dispatch",side_effect=AssertionError("mutation")):
+        with mock.patch("respected_brain.cli._dispatch",side_effect=AssertionError("mutation")):
             self.assertEqual(cli.main(["uninstall", "--purge-vault"]),2)
             self.assertEqual(cli.main(["uninstall", "--wsl-worker"]),2)
         self.assertEqual(snapshot(self.vault),before)

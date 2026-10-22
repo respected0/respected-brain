@@ -19,10 +19,10 @@ except ModuleNotFoundError:  # Python 3.10
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
-from respectedbrain.maintenance.ingestion.url_safety import validate_safe_url
-from respectedbrain.maintenance.ingestion.defuddle import clean_html
-from respectedbrain.maintenance.vault_linter import lint_vault
-from respectedbrain.maintenance.tiling_check import check_tiling, jaccard_similarity, tokenize
+from respected_brain.maintenance.ingestion.url_safety import validate_safe_url
+from respected_brain.maintenance.ingestion.defuddle import clean_html
+from respected_brain.maintenance.vault_linter import lint_vault
+from respected_brain.maintenance.tiling_check import check_tiling, jaccard_similarity, tokenize
 
 
 class TestUrlSafety(unittest.TestCase):
@@ -188,7 +188,7 @@ class TestVaultLinterAndTiling(unittest.TestCase):
         self.assertGreaterEqual(pair["similarity_pct"], 50.0)
 
     def test_vault_linter_ignores_code_block_wikilinks(self):
-        from respectedbrain.maintenance.vault_linter import lint_vault
+        from respected_brain.maintenance.vault_linter import lint_vault
         test_note = self.vault / "knowledge" / "code_example.md"
         test_note.write_text(
             '---\ntitle: "Kod Ornegi"\ncreated: "2026-09-07"\ntype: note\nstatus: active\n---\n\n'
@@ -212,22 +212,22 @@ class TestManifestAndTemplates(unittest.TestCase):
     """1.4.1 Sürüm Manifesti, Şablonlar ve Kurallar."""
 
     def test_package_version_modules_and_resources_have_one_source(self):
-        from respectedbrain import __version__
-        from respectedbrain.core.resources import ResourceCatalog
+        from respected_brain import __version__
+        from respected_brain.core.resources import ResourceCatalog
         import importlib
         self.assertRegex(__version__, r"^\d+\.\d+\.\d+(?:(?:a|b|rc)\d+|[.+-].*)?$")  # PEP 440 pre-releases: 0.1.0b1
         for name in ("maintenance.ingestion.url_safety", "maintenance.ingestion.defuddle", "maintenance.vault_linter", "maintenance.tiling_check"):
-            module = importlib.import_module("respectedbrain." + name)
-            self.assertTrue(Path(module.__file__).is_relative_to(ROOT / "src/respectedbrain"))
+            module = importlib.import_module("respected_brain." + name)
+            self.assertTrue(Path(module.__file__).is_relative_to(ROOT / "src/respected_brain"))
         catalog = ResourceCatalog()
-        for name in ("📋 Templates/Base.base", "📋 Templates/Canvas.canvas", ".obsidian/snippets/secondbrain-layout.css"):
+        for name in ("📋 Templates/Base.base", "📋 Templates/Canvas.canvas", ".obsidian/snippets/brain-layout.css"):
             self.assertTrue(catalog.read_text("vault-template/" + name))
 
     def test_new_skills_and_templates_exist(self):
         # Obsidian CSS Snippet
-        self.assertTrue((ROOT / "src/respectedbrain/resources/vault-template" / ".obsidian" / "snippets" / "secondbrain-layout.css").is_file())
+        self.assertTrue((ROOT / "src/respected_brain/resources/vault-template" / ".obsidian" / "snippets" / "brain-layout.css").is_file())
 
-        skills_root = ROOT / "src/respectedbrain/resources/skills"
+        skills_root = ROOT / "src/respected_brain/resources/skills"
 
         # Otonom araştırma skill'i
         self.assertTrue((skills_root / "otonom-arastirma" / "SKILL.md").is_file())
@@ -235,16 +235,16 @@ class TestManifestAndTemplates(unittest.TestCase):
         self.assertTrue((skills_root / "yazilim-kalite" / "SKILL.md").is_file())
 
         # Obsidian Base şablonu
-        self.assertTrue((ROOT / "src/respectedbrain/resources/vault-template" / "📋 Templates" / "Base.base").is_file())
+        self.assertTrue((ROOT / "src/respected_brain/resources/vault-template" / "📋 Templates" / "Base.base").is_file())
 
         # Sürüm dosyası
-        from respectedbrain import __version__
+        from respected_brain import __version__
         from packaging.version import Version
         self.assertEqual(__version__, str(Version(tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]["version"])))
-        self.assertFalse((ROOT / "src/respectedbrain/resources/vault-template" / ".respectedbrain-version").exists())
+        self.assertFalse((ROOT / "src/respected_brain/resources/vault-template" / ".respectedbrain-version").exists())
 
     def test_url_safety_blocks_rfc_internal_domains(self):
-        from respectedbrain.maintenance.ingestion.url_safety import validate_safe_url
+        from respected_brain.maintenance.ingestion.url_safety import validate_safe_url
         internal_domains = [
             "http://gateway.home.arpa",
             "https://server.corp",
@@ -279,14 +279,14 @@ class TestManifestAndTemplates(unittest.TestCase):
         self.assertIn("kimlik bilgisi", reason)
 
         # Köşeli parantezli IPv6 doğrudan is_private_or_reserved_ip kontrolü
-        from respectedbrain.maintenance.ingestion.url_safety import is_private_or_reserved_ip
+        from respected_brain.maintenance.ingestion.url_safety import is_private_or_reserved_ip
         self.assertTrue(is_private_or_reserved_ip("[::1]"))
         self.assertTrue(is_private_or_reserved_ip("[::ffff:127.0.0.1]"))
         self.assertFalse(is_private_or_reserved_ip("[2606:4700:4700::1111]"))
 
     def test_defuddle_fail_closed_import_protection(self):
         """When validate_safe_url fallback is called, it must fail closed (return False) rejecting URLs."""
-        from respectedbrain.maintenance.ingestion import defuddle as defuddle_mod
+        from respected_brain.maintenance.ingestion import defuddle as defuddle_mod
         from unittest import mock
 
         fallback_fn = lambda u: (False, "url_safety güvenlik modülü yüklenemedi; istek engellendi")

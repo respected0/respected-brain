@@ -1,13 +1,13 @@
-# SecondBrain komutları
+# Brain komutları
 
-Kurulu program: `%LOCALAPPDATA%\Respected\RespectedBrain\app\respectedbrain.exe` (PATH'e eklenmez; tam yolu kullanın).
-Kaynaktan: `python -m respectedbrain`. Linux'ta `~/.local/bin/respectedbrain`.
+Kurulu program: `%LOCALAPPDATA%\Respected\RespectedBrain\app\respected-brain.exe` (PATH'e eklenmez; tam yolu kullanın).
+Kaynaktan: `python -m respected_brain`. Linux'ta `~/.local/bin/respected-brain`.
 
 Ortak kurallar (üç ürün aynı, bkz. ekosistem kökündeki `docs/PRODUCT_CONTRACT.md`):
 
 - Çıktı UTF-8 JSON'dur. Hata: `{"error": {"code", "message", "hint"}}`.
 - Çıkış kodu: `0` başarı, `1` işlem başarısız, `2` kullanım ya da geçersiz ayar.
-- `--version` (`respected-secondbrain <sürüm>`), `--help` ve `<komut> --help` hiçbir şey kurmaz ya da yazmaz.
+- `--version` (`respected-brain <sürüm>`), `--help` ve `<komut> --help` hiçbir şey kurmaz ya da yazmaz.
 - Kasa isteyen komutlar `--vault <yol>` ya da `--vault-id <UUID>` alır (ikisi birden olmaz); verilmezse
   `RESPECTED_VAULT_PATH`, o da yoksa etkin kasa kullanılır.
 - `hook` ve `mcp` komutlarının stdout'u protokol çıktısıdır; tanı mesajları stderr'e ve `logs/` klasörüne gider.
@@ -79,4 +79,4 @@ açıksa ayrıca `respected_quick_capture` ve `respected_remember` (yalnızca `�
 | `backup_restic` | Restic yedeği, doğrulama, `--restore-to` ile geri yükleme | önizleme; `--apply` ile yedekler |
 | `publish_git_snapshot` | Kasanın sır taramasından geçmiş Git anlık görüntüsünü iter | önizleme; `--apply` ile commit + push |
 
-Her aracın seçenekleri: `respectedbrain maintenance ARAÇ --help`.
+Her aracın seçenekleri: `respected-brain maintenance ARAÇ --help`.

@@ -9,11 +9,11 @@ import tempfile
 import unittest
 from unittest import mock
 
-from respectedbrain.core.context import AppContext
-from respectedbrain.core.paths import AppPaths
-from respectedbrain.core.resources import ResourceCatalog
-from respectedbrain.core.errors import OwnershipConflict
-from respectedbrain.integrations.backend import ExternalChange, IntegrationProfile
+from respected_brain.core.context import AppContext
+from respected_brain.core.paths import AppPaths
+from respected_brain.core.resources import ResourceCatalog
+from respected_brain.core.errors import OwnershipConflict
+from respected_brain.integrations.backend import ExternalChange, IntegrationProfile
 from tests.support.files import snapshot
 from tests.support.fakes import IntegrationFixture
 
@@ -23,7 +23,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
     def test_external_lock_and_override_junctions_are_refused(self):
         import os
         import subprocess
-        renderer = importlib.import_module('respectedbrain.integrations.rendering')
+        renderer = importlib.import_module('respected_brain.integrations.rendering')
         with tempfile.TemporaryDirectory() as outside_name:
             outside = Path(outside_name)
             (outside / 'instructions.md').write_text('outside instructions', encoding='utf-8')
@@ -51,22 +51,22 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
 
     def test_native_command_timeout_is_bounded_and_reported(self):
         import subprocess
-        from respectedbrain.core.errors import FoundationError
+        from respected_brain.core.errors import FoundationError
         backend = self.backend()
-        with mock.patch.object(backend, '_windows'), mock.patch('respectedbrain.integrations.backend.shutil.which', return_value='powershell.exe'), mock.patch('respectedbrain.integrations.backend.subprocess.run', side_effect=subprocess.TimeoutExpired('powershell.exe', 30)) as command:
+        with mock.patch.object(backend, '_windows'), mock.patch('respected_brain.integrations.backend.shutil.which', return_value='powershell.exe'), mock.patch('respected_brain.integrations.backend.subprocess.run', side_effect=subprocess.TimeoutExpired('powershell.exe', 30)) as command:
             with self.assertRaises(FoundationError):
                 backend._powershell('fixture')
             self.assertEqual(command.call_args.kwargs['timeout'], 30)
 
     def test_disabled_options_produce_no_new_registration(self):
-        renderer = importlib.import_module('respectedbrain.integrations.rendering')
+        renderer = importlib.import_module('respected_brain.integrations.rendering')
         before = snapshot(self.root)
         changes = renderer.plan_integrations(self.ctx, self.profile, {'global': False, 'mcp': False, 'schedule': False, 'shortcut': False}, self.backend())
         self.assertEqual(changes, ())
         self.assertEqual(snapshot(self.root), before)
 
     def test_native_hooks_and_notify_preserve_existing_user_data(self):
-        renderer = importlib.import_module('respectedbrain.integrations.rendering')
+        renderer = importlib.import_module('respected_brain.integrations.rendering')
         codex = self.home / '.codex'
         codex.mkdir()
         original = 'My own rules\n'
@@ -79,7 +79,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertTrue(after[str(codex / 'AGENTS.md')].startswith(original))
         hooks = json.loads(after[str(codex / 'hooks.json')])
         command = hooks['hooks']['SessionStart'][-1]['hooks'][0]['command']
-        self.assertIn(str(self.app / 'respectedbrain.exe'), command)
+        self.assertIn(str(self.app / 'respected-brain.exe'), command)
         self.assertIn(self.ctx.paths.vault_id, command)
         self.assertNotIn('.py', command)
         self.assertNotIn('python', command)
@@ -88,7 +88,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(json.loads(after[str(chain)])['argv'], ['other-notifier.exe', 'turn-ended'])
 
     def test_native_mcp_preserves_unknown_servers_and_settings(self):
-        renderer = importlib.import_module('respectedbrain.integrations.rendering')
+        renderer = importlib.import_module('respected_brain.integrations.rendering')
         path = self.home / '.cursor/mcp.json'
         path.parent.mkdir()
         path.write_text(json.dumps({'mcpServers': {'other': {'command': 'other.exe'}}, 'setting': {'keep': True}}), encoding='utf-8')
@@ -98,7 +98,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(document['mcpServers']['other'], {'command': 'other.exe'})
         self.assertEqual(document['setting'], {'keep': True})
         entry = document['mcpServers']['respected-vault']
-        self.assertEqual(entry['command'], str(self.app / 'respectedbrain.exe'))
+        self.assertEqual(entry['command'], str(self.app / 'respected-brain.exe'))
         self.assertEqual(entry['args'], ['mcp', '--vault-id', self.ctx.paths.vault_id])
 
     def test_backend_cas_restore_does_not_overwrite_user_changed_record(self):
@@ -122,7 +122,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(path.read_bytes(), b'user edit')
 
     def test_uuid_instruction_override_precedes_package_defaults(self):
-        renderer = importlib.import_module('respectedbrain.integrations.rendering')
+        renderer = importlib.import_module('respected_brain.integrations.rendering')
         override = self.ctx.paths.overrides_dir / 'instructions.md'
         override.parent.mkdir(parents=True)
         override.write_text('My personalized instructions', encoding='utf-8')
@@ -131,7 +131,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertIn('My personalized instructions', agents.after.decode('utf-8'))
 
     def test_hook_protocol_uses_selected_uuid_state_and_stable_session_id(self):
-        bridge = importlib.import_module('respectedbrain.integrations.hooks.bridge')
+        bridge = importlib.import_module('respected_brain.integrations.hooks.bridge')
         before_app = snapshot(self.app)
         stdout = io.StringIO()
         with contextlib.redirect_stdout(stdout):
@@ -144,7 +144,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(snapshot(self.app), before_app)
 
     def test_mcp_stdout_is_protocol_only(self):
-        module = importlib.import_module('respectedbrain.integrations.mcp.server')
+        module = importlib.import_module('respected_brain.integrations.mcp.server')
         output = io.StringIO()
         incoming = io.StringIO(json.dumps({'jsonrpc': '2.0', 'id': 1, 'method': 'initialize'}) + '\n')
         with mock.patch('sys.stdin', incoming), contextlib.redirect_stdout(output):
@@ -156,7 +156,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertNotIn('DEBUG', output.getvalue())
 
     def test_schedule_uses_stable_uuid_and_provider_free_launcher(self):
-        from respectedbrain.integrations.scheduling.service import plan_schedule
+        from respected_brain.integrations.scheduling.service import plan_schedule
         backend = mock.Mock()
         backend.read.return_value = None
         changes = plan_schedule(self.ctx, self.profile, backend)
@@ -164,7 +164,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(changes[0].kind, "task")
         self.assertIn(self.ctx.paths.vault_id, changes[0].key)
         text = changes[0].after.decode("utf-8")
-        self.assertIn("respectedbrain.exe", text)
+        self.assertIn("respected-brain.exe", text)
         self.assertIn("briefing --vault-id", text)
         self.assertNotIn("python", text)
         self.assertNotIn(".py", text)
@@ -172,18 +172,18 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertIn("StartWhenAvailable", text)
 
     def test_codex_notify_preserves_chained_json_argument_without_path_rewrite(self):
-        from respectedbrain.integrations.hooks.codex_notify import dispatch
+        from respected_brain.integrations.hooks.codex_notify import dispatch
         chain = self.ctx.paths.state_dir / "codex-notify-chain.json"
         chain.parent.mkdir(parents=True)
         chain.write_text(json.dumps({"argv": ["other.exe", "turn-ended"]}), encoding="utf-8")
         payload = json.dumps({"thread-id": "session", "client": "codex_exec", "cwd": "C:\\project"})
-        with mock.patch("respectedbrain.integrations.hooks.codex_notify.subprocess.Popen") as spawn:
+        with mock.patch("respected_brain.integrations.hooks.codex_notify.subprocess.Popen") as spawn:
             result = dispatch(self.ctx, argv=["--chain-file", str(chain), payload], stdin="")
         self.assertEqual(result, "")
         self.assertEqual(spawn.call_args.args[0], ["other.exe", "turn-ended", payload])
 
     def test_mcp_antigravity_schemas_are_planned_without_search_cache_creation(self):
-        from respectedbrain.integrations.rendering import plan_integrations
+        from respected_brain.integrations.rendering import plan_integrations
         (self.home / ".gemini").mkdir()
         before = snapshot(self.root)
         changes = plan_integrations(self.ctx, self.profile, {"mcp": True}, self.backend())
@@ -193,29 +193,29 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(snapshot(self.root), before)
 
     def test_wsl_profile_validates_launcher_inside_wsl(self):
-        from respectedbrain.integrations.rendering import plan_integrations
-        from respectedbrain.core.errors import FoundationError
-        profile = IntegrationProfile("windows-wsl", ("/opt/respectedbrain",), self.home)
-        with mock.patch("respectedbrain.integrations.rendering.subprocess.run", return_value=mock.Mock(returncode=1)) as runner:
+        from respected_brain.integrations.rendering import plan_integrations
+        from respected_brain.core.errors import FoundationError
+        profile = IntegrationProfile("windows-wsl", ("/opt/respected-brain",), self.home)
+        with mock.patch("respected_brain.integrations.rendering.subprocess.run", return_value=mock.Mock(returncode=1)) as runner:
             with self.assertRaises(FoundationError):
                 plan_integrations(self.ctx, profile, {"global": True}, self.backend())
         argv = runner.call_args.args[0]
         self.assertEqual(argv[:4], ["wsl.exe", "--", "sh", "-c"])
-        self.assertEqual(argv[-1], "/opt/respectedbrain")
+        self.assertEqual(argv[-1], "/opt/respected-brain")
 
     @unittest.skipUnless(__import__("os").name == "nt", "Windows native registration")
     def test_native_task_and_shortcut_roundtrip_canonical_ownership(self):
         import uuid
-        from respectedbrain.integrations.backend import ExternalChange, canonical_json, canonical_task_xml
-        from respectedbrain.integrations.scheduling.service import _windows_xml
-        from respectedbrain.core.errors import FoundationError
+        from respected_brain.integrations.backend import ExternalChange, canonical_json, canonical_task_xml
+        from respected_brain.integrations.scheduling.service import _windows_xml
+        from respected_brain.core.errors import FoundationError
         backend = self.backend()
         key = "RespectedBrain-FoundationTest-" + str(uuid.uuid4())
         try:
             backend._task_read("RespectedBrain-FoundationTest-Availability-" + str(uuid.uuid4()))
         except FoundationError as error:
             self.skipTest("Task Scheduler root is unavailable on this host: " + str(error))
-        after = canonical_task_xml(_windows_xml(str(self.app / "respectedbrain.exe"), "briefing --vault-id " + self.ctx.paths.vault_id))
+        after = canonical_task_xml(_windows_xml(str(self.app / "respected-brain.exe"), "briefing --vault-id " + self.ctx.paths.vault_id))
         try:
             backend.apply(ExternalChange("task", key, None, after))
             self.assertEqual(backend.read("task", key), after)
@@ -225,7 +225,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
             if backend.read("task", key) is not None:
                 backend._write("task", key, None)
         path = self.home / "Desktop/test.lnk"
-        descriptor = canonical_json({"target": str(self.app / "respectedbrain.exe"), "arguments": "serve --vault-id " + self.ctx.paths.vault_id, "working_directory": str(self.app), "description": "test", "icon_location": "", "window_style": 1, "hotkey": ""})
+        descriptor = canonical_json({"target": str(self.app / "respected-brain.exe"), "arguments": "serve --vault-id " + self.ctx.paths.vault_id, "working_directory": str(self.app), "description": "test", "icon_location": "", "window_style": 1, "hotkey": ""})
         try:
             backend.apply(ExternalChange("shortcut", str(path), None, descriptor))
             self.assertEqual(backend.read("shortcut", str(path)), descriptor)
@@ -237,7 +237,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
     def test_native_registry_preserves_unknown_typed_values_and_children(self):
         import uuid
         import winreg
-        from respectedbrain.integrations.backend import ExternalChange, canonical_json
+        from respected_brain.integrations.backend import ExternalChange, canonical_json
         backend = self.backend()
         key = "HKCU\\Software\\RespectedBrain-FoundationTest-" + str(uuid.uuid4())
         probe_name = "Software\\RespectedBrain-FoundationTest-Availability-" + str(uuid.uuid4())
@@ -259,19 +259,19 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
                 backend._write("registry", key, None)
 
     def test_systemd_backend_read_reports_actual_activation_and_propagates_failure(self):
-        from respectedbrain.integrations.backend import canonical_json
-        from respectedbrain.core.errors import FoundationError
+        from respected_brain.integrations.backend import canonical_json
+        from respected_brain.core.errors import FoundationError
         backend = self.backend()
         outputs = [mock.Mock(returncode=0, stdout=b"enabled\n", stderr=b""), mock.Mock(returncode=0, stdout=b"active\n", stderr=b"")]
-        with mock.patch("respectedbrain.integrations.backend.subprocess.run", side_effect=outputs):
+        with mock.patch("respected_brain.integrations.backend.subprocess.run", side_effect=outputs):
             self.assertEqual(backend.read("task", "systemd:respected-test.timer"), canonical_json({"enabled": True, "active": True}))
-        with mock.patch("respectedbrain.integrations.backend.subprocess.run", return_value=mock.Mock(returncode=1, stdout=b"", stderr=b"activation failed")):
+        with mock.patch("respected_brain.integrations.backend.subprocess.run", return_value=mock.Mock(returncode=1, stdout=b"", stderr=b"activation failed")):
             with self.assertRaises(FoundationError):
                 backend._write("task", "systemd:respected-test.timer", canonical_json({"enabled": True, "active": True}))
 
     def test_managed_identity_uses_registered_uppercase_settings(self):
-        from respectedbrain.core.context import AppContext
-        from respectedbrain.integrations.rendering import managed_rule
+        from respected_brain.core.context import AppContext
+        from respected_brain.integrations.rendering import managed_rule
         ctx = AppContext(self.ctx.paths, {"vaults": {self.ctx.paths.vault_id: {"settings": {"OS_NAME": "AdaOS", "COMPANION": "AdaCompanion", "USER_NAME": "Ada", "USER_BIO": "Researcher"}}}}, self.ctx.resources)
         text = managed_rule(ctx)
         self.assertIn("# AdaOS", text)
@@ -280,48 +280,48 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertNotIn("{{", text)
 
     def test_persistent_posix_registration_rejects_python_launcher(self):
-        from respectedbrain.integrations.rendering import plan_integrations
-        profile = IntegrationProfile("posix", ("python3", "-m", "respectedbrain"), self.home)
+        from respected_brain.integrations.rendering import plan_integrations
+        profile = IntegrationProfile("posix", ("python3", "-m", "respected_brain"), self.home)
         with self.assertRaises(ValueError):
             plan_integrations(self.ctx, profile, {"global": True}, self.backend())
 
     def test_reentrant_hook_does_not_create_any_technical_state(self):
-        from respectedbrain.integrations.hooks.bridge import dispatch
+        from respected_brain.integrations.hooks.bridge import dispatch
         before = snapshot(self.root)
         with mock.patch.dict("os.environ", {"RESPECTED_INVOKED_BY": "codex"}):
             self.assertEqual(dispatch(self.ctx, provider="cursor", event="prompt", argv=[], stdin="{}"), "")
         self.assertEqual(snapshot(self.root), before)
 
     def test_schedule_planner_refuses_unknown_record_at_uuid_task_name(self):
-        from respectedbrain.integrations.scheduling.service import plan_schedule, _windows_xml
-        from respectedbrain.integrations.backend import canonical_task_xml
+        from respected_brain.integrations.scheduling.service import plan_schedule, _windows_xml
+        from respected_brain.integrations.backend import canonical_task_xml
         backend = mock.Mock()
         backend.read.return_value = canonical_task_xml(_windows_xml("third-party.exe", "user task"))
         with self.assertRaises(OwnershipConflict):
             plan_schedule(self.ctx, self.profile, backend)
 
     def test_shortcut_planner_refuses_unrelated_existing_user_shortcut(self):
-        from respectedbrain.integrations.rendering import plan_integrations
-        from respectedbrain.integrations.backend import canonical_json
+        from respected_brain.integrations.rendering import plan_integrations
+        from respected_brain.integrations.backend import canonical_json
         backend = mock.Mock()
         backend.read.return_value = canonical_json({"target": "third-party.exe", "arguments": "user shortcut"})
         with self.assertRaises(OwnershipConflict):
             plan_integrations(self.ctx, self.profile, {"shortcut": True}, backend)
 
     def test_mcp_registration_preserves_unknown_entry_fields(self):
-        from respectedbrain.integrations.rendering import plan_integrations
+        from respected_brain.integrations.rendering import plan_integrations
         path = self.home / ".cursor/mcp.json"
         path.parent.mkdir()
-        entry = {"command": str(self.app / "respectedbrain.exe"), "args": ["mcp", "--vault-id", self.ctx.paths.vault_id], "env": {"USER_SETTING": "keep"}, "disabled": False}
+        entry = {"command": str(self.app / "respected-brain.exe"), "args": ["mcp", "--vault-id", self.ctx.paths.vault_id], "env": {"USER_SETTING": "keep"}, "disabled": False}
         path.write_text(json.dumps({"mcpServers": {"respected-vault": entry}}), encoding="utf-8")
         rows = plan_integrations(self.ctx, self.profile, {"mcp": True}, self.backend())
         row = next(row for row in rows if row.key == str(path))
         self.assertEqual(json.loads(row.after)["mcpServers"]["respected-vault"]["env"], {"USER_SETTING": "keep"})
 
     def test_global_skills_never_replace_unowned_or_user_changed_content(self):
-        from respectedbrain.integrations.rendering import plan_integrations
-        from respectedbrain.installation.ownership import OwnershipManifest, manifest_document
-        path = self.home / ".agents/skills/secondbrain-doktor/SKILL.md"
+        from respected_brain.integrations.rendering import plan_integrations
+        from respected_brain.installation.ownership import OwnershipManifest, manifest_document
+        path = self.home / ".agents/skills/brain-doktor/SKILL.md"
         path.parent.mkdir(parents=True)
         path.write_bytes(b"user custom skill")
         for owned in (False, True):
@@ -335,11 +335,11 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
             self.assertEqual(snapshot(self.root),before)
 
     def test_skill_upgrade_accepts_unchanged_recorded_ownership_and_package_baseline(self):
-        from respectedbrain.integrations.rendering import plan_integrations
-        from respectedbrain.installation.ownership import OwnershipManifest, manifest_document
-        path = self.home / ".agents/skills/secondbrain-doktor/SKILL.md"
+        from respected_brain.integrations.rendering import plan_integrations
+        from respected_brain.installation.ownership import OwnershipManifest, manifest_document
+        path = self.home / ".agents/skills/brain-doktor/SKILL.md"
         path.parent.mkdir(parents=True)
-        baseline = self.ctx.resources.read_text("skills/secondbrain-doktor/SKILL.md").encode()
+        baseline = self.ctx.resources.read_text("skills/brain-doktor/SKILL.md").encode()
         path.write_bytes(baseline)
         rows = plan_integrations(self.ctx,self.profile,{"global":True},self.backend())
         self.assertNotIn(str(path),{row.key for row in rows})
@@ -351,7 +351,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(next(row.after for row in rows if row.key==str(path)),baseline)
 
     def test_global_hooks_refuse_spoofed_managed_flags_and_preserve_empty_user_groups(self):
-        from respectedbrain.integrations.rendering import plan_integrations
+        from respected_brain.integrations.rendering import plan_integrations
         path=self.home / ".claude/settings.json"
         path.parent.mkdir()
         path.write_text(json.dumps({"hooks":{"SessionStart":[{"hooks":[{"command":"third-party.exe --global-hook --provider claude"}]}]}}),encoding="utf-8")
@@ -365,7 +365,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertTrue(after["custom"])
 
     def test_generated_mcp_tool_files_cannot_replace_unowned_content(self):
-        from respectedbrain.integrations.rendering import plan_integrations
+        from respected_brain.integrations.rendering import plan_integrations
         path=self.home / ".gemini/antigravity-ide/mcp/respected-vault/instructions.md"
         path.parent.mkdir(parents=True)
         path.write_bytes(b"my own MCP instructions")
@@ -375,7 +375,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(snapshot(self.root),before)
 
     def test_native_shortcut_opens_the_vault_through_the_public_open_command(self):
-        from respectedbrain.integrations.rendering import plan_integrations
+        from respected_brain.integrations.rendering import plan_integrations
         backend=mock.Mock()
         backend.read.return_value=None
         rows=plan_integrations(self.ctx,self.profile,{"shortcut":True},backend)
@@ -394,14 +394,14 @@ class HookCommandQuotingTest(unittest.TestCase):
         import shutil
         import subprocess
         from types import SimpleNamespace
-        from respectedbrain.integrations.rendering import command_text
+        from respected_brain.integrations.rendering import command_text
         profile = SimpleNamespace(platform="windows-native")
-        plain = command_text(profile, [r"C:\Apps\Respected\respectedbrain.exe", "hook", "--vault-id", "x"])
-        spaced = command_text(profile, [r"C:\Program Files\R\respectedbrain.exe", "hook"])
-        self.assertEqual(plain, r'"C:\Apps\Respected\respectedbrain.exe" hook --vault-id x')
-        self.assertEqual(spaced, r'"C:\Program Files\R\respectedbrain.exe" hook')
+        plain = command_text(profile, [r"C:\Apps\Respected\respected-brain.exe", "hook", "--vault-id", "x"])
+        spaced = command_text(profile, [r"C:\Program Files\R\respected-brain.exe", "hook"])
+        self.assertEqual(plain, r'"C:\Apps\Respected\respected-brain.exe" hook --vault-id x')
+        self.assertEqual(spaced, r'"C:\Program Files\R\respected-brain.exe" hook')
         bash = shutil.which("bash")
         if bash:  # the quoted form survives the shell that Claude Code uses on Windows
-            echoed = subprocess.run([bash, "-c", plain.replace("respectedbrain.exe", "x").replace('"C:', 'echo "C:', 1)], capture_output=True, text=True).stdout
+            echoed = subprocess.run([bash, "-c", plain.replace("respected-brain.exe", "x").replace('"C:', 'echo "C:', 1)], capture_output=True, text=True).stdout
             self.assertIn(r"C:\Apps\Respected\x", echoed)
         self.assertEqual(command_text(SimpleNamespace(platform="posix"), ["/a b/x", "hook"]), "'/a b/x' hook")

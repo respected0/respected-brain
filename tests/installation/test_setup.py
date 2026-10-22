@@ -5,10 +5,10 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from respectedbrain.core.paths import Roots
-from respectedbrain.core.config import ConfigStore
-from respectedbrain.installation.setup import setup
-from respectedbrain.installation.ownership import read_manifest
+from respected_brain.core.paths import Roots
+from respected_brain.core.config import ConfigStore
+from respected_brain.installation.setup import setup
+from respected_brain.installation.ownership import read_manifest
 from tests.support.packages import seed_package
 from tests.support.files import snapshot, note_hashes
 from tests.support.fakes import Backend
@@ -26,7 +26,7 @@ class FoundationSetupTest(unittest.TestCase):
         self.roots = Roots(self.root / "app", self.root / "data", self.vault)
         seed_package(self.roots.app_root)  # what the installer lays down
         self.backend = Backend()
-        self.health = patch("respectedbrain.installation.payload.validate_installed_health", return_value=None)
+        self.health = patch("respected_brain.installation.payload.validate_installed_health", return_value=None)
         self.health.start()
         self.addCleanup(self.health.stop)
 
@@ -66,7 +66,7 @@ class FoundationSetupTest(unittest.TestCase):
 
     def test_repeated_setup_refuses_manifest_file_outside_program_root(self):
         from dataclasses import replace
-        from respectedbrain.installation.ownership import OwnedFile, digest, manifest_document
+        from respected_brain.installation.ownership import OwnedFile, digest, manifest_document
         self.assertTrue(self.install().success)
         sentinel = self.root / 'human-note.md'
         sentinel.write_bytes(b'user')
@@ -93,14 +93,14 @@ class FoundationSetupTest(unittest.TestCase):
         self.assertTrue(self.install().success)
         self.assertEqual(note_hashes(self.vault), before)
         manifest = read_manifest(self.roots.data_root / "install-manifest.json")
-        self.assertIn(self.roots.app_root / "respectedbrain.exe", {item.path for item in manifest.files if item.role == "application"})
+        self.assertIn(self.roots.app_root / "respected-brain.exe", {item.path for item in manifest.files if item.role == "application"})
         self.assertFalse(any(item.path.is_relative_to(self.vault) for item in manifest.files))
 
     def test_missing_or_changed_program_is_not_success(self):
-        (self.roots.app_root / "respectedbrain.exe").write_bytes(b"changed")
+        (self.roots.app_root / "respected-brain.exe").write_bytes(b"changed")
         self.assertFalse(self.install().success)
         self.assertFalse(self.vault.exists())
-        (self.roots.app_root / "respectedbrain.exe").unlink()
+        (self.roots.app_root / "respected-brain.exe").unlink()
         self.assertFalse(self.install().success)
 
     def test_busy_writer_blocks_setup(self):
@@ -124,14 +124,14 @@ class FoundationSetupTest(unittest.TestCase):
         self.assertEqual(snapshot(self.root), before)
 
     def test_fresh_native_install_renders_global_hooks_for_final_registered_uuid(self):
-        from respectedbrain.integrations.backend import NativeBackend
+        from respected_brain.integrations.backend import NativeBackend
         self.backend = NativeBackend(self.roots.data_root)
         self.assertTrue(self.install(**{"integrations.global": True}).success)
         identity = json.loads((self.vault / ".respected.json").read_text())["vault_id"]
         content = self.global_hooks()
         self.assertIn(identity, content)
-        self.assertIn(str(self.roots.app_root / "respectedbrain.exe").replace("\\", "\\\\"), content)
-        self.assertIn("respectedbrain.exe", content)
+        self.assertIn(str(self.roots.app_root / "respected-brain.exe").replace("\\", "\\\\"), content)
+        self.assertIn("respected-brain.exe", content)
         self.assertNotIn("python", content)
 
     def test_reinstall_preserves_user_note_and_project_config_bytes(self):
@@ -176,15 +176,15 @@ class FoundationSetupTest(unittest.TestCase):
         self.assertTrue(records)
         for record in records:
             command = record["mcpServers"]["respected-vault"]
-            self.assertEqual(command["command"], str(self.roots.app_root / "respectedbrain.exe"))
+            self.assertEqual(command["command"], str(self.roots.app_root / "respected-brain.exe"))
             self.assertEqual(command["args"][0], "mcp")
             self.assertIn("--vault-id", command["args"])
 
     def test_vault_gets_no_local_hook_folders_and_notes_survive_maintenance(self):
-        from respectedbrain.integrations.backend import NativeBackend
-        from respectedbrain.installation.repair import repair
-        from respectedbrain.installation.uninstall import uninstall
-        from respectedbrain.vault.registry import build_context
+        from respected_brain.integrations.backend import NativeBackend
+        from respected_brain.installation.repair import repair
+        from respected_brain.installation.uninstall import uninstall
+        from respected_brain.vault.registry import build_context
         names = ('.agents/hooks.json', '.claude/settings.json', '.codex/hooks.json', '.cursor/hooks.json', '.gemini/settings.json')
         for purge in (True, False):
             with self.subTest(purge=purge):
@@ -204,13 +204,13 @@ class FoundationSetupTest(unittest.TestCase):
                 result = uninstall(ctx, backend=backend, purge_data=purge)
                 self.assertTrue(result.success, result.conflicts)
                 self.assertEqual(note_hashes(roots.default_vault), notes)
-                self.assertTrue((roots.app_root / 'respectedbrain.exe').is_file(), "the program is the installer's to remove")
+                self.assertTrue((roots.app_root / 'respected-brain.exe').is_file(), "the program is the installer's to remove")
                 self.assertFalse((roots.data_root / 'install-manifest.json').exists())
 
     def test_install_rolls_back_when_install_health_fails(self):
-        from respectedbrain.integrations.backend import NativeBackend
+        from respected_brain.integrations.backend import NativeBackend
         self.backend = NativeBackend(self.roots.data_root)
-        with patch('respectedbrain.installation.payload.validate_installed_health', side_effect=OSError('health failure')):
+        with patch('respected_brain.installation.payload.validate_installed_health', side_effect=OSError('health failure')):
             result = self.install()
         self.assertFalse(result.success)
         self.assertEqual(result.conflicts, ('health failure',))

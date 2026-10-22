@@ -1,18 +1,18 @@
-# SecondBrain kullanım rehberi
+# Brain kullanım rehberi
 
 Kurulumdan kaldırmaya kadar kişinin yapacağı her şey. Komutların tam listesi [COMMANDS.md](COMMANDS.md), iç yapı
 [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## 1. Kurulum (Windows)
 
-`RespectedSecondBrain-Windows-Setup.exe` kullanıcı başına kurulur, yönetici izni istemez, Python gerektirmez. İlk sayfada
+`RespectedBrain-Windows-Setup.exe` kullanıcı başına kurulur, yönetici izni istemez, Python gerektirmez. İlk sayfada
 iki yol vardır:
 
-- **Respected Hub ile devam et (önerilen):** kurucu en güncel Hub'ı indirip kurar ve SecondBrain'i Hub'ın kurulum
+- **Respected Hub ile devam et (önerilen):** kurucu en güncel Hub'ı indirip kurar ve Brain'i Hub'ın kurulum
   sayfasında açar. Sorular orada sorulur, kurulumu Hub aynı kurucuyla yapar.
-- **Yalnızca SecondBrain:** kurucu sırayla sorar:
+- **Yalnızca Brain:** kurucu sırayla sorar:
   - **Kimlik:** adınız, asistanınızın adı, kısa bir tanıtım. Asistan ve sabah özeti size bu adla hitap eder.
-  - **Not kasası:** yeni boş bir klasör ya da daha önce SecondBrain'in kullandığı bir kasa. Dolu ama SecondBrain'e ait
+  - **Not kasası:** yeni boş bir klasör ya da daha önce Brain'in kullandığı bir kasa. Dolu ama Brain'e ait
     olmayan bir klasöre şablon yazılmaz.
   - **Bağlantılar:** hangi AI araçlarının oturumlarının yakalanacağı, hafızanın MCP sunucusu olarak sunulup sunulmayacağı,
     sabah özeti görevi, masaüstü kısayolu.
@@ -24,7 +24,7 @@ değişiklikleri geri alır; kurucu yeniden çalıştırılabilir. Yüklü uygul
 Sessiz kurulum aynı ayarları anahtarlarla alır (anahtarlar: bölüm 6):
 
 ```text
-RespectedSecondBrain-Windows-Setup.exe /VERYSILENT /VAULT="D:\Notlar\RespectedOS" /SET=user_name=Ayşe /SET=assistant_name=Jarvis /SET=integrations.mcp=true
+RespectedBrain-Windows-Setup.exe /VERYSILENT /VAULT="D:\Notlar\RespectedOS" /SET=user_name=Ayşe /SET=assistant_name=Jarvis /SET=integrations.mcp=true
 ```
 
 AI özetleri için kullanmak istediğiniz aracın (Claude Code, Codex, Gemini CLI…) komut satırında oturum açık olmalıdır.
@@ -39,15 +39,15 @@ Kurulum betikleri var ama **doğrulanmadı**. Dağıtımın açılmış klasör�
 ./setup.sh --uninstall [--purge]
 ```
 
-Program Linux'ta `~/.local/lib/respectedbrain`, komut `~/.local/bin/respectedbrain`; macOS'ta
-`~/Applications/RespectedBrain.app`. Veri Linux'ta `$XDG_DATA_HOME/respectedbrain` (yoksa `~/.local/share/respectedbrain`),
+Program Linux'ta `~/.local/lib/respected-brain`, komut `~/.local/bin/respected-brain`; macOS'ta
+`~/Applications/RespectedBrain.app`. Veri Linux'ta `$XDG_DATA_HOME/respected-brain` (yoksa `~/.local/share/respected-brain`),
 macOS'ta `~/Library/Application Support/RespectedBrain`.
 
 ## 2. Kurucuyu yeniden çalıştırmak
 
 Ürün kuruluyken kurucu tek bir sayfa gösterir:
 
-- **Onar / güncelle:** program dosyaları bu kurucudaki sürümle yenilenir, ardından `respectedbrain repair` kayıtları ve
+- **Onar / güncelle:** program dosyaları bu kurucudaki sürümle yenilenir, ardından `respected-brain repair` kayıtları ve
   bağlantıları doğrular. Ayarlar ve kasa korunur. **Güncelleme budur:** yeni sürümün kurucusunu çalıştırmak (sessiz:
   `/VERYSILENT`). Hub güncellemeyi kendisi önerir ve aynı kurucuyu çalıştırır.
 - **Ayarları değiştir:** Kimlik ve Bağlantılar sayfaları mevcut değerlerle açılır; kaydetmek `config set` ile aynıdır.
@@ -56,9 +56,9 @@ macOS'ta `~/Library/Application Support/RespectedBrain`.
 ## 3. İlk kontrol
 
 ```text
-respectedbrain --version
-respectedbrain vault list
-respectedbrain health
+respected-brain --version
+respected-brain vault list
+respected-brain health
 ```
 
 Kasayı Obsidian'da klasör olarak açın. `🔮 850-Companion` altında `Core.md` asistanın kimliği ve sizin hakkınızdaki
@@ -89,18 +89,18 @@ serbesttir. Kasa kökündeki `.respected.json` kasanın kalıcı kimliğini (UUI
 
 ## 5. Günlük kullanım
 
-- **Hub'da:** SecondBrain → Hafıza sayfasında not arama (tam metin; açıksa anlamsal), not okuma, hızlı not ve "sabah
+- **Hub'da:** Brain → Hafıza sayfasında not arama (tam metin; açıksa anlamsal), not okuma, hızlı not ve "sabah
   özetini şimdi çalıştır".
 - **AI aracında:** hook'lar oturum başında bağlam verir, oturum bitince özet yazar. MCP açıksa araç kasada arar ve not
   okur; `mcp_write` açıksa yalnızca gelen kutusuna geri alınabilir not yazar.
 - **Komutla:**
 
 ```text
-respectedbrain search "transaction rollback" --json
-respectedbrain compile --dry-run
-respectedbrain compile --before-date 2026-10-21
-respectedbrain briefing
-respectedbrain open
+respected-brain search "transaction rollback" --json
+respected-brain compile --dry-run
+respected-brain compile --before-date 2026-10-21
+respected-brain briefing
+respected-brain open
 ```
 
 `compile`, `--before-date` verilmezse günün henüz bitmemiş günlüğünü de derleyebilir; oturum kapanışındaki otomatik
@@ -108,7 +108,7 @@ derleme yalnızca önceki günleri alır. `briefing`, zamanı gelmişse sabah ö
 özet dosyasını yazıp 1 ile çıkabilir. Bu yüzden dosyanın varlığı her adımın başarılı olduğunu göstermez. Özetler model
 çıktısıdır; kararlarınızı doğru yansıttığını kontrol edin.
 
-**Anlamsal arama (isteğe bağlı):** Hub → SecondBrain → Ayarlar → "Anlamsal arama". Onaylarsanız sabitlenmiş bir
+**Anlamsal arama (isteğe bağlı):** Hub → Brain → Ayarlar → "Anlamsal arama". Onaylarsanız sabitlenmiş bir
 llama.cpp çalışma ortamı ve bge-m3 modeli (yaklaşık 460 MB) ürünün veri klasörüne indirilir, her sorguda yerelde çalışır;
 notlarınız bilgisayardan çıkmaz. Kapatılınca tam metin araması devam eder.
 
@@ -117,9 +117,9 @@ notlarınız bilgisayardan çıkmaz. Kapatılınca tam metin araması devam eder
 Ayarların tek kaynağı ürünün şemasıdır; kurucu, Hub ve komut aynı doğrulamayı kullanır.
 
 ```text
-respectedbrain config
-respectedbrain config get briefing_time
-respectedbrain config set user_name=Ayşe briefing_time=07:30
+respected-brain config
+respected-brain config get briefing_time
+respected-brain config set user_name=Ayşe briefing_time=07:30
 ```
 
 | Anahtar | Ne | Varsayılan |
@@ -176,9 +176,9 @@ açıksa önce seçilen, sonra varsayılan sıra (Claude, Codex, Antigravity, Ge
 atlanır; zaman aşımı, süreç hatası ya da geçici kota/ağ hatası sonraki adaya geçirir. `auto` modunda kimlik doğrulama
 hatası ve boş yanıt da sonraki adaya geçirir. Kota, yanıt veren aracın hesabından düşer.
 
-**Windows ve WSL:** varsayılan profil `windows-native` (kurulu `respectedbrain.exe`). WSL içindeki bir kuruluma bağlanmak
+**Windows ve WSL:** varsayılan profil `windows-native` (kurulu `respected-brain.exe`). WSL içindeki bir kuruluma bağlanmak
 için `setup --platform windows-wsl`: `wsl.exe` köprüsü kullanılır, yollar `/mnt/...` karşılığına çevrilir; WSL içinde
-çalışan bir `respectedbrain` ve aynı kasanın orada kaydı gerekir. Linux/macOS profili `posix`.
+çalışan bir `respected-brain` ve aynı kasanın orada kaydı gerekir. Linux/macOS profili `posix`.
 
 ## 8. Yedekleme
 
@@ -191,25 +191,25 @@ o işlemde değişen dosyaları tutar, kasa yedeği yerine geçmez.
 - **Restic (isteğe bağlı, `restic` kurulu olmalı):**
 
 ```text
-respectedbrain maintenance backup_restic --repo "<depo>" --password-file "<dosya>"            # önizleme
-respectedbrain maintenance backup_restic --repo "<depo>" --password-file "<dosya>" --apply    # yedekle ve doğrula
-respectedbrain maintenance backup_restic --repo "<depo>" --password-file "<dosya>" --restore-to "<yeni boş klasör>" [--snapshot <id>]
+respected-brain maintenance backup_restic --repo "<depo>" --password-file "<dosya>"            # önizleme
+respected-brain maintenance backup_restic --repo "<depo>" --password-file "<dosya>" --apply    # yedekle ve doğrula
+respected-brain maintenance backup_restic --repo "<depo>" --password-file "<dosya>" --restore-to "<yeni boş klasör>" [--snapshot <id>]
 ```
 
   Yedek, geri yüklenip her dosyanın SHA-256 değeri karşılaştırılarak doğrulanır. Geri yükleme yalnızca yeni ya da boş, kasa
   dışındaki bir klasöre yapılır; kasanın üzerine yazılmaz, gerekenleri siz kopyalarsınız. Gerçek restic 0.19.1 ile denendi.
-- **Git anlık görüntüsü:** `respectedbrain maintenance publish_git_snapshot` önizlemedir; `--apply` commit ve push yapar,
+- **Git anlık görüntüsü:** `respected-brain maintenance publish_git_snapshot` önizlemedir; `--apply` commit ve push yapar,
   yani veriyi dışarı gönderir. Yayından önce dosya adları ve içerik sır taramasından geçer; tanınmayan bir sır biçimi
   kaçabilir. Özel depo olması notlarda sır olmadığı anlamına gelmez.
 
 ## 9. Onarım ve kaldırma
 
 ```text
-respectedbrain repair      # program dosyalarını doğrular (bozuksa kurucuyu yeniden çalıştırmanızı söyler), kaydı ve bağlantıları yeniler
-respectedbrain recover     # yarım kalmış işlemleri geri alır; sonradan değiştirdiğiniz dosyayı zorla eski haline getirmez
+respected-brain repair      # program dosyalarını doğrular (bozuksa kurucuyu yeniden çalıştırmanızı söyler), kaydı ve bağlantıları yeniler
+respected-brain recover     # yarım kalmış işlemleri geri alır; sonradan değiştirdiğiniz dosyayı zorla eski haline getirmez
 ```
 
-Kaldırma yolları: Windows **Yüklü uygulamalar** → Respected SecondBrain → Kaldır; kurucu → Kaldır; Hub → SecondBrain →
+Kaldırma yolları: Windows **Yüklü uygulamalar** → Respected Brain → Kaldır; kurucu → Kaldır; Hub → Brain →
 Kaldır; sessiz `unins000.exe /VERYSILENT [/PURGE=1]`. Kaldırıcı "Ayarlar ve çalışma verileri de silinsin mi?" diye sorar
 (varsayılan Hayır) ve ürünün `uninstall [--purge]` komutunu çalıştırır.
 
@@ -227,16 +227,16 @@ Kaldır; sessiz `unins000.exe /VERYSILENT [/PURGE=1]`. Kaldırıcı "Ayarlar ve 
 | Belirti | Bakılacak yer |
 |---|---|
 | Kasa bulunamadı / UUID çakışması | `vault list`, kasadaki `.respected.json`, verdiğiniz `--vault`/`--vault-id`, `RESPECTED_VAULT_PATH` |
-| Dolu klasöre kurulmuyor | Boş yeni bir klasör ya da SecondBrain'in kullandığı bir kasa seçin |
+| Dolu klasöre kurulmuyor | Boş yeni bir klasör ya da Brain'in kullandığı bir kasa seçin |
 | `daily` yazılmıyor | Aracın bağlantısı açık mı (`config`), hook etkin ve güvenilir mi, özetleyici aracın oturumu açık mı, `capture_mode` manual mı, veri klasöründeki `logs/` |
 | Sabah özeti yok | `integrations.schedule`, `briefing_time`, işletim sisteminin görev zamanlayıcısı, aracın kotası |
-| Arama eski sonuç veriyor | `respectedbrain index-refresh` ya da `search --reindex` |
-| MCP bozuk yanıt veriyor | AI aracının ayarındaki komut kurulu programı mı gösteriyor, `respectedbrain health` |
+| Arama eski sonuç veriyor | `respected-brain index-refresh` ya da `search --reindex` |
+| MCP bozuk yanıt veriyor | AI aracının ayarındaki komut kurulu programı mı gösteriyor, `respected-brain health` |
 | "Onarım gerekli" | Kurucuyu çalıştırıp **Onar / güncelle** seçin |
-| Yarım kalan işlem / geri alma çakışması | `respectedbrain recover`; değişmiş dosyalar korunur, `backups/` ve `logs/` saklanır |
+| Yarım kalan işlem / geri alma çakışması | `respected-brain recover`; değişmiş dosyalar korunur, `backups/` ve `logs/` saklanır |
 
-Kasa denetimi: `respectedbrain maintenance vault_linter` (kırık bağlantı, yetim not) ve `tiling_check` (tekrar eden
-notlar). Onarım, birleştirme ve içe alma araçları kasaya yazar ([COMMANDS.md](COMMANDS.md#bakım-araçları)). Pakette gelen `secondbrain-doktor` becerisi AI aracınıza kasa
+Kasa denetimi: `respected-brain maintenance vault_linter` (kırık bağlantı, yetim not) ve `tiling_check` (tekrar eden
+notlar). Onarım, birleştirme ve içe alma araçları kasaya yazar ([COMMANDS.md](COMMANDS.md#bakım-araçları)). Pakette gelen `brain-doktor` becerisi AI aracınıza kasa
 denetimi yaptırır.
 
 Hata bildirirken işletim sistemi, `--version` çıktısı, kişisel bilgilerden arındırılmış komut, çıkış kodu ve hata kodunu

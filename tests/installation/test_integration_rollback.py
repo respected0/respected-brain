@@ -2,9 +2,9 @@
 from unittest import TestCase, mock
 from tests.support.fakes import IntegrationFixture
 from tests.support.files import snapshot
-from respectedbrain.integrations.rendering import plan_integrations
-from respectedbrain.integrations.backend import ExternalChange
-from respectedbrain.installation.transaction import Transaction
+from respected_brain.integrations.rendering import plan_integrations
+from respected_brain.integrations.backend import ExternalChange
+from respected_brain.installation.transaction import Transaction
 
 
 class IntegrationRollbackTest(IntegrationFixture, TestCase):

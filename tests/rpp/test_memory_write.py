@@ -10,8 +10,8 @@ import unittest
 from unittest.mock import patch
 from uuid import uuid4
 
-from respectedbrain.rpp import server as rpp
-from respectedbrain.core.config import ConfigStore
+from respected_brain.rpp import server as rpp
+from respected_brain.core.config import ConfigStore
 
 
 class MemoryWriteTest(unittest.TestCase):

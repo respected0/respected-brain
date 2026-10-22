@@ -8,7 +8,7 @@ import subprocess
 import tempfile
 import unittest
 
-from respectedbrain.maintenance.backup.publish_git_snapshot import (
+from respected_brain.maintenance.backup.publish_git_snapshot import (
     check_secret_guard,
     publish_if_due,
     scan_file_content_for_secrets,
@@ -163,7 +163,7 @@ class ContentSecretScanningTest(unittest.TestCase):
                 return original_run(argv, **kwargs)
 
             from unittest.mock import patch
-            from respectedbrain.maintenance.backup import publish_git_snapshot as snapshot
+            from respected_brain.maintenance.backup import publish_git_snapshot as snapshot
             receipt = root / "receipt.json"
             with patch.object(snapshot, "_branch_divergence_status", return_value="clean"), \
                  patch.object(snapshot.subprocess, "run", side_effect=fixture_run):

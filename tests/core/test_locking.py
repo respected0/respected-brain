@@ -3,8 +3,8 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
-from respectedbrain.core.errors import BusyError
-from respectedbrain.core.locking import exclusive_lock, shared_lock
+from respected_brain.core.errors import BusyError
+from respected_brain.core.locking import exclusive_lock, shared_lock
 
 
 @unittest.skipUnless(os.name == "nt", "Windows byte range locking regression")

@@ -4,8 +4,8 @@ from pathlib import Path
 from unittest import TestCase
 from tests.support.fakes import IntegrationFixture
 from tests.support.files import snapshot
-from respectedbrain.integrations.rendering import plan_integrations
-from respectedbrain.core.errors import OwnershipConflict
+from respected_brain.integrations.rendering import plan_integrations
+from respected_brain.core.errors import OwnershipConflict
 
 class TestMcpRegistration(IntegrationFixture, TestCase):
     def apply(self, rows):
@@ -23,7 +23,7 @@ class TestMcpRegistration(IntegrationFixture, TestCase):
         self.assertTrue(loaded["other_setting"])
         self.assertEqual(loaded["mcpServers"]["existing_mcp"], original["mcpServers"]["existing_mcp"])
         entry = loaded["mcpServers"]["respected-vault"]
-        self.assertEqual(entry["command"], str(self.app / "respectedbrain.exe"))
+        self.assertEqual(entry["command"], str(self.app / "respected-brain.exe"))
         self.assertEqual(entry["args"], ["mcp", "--vault-id", self.ctx.paths.vault_id])
 
     def test_register_all_editors_in_fake_environment(self):

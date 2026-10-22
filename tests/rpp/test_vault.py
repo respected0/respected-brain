@@ -7,7 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from respectedbrain.rpp import server as rpp
+from respected_brain.rpp import server as rpp
 
 
 class InstallStateTest(unittest.TestCase):

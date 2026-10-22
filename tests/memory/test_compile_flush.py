@@ -8,9 +8,9 @@ import tempfile
 import unittest
 from unittest import mock
 
-from respectedbrain.core.context import AppContext
-from respectedbrain.core.paths import AppPaths
-from respectedbrain.core.resources import ResourceCatalog
+from respected_brain.core.context import AppContext
+from respected_brain.core.paths import AppPaths
+from respected_brain.core.resources import ResourceCatalog
 from tests.support.files import snapshot
 from tests.support.fakes import FakeModel
 
@@ -45,7 +45,7 @@ class FoundationMemoryTest(unittest.TestCase):
         return path
     def module(self, name):
         try:
-            return importlib.import_module("respectedbrain." + name)
+            return importlib.import_module("respected_brain." + name)
         except ModuleNotFoundError:
             self.fail("Missing explicit-context service: " + name)
     def test_two_vaults_share_package_not_session_state(self):
@@ -117,7 +117,7 @@ class FoundationMemoryTest(unittest.TestCase):
         self.assertEqual(claim.read_text(), "other writer")
 
     def test_explicit_flush_reports_model_failure(self):
-        from respectedbrain.core.context import ModelResult
+        from respected_brain.core.context import ModelResult
         class Failure(FakeModel):
             def run(self, prompt, *, cwd, mode, timeout):
                 return ModelResult(None, "codex", "codex-timeout")
@@ -128,7 +128,7 @@ class FoundationMemoryTest(unittest.TestCase):
         self.assertEqual(state["status"], "fail")
 
     def test_companion_failure_is_visible_and_retries_without_model_or_duplicate_event(self):
-        from respectedbrain.memory import flush, events
+        from respected_brain.memory import flush, events
         from datetime import timedelta
         for operation in ('record_event', 'project_companion'):
             with self.subTest(operation=operation):
@@ -152,7 +152,7 @@ class FoundationMemoryTest(unittest.TestCase):
                 self.assertEqual(json.loads(flush._session_state_path(self.ctx1.paths.state_dir,identity).read_text())['status'],'ok')
 
     def test_pending_companion_survives_short_precompact_and_preserves_daily_edit(self):
-        from respectedbrain.memory import flush,events
+        from respected_brain.memory import flush,events
         from datetime import timedelta
         transcript=self.transcript(self.ctx1)
         model=FakeModel()
@@ -167,7 +167,7 @@ class FoundationMemoryTest(unittest.TestCase):
         self.assertEqual(len(events.list_events(self.ctx1.paths.vault_root)),1)
 
     def test_explicit_compile_reports_model_failure(self):
-        from respectedbrain.core.context import ModelResult
+        from respected_brain.core.context import ModelResult
         class Failure(FakeModel):
             def run(self, prompt, *, cwd, mode, timeout):
                 return ModelResult(None, "codex", "codex-timeout")
@@ -203,12 +203,12 @@ class FoundationMemoryTest(unittest.TestCase):
         code = """
 from unittest import mock
 import importlib, os, pathlib, subprocess, sys
-import respectedbrain  # immutable distribution metadata is permitted
+import respected_brain  # immutable distribution metadata is permitted
 names = ('providers.runner', 'memory.flush', 'memory.compile', 'memory.lifecycle',
          'memory.events')
 with mock.patch.object(pathlib.Path, 'read_text', side_effect=AssertionError('user read during import')), mock.patch.object(pathlib.Path, 'mkdir', side_effect=AssertionError('mkdir during import')), mock.patch.object(subprocess, 'run', side_effect=AssertionError('process during import')), mock.patch.object(subprocess, 'Popen', side_effect=AssertionError('process during import')), mock.patch.object(sys.stdout, 'reconfigure', side_effect=AssertionError('stream changed during import')):
     for name in names:
-        importlib.import_module('respectedbrain.' + name)
+        importlib.import_module('respected_brain.' + name)
 """
         environment = dict(__import__("os").environ)
         environment["PYTHONDONTWRITEBYTECODE"] = "1"

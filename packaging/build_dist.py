@@ -66,13 +66,13 @@ def assemble_macos_bundle(source: Path, bundle: Path) -> None:
         staging = Path(temporary) / bundle.name
         executable_dir = staging / "Contents/MacOS"
         executable_dir.mkdir(parents=True)
-        shutil.copy2(source / "respectedbrain", executable_dir / "respectedbrain")
+        shutil.copy2(source / "respected-brain", executable_dir / "respected-brain")
         # PyInstaller recognizes .app/Contents/MacOS even for its console
         # bootloader and uses Contents/Frameworks, ignoring --contents-directory.
         shutil.copytree(source / "app", staging / "Contents/Frameworks")
         with (staging / "Contents/Info.plist").open("wb") as stream:
-            plistlib.dump({"CFBundleExecutable": "respectedbrain",
-                          "CFBundleIdentifier": "com.respected.respectedbrain",
+            plistlib.dump({"CFBundleExecutable": "respected-brain",
+                          "CFBundleIdentifier": "com.respected.brain",
                           "CFBundleName": "Respected Brain",
                           "CFBundlePackageType": "APPL"}, stream)
         original = Path(temporary) / "original"
@@ -89,12 +89,12 @@ def assemble_macos_bundle(source: Path, bundle: Path) -> None:
 
 def check_installed_package() -> None:
     """The frozen build stamps the pip-installed metadata: refuse an install of another checkout or an older version."""
-    import respectedbrain
+    import respected_brain
     from packaging.version import Version
     declared = re.search(r'(?m)^version\s*=\s*"([^"]+)"', (ROOT / "pyproject.toml").read_text(encoding="utf-8")).group(1)
-    location = Path(respectedbrain.__file__).resolve()
-    if not location.is_relative_to((ROOT / "src").resolve()) or Version(version("respectedbrain")) != Version(declared):
-        raise RuntimeError(f"installed respectedbrain {version('respectedbrain')} at {location} is not this checkout "
+    location = Path(respected_brain.__file__).resolve()
+    if not location.is_relative_to((ROOT / "src").resolve()) or Version(version("respected-brain")) != Version(declared):
+        raise RuntimeError(f"installed respected_brain {version('respected-brain')} at {location} is not this checkout "
                            f"({declared}); run: python -m pip install -e \".[dev]\"")
 
 
@@ -110,23 +110,23 @@ def build(*, platform: str, output: Path) -> Path:
         "--contents-directory", "app", "--name", "RespectedBrain",
         "--distpath", str(output), "--workpath", str(ROOT / "build/frozen"),
         "--specpath", str(ROOT / "build"), "--paths", str(ROOT / "src"),
-        "--collect-submodules", "respectedbrain", "--copy-metadata", "respectedbrain",
-        "--add-data", str(ROOT / "src/respectedbrain/resources") + os.pathsep + "respectedbrain/resources",
+        "--collect-submodules", "respected_brain", "--copy-metadata", "respected-brain",
+        "--add-data", str(ROOT / "src/respected_brain/resources") + os.pathsep + "respected_brain/resources",
         str(ROOT / "packaging/entrypoint.py"),
     ]
     subprocess.run(command, cwd=ROOT, check=True)
     app = output / "RespectedBrain"
     launcher = app / ("RespectedBrain.exe" if platform == "windows" else "RespectedBrain")
-    target = app / ("respectedbrain.exe" if platform == "windows" else "respectedbrain")
+    target = app / ("respected-brain.exe" if platform == "windows" else "respected-brain")
     launcher.replace(target)
     if platform != "windows":
         dereference_distribution_links(app)
     if platform == "macos":
         bundle = output / "RespectedBrain.app"
         assemble_macos_bundle(app, bundle)
-        app, target = bundle, bundle / "Contents/MacOS/respectedbrain"
+        app, target = bundle, bundle / "Contents/MacOS/respected-brain"
     files = {path.relative_to(app).as_posix(): hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(app.rglob("*")) if path.is_file() and path.name != "distribution.json"}
-    document = {"schema_version": 3, "version": version("respectedbrain"), "platform": platform, "launcher": target.relative_to(app).as_posix(), "files": files}
+    document = {"schema_version": 3, "version": version("respected-brain"), "platform": platform, "launcher": target.relative_to(app).as_posix(), "files": files}
     (app / "distribution.json").write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if platform != "windows":
         entry = ROOT / ("packaging/macos/setup.command" if platform == "macos" else "packaging/linux/setup.sh")

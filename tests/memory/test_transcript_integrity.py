@@ -9,8 +9,8 @@ import threading
 import unittest
 from unittest import mock
 
-from respectedbrain.memory import flush as F
-from respectedbrain.core.context import ModelResult
+from respected_brain.memory import flush as F
+from respected_brain.core.context import ModelResult
 from tests.support.files import make_context
 
 SID = '12345678-1234-4123-8123-123456789abc'
@@ -70,14 +70,14 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         self.assertEqual(status, 1)
         self.assertFalse(self.daily.exists())
     def test_cli_hook_input_foreign_metadata_rejected(self):
-        from respectedbrain import cli
+        from respected_brain import cli
         foreign = make_context(self.root, self.root / 'vault-b')
         p = self.transcript({'id': OTHER, 'cwd': str(foreign.paths.vault_root)})
         hook_input = self.state / 'hookin-foreign.json'
         hook_input.write_text(json.dumps({'session_id': SID, 'transcript_path': str(p)}), encoding='utf-8')
         model = Model('FOREIGN CLI')
         with mock.patch.object(cli, 'bootstrap', return_value=self.ctx), \
-             mock.patch('respectedbrain.providers.runner.ModelRunner', return_value=model):
+             mock.patch('respected_brain.providers.runner.ModelRunner', return_value=model):
             status = cli.main(['flush', '--hook-input', str(hook_input)])
         daily_files = list((self.vault / 'daily').glob('*.md'))
         self.assertEqual(status, 1)
@@ -323,7 +323,7 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         self.assertNotIn('FOREIGN', self.daily.read_text(encoding='utf-8'))
 
     def test_precompact_cannot_archive_foreign_transcript(self):
-        from respectedbrain.memory import lifecycle as L
+        from respected_brain.memory import lifecycle as L
         foreign = make_context(self.root, self.root / 'vault-b')
         path = self.transcript({'id': OTHER, 'cwd': str(foreign.paths.vault_root)})
         with mock.patch.object(L, '_launch_flush', return_value=True):
@@ -335,7 +335,7 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
 
     def test_precompact_archive_is_opt_in_redacted_and_outside_the_vault(self):
         import dataclasses
-        from respectedbrain.memory import lifecycle as L
+        from respected_brain.memory import lifecycle as L
         path = self.transcript({'id': SID, 'cwd': str(self.vault), 'note': 'key sk-' + 'a1B2c3D4e5F6g7H8i9J0k1L2'})
         archive = self.ctx.paths.data_root / 'session-archive'
         def precompact(ctx):
@@ -371,7 +371,7 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         self.assertIn('[REDACTED', stored)
 
     def test_archived_session_cannot_be_taken_over_by_another_path(self):
-        from respectedbrain.memory import lifecycle as L
+        from respected_brain.memory import lifecycle as L
         path = self.transcript({'id': SID, 'cwd': str(self.vault)})
         with mock.patch.object(L, '_launch_flush', return_value=True):
             L.handle_event(self.ctx, event='precompact', session_id=SID, transcript=path,
@@ -386,7 +386,7 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         self.assertTrue(self.daily.exists())
 
     def test_cli_validates_available_hook_provenance(self):
-        from respectedbrain import cli
+        from respected_brain import cli
         foreign = make_context(self.root, self.root / 'vault-b')
         path = self.transcript()
         for extra in ({'cwd': str(foreign.paths.vault_root)}, {'workspace': []},
@@ -399,7 +399,7 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
                 before = hook_input.read_bytes()
                 model = Model('REJECTED')
                 with mock.patch.object(cli, 'bootstrap', return_value=self.ctx), \
-                     mock.patch('respectedbrain.providers.runner.ModelRunner', return_value=model):
+                     mock.patch('respected_brain.providers.runner.ModelRunner', return_value=model):
                     status = cli.main(['flush', '--hook-input', str(hook_input)])
                 self.assertEqual(status, 1)
                 self.assertEqual(model.calls, 0)
@@ -475,16 +475,16 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         self.assertFalse(self.daily.exists())
 
     def test_bridge_cannot_normalize_away_available_conflicts(self):
-        from respectedbrain.integrations.hooks import bridge
-        from respectedbrain.memory import lifecycle as L
-        from respectedbrain import cli
+        from respected_brain.integrations.hooks import bridge
+        from respected_brain.memory import lifecycle as L
+        from respected_brain import cli
         foreign = make_context(self.root, self.root / 'vault-b')
         path = self.transcript()
         def launch(ctx, provider, *, payload=None, **kwargs):
             hook_input = self.state / 'hookin-conflicting-source.json'
             hook_input.write_text(json.dumps(payload), encoding='utf-8')
             with mock.patch.object(cli, 'bootstrap', return_value=ctx), \
-                 mock.patch('respectedbrain.providers.runner.ModelRunner', return_value=Model()):
+                 mock.patch('respected_brain.providers.runner.ModelRunner', return_value=Model()):
                 return cli.main(['flush', '--hook-input', str(hook_input)]) == 0
         for fields in ({'provider': 'claude', 'cwd': str(self.vault)},
                        {'cwd': str(foreign.paths.vault_root), 'workspace': {'current_dir': str(self.vault)}}):
@@ -494,7 +494,7 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
                 self.assertFalse(self.daily.exists())
 
     def test_malformed_cursor_hook_keeps_native_response_protocol(self):
-        from respectedbrain.integrations.hooks import bridge
+        from respected_brain.integrations.hooks import bridge
         response = bridge.dispatch(self.ctx, provider='cursor', event='end', argv=[],
                                    stdin=json.dumps({'session_id': SID, 'workspace': []}))
         self.assertEqual(json.loads(response), {})
@@ -515,16 +515,16 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         self.assertEqual(before.count(b':BEGIN -->'), 1)
 
     def test_missing_hook_workspace_stays_absent_through_bridge(self):
-        from respectedbrain.integrations.hooks import bridge
-        from respectedbrain.memory import lifecycle as L
-        from respectedbrain import cli
+        from respected_brain.integrations.hooks import bridge
+        from respected_brain.memory import lifecycle as L
+        from respected_brain import cli
         path = self.transcript()
         def launch(ctx, provider, *, payload=None, **kwargs):
             hook_input = self.state / 'hookin-absent-workspace.json'
             hook_input.write_text(json.dumps(payload), encoding='utf-8')
             with mock.patch.object(cli, 'bootstrap', return_value=ctx), \
                  mock.patch.object(cli, 'datetime', wraps=dt.datetime) as clock, \
-                 mock.patch('respectedbrain.providers.runner.ModelRunner', return_value=Model()):
+                 mock.patch('respected_brain.providers.runner.ModelRunner', return_value=Model()):
                 clock.now.return_value = NOW
                 return cli.main(['flush', '--hook-input', str(hook_input)]) == 0
         with mock.patch.object(L, '_launch_flush', side_effect=launch):
@@ -553,7 +553,7 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         self.assertIn('REVISION', text)
 
     def test_start_cleanup_cannot_erase_ambiguous_provenance(self):
-        from respectedbrain.memory import lifecycle as L
+        from respected_brain.memory import lifecycle as L
         path = self.transcript()
         self.hook()
         self.assertFalse(F.record_hook_workspace(self.state, self.ctx.paths.vault_id, SID,
@@ -587,9 +587,9 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         self.assertFalse((self.vault / 'daily/1999-01-01.md').exists())
 
     def test_antigravity_invocation_ids_do_not_block_stable_session_flush(self):
-        from respectedbrain.integrations.hooks import bridge
-        from respectedbrain.memory import lifecycle as L
-        from respectedbrain import cli
+        from respected_brain.integrations.hooks import bridge
+        from respected_brain.memory import lifecycle as L
+        from respected_brain import cli
         path = self.home / '.gemini/antigravity-ide/brain' / SID / '.system_generated/logs/transcript.jsonl'
         model = Model()
         statuses = []
@@ -599,7 +599,7 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
             with mock.patch.dict(os.environ, {'RESPECTED_PROVIDER': provider}), \
                  mock.patch.object(cli, 'bootstrap', return_value=ctx), \
                  mock.patch.object(cli, 'datetime', wraps=dt.datetime) as clock, \
-                 mock.patch('respectedbrain.providers.runner.ModelRunner', return_value=model):
+                 mock.patch('respected_brain.providers.runner.ModelRunner', return_value=model):
                 clock.now.return_value = NOW
                 status = cli.main(['flush', '--hook-input', str(hook_input)])
             statuses.append(status)
@@ -622,8 +622,8 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         self.assertEqual(owner['provider'], 'antigravity')
 
     def test_antigravity_normalization_preserves_real_identity_conflicts(self):
-        from respectedbrain.integrations.hooks import bridge
-        from respectedbrain.memory import lifecycle as L
+        from respected_brain.integrations.hooks import bridge
+        from respected_brain.memory import lifecycle as L
         path = self.write(self.home / '.gemini/antigravity-ide/brain' / SID / '.system_generated/logs/transcript.jsonl',
                           {'id': SID, 'cwd': str(self.vault)})
         for extra in ({'session_id': OTHER}, {'metadata': {'session_id': OTHER}},

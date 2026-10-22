@@ -1,4 +1,4 @@
-"""Test packages; product imports use the installed respectedbrain package.
+"""Test packages; product imports use the installed respected_brain package.
 
 Importing this package (unittest discovery does it before any test module) points HOME, USERPROFILE, APPDATA and
 LOCALAPPDATA at a fresh empty folder, so no test can reach the real AI-client configuration, vault registry or

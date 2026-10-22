@@ -17,11 +17,11 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-from respectedbrain.maintenance import vault_linter
-from respectedbrain.maintenance import architect_scan
-from respectedbrain.maintenance import smart_merge
+from respected_brain.maintenance import vault_linter
+from respected_brain.maintenance import architect_scan
+from respected_brain.maintenance import smart_merge
 from tests.support.files import make_context
-from respectedbrain.core.resources import ResourceCatalog
+from respected_brain.core.resources import ResourceCatalog
 
 
 class TestSmartMerge(unittest.TestCase):

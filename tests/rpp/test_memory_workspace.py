@@ -10,10 +10,10 @@ from pathlib import Path
 from unittest.mock import patch
 from uuid import uuid4
 
-from respectedbrain.rpp import server as rpp
-from respectedbrain.core.config import ConfigStore
-from respectedbrain.rpp.integrations import _context
-from respectedbrain.search import freshness
+from respected_brain.rpp import server as rpp
+from respected_brain.core.config import ConfigStore
+from respected_brain.rpp.integrations import _context
+from respected_brain.search import freshness
 
 
 class WorkspaceTest(unittest.TestCase):
@@ -81,7 +81,7 @@ class WorkspaceTest(unittest.TestCase):
         env = {k: v for k, v in os.environ.items() if k not in ("PYTHONUTF8", "PYTHONIOENCODING")}
         env["PYTHONPATH"] = str(Path(__file__).resolve().parents[2] / "src")
         request = json.dumps({"rpp": "1", "op": "memory.note.read", "payload": {"path": "notes/hızlı not.md"}}, ensure_ascii=False)
-        done = subprocess.run([sys.executable, "-m", "respectedbrain", "rpp"], input=request.encode("utf-8"), capture_output=True, env=env, timeout=60)
+        done = subprocess.run([sys.executable, "-m", "respected_brain", "rpp"], input=request.encode("utf-8"), capture_output=True, env=env, timeout=60)
         reply = json.loads(done.stdout.decode("utf-8").strip().splitlines()[-1])
         self.assertTrue(reply["ok"], reply)
         self.assertIn("çalışıyor", reply["result"]["content"])
@@ -107,7 +107,7 @@ class WorkspaceTest(unittest.TestCase):
 
     def test_briefing_needs_confirmation(self):
         self.assertEqual(self.call("memory.briefing.run", {})["error"]["code"], "BAD_REQUEST")
-        with patch("respectedbrain.briefing.service.run_if_due", return_value=0), patch("respectedbrain.providers.runner.ModelRunner"):
+        with patch("respected_brain.briefing.service.run_if_due", return_value=0), patch("respected_brain.providers.runner.ModelRunner"):
             self.assertEqual(self.call("memory.briefing.run", {"confirm": True})["result"], {"status": 0})
 
 if __name__ == "__main__":

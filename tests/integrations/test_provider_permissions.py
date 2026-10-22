@@ -5,9 +5,9 @@ from pathlib import Path
 import unittest
 from unittest.mock import patch
 
-from respectedbrain.core.context import AppContext, AppPaths
-from respectedbrain.core.resources import ResourceCatalog
-from respectedbrain.providers.runner import (
+from respected_brain.core.context import AppContext, AppPaths
+from respected_brain.core.resources import ResourceCatalog
+from respected_brain.providers.runner import (
     _command,
     _find_executable,
     run_model,
@@ -32,7 +32,7 @@ class ProviderPermissionsAndBoundariesTest(unittest.TestCase):
             "bypassPermissions",
         }
 
-        with patch("respectedbrain.providers.runner._find_executable", return_value="dummy-cli"):
+        with patch("respected_brain.providers.runner._find_executable", return_value="dummy-cli"):
             for provider in ("claude", "codex", "antigravity", "gemini"):
                 for mode in ("text", "workspace"):
                     inv = _command(provider, "test prompt", mode=mode)
@@ -53,7 +53,7 @@ class ProviderPermissionsAndBoundariesTest(unittest.TestCase):
 
     def test_antigravity_enforces_sandbox_in_both_modes_without_bypass(self):
         """Antigravity must use --sandbox in text and workspace modes, and never use --dangerously-skip-permissions."""
-        with patch("respectedbrain.providers.runner._find_executable", return_value="C:/path/agy.exe"):
+        with patch("respected_brain.providers.runner._find_executable", return_value="C:/path/agy.exe"):
             text_inv = _command("antigravity", "hello", mode="text")
             self.assertIsNotNone(text_inv)
             self.assertIn("--sandbox", text_inv.argv)
@@ -68,7 +68,7 @@ class ProviderPermissionsAndBoundariesTest(unittest.TestCase):
 
     def test_gemini_uses_safe_modes_and_no_bypass(self):
         """Gemini must use --sandbox and approval modes (plan in text, auto_edit in workspace) without bypass flags."""
-        with patch("respectedbrain.providers.runner._find_executable", return_value="C:/path/gemini.cmd"):
+        with patch("respected_brain.providers.runner._find_executable", return_value="C:/path/gemini.cmd"):
             text_inv = _command("gemini", "hello", mode="text")
             self.assertIsNotNone(text_inv)
             self.assertEqual(text_inv.argv, ["C:/path/gemini.cmd", "--sandbox", "--approval-mode", "plan", "--output-format", "json", "-p", ""])
@@ -85,7 +85,7 @@ class ProviderPermissionsAndBoundariesTest(unittest.TestCase):
 
     def test_codex_enforces_read_only_in_text_and_workspace_write_in_workspace(self):
         """Codex must strictly bind sandbox modes based on execution mode."""
-        with patch("respectedbrain.providers.runner._find_executable", return_value="C:/path/codex.exe"):
+        with patch("respected_brain.providers.runner._find_executable", return_value="C:/path/codex.exe"):
             text_inv = _command("codex", "hello", mode="text")
             self.assertIsNotNone(text_inv)
             idx = text_inv.argv.index("--sandbox")
@@ -98,7 +98,7 @@ class ProviderPermissionsAndBoundariesTest(unittest.TestCase):
 
     def test_claude_disables_tools_in_text_mode_and_restricts_tools_in_workspace(self):
         """Claude must disable all tools in text mode (--tools \"\") and restrict to workspace edits in workspace mode."""
-        with patch("respectedbrain.providers.runner._find_executable", return_value="C:/path/claude.cmd"):
+        with patch("respected_brain.providers.runner._find_executable", return_value="C:/path/claude.cmd"):
             text_inv = _command("claude", "hello", mode="text")
             self.assertIsNotNone(text_inv)
             self.assertIn("--safe-mode", text_inv.argv)
@@ -158,7 +158,7 @@ class ProviderPermissionsAndBoundariesTest(unittest.TestCase):
 
     def test_cursor_command_invocation_fails_closed_in_text_mode(self):
         """Cursor agent lacks sandbox/read-only mode and must fail-closed in text mode."""
-        with patch("respectedbrain.providers.runner._find_executable", return_value="C:/path/cursor-agent.cmd"):
+        with patch("respected_brain.providers.runner._find_executable", return_value="C:/path/cursor-agent.cmd"):
             inv_text = _command("cursor", "hello", mode="text")
             self.assertIsNone(inv_text, "Cursor must return None in text mode because it cannot enforce read-only boundary")
             inv_ws = _command("cursor", "hello", mode="workspace")
@@ -175,7 +175,7 @@ class ProviderIsolationTest(unittest.TestCase):
             for target in (existing,nested/'inside.md',outside/'outside.md'):
                 script = f'from pathlib import Path;Path({str(target)!r}).write_text(\'changed\');print(\'ok\')'
                 command = subprocess.list2cmdline([sys.executable,'-c',script])
-                with mock.patch.dict(os.environ,{'RESPECTED_LLM_COMMAND':command}), mock.patch('respectedbrain.providers.runner._run_process_tree') as call:
+                with mock.patch.dict(os.environ,{'RESPECTED_LLM_COMMAND':command}), mock.patch('respected_brain.providers.runner._run_process_tree') as call:
                     output, error, provider = run_model('prompt',vault,'text',5,ctx=ctx)
                 self.assertIsNone(output); self.assertEqual(error,'custom-isolation-required'); self.assertEqual(provider,'custom'); call.assert_not_called()
             self.assertEqual(existing.read_text(),'human content')

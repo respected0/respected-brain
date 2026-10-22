@@ -7,13 +7,13 @@ import stat
 import tempfile
 import unittest
 from unittest.mock import patch
-from respectedbrain.core.config import ConfigStore
-from respectedbrain.core.paths import Roots
-from respectedbrain.vault.registry import build_context
-from respectedbrain.installation.setup import setup as production_setup
-from respectedbrain.installation.repair import repair
-from respectedbrain.installation.uninstall import uninstall
-from respectedbrain.installation.ownership import read_manifest, prove_ownership
+from respected_brain.core.config import ConfigStore
+from respected_brain.core.paths import Roots
+from respected_brain.vault.registry import build_context
+from respected_brain.installation.setup import setup as production_setup
+from respected_brain.installation.repair import repair
+from respected_brain.installation.uninstall import uninstall
+from respected_brain.installation.ownership import read_manifest, prove_ownership
 from tests.support.packages import seed_package
 from tests.support.files import note_hashes
 from tests.support.fakes import Backend
@@ -32,18 +32,18 @@ class FoundationPosixInstallTest(unittest.TestCase):
         self.flags = dict.fromkeys(("global", "mcp", "schedule", "shortcut"), False)
         self.profile = {"platform":"posix", "user_home":str(self.home)}
         self.package = seed_package(self.roots.app_root)  # setup.sh copied the program here
-        executable = self.package / "respectedbrain.exe"
-        executable.rename(self.package / "respectedbrain")
+        executable = self.package / "respected-brain.exe"
+        executable.rename(self.package / "respected-brain")
         manifest = json.loads((self.package / "distribution.json").read_text())
         manifest["platform"] = "linux"
-        manifest["launcher"] = "respectedbrain"
-        manifest["files"]["respectedbrain"] = manifest["files"].pop("respectedbrain.exe")
+        manifest["launcher"] = "respected-brain"
+        manifest["files"]["respected-brain"] = manifest["files"].pop("respected-brain.exe")
         (self.package / "distribution.json").write_text(json.dumps(manifest))
-        (self.package / "respectedbrain").chmod(0o755)
-        for fake in (patch("sys.platform", "linux"), patch("respectedbrain.installation.payload.validate_installed_health", return_value=None)):
+        (self.package / "respected-brain").chmod(0o755)
+        for fake in (patch("sys.platform", "linux"), patch("respected_brain.installation.payload.validate_installed_health", return_value=None)):
             fake.start()
             self.addCleanup(fake.stop)
-        self.launcher = self.home / ".local/bin/respectedbrain"
+        self.launcher = self.home / ".local/bin/respected-brain"
     def setup(self):
         return production_setup(self.roots, self.vault, values={"integrations." + key: value for key, value in self.flags.items()},
                                 backend=self.backend, platform=self.profile.get("platform"), home=self.home)
@@ -61,21 +61,21 @@ class FoundationPosixInstallTest(unittest.TestCase):
     def test_default_linux_profile_persists_resolved_platform(self):
         self.profile.pop("platform")
         ctx = self.install()
-        from respectedbrain.installation.operations import validate_manifest_roots
+        from respected_brain.installation.operations import validate_manifest_roots
         self.assertEqual(ctx.config["vaults"][ctx.paths.vault_id]["settings"].get("platform"), "posix")
         validate_manifest_roots(ctx, read_manifest(ctx.paths.data_root / "install-manifest.json"))
 
     def test_posix_schedule_files_are_kept_when_global_is_disabled(self):
         ctx = self.install()
         ConfigStore(ctx.paths.data_root).update(lambda value: value["integrations"].update(schedule=True))
-        from respectedbrain.installation.ownership import OwnershipManifest
-        from respectedbrain.installation.operations import plan_connections
-        from respectedbrain.integrations.backend import ExternalChange
+        from respected_brain.installation.ownership import OwnershipManifest
+        from respected_brain.installation.operations import plan_connections
+        from respected_brain.integrations.backend import ExternalChange
         name = "respected-morning-briefing-" + ctx.paths.vault_id
         rows = tuple(ExternalChange("file", str(self.home / ".config/systemd/user" / (name + suffix)), None, b"owned schedule") for suffix in (".service", ".timer"))
         for row in rows:
             self.backend.records[(row.kind, row.key)] = row.after
-        with patch("respectedbrain.integrations.rendering.plan_integrations", return_value=()):
+        with patch("respected_brain.integrations.rendering.plan_integrations", return_value=()):
             changes, owned = plan_connections(ctx, self.backend, OwnershipManifest(3, (), rows))
         self.assertEqual(changes, ())
         self.assertEqual(owned, rows)
@@ -85,7 +85,7 @@ class FoundationPosixInstallTest(unittest.TestCase):
         self.assertTrue(self.launcher.is_file(), "Linux install must create the required PATH launcher")
         text = self.launcher.read_text()
         self.assertTrue(text.startswith("#!/bin/sh\n"))
-        self.assertIn("respectedbrain", text)
+        self.assertIn("respected-brain", text)
         self.assertIn('"$@"', text)
         manifest = read_manifest(self.roots.data_root / "install-manifest.json")
         self.assertTrue(any(item.role == "launcher" and item.path == self.launcher for item in manifest.files))
@@ -96,7 +96,7 @@ class FoundationPosixInstallTest(unittest.TestCase):
         self.launcher.write_bytes(b"user launcher")
         self.assertFalse(self.setup().success)
         self.assertEqual(self.launcher.read_bytes(), b"user launcher")
-        self.assertTrue((self.roots.app_root / "respectedbrain").exists(), "the program is setup.sh's, not the product's")
+        self.assertTrue((self.roots.app_root / "respected-brain").exists(), "the program is setup.sh's, not the product's")
     def test_repair_and_uninstall_keep_notes_and_manage_launcher(self):
         ctx = self.install()
         before = note_hashes(self.vault)
@@ -111,7 +111,7 @@ class FoundationPosixInstallTest(unittest.TestCase):
         self.assertEqual(note_hashes(self.vault), before)
     def test_application_permission_changes_break_ownership_proof(self):
         self.install()
-        binary = self.roots.app_root / "respectedbrain"
+        binary = self.roots.app_root / "respected-brain"
         original = stat.S_IMODE(binary.stat().st_mode)
         binary.chmod(0o444)
         try:
@@ -144,7 +144,7 @@ class FoundationPosixInstallTest(unittest.TestCase):
     def test_fresh_health_failure_removes_only_product_launcher(self):
         sentinel = self.home / "sentinel"
         sentinel.write_bytes(b"user")
-        with patch("respectedbrain.installation.payload.validate_installed_health", side_effect=OSError("fault")):
+        with patch("respected_brain.installation.payload.validate_installed_health", side_effect=OSError("fault")):
             result = self.setup()
         self.assertFalse(result.success)
         self.assertFalse(self.launcher.exists())
@@ -155,7 +155,7 @@ class FoundationPosixInstallTest(unittest.TestCase):
         self.assertTrue(os.access(self.launcher, os.X_OK))
         import shlex
         command = self.launcher.read_text().splitlines()[1]
-        self.assertEqual(shlex.split(command)[:2], ["exec", str(self.roots.app_root / "respectedbrain")])
+        self.assertEqual(shlex.split(command)[:2], ["exec", str(self.roots.app_root / "respected-brain")])
 
 class PosixPackagingEntrypointsTest(unittest.TestCase):
     def test_native_setup_scripts_copy_the_program_and_forward_to_the_product(self):

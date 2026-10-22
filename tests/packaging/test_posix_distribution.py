@@ -8,8 +8,8 @@ import plistlib
 import subprocess
 import tempfile
 import unittest
-from respectedbrain.core.errors import OwnershipConflict
-from respectedbrain.installation.transaction import Transaction, recover_transactions
+from respected_brain.core.errors import OwnershipConflict
+from respected_brain.installation.transaction import Transaction, recover_transactions
 from tests.support.builder import build_dist
 
 class Backend:
@@ -28,24 +28,24 @@ class FoundationPosixDistributionTest(unittest.TestCase):
         return stat.S_IMODE(path.stat().st_mode)
     def test_macos_bundle_places_runtime_at_bootloader_frameworks_root(self):
         source = self.root / "onedir"
-        (source / "app/respectedbrain/resources").mkdir(parents=True)
-        (source / "respectedbrain").write_bytes(b"launcher")
+        (source / "app/respected_brain/resources").mkdir(parents=True)
+        (source / "respected-brain").write_bytes(b"launcher")
         (source / "app/Python").write_bytes(b"python shared library")
-        (source / "app/respectedbrain/resources/instructions.md").write_bytes(b"instructions")
+        (source / "app/respected_brain/resources/instructions.md").write_bytes(b"instructions")
         bundle = self.root / "RespectedBrain.app"
         function = getattr(build_dist, "assemble_macos_bundle", None)
         self.assertTrue(callable(function), "macOS bundle assembler is missing")
         function(source, bundle)
-        self.assertEqual((bundle / "Contents/MacOS/respectedbrain").read_bytes(), b"launcher")
+        self.assertEqual((bundle / "Contents/MacOS/respected-brain").read_bytes(), b"launcher")
         self.assertEqual((bundle / "Contents/Frameworks/Python").read_bytes(), b"python shared library")
-        self.assertEqual((bundle / "Contents/Frameworks/respectedbrain/resources/instructions.md").read_bytes(), b"instructions")
+        self.assertEqual((bundle / "Contents/Frameworks/respected_brain/resources/instructions.md").read_bytes(), b"instructions")
         self.assertFalse((bundle / "Contents/MacOS/app").exists())
         with (bundle / "Contents/Info.plist").open("rb") as stream:
-            self.assertEqual(plistlib.load(stream)["CFBundleExecutable"], "respectedbrain")
+            self.assertEqual(plistlib.load(stream)["CFBundleExecutable"], "respected-brain")
     def test_macos_bundle_rebuild_drops_obsolete_payload_without_changing_source(self):
         source = self.root / "onedir"
         (source / "app").mkdir(parents=True)
-        (source / "respectedbrain").write_bytes(b"launcher")
+        (source / "respected-brain").write_bytes(b"launcher")
         (source / "app/Python").write_bytes(b"python shared library")
         bundle = self.root / "RespectedBrain.app"
         bundle.mkdir()

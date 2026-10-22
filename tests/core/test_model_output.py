@@ -17,7 +17,7 @@ from datetime import datetime
 from tests.support.fakes import FakeModel, memory_context as make_context
 
 def load_flush_module():
-    from respectedbrain.memory import flush
+    from respected_brain.memory import flush
     return flush
 
 

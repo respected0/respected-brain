@@ -1,4 +1,4 @@
-# Respected Brain (SecondBrain) deposu: çalışma kuralları
+# Respected Brain deposu: çalışma kuralları
 
 Gerçeği kod ve testlerden doğrula. Belgeler: `README.md` (giriş), `docs/USAGE.md`, `docs/COMMANDS.md`, `docs/ARCHITECTURE.md`.
 Üç ürünün ortak sözleşmesi ekosistem kökündeki `docs/PRODUCT_CONTRACT.md` dosyasındadır ve `conformance/` ile ölçülür.
@@ -12,17 +12,17 @@ Bu bilgisayara özel devreye alma kararı Git dışındaki `.local/ROLLOUT.md` k
 
 ## Sınırlar
 
-- Program dosyaları kurucunundur (`packaging/windows/secondbrain_setup.iss`; Orchestrator kurucusunun ortak bölümü
+- Program dosyaları kurucunundur (`packaging/windows/brain_setup.iss`; Orchestrator kurucusunun ortak bölümü
   buradan üretilir). Ürün `setup`, `repair`, `uninstall [--purge]`, `config`, `health`, `rpp`, `mcp` ile kaydı, veriyi,
   kasayı ve bağlantıları yönetir. `update` komutu, kendini güncelleme ve protokol üzerinden kurma yoktur.
-- Kişinin ayarlarının tek kaynağı `src/respectedbrain/settings.py`; RPP, `config` ve kurucu (`--set`) aynı kodu kullanır.
+- Kişinin ayarlarının tek kaynağı `src/respected_brain/settings.py`; RPP, `config` ve kurucu (`--set`) aynı kodu kullanır.
 - Program, veri ve kasa kökleri ayrıdır. Kaldırma ve onarım insan notlarının üzerine yazmaz; sahiplik kaydı, işlem
   günlüğü ve geri alma korunur.
-- Kaynak `src/respectedbrain/`, değişmez paket içeriği `src/respectedbrain/resources/`, paket tarifleri `packaging/`.
+- Kaynak `src/respected_brain/`, değişmez paket içeriği `src/respected_brain/resources/`, paket tarifleri `packaging/`.
 
 ## Değişiklik disiplini
 
-- Testler `tests/` altında `src/respectedbrain` ile aynı alanda (`test_*.py`); ortak sahteler `tests/support/`. Test
+- Testler `tests/` altında `src/respected_brain` ile aynı alanda (`test_*.py`); ortak sahteler `tests/support/`. Test
   takımı HOME'u geçici klasöre yönlendirir; bunu atlatan test yazma.
 - Tamamlandı demeden önce: `python -m unittest discover -s tests -t .`. Paket değişikliğinde
   `python packaging/build_dist.py --platform windows --output dist` ve `python -m unittest tests.packaging.test_distribution`.

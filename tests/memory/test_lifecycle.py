@@ -23,7 +23,7 @@ FIXED_NOW = datetime(2026, 8, 28, 20, 15)
 
 from types import SimpleNamespace
 from tests.support.fakes import memory_context as make_context
-from respectedbrain.memory import lifecycle as LIFECYCLE
+from respected_brain.memory import lifecycle as LIFECYCLE
 
 
 class LifecycleTest(unittest.TestCase):
@@ -100,7 +100,7 @@ class LifecycleTest(unittest.TestCase):
             payload={**payload, "provider": provider}, now=now)
 
     def _record_process(self, command, **kwargs):
-        self.assertEqual(command[:4], [sys.executable, "-m", "respectedbrain", "flush"])
+        self.assertEqual(command[:4], [sys.executable, "-m", "respected_brain", "flush"])
         self.assertEqual(command[4:6], ["--vault-id", self.ctx.paths.vault_id])
         argv = command[6:]
         record = {"argv": argv, "provider": kwargs["env"].get("RESPECTED_PROVIDER")}
@@ -180,7 +180,7 @@ class LifecycleTest(unittest.TestCase):
         self.assertIn("30. mesaj", self.handle("prompt", payload, self.vault, "antigravity"))
 
     def test_start_injects_projected_session_and_open_threads(self):
-        from respectedbrain.memory import events
+        from respected_brain.memory import events
         events.record_event(self.vault, "codex", "session_end", "previous",
                             context="PROJECTED-SESSION-CONTEXT", decisions=["PROJECTED-DECISION"],
                             threads=[{"title": "OPEN-PROJECT", "status": "active"},

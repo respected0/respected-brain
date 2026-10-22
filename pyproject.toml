@@ -3,7 +3,7 @@ requires = ["setuptools>=77", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "respectedbrain"
+name = "respected-brain"
 version = "0.1.0-beta.1"
 description = "Local, provider-neutral memory for a personal Markdown vault"
 readme = "README.md"
@@ -14,33 +14,33 @@ requires-python = ">=3.10"
 dependencies = []
 
 [project.urls]
-Repository = "https://github.com/respected0/respected-secondbrain"
+Repository = "https://github.com/respected0/respected-brain"
 
 [project.optional-dependencies]
 dev = ["setuptools>=77", "build>=1", "wheel", "pyinstaller>=6", "tomli>=2; python_version < '3.11'"]
 
 [project.scripts]
-respectedbrain = "respectedbrain.cli:main"
+respected-brain = "respected_brain.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 namespaces = false
 
 [tool.setuptools.package-data]
-"respectedbrain.resources" = [
+"respected_brain.resources" = [
   "defaults.json",
   "instructions/default.md",
   "skills/ajan-gecmis-tara/SKILL.md",
-  "skills/secondbrain-doktor/SKILL.md",
-  "skills/secondbrain-meydan-oku/SKILL.md",
-  "skills/secondbrain-oruntu/SKILL.md",
+  "skills/brain-doktor/SKILL.md",
+  "skills/brain-meydan-oku/SKILL.md",
+  "skills/brain-oruntu/SKILL.md",
   "skills/gecmis-import/SKILL.md",
   "skills/inbox-duzenle/SKILL.md",
   "skills/obsidian-layout/SKILL.md",
   "skills/otonom-arastirma/SKILL.md",
   "skills/yazilim-kalite/SKILL.md",
   "vault-template/.gitignore",
-  "vault-template/.obsidian/snippets/secondbrain-layout.css",
+  "vault-template/.obsidian/snippets/brain-layout.css",
   "vault-template/.respected.json",
   "vault-template/daily/.gitkeep",
   "vault-template/knowledge/concepts/.gitkeep",

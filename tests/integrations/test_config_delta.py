@@ -4,10 +4,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from respectedbrain.installation.ownership import OwnershipManifest, manifest_document, read_manifest
-from respectedbrain.installation.transaction import Transaction, scrub_committed_journals
-from respectedbrain.integrations import delta
-from respectedbrain.integrations.backend import ExternalChange
+from respected_brain.installation.ownership import OwnershipManifest, manifest_document, read_manifest
+from respected_brain.installation.transaction import Transaction, scrub_committed_journals
+from respected_brain.integrations import delta
+from respected_brain.integrations.backend import ExternalChange
 from tests.support.fakes import Backend
 
 SECRET = "sk-live-" + "9f8e7d6c5b4a39281706"
@@ -17,8 +17,8 @@ def j(value) -> bytes:
     return json.dumps(value, indent=2).encode("utf-8")
 
 
-OURS_MCP = {"command": "C:/app/respectedbrain.exe", "args": ["mcp"]}
-OURS_HOOK = {"hooks": [{"type": "command", "command": "C:/app/respectedbrain.exe hook"}]}
+OURS_MCP = {"command": "C:/app/respected-brain.exe", "args": ["mcp"]}
+OURS_HOOK = {"hooks": [{"type": "command", "command": "C:/app/respected-brain.exe hook"}]}
 CLAUDE_BEFORE = {"numStartups": 3, "mcpServers": {"github": {"command": "npx", "env": {"GITHUB_TOKEN": SECRET}}}, "hooks": {"Stop": [{"hooks": [{"type": "command", "command": "other"}]}]}}
 CLAUDE_AFTER = {**CLAUDE_BEFORE, "mcpServers": {**CLAUDE_BEFORE["mcpServers"], "respected-vault": OURS_MCP},
                 "hooks": {"Stop": [*CLAUDE_BEFORE["hooks"]["Stop"], OURS_HOOK]}}
@@ -72,7 +72,7 @@ class JsonDeltaTest(unittest.TestCase):
 
 
 CODEX_BEFORE = (b'# my config\nmodel = "gpt"\n\n[projects."C:/a"]\ntrust_level = "trusted"\n\n[mcp_servers.other]\ncommand = "y"\nenv = { TOKEN = "' + SECRET.encode() + b'" }\n')
-CODEX_BLOCK = b'\n[mcp_servers.respected-vault]\ncommand = "C:/app/respectedbrain.exe"\nargs = ["mcp"]\n'
+CODEX_BLOCK = b'\n[mcp_servers.respected-vault]\ncommand = "C:/app/respected-brain.exe"\nargs = ["mcp"]\n'
 CODEX_AFTER = CODEX_BEFORE + CODEX_BLOCK
 
 
@@ -90,7 +90,7 @@ class TextDeltaTest(unittest.TestCase):
         restored = self.compact.undo(rewritten)
         self.assertNotIn(b"respected-vault", restored)
         self.assertEqual(restored, CODEX_BEFORE + b'\n[projects."C:/new"]\ntrust_level = "trusted"\n')
-        edited = CODEX_AFTER.replace(b"C:/app/respectedbrain.exe", b"C:/evil/x.exe")
+        edited = CODEX_AFTER.replace(b"C:/app/respected-brain.exe", b"C:/evil/x.exe")
         with self.assertRaises(ValueError):
             self.compact.undo(edited)
         removed_by_user = CODEX_BEFORE + b"# user cleaned up\n"

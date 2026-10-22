@@ -17,12 +17,12 @@ try {
     $Program = @'
 from pathlib import Path
 import json, subprocess, sys, tempfile, shlex
-from respectedbrain.installation.payload import validate_package
-from respectedbrain.core.paths import Roots
-from respectedbrain.core.config import ConfigStore
-from respectedbrain.vault.registry import VaultRegistry, build_context
-from respectedbrain.integrations.backend import IntegrationProfile
-from respectedbrain.integrations.planning import validate_profile, bridge_argv, wsl_path
+from respected_brain.installation.payload import validate_package
+from respected_brain.core.paths import Roots
+from respected_brain.core.config import ConfigStore
+from respected_brain.vault.registry import VaultRegistry, build_context
+from respected_brain.integrations.backend import IntegrationProfile
+from respected_brain.integrations.planning import validate_profile, bridge_argv, wsl_path
 package = Path(sys.argv[1]).resolve()
 document = validate_package(package)
 if document["platform"] != "linux":

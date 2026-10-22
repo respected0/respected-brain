@@ -9,13 +9,13 @@ import tempfile
 import unittest
 from unittest.mock import patch, MagicMock
 
-from respectedbrain.maintenance.ingestion.url_safety import validate_safe_url
-from respectedbrain.maintenance.backup.publish_git_snapshot import publish_if_due
-from respectedbrain.integrations.mcp.server import RespectedMcpServer
-from respectedbrain.maintenance.ingestion.mine_agent_history import AgentHistoryMiner
-from respectedbrain.maintenance.smart_merge import smart_merge, dump_frontmatter
-from respectedbrain.maintenance.tiling_check import check_tiling
-from respectedbrain.maintenance.ingestion.defuddle import clean_html, MAX_HTML_STRING_LEN
+from respected_brain.maintenance.ingestion.url_safety import validate_safe_url
+from respected_brain.maintenance.backup.publish_git_snapshot import publish_if_due
+from respected_brain.integrations.mcp.server import RespectedMcpServer
+from respected_brain.maintenance.ingestion.mine_agent_history import AgentHistoryMiner
+from respected_brain.maintenance.smart_merge import smart_merge, dump_frontmatter
+from respected_brain.maintenance.tiling_check import check_tiling
+from respected_brain.maintenance.ingestion.defuddle import clean_html, MAX_HTML_STRING_LEN
 
 
 class ZeroTrustSecurityTests(unittest.TestCase):
@@ -68,8 +68,8 @@ class ZeroTrustSecurityTests(unittest.TestCase):
         self.assertTrue(result["status"].startswith("halted:"))
         self.assertIn("fail-closed", result["detail"].lower())
 
-    @patch("respectedbrain.maintenance.backup.publish_git_snapshot._branch_divergence_status")
-    @patch("respectedbrain.maintenance.backup.publish_git_snapshot.check_secret_guard")
+    @patch("respected_brain.maintenance.backup.publish_git_snapshot._branch_divergence_status")
+    @patch("respected_brain.maintenance.backup.publish_git_snapshot.check_secret_guard")
     def test_publish_git_snapshot_fail_closed_on_divergence_error(self, mock_guard, mock_div):
         mock_guard.return_value = (True, [])
         mock_div.return_value = "error"
@@ -78,8 +78,8 @@ class ZeroTrustSecurityTests(unittest.TestCase):
         self.assertEqual(result["status"], "halted:error")
         self.assertIn("fail-closed", result["detail"])
 
-    @patch("respectedbrain.maintenance.backup.publish_git_snapshot._branch_divergence_status")
-    @patch("respectedbrain.maintenance.backup.publish_git_snapshot.check_secret_guard")
+    @patch("respected_brain.maintenance.backup.publish_git_snapshot._branch_divergence_status")
+    @patch("respected_brain.maintenance.backup.publish_git_snapshot.check_secret_guard")
     def test_publish_git_snapshot_fail_closed_on_divergence_unknown(self, mock_guard, mock_div):
         mock_guard.return_value = (True, [])
         mock_div.return_value = "unknown"

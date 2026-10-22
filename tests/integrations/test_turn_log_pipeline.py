@@ -17,13 +17,13 @@ import unittest
 from unittest import mock
 
 
-from respectedbrain.memory import flush as FLUSH
-from respectedbrain.core.errors import OwnershipConflict
+from respected_brain.memory import flush as FLUSH
+from respected_brain.core.errors import OwnershipConflict
 from tests.support.fakes import FakeModel
 from tests.support.files import make_context
-from respectedbrain.memory import lifecycle as LIFECYCLE
-from respectedbrain.integrations.hooks import codex_notify as CODEX_NOTIFY
-from respectedbrain.integrations.hooks import bridge as BRIDGE
+from respected_brain.memory import lifecycle as LIFECYCLE
+from respected_brain.integrations.hooks import codex_notify as CODEX_NOTIFY
+from respected_brain.integrations.hooks import bridge as BRIDGE
 
 
 class TurnLogPipelineTest(unittest.TestCase):
@@ -140,7 +140,7 @@ class TurnLogPipelineTest(unittest.TestCase):
     def test_twenty_four_processes_share_one_daily_without_lost_updates(self):
         worker = """
 import datetime as dt, importlib.util, pathlib, sys
-from respectedbrain.memory import flush as module
+from respected_brain.memory import flush as module
 module._upsert_daily_session(
     pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2]),
     '## Baglam\\nProcess ' + sys.argv[3], 'turn',

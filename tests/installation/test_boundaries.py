@@ -13,11 +13,11 @@ import tempfile
 import unittest
 from unittest import mock
 
-from respectedbrain.core.config import ConfigStore
-from respectedbrain.core.errors import SelectionError
-from respectedbrain.core.paths import Roots
-from respectedbrain.integrations.backend import IntegrationProfile
-from respectedbrain.installation.transaction import Transaction
+from respected_brain.core.config import ConfigStore
+from respected_brain.core.errors import SelectionError
+from respected_brain.core.paths import Roots
+from respected_brain.integrations.backend import IntegrationProfile
+from respected_brain.installation.transaction import Transaction
 from tests.support.packages import seed_package
 from tests.support.fakes import Backend
 from tests.support.files import snapshot
@@ -25,7 +25,7 @@ from tests.support.files import snapshot
 
 class BoundaryRegressionTest(unittest.TestCase):
     def setUp(self):
-        from respectedbrain.memory import compile
+        from respected_brain.memory import compile
         self.compile = compile
         temporary = tempfile.TemporaryDirectory(prefix="boundary-")
         self.addCleanup(temporary.cleanup)
@@ -34,7 +34,7 @@ class BoundaryRegressionTest(unittest.TestCase):
         self.vault.mkdir()
         self.roots = Roots(self.root / "app", self.root / "data", self.vault)
         self.backend = Backend()
-        self.profile = IntegrationProfile("windows-native", (str(self.roots.app_root / "respectedbrain.exe"),), self.root / "home")
+        self.profile = IntegrationProfile("windows-native", (str(self.roots.app_root / "respected-brain.exe"),), self.root / "home")
 
     def test_staging_inside_vault_is_rejected_before_model_call(self):
         """If temporary staging directory falls inside vault root, compile must abort immediately."""
@@ -85,9 +85,9 @@ class BoundaryRegressionTest(unittest.TestCase):
 
     def test_install_antigravity_global_accepts_non_windows_vault_path(self):
         """install_antigravity_global must not reject Linux/POSIX vault paths where windows_path is None."""
-        from respectedbrain.integrations.backend import IntegrationProfile, NativeBackend
-        from respectedbrain.integrations import rendering
-        from respectedbrain.installation.transaction import Transaction
+        from respected_brain.integrations.backend import IntegrationProfile, NativeBackend
+        from respected_brain.integrations import rendering
+        from respected_brain.installation.transaction import Transaction
         from tests.support.fakes import memory_context as make_context
         with tempfile.TemporaryDirectory() as temporary:
             base = Path(temporary).resolve()
@@ -95,7 +95,7 @@ class BoundaryRegressionTest(unittest.TestCase):
             home = base / "home"
             home.mkdir()
             backend = NativeBackend(ctx.paths.data_root, user_home=home)
-            profile = IntegrationProfile("posix", ("/opt/respectedbrain/bin/respectedbrain",), home)
+            profile = IntegrationProfile("posix", ("/opt/respected-brain/bin/respected-brain",), home)
             with mock.patch.object(rendering, "windows_path", return_value=None):
                 changes = rendering.plan_integrations(ctx, profile, {"global": True}, backend)
             with Transaction(ctx.paths.data_root, backend) as tx:
@@ -105,7 +105,7 @@ class BoundaryRegressionTest(unittest.TestCase):
             hooks = home / ".gemini/config/hooks.json"
             self.assertTrue(hooks.is_file())
             self.assertIn(ctx.paths.vault_id, hooks.read_text(encoding="utf-8"))
-            self.assertIn("/opt/respectedbrain/bin/respectedbrain", hooks.read_text(encoding="utf-8"))
+            self.assertIn("/opt/respected-brain/bin/respected-brain", hooks.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

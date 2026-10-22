@@ -10,8 +10,8 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from respectedbrain import settings as product_settings
-from respectedbrain.rpp import server as rpp
+from respected_brain import settings as product_settings
+from respected_brain.rpp import server as rpp
 
 
 class RppTest(unittest.TestCase):
@@ -33,7 +33,7 @@ class RppTest(unittest.TestCase):
 
     def test_manifest_lists_the_real_operations_and_install_state(self):
         result = self.call({"op": "manifest"})["result"]
-        self.assertEqual(result["product_id"], "respected-secondbrain")
+        self.assertEqual(result["product_id"], "respected-brain")
         self.assertEqual(result["rpp"], "1")
         self.assertEqual(result["capabilities"], sorted(rpp._OPS))
         self.assertTrue(result["product_version"])

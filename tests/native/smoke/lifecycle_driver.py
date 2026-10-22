@@ -8,13 +8,13 @@ import json
 import os
 from pathlib import Path
 
-from respectedbrain.core.config import ConfigStore
-from respectedbrain.core.paths import Roots
-from respectedbrain.integrations.backend import NativeBackend
-from respectedbrain.installation.repair import repair
-from respectedbrain.installation.setup import setup
-from respectedbrain.installation.uninstall import uninstall
-from respectedbrain.vault.registry import build_context
+from respected_brain.core.config import ConfigStore
+from respected_brain.core.paths import Roots
+from respected_brain.integrations.backend import NativeBackend
+from respected_brain.installation.repair import repair
+from respected_brain.installation.setup import setup
+from respected_brain.installation.uninstall import uninstall
+from respected_brain.vault.registry import build_context
 
 
 def main() -> int:

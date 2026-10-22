@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest import mock
 
-from respectedbrain.installation import transaction
+from respected_brain.installation import transaction
 from tests.support.fakes import Backend
 
 

@@ -12,11 +12,11 @@ import tempfile
 import time
 import unittest
 from unittest import mock
-from respectedbrain.core.resources import ResourceCatalog
-from respectedbrain.core.paths import Roots
-from respectedbrain.core.config import ConfigStore
-from respectedbrain.vault.registry import build_context
-from respectedbrain.integrations.backend import IntegrationProfile
+from respected_brain.core.resources import ResourceCatalog
+from respected_brain.core.paths import Roots
+from respected_brain.core.config import ConfigStore
+from respected_brain.vault.registry import build_context
+from respected_brain.integrations.backend import IntegrationProfile
 from tests.support.render import render_project_integrations
 from tests.support.files import make_context, snapshot
 from tests.support.packages import seed_package
@@ -40,7 +40,7 @@ class WindowsNativeTest(unittest.TestCase):
         self.home.mkdir()
         self.environment = {**os.environ, "RESPECTED_APP_DIR": str(self.ctx.paths.app_root), "RESPECTED_DATA_DIR": str(self.ctx.paths.data_root), "HOME": str(self.home), "USERPROFILE": str(self.home), "RESPECTED_INVOKED_BY": "", "RESPECTED_RECURSION_DEPTH": "0", "PYTHONUTF8": "1"}
         self.environment.pop("RESPECTED_LLM_COMMAND", None)
-        self.profile = IntegrationProfile("windows-native", (str(self.ctx.paths.app_root / "respectedbrain.exe"),), self.home)
+        self.profile = IntegrationProfile("windows-native", (str(self.ctx.paths.app_root / "respected-brain.exe"),), self.home)
         memory = self.vault / "🔮 850-Companion"
         (memory / "Last-Session.md").write_text("## Session: Native\nİlk provider kararı.\n## Previous Sessions\n", encoding="utf-8")
         (memory / "Threads.md").write_text("## Active\n### Native\n", encoding="utf-8")
@@ -61,7 +61,7 @@ class WindowsNativeTest(unittest.TestCase):
                 time.sleep(.05)
 
     def _cli(self, *arguments, payload=None, environment=None):
-        return subprocess.run([sys.executable, "-m", "respectedbrain", *arguments], input=json.dumps(payload) if payload is not None else None, text=True, encoding="utf-8", capture_output=True, cwd=self.root, env=environment or self.environment, timeout=45)
+        return subprocess.run([sys.executable, "-m", "respected_brain", *arguments], input=json.dumps(payload) if payload is not None else None, text=True, encoding="utf-8", capture_output=True, cwd=self.root, env=environment or self.environment, timeout=45)
 
     def _bridge(self, provider, event, payload):
         return self._cli("hook", "--vault-id", self.ctx.paths.vault_id, "--provider", provider, "--event", event, payload=payload)
@@ -70,7 +70,7 @@ class WindowsNativeTest(unittest.TestCase):
         combined = "\n".join((self.vault / relative).read_text(encoding="utf-8") for relative in (".claude/settings.json", ".codex/hooks.json", ".cursor/hooks.json", ".agents/hooks.json"))
         for provider in ("claude", "codex", "cursor", "antigravity"):
             self.assertIn(f"--provider {provider}", combined)
-        self.assertIn("respectedbrain.exe", combined)
+        self.assertIn("respected-brain.exe", combined)
         self.assertIn(self.ctx.paths.vault_id, combined)
         for forbidden in ("python", ".py", "wsl.exe", "bash"):
             self.assertNotIn(forbidden, combined.lower())
@@ -82,7 +82,7 @@ class WindowsNativeTest(unittest.TestCase):
         with ThreadPoolExecutor(max_workers=8) as pool:
             results = list(pool.map(lambda _: self._bridge("cursor", "prompt", {"session_id": "native"}), range(30)))
         self.assertEqual([row.returncode for row in results], [0] * 30, [row.stderr for row in results])
-        from respectedbrain.memory.lifecycle import session_key
+        from respected_brain.memory.lifecycle import session_key
         counter = self.state / ("prompt_count." + session_key("native"))
         self.assertEqual(counter.read_text(encoding="utf-8").strip(), "30")
         transcript = self.root / "native-transcript.jsonl"
@@ -115,7 +115,7 @@ class WindowsNativeTest(unittest.TestCase):
         self.assertFalse(any(self.state.glob("hookin-*.json")))
 
     def test_provider_first_retryable_failure_uses_the_next_real_cli_stub(self):
-        from respectedbrain.providers import runner
+        from respected_brain.providers import runner
         bin_dir = self.root / "bin"
         bin_dir.mkdir()
         log = self.root / "provider-order.txt"
@@ -128,7 +128,7 @@ class WindowsNativeTest(unittest.TestCase):
         self.assertEqual(log.read_text(encoding="utf-8").splitlines(), ["codex", "cursor"])
 
     def test_session_start_catchup_excludes_the_current_day(self):
-        from respectedbrain.memory.flush import compile_catch_up
+        from respected_brain.memory.flush import compile_catch_up
         daily = self.vault / ("daily/" + dt.date.today().isoformat() + ".md")
         daily.write_text("# Daily\nStill changing.\n", encoding="utf-8")
         model = mock.Mock()
@@ -137,7 +137,7 @@ class WindowsNativeTest(unittest.TestCase):
         self.assertFalse(any(self.state.glob("compile-trigger-*")))
 
     def test_compile_staging_uses_data_cache_and_is_cleaned(self):
-        from respectedbrain.memory import compile as compiler
+        from respected_brain.memory import compile as compiler
         daily = self.vault / "daily/2026-08-30.md"
         daily.write_text("# Native staging\n", encoding="utf-8")
         observed = {}
@@ -153,7 +153,7 @@ class WindowsNativeTest(unittest.TestCase):
         self.assertFalse(observed["stage"].is_relative_to(self.vault))
 
     def test_map_builder_rejects_windows_directory_junction(self):
-        from respectedbrain.vault.maps import refresh_maps
+        from respected_brain.vault.maps import refresh_maps
         outside = self.root / "outside-command-center"
         outside.mkdir()
         command_center = self.vault / "🎯 100-Command-Center"
@@ -170,13 +170,13 @@ class WindowsNativeTest(unittest.TestCase):
             command_center.rmdir()
 
     def test_repair_after_an_installer_update_runs_with_native_paths_and_external_backup(self):
-        from respectedbrain.installation.setup import setup
-        from respectedbrain.installation.repair import repair
+        from respected_brain.installation.setup import setup
+        from respected_brain.installation.repair import repair
         vault = self.root / "Update 🧠 Brain"
         roots = Roots(self.root / "installed", self.root / "installation-data", vault)
         backend = Backend()
         seed_package(roots.app_root)
-        with mock.patch("respectedbrain.installation.payload.validate_installed_health"):
+        with mock.patch("respected_brain.installation.payload.validate_installed_health"):
             self.assertTrue(setup(roots, vault, values={}, backend=backend).success)
             ctx = build_context(roots, ConfigStore(roots.data_root), vault=vault, vault_id=None, env={})
             personal = vault / "🔮 850-Companion/Core.md"

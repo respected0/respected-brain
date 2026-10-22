@@ -4,15 +4,15 @@ from unittest import TestCase, mock
 from pathlib import PureWindowsPath
 from tests.support.fakes import IntegrationFixture
 from tests.support.files import snapshot
-from respectedbrain.integrations.backend import IntegrationProfile
-from respectedbrain.integrations import rendering as RENDER
-from respectedbrain.integrations.planning import wsl_path
+from respected_brain.integrations.backend import IntegrationProfile
+from respected_brain.integrations import rendering as RENDER
+from respected_brain.integrations.planning import wsl_path
 from tests.support.render import render_project_integrations
 
 class ProfileRenderTest(IntegrationFixture, TestCase):
     def test_native_bridge_argv_preserves_a_spaced_windows_vault_as_one_argument(self):
         argv = RENDER.bridge_argv(self.ctx, self.profile, "codex", "start")
-        self.assertEqual(argv[0], str(self.app / "respectedbrain.exe"))
+        self.assertEqual(argv[0], str(self.app / "respected-brain.exe"))
         self.assertEqual(argv[argv.index("--vault-id") + 1], self.ctx.paths.vault_id)
         self.assertNotIn(str(self.vault), argv)
         self.assertNotIn(".py", " ".join(argv))
@@ -24,15 +24,15 @@ class ProfileRenderTest(IntegrationFixture, TestCase):
         self.assertEqual(argv[argv.index("--event") + 1], "turn")
 
     def test_portable_global_bridge_uses_explicit_uuid(self):
-        profile = IntegrationProfile("posix", ("/opt/Respected Brain/respectedbrain",), self.home)
+        profile = IntegrationProfile("posix", ("/opt/Respected Brain/respected-brain",), self.home)
         argv = RENDER.bridge_argv(self.ctx, profile, "codex", "start", global_hook=True)
         self.assertEqual(argv[0], profile.launcher[0])
         self.assertIn("--global-hook", argv)
         self.assertIn(self.ctx.paths.vault_id, argv)
-        self.assertIn("'/opt/Respected Brain/respectedbrain'", RENDER.command_text(profile, argv))
+        self.assertIn("'/opt/Respected Brain/respected-brain'", RENDER.command_text(profile, argv))
 
     def test_each_profile_renders_all_provider_adapters(self):
-        for platform, launcher in (("windows-native", self.profile.launcher), ("windows-wsl", ("/opt/respectedbrain",)), ("posix", ("/opt/respectedbrain",))):
+        for platform, launcher in (("windows-native", self.profile.launcher), ("windows-wsl", ("/opt/respected-brain",)), ("posix", ("/opt/respected-brain",))):
             with self.subTest(platform=platform), mock.patch.object(RENDER.subprocess, "run", return_value=mock.Mock(returncode=0, stdout=self.wsl_registry_output())):
                 profile = IntegrationProfile(platform, launcher, self.home)
                 rows = RENDER.plan_integrations(self.ctx, profile, {"global": True}, self.backend())
@@ -64,25 +64,25 @@ class ProfileRenderTest(IntegrationFixture, TestCase):
         self.assertEqual(snapshot(self.root), before)
 
     def test_wsl_executable_without_registered_uuid_fails_readonly(self):
-        from respectedbrain.core.errors import OwnershipConflict
-        profile = IntegrationProfile("windows-wsl", ("/opt/respectedbrain",), self.home)
+        from respected_brain.core.errors import OwnershipConflict
+        profile = IntegrationProfile("windows-wsl", ("/opt/respected-brain",), self.home)
         before = snapshot(self.root)
         with mock.patch.object(RENDER.subprocess, "run", side_effect=[mock.Mock(returncode=0), mock.Mock(returncode=0, stdout="{}")]) as run:
             with self.assertRaisesRegex(OwnershipConflict, "vault register"):
                 RENDER.validate_profile(self.ctx, profile)
         self.assertEqual(snapshot(self.root), before)
-        self.assertEqual(run.call_args.args[0], ["wsl.exe", "--", "/opt/respectedbrain", "vault", "list"])
+        self.assertEqual(run.call_args.args[0], ["wsl.exe", "--", "/opt/respected-brain", "vault", "list"])
 
     def test_wsl_existing_uuid_must_point_to_same_converted_vault(self):
-        from respectedbrain.core.errors import OwnershipConflict
-        profile = IntegrationProfile("windows-wsl", ("/opt/respectedbrain",), self.home)
+        from respected_brain.core.errors import OwnershipConflict
+        profile = IntegrationProfile("windows-wsl", ("/opt/respected-brain",), self.home)
         wrong = json.dumps({self.ctx.paths.vault_id: {"path": "/wrong/vault"}})
         with mock.patch.object(RENDER.subprocess, "run", side_effect=[mock.Mock(returncode=0), mock.Mock(returncode=0, stdout=wrong)]):
             with self.assertRaises(OwnershipConflict):
                 RENDER.validate_profile(self.ctx, profile)
 
     def test_wsl_matching_existing_uuid_is_accepted_without_registration_write(self):
-        profile = IntegrationProfile("windows-wsl", ("/opt/respectedbrain",), self.home)
+        profile = IntegrationProfile("windows-wsl", ("/opt/respected-brain",), self.home)
         registry = json.dumps({self.ctx.paths.vault_id: {"path": wsl_path(self.vault)}})
         before = snapshot(self.root)
         with mock.patch.object(RENDER.subprocess, "run", side_effect=[mock.Mock(returncode=0), mock.Mock(returncode=0, stdout=registry)]):
@@ -90,12 +90,12 @@ class ProfileRenderTest(IntegrationFixture, TestCase):
         self.assertEqual(snapshot(self.root), before)
 
     def test_installed_wsl_profile_wraps_linux_launcher_exactly_once(self):
-        from respectedbrain.installation.common import installed_profile
-        from respectedbrain.core.paths import Roots
+        from respected_brain.installation.common import installed_profile
+        from respected_brain.core.paths import Roots
         profile = installed_profile(Roots(self.app,self.data,self.vault), {"platform":"windows-wsl","user_home":str(self.home)})
-        self.assertEqual(profile.launcher, ("respectedbrain",))
+        self.assertEqual(profile.launcher, ("respected-brain",))
         with mock.patch.object(RENDER.subprocess, "run", return_value=mock.Mock(returncode=0,stdout=self.wsl_registry_output())):
             RENDER.validate_profile(self.ctx,profile)
         argv = RENDER.bridge_argv(self.ctx,profile,"cursor","prompt")
         self.assertEqual(argv.count("wsl.exe"),1)
-        self.assertEqual(argv[3],"respectedbrain")
+        self.assertEqual(argv[3],"respected-brain")

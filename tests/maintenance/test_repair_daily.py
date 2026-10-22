@@ -12,7 +12,7 @@ import unittest
 from unittest import mock
 
 
-from respectedbrain.maintenance import repair_daily as REPAIR_DAILY
+from respected_brain.maintenance import repair_daily as REPAIR_DAILY
 
 
 class RepairDailyTest(unittest.TestCase):

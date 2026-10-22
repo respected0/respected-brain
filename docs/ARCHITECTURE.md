@@ -1,4 +1,4 @@
-# SecondBrain mimarisi
+# Brain mimarisi
 
 Programın nasıl kurulduğu, verinin nerede durduğu, başka ürünlerin hafızaya nasıl eriştiği ve hangi güvenlik
 sınırlarının uygulandığı. Kullanım: [USAGE.md](USAGE.md). Komutlar: [COMMANDS.md](COMMANDS.md). Üç ürünün ortak
@@ -9,8 +9,8 @@ tekrarlanmaz.
 
 | Kök | Windows | macOS | Linux | İçerik |
 |---|---|---|---|---|
-| Program | `%LOCALAPPDATA%\Respected\RespectedBrain\app` | `~/Applications/RespectedBrain.app` | `~/.local/lib/respectedbrain` | `respectedbrain.exe`, `app/` (çalışma ortamı ve `resources/`), `distribution.json`, kaldırıcı |
-| Veri | `%LOCALAPPDATA%\Respected\RespectedBrain\data` | `~/Library/Application Support/RespectedBrain` | `$XDG_DATA_HOME/respectedbrain` | `config.json`, `install-manifest.json`, `logs/`, `backups/`, `vaults/<UUID>/{state,cache,overrides}` |
+| Program | `%LOCALAPPDATA%\Respected\RespectedBrain\app` | `~/Applications/RespectedBrain.app` | `~/.local/lib/respected-brain` | `respected-brain.exe`, `app/` (çalışma ortamı ve `resources/`), `distribution.json`, kaldırıcı |
+| Veri | `%LOCALAPPDATA%\Respected\RespectedBrain\data` | `~/Library/Application Support/RespectedBrain` | `$XDG_DATA_HOME/respected-brain` | `config.json`, `install-manifest.json`, `logs/`, `backups/`, `vaults/<UUID>/{state,cache,overrides}` |
 | Kasa | kişinin seçtiği yer (varsayılan `Belgeler\RespectedOS`) | aynı | aynı | notlar, `.obsidian/`, `.respected.json` |
 
 - Kökler birbirini içeremez. Windows'ta yollar Known Folders ile çözülür (yönlendirilmiş Belgeler/AppData dahil).
@@ -79,7 +79,7 @@ Biçim denetimleri özetin doğru olduğunu kanıtlamaz; model çıktısıdır.
 
 ## 5. Başka ürünlerin hafızaya erişimi
 
-Orchestrator gibi başka bir ürün hafızaya yalnızca **izinle** ve yalnızca `rpp` üzerinden erişir; SecondBrain'in kodunu
+Orchestrator gibi başka bir ürün hafızaya yalnızca **izinle** ve yalnızca `rpp` üzerinden erişir; Brain'in kodunu
 içe aktarmaz.
 
 - **İzin bir sırdır, ad değil.** `memory.grant {label, write?, max_results?}` bir izin kimliği ve bir kez gösterilen bir

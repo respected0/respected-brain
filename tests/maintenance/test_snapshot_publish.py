@@ -2,9 +2,9 @@
 from pathlib import Path
 import os, shutil, subprocess, sys, tempfile, unittest
 from unittest import mock
-from respectedbrain.maintenance.backup.publish_git_snapshot import publish_if_due
+from respected_brain.maintenance.backup.publish_git_snapshot import publish_if_due
 import json
-import respectedbrain.maintenance.backup.publish_git_snapshot as snapshot_module
+import respected_brain.maintenance.backup.publish_git_snapshot as snapshot_module
 
 class ImmutableSnapshotPublicationTest(unittest.TestCase):
     def setUp(self):
@@ -24,7 +24,7 @@ class ImmutableSnapshotPublicationTest(unittest.TestCase):
     def test_post_scan_isolated_index_race_cannot_change_published_tree(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp); remote, repo = self._fixture(root); secret = 'sk-proj-SYNTHETICONLY1234567890'*3
-            import os, respectedbrain.maintenance.backup.publish_git_snapshot as module
+            import os, respected_brain.maintenance.backup.publish_git_snapshot as module
             def race(*args,**kwargs):
                 if not Path(kwargs['index_file']).name.startswith('index.tree_'):
                     return True,[]
@@ -178,7 +178,7 @@ class ImmutableSnapshotChainTest(unittest.TestCase):
             script = (
                 'import json, sys\n'
                 'from pathlib import Path\n'
-                'from respectedbrain.maintenance.backup.publish_git_snapshot import publish_if_due\n'
+                'from respected_brain.maintenance.backup.publish_git_snapshot import publish_if_due\n'
                 'result = publish_if_due(Path(sys.argv[1]), remote="origin", branch="main", apply=True, min_interval_seconds=0, receipt_file=Path(sys.argv[2]))\n'
                 'print(json.dumps(result))\n'
             )

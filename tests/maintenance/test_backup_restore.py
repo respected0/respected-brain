@@ -11,7 +11,7 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from respectedbrain.maintenance.backup import backup_restic as B
+from respected_brain.maintenance.backup import backup_restic as B
 
 
 class FakeRestic:

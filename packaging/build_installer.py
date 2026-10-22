@@ -1,9 +1,9 @@
-"""Build dist/RespectedSecondBrain-Windows-Setup.exe (not Authenticode-signed) from the packaged distribution.
+"""Build dist/RespectedBrain-Windows-Setup.exe (not Authenticode-signed) from the packaged distribution.
 
     python packaging/build_installer.py [--skip-dist]
 
 Runs packaging/build_dist.py --platform windows (PyInstaller onedir) unless --skip-dist, then compiles
-packaging/windows/secondbrain_setup.iss with Inno Setup (set INNO_COMPILER when ISCC.exe is not on PATH or in
+packaging/windows/brain_setup.iss with Inno Setup (set INNO_COMPILER when ISCC.exe is not on PATH or in
 %LOCALAPPDATA%\Programs\Inno Setup 6).
 """
 import argparse
@@ -37,9 +37,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if not args.skip_dist:
         run([sys.executable, "-B", str(ROOT / "packaging" / "build_dist.py"), "--platform", "windows", "--output", str(DIST)])
-    if not (DIST / "RespectedBrain" / "respectedbrain.exe").is_file():
+    if not (DIST / "RespectedBrain" / "respected-brain.exe").is_file():
         sys.exit("dist/RespectedBrain is missing; run without --skip-dist")
     version = re.search(r'^version\s*=\s*"([^"]+)"', (ROOT / "pyproject.toml").read_text("utf-8"), re.M).group(1)
     run([inno(), f"/DAppVersion={version}", f"/DStageDir={DIST / 'RespectedBrain'}", f"/DOutputDir={DIST}",
-         str(ROOT / "packaging" / "windows" / "secondbrain_setup.iss")])
-    print(DIST / "RespectedSecondBrain-Windows-Setup.exe")
+         str(ROOT / "packaging" / "windows" / "brain_setup.iss")])
+    print(DIST / "RespectedBrain-Windows-Setup.exe")

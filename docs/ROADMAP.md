@@ -1,4 +1,4 @@
-# SecondBrain: gelecekte yapılacaklar
+# Brain: gelecekte yapılacaklar
 
 Ürün beklentisiyle bugünkü durum arasındaki açıklar (2026-10-22 değerlendirmesi). Yapılan madde işaretlenir ya da silinir.
 
@@ -33,7 +33,7 @@
 
 ## Ürün ve yayın
 
-- [ ] İsim kararı: Respected-SecondBrain mi Respected-Brain mi. Bugün depo `respected-secondbrain`, program
-  `respectedbrain.exe`, README başlığı "Respected Brain (SecondBrain)".
+- [ ] GitHub deposunu `respected0/respected-secondbrain` → `respected0/respected-brain` olarak yeniden adlandırmak
+  (ürün adı 2026-10-22'de "Respected Brain" olarak kesinleşti; kod ve belgeler buna göre).
 - [ ] Kurucuyu Authenticode ile imzalamak (SmartScreen uyarısı).
 - [ ] macOS / Linux / WSL: kod ve betikler var, derlenmiyor ve CI'da sınanmıyor.

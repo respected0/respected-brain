@@ -10,9 +10,9 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from respectedbrain import cli
-from respectedbrain.core.locking import exclusive_lock
-from respectedbrain.maintenance.ingestion.mine_agent_history import AgentHistoryMiner
+from respected_brain import cli
+from respected_brain.core.locking import exclusive_lock
+from respected_brain.maintenance.ingestion.mine_agent_history import AgentHistoryMiner
 from tests.support.files import make_context, snapshot
 
 
@@ -51,7 +51,7 @@ class EntryReviewTest(unittest.TestCase):
         def flush(*args, **kwargs):
             path.write_bytes(edited)
             return 0
-        with patch('respectedbrain.memory.flush.flush_transcript', side_effect=flush):
+        with patch('respected_brain.memory.flush.flush_transcript', side_effect=flush):
             code, _, _ = self.call(['flush', '--hook-input', str(path)])
         self.assertEqual(code, 0)
         self.assertTrue(path.exists(), 'cleanup must preserve a late edit')
@@ -70,7 +70,7 @@ class EntryReviewTest(unittest.TestCase):
         def flush(*args, **kwargs):
             path.unlink()
             return 0
-        with patch('respectedbrain.memory.flush.flush_transcript', side_effect=flush):
+        with patch('respected_brain.memory.flush.flush_transcript', side_effect=flush):
             code, _, err = self.call(['flush', '--hook-input', str(path)])
         self.assertEqual(code, 0, err)
 
@@ -151,14 +151,14 @@ class EntryReviewTest(unittest.TestCase):
 
 class BootstrapReviewTest(unittest.TestCase):
     def test_frozen_launch_uses_executable_root_and_explicit_data(self):
-        module = importlib.import_module('respectedbrain.bootstrap')
+        module = importlib.import_module('respected_brain.bootstrap')
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
             home = root / 'home'
             home.mkdir()
-            cases = [('win32', root/'app'/'respectedbrain.exe', root/'app'),
-                     ('darwin', root/'RespectedBrain.app'/'Contents'/'MacOS'/'respectedbrain', root/'RespectedBrain.app'),
-                     ('linux', root/'app'/'respectedbrain', root/'app')]
+            cases = [('win32', root/'app'/'respected-brain.exe', root/'app'),
+                     ('darwin', root/'RespectedBrain.app'/'Contents'/'MacOS'/'respected-brain', root/'RespectedBrain.app'),
+                     ('linux', root/'app'/'respected-brain', root/'app')]
             for platform, executable, expected in cases:
                 with self.subTest(platform=platform), patch.object(module.sys, 'frozen', True, create=True), patch.object(module.sys, 'platform', platform), patch.object(module.sys, 'executable', str(executable)), patch.object(Path, 'home', return_value=home), patch.object(module, 'known_folder', return_value=home/'Documents'):
                     roots = module.application_roots(env={'RESPECTED_DATA_DIR': str(root/'data')})

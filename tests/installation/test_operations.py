@@ -5,15 +5,15 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from respectedbrain.core.config import ConfigStore
-from respectedbrain.installation.setup import setup
-from respectedbrain.installation.repair import repair
-from respectedbrain.installation.reconfigure import reconfigure
-from respectedbrain.installation.uninstall import uninstall
-from respectedbrain.core.paths import Roots
-from respectedbrain.vault.registry import build_context
-from respectedbrain.integrations.backend import ExternalChange
-from respectedbrain.installation.ownership import OwnershipManifest, read_manifest, manifest_document
+from respected_brain.core.config import ConfigStore
+from respected_brain.installation.setup import setup
+from respected_brain.installation.repair import repair
+from respected_brain.installation.reconfigure import reconfigure
+from respected_brain.installation.uninstall import uninstall
+from respected_brain.core.paths import Roots
+from respected_brain.vault.registry import build_context
+from respected_brain.integrations.backend import ExternalChange
+from respected_brain.installation.ownership import OwnershipManifest, read_manifest, manifest_document
 from tests.support.packages import seed_package
 from tests.support.files import note_hashes, snapshot
 from tests.support.fakes import Backend
@@ -29,7 +29,7 @@ class FoundationOperationsTest(unittest.TestCase):
         self.vault = self.root / "Türkçe 🧠 Vault"
         self.roots = Roots(self.root / "app", self.root / "data", self.vault)
         self.backend = Backend()
-        self.health = patch("respectedbrain.installation.payload.validate_installed_health", return_value=None)
+        self.health = patch("respected_brain.installation.payload.validate_installed_health", return_value=None)
         self.health.start()
         self.addCleanup(self.health.stop)
         seed_package(self.roots.app_root)
@@ -52,14 +52,14 @@ class FoundationOperationsTest(unittest.TestCase):
         seed_package(self.roots.app_root, content=b"MZ-new")
         result = repair(self.ctx, backend=self.backend)
         self.assertTrue(result.success, result.conflicts)
-        from respectedbrain.installation.ownership import digest
+        from respected_brain.installation.ownership import digest
         recorded = {item.path: item.sha256 for item in read_manifest(self.manifest_path).files}
-        self.assertEqual(recorded[self.roots.app_root / "respectedbrain.exe"], digest(self.roots.app_root / "respectedbrain.exe"))
+        self.assertEqual(recorded[self.roots.app_root / "respected-brain.exe"], digest(self.roots.app_root / "respected-brain.exe"))
         self.assertEqual(ConfigStore(self.roots.data_root).read(), config)
         self.assertEqual((note_hashes(self.vault), snapshot(self.other)), (notes, other))
 
     def test_repair_refuses_a_damaged_program_and_leaves_it_to_the_installer(self):
-        target = self.roots.app_root / "respectedbrain.exe"
+        target = self.roots.app_root / "respected-brain.exe"
         target.write_bytes(b"damaged")
         manifest = self.manifest_path.read_bytes()
         result = repair(self.ctx, backend=self.backend)
@@ -69,7 +69,7 @@ class FoundationOperationsTest(unittest.TestCase):
 
     def test_maintenance_retains_migrated_technical_ownership_without_adopting_edits(self):
         from dataclasses import replace
-        from respectedbrain.installation.ownership import OwnedFile, digest
+        from respected_brain.installation.ownership import OwnedFile, digest
         path = self.ctx.paths.state_dir / 'migration-receipts/fixture.json'
         path.parent.mkdir(parents=True)
         path.write_bytes(b'original-receipt')
@@ -91,7 +91,7 @@ class FoundationOperationsTest(unittest.TestCase):
         import subprocess
         before = snapshot(self.roots.app_root)
         self.health.stop()
-        with patch('respectedbrain.installation.payload.subprocess.run', side_effect=subprocess.TimeoutExpired('fixture', 30)):
+        with patch('respected_brain.installation.payload.subprocess.run', side_effect=subprocess.TimeoutExpired('fixture', 30)):
             result = repair(self.ctx, backend=self.backend)
         self.assertFalse(result.success)
         self.assertEqual(snapshot(self.roots.app_root), before)
@@ -105,11 +105,11 @@ class FoundationOperationsTest(unittest.TestCase):
                 self.assertEqual(snapshot(self.roots.app_root), before)
 
     def test_distribution_member_alias_is_rejected(self):
-        from respectedbrain.installation.payload import validate_package
-        from respectedbrain.core.errors import OwnershipConflict
+        from respected_brain.installation.payload import validate_package
+        from respected_brain.core.errors import OwnershipConflict
         path = self.roots.app_root / 'distribution.json'
         document = json.loads(path.read_text())
-        document['files']['./respectedbrain.exe'] = document['files']['respectedbrain.exe']
+        document['files']['./respected-brain.exe'] = document['files']['respected-brain.exe']
         path.write_text(json.dumps(document), encoding='utf-8')
         with self.assertRaises(OwnershipConflict):
             validate_package(self.roots.app_root)
@@ -122,7 +122,7 @@ class FoundationOperationsTest(unittest.TestCase):
             document["integrations"]["global"] = True
             document["vaults"][self.ctx.paths.vault_id]["settings"]["COMPANION"] = "Jarvis"
         with patch.object(self.backend, "apply", side_effect=OSError("client file locked")), \
-                patch("respectedbrain.bootstrap.application_roots", return_value=self.roots):
+                patch("respected_brain.bootstrap.application_roots", return_value=self.roots):
             result = reconfigure(self.roots.data_root, enable, backend=self.backend)
         self.assertFalse(result.success)
         self.assertEqual(((self.roots.data_root / "config.json").read_bytes(), self.manifest_path.read_bytes()), (config, manifest))

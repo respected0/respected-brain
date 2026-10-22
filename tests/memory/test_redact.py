@@ -1,8 +1,8 @@
 """Secrets in session text: redaction shapes, the summariser prompt, and what lands in notes."""
 import unittest
 
-from respectedbrain.memory import flush as F
-from respectedbrain.memory.redact import redact
+from respected_brain.memory import flush as F
+from respected_brain.memory.redact import redact
 
 SECRETS = {
     "openai": "sk-" + "Ab12Cd34Ef56Gh78Ij90Kl12",

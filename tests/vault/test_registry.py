@@ -24,9 +24,9 @@ class VaultRegistryTest(unittest.TestCase):
         self.vault2 = self.root / 'İkinci Vault'
         self.vault1.mkdir()
         self.vault2.mkdir()
-        self.assertIsNotNone(importlib.util.find_spec('respectedbrain.vault'), 'Vault registry is missing')
-        from respectedbrain.core.config import ConfigStore
-        from respectedbrain.vault.registry import VaultRegistry
+        self.assertIsNotNone(importlib.util.find_spec('respected_brain.vault'), 'Vault registry is missing')
+        from respected_brain.core.config import ConfigStore
+        from respected_brain.vault.registry import VaultRegistry
         self.store = ConfigStore(self.data)
         self.registry = VaultRegistry(self.store)
 
@@ -35,7 +35,7 @@ class VaultRegistryTest(unittest.TestCase):
         self.id2 = self.registry.register(self.vault2)
 
     def test_atomic_write_recovers_from_transient_replace_denial(self):
-        from respectedbrain.core import config
+        from respected_brain.core import config
         target = self.root / 'atomic.json'
         target.write_bytes(b'original')
         replace = config.os.replace
@@ -52,7 +52,7 @@ class VaultRegistryTest(unittest.TestCase):
         self.assertEqual(list(self.root.glob('.atomic.json-*.tmp')), [])
 
     def test_atomic_write_denial_is_bounded_and_preserves_original(self):
-        from respectedbrain.core import config
+        from respected_brain.core import config
         target = self.root / 'atomic.json'
         target.write_bytes(b'original')
         with mock.patch.object(config.os, 'replace', side_effect=PermissionError('denied')) as publish:
@@ -63,7 +63,7 @@ class VaultRegistryTest(unittest.TestCase):
         self.assertEqual(list(self.root.glob('.atomic.json-*.tmp')), [])
 
     def test_selector_priority_and_invalid_explicit_path(self):
-        from respectedbrain.core.errors import SelectionError
+        from respected_brain.core.errors import SelectionError
         self.register_two()
         env = {'RESPECTED_VAULT_PATH': str(self.vault1)}
         self.assertEqual(self.registry.select(vault=self.vault2, vault_id=None, env=env), (self.id2, self.vault2))
@@ -79,7 +79,7 @@ class VaultRegistryTest(unittest.TestCase):
         self.assertEqual(snapshot(self.root), before)
 
     def test_move_and_copy_uuid(self):
-        from respectedbrain.core.errors import IdentityConflict
+        from respected_brain.core.errors import IdentityConflict
         self.register_two()
         moved = self.root / 'Moved Vault'
         shutil.move(self.vault1, moved)
@@ -102,7 +102,7 @@ class VaultRegistryTest(unittest.TestCase):
         code = r'''
 import sys, time
 from pathlib import Path
-from respectedbrain.core.config import ConfigStore
+from respected_brain.core.config import ConfigStore
 while not Path(sys.argv[2]).exists(): time.sleep(.01)
 ConfigStore(Path(sys.argv[1])).update(lambda cfg: cfg['preferences'].update({sys.argv[3]: sys.argv[4]}))
 '''
@@ -153,7 +153,7 @@ ConfigStore(Path(sys.argv[1])).update(lambda cfg: cfg['preferences'].update({sys
         self.assertEqual(snapshot(self.root), before)
 
     def test_explicit_path_with_unregistered_or_mismatched_marker_is_rejected(self):
-        from respectedbrain.core.errors import SelectionError
+        from respected_brain.core.errors import SelectionError
         self.register_two()
         write_json(self.vault2/'.respected.json', {'schema_version':3,'vault_id':self.id1})
         with self.assertRaises(SelectionError):
@@ -165,8 +165,8 @@ ConfigStore(Path(sys.argv[1])).update(lambda cfg: cfg['preferences'].update({sys
             self.registry.select(vault=unregistered,vault_id=None,env={})
 
     def test_context_binds_selected_uuid_without_creating_state(self):
-        from respectedbrain.core.paths import Roots
-        from respectedbrain.vault.registry import build_context
+        from respected_brain.core.paths import Roots
+        from respected_brain.vault.registry import build_context
         self.register_two()
         before = snapshot(self.root)
         ctx = build_context(Roots(self.root/'App', self.data, self.root/'Default'), self.store,

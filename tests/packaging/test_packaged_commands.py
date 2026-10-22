@@ -6,9 +6,9 @@ import re
 import shlex
 import unittest
 from pathlib import Path
-from respectedbrain.cli import _parser
-from respectedbrain.core.resources import ResourceCatalog
-from respectedbrain.maintenance import _TOOLS
+from respected_brain.cli import _parser
+from respected_brain.core.resources import ResourceCatalog
+from respected_brain.maintenance import _TOOLS
 
 class FoundationPackagedCommandsTest(unittest.TestCase):
     def documents(self):
@@ -25,7 +25,7 @@ class FoundationPackagedCommandsTest(unittest.TestCase):
         found=[]
         for name,text in self.documents().items():
             for line in text.splitlines():
-                if not line.startswith("respectedbrain "):
+                if not line.startswith("respected-brain "):
                     continue
                 with self.subTest(name=name,command=line):
                     words=shlex.split(line)
@@ -38,7 +38,7 @@ class FoundationPackagedCommandsTest(unittest.TestCase):
                     self.assertFalse(args.command.startswith("_"))
                     if args.command=="maintenance":
                         self.assertIn(args.name,_TOOLS)
-                        module_path=Path(__file__).resolve().parents[2]/"src/respectedbrain/maintenance"/(_TOOLS[args.name].lstrip(".").replace(".","/")+".py")
+                        module_path=Path(__file__).resolve().parents[2]/"src/respected_brain/maintenance"/(_TOOLS[args.name].lstrip(".").replace(".","/")+".py")
                         syntax=ast.parse(module_path.read_text(encoding="utf-8"))
                         flags={item.value for node in ast.walk(syntax) if isinstance(node,ast.Call) and isinstance(node.func,ast.Attribute) and node.func.attr=="add_argument" for item in node.args if isinstance(item,ast.Constant) and isinstance(item.value,str)}
                         for value in args.argv:
@@ -66,10 +66,10 @@ class FoundationPackagedCommandsTest(unittest.TestCase):
     def test_installed_diagnosis_uses_real_marker_and_packaged_seeds(self):
         documents = self.documents()
         self.assertIn(".respected.json", ResourceCatalog().iter_files("vault-template"))
-        for name in ("instructions/default.md", "secondbrain-doktor/SKILL.md"):
+        for name in ("instructions/default.md", "brain-doktor/SKILL.md"):
             self.assertIn("VaultRoot/.respected.json", documents[name])
-            self.assertNotIn("VaultRoot/respectedbrain.json", documents[name])
-        doctor = documents["secondbrain-doktor/SKILL.md"]
+            self.assertNotIn("VaultRoot/respected_brain.json", documents[name])
+        doctor = documents["brain-doktor/SKILL.md"]
         self.assertNotIn("depodaki tohum", doctor)
         for resource in ("vault-template/knowledge/index.md", "vault-template/🔮 850-Companion/Kurallar.md"):
             self.assertTrue(ResourceCatalog().read_text(resource))

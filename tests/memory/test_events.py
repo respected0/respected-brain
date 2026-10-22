@@ -14,7 +14,7 @@ import unittest
 
 
 def load_events_module():
-    from respectedbrain.memory import events
+    from respected_brain.memory import events
     return events
 
 
@@ -376,7 +376,7 @@ Bu bir koddur ve thread olarak algılanmamalıdır.
 
 
 def load_flush_module():
-    from respectedbrain.memory import flush
+    from respected_brain.memory import flush
     return flush
 
 

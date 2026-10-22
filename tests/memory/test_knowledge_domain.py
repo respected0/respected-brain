@@ -13,7 +13,7 @@ import unittest
 
 class KnowledgeDomainTest(unittest.TestCase):
     def setUp(self) -> None:
-        from respectedbrain.memory import compile
+        from respected_brain.memory import compile
         self.compiler = compile
         self.temporary = tempfile.TemporaryDirectory()
         self.vault = Path(self.temporary.name)
@@ -36,7 +36,7 @@ class KnowledgeDomainTest(unittest.TestCase):
         self.temporary.cleanup()
 
     def test_template_index_markdown_has_domain_column(self) -> None:
-        from respectedbrain.core.resources import ResourceCatalog
+        from respected_brain.core.resources import ResourceCatalog
         text = ResourceCatalog().read_text("vault-template/knowledge/index.md")
         self.assertIn("| Makale | Alan (Domain) | Özet | Kaynak | Güncellendi |", text)
 

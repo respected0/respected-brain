@@ -5,8 +5,8 @@ import tempfile
 import unittest
 from unittest import mock
 
-from respectedbrain.core.errors import BusyError
-from respectedbrain.integrations.hooks import codex_notify
+from respected_brain.core.errors import BusyError
+from respected_brain.integrations.hooks import codex_notify
 from tests.support.files import make_context
 
 

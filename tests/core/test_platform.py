@@ -12,7 +12,7 @@ import unittest
 from unittest import mock
 
 
-from respectedbrain.core import platform as RUNTIME
+from respected_brain.core import platform as RUNTIME
 
 
 class RuntimePlatformTest(unittest.TestCase):

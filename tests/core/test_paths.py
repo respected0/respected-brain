@@ -21,8 +21,8 @@ class FoundationPathsTest(unittest.TestCase):
         self.docs = self.root / 'Türkçe 🧠 Belgeler'
 
     def paths_module(self):
-        self.assertIsNotNone(importlib.util.find_spec('respectedbrain.core.paths'), 'Pure paths contract is missing')
-        from respectedbrain.core import paths
+        self.assertIsNotNone(importlib.util.find_spec('respected_brain.core.paths'), 'Pure paths contract is missing')
+        from respected_brain.core import paths
         return paths
 
     def test_redirected_documents_and_separate_roots(self):
@@ -43,8 +43,8 @@ class FoundationPathsTest(unittest.TestCase):
         paths = self.paths_module()
         xdg = self.root / 'Custom Data'
         linux = paths.resolve_roots(platform='linux', home=self.home, env={'XDG_DATA_HOME': str(xdg)}, known_folder=lambda _: None)
-        self.assertEqual(linux.app_root, self.home / '.local/lib/respectedbrain')
-        self.assertEqual(linux.data_root, xdg / 'respectedbrain')
+        self.assertEqual(linux.app_root, self.home / '.local/lib/respected-brain')
+        self.assertEqual(linux.data_root, xdg / 'respected-brain')
         self.assertEqual(linux.default_vault, self.home / 'RespectedOS')
         mac = paths.resolve_roots(platform='darwin', home=self.home, env={}, known_folder=lambda _: None)
         self.assertEqual(mac.app_root, self.home / 'Applications/RespectedBrain.app')
@@ -52,7 +52,7 @@ class FoundationPathsTest(unittest.TestCase):
         (self.home / 'Documents').mkdir()
         fallback = paths.resolve_roots(platform='linux', home=self.home, env={}, known_folder=lambda _: None)
         self.assertEqual(fallback.default_vault, self.home / 'Documents/RespectedOS')
-        self.assertEqual(fallback.data_root, self.home / '.local/share/respectedbrain')
+        self.assertEqual(fallback.data_root, self.home / '.local/share/respected-brain')
 
     def test_overrides_do_not_use_legacy_runtime_dir(self):
         paths = self.paths_module()
@@ -66,7 +66,7 @@ class FoundationPathsTest(unittest.TestCase):
 
     def test_overlapping_paths_and_bad_identity_are_rejected(self):
         paths = self.paths_module()
-        from respectedbrain.core.errors import SelectionError
+        from respected_brain.core.errors import SelectionError
         for app, data, vault, identity in [(self.root/'Same', self.root/'Same', self.docs, UUID),
                                           (self.root/'App', self.root/'App/Data', self.docs, UUID),
                                           (self.root/'App', self.root/'Data', self.docs, '../escape')]:

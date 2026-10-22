@@ -11,10 +11,10 @@ import unittest
 from unittest.mock import patch
 from uuid import uuid4
 
-from respectedbrain.rpp import server as rpp
-from respectedbrain.core.config import ConfigStore
-from respectedbrain.rpp.integrations import _context
-from respectedbrain.search.engine import SearchEngine
+from respected_brain.rpp import server as rpp
+from respected_brain.core.config import ConfigStore
+from respected_brain.rpp.integrations import _context
+from respected_brain.search.engine import SearchEngine
 
 OPS = ["memory.grant", "memory.revoke", "memory.recall"]
 

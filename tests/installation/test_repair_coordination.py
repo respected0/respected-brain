@@ -13,14 +13,14 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from respectedbrain.core.config import ConfigStore
-from respectedbrain.core.coordination import writer_lease, quiesce_writers
-from respectedbrain.core.errors import BusyError
-from respectedbrain.core.paths import Roots
-from respectedbrain.vault.registry import VaultRegistry, build_context
-from respectedbrain.installation.setup import setup
-from respectedbrain.installation.repair import repair
-from respectedbrain.installation.transaction import Transaction, recover_transactions
+from respected_brain.core.config import ConfigStore
+from respected_brain.core.coordination import writer_lease, quiesce_writers
+from respected_brain.core.errors import BusyError
+from respected_brain.core.paths import Roots
+from respected_brain.vault.registry import VaultRegistry, build_context
+from respected_brain.installation.setup import setup
+from respected_brain.installation.repair import repair
+from respected_brain.installation.transaction import Transaction, recover_transactions
 from tests.support.packages import seed_package
 from tests.support.files import snapshot
 from tests.support.fakes import Backend
@@ -35,7 +35,7 @@ class RepairWriterCoordinationTest(unittest.TestCase):
         self.vault.mkdir()
         self.roots = Roots(self.root / "app", self.root / "data", self.vault)
         self.backend = Backend()
-        self.health = patch("respectedbrain.installation.payload.validate_installed_health", return_value=None)
+        self.health = patch("respected_brain.installation.payload.validate_installed_health", return_value=None)
         self.health.start()
         self.addCleanup(self.health.stop)
         seed_package(self.roots.app_root)
@@ -94,7 +94,7 @@ class RepairWriterCoordinationTest(unittest.TestCase):
         self.assertNotEqual(self.manifest(), before)
 
     def test_recovery_coordinates_every_vault_and_rolls_back_interrupted_repair(self):
-        target = self.roots.app_root / "respectedbrain.exe"
+        target = self.roots.app_root / "respected-brain.exe"
         with Transaction(self.roots.data_root, self.backend) as tx:
             tx.write(target, b"interrupted")
             tx.commit()

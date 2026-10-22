@@ -30,8 +30,8 @@ VALID = """## Dün tamamlananlar
 
 
 def load_worker():
-    from respectedbrain.briefing import service
-    from respectedbrain.core.context import ModelResult
+    from respected_brain.briefing import service
+    from respected_brain.core.context import ModelResult
     from tests.support.files import make_context
     from types import SimpleNamespace
 
@@ -51,7 +51,7 @@ class MorningBriefingTest(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory(prefix="respected-briefing-")
         self.vault = Path(self.temporary.name).resolve() / "Ada Brain"
-        from respectedbrain.briefing import service
+        from respected_brain.briefing import service
         from tests.support.files import make_context
         self.ctx = make_context(Path(self.temporary.name).resolve(), self.vault)
         self.compiler = patch.object(service, "compile_memory", return_value=0)
@@ -132,8 +132,8 @@ class MorningBriefingTest(unittest.TestCase):
         self.assertFalse(calls[0].exists())
 
     def test_linked_cache_is_rejected_before_model_or_compilation(self):
-        from respectedbrain.briefing import service
-        from respectedbrain.core.context import ModelResult
+        from respected_brain.briefing import service
+        from respected_brain.core.context import ModelResult
         outside = Path(self.temporary.name) / "outside-cache"
         outside.mkdir()
         cache = self.ctx.paths.cache_dir
@@ -168,7 +168,7 @@ class MorningBriefingTest(unittest.TestCase):
                 cache.unlink()
 
     def test_dashboard_edit_during_staging_is_preserved_on_first_attempt(self):
-        from respectedbrain.briefing import service
+        from respected_brain.briefing import service
         dashboard = self.vault / "🎯 100-Command-Center/Dashboard.md"
         user_edit = b"# Dashboard\nUser edit during staging\n"
         original = service.tempfile.mkstemp
@@ -245,7 +245,7 @@ class MorningBriefingTest(unittest.TestCase):
                 self._sharing_failure_case('no-retry', platform=platform, winerror=code)
 
     def _sharing_failure_case(self, variant, *, platform='win32', winerror=5):
-        from respectedbrain.briefing import service
+        from respected_brain.briefing import service
         worker = load_worker()
         dashboard = self.vault / '🎯 100-Command-Center/Dashboard.md'
         before = dashboard.read_bytes()

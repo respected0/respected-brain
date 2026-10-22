@@ -17,8 +17,8 @@ class NamingContractTest(unittest.TestCase):
         from tests.support.files import make_context
         from uuid import UUID
         import json
-        from respectedbrain import __version__
-        self.assertEqual(__version__,version("respectedbrain"))
+        from respected_brain import __version__
+        self.assertEqual(__version__,version("respected-brain"))
         with tempfile.TemporaryDirectory() as temporary:
             ctx=make_context(Path(temporary))
             marker=json.loads((ctx.paths.vault_root / ".respected.json").read_text(encoding="utf-8"))

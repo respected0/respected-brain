@@ -5,7 +5,7 @@ import subprocess
 import sys
 import unittest
 from unittest import mock
-from respectedbrain import cli
+from respected_brain import cli
 from tests.support.fakes import IntegrationFixture
 from tests.support.files import snapshot
 
@@ -33,7 +33,7 @@ from pathlib import Path
 from unittest import mock
 before = list(sys.path)
 with mock.patch.object(Path, 'home', side_effect=AssertionError('home lookup')), mock.patch.object(Path, 'mkdir', side_effect=AssertionError('mkdir')), mock.patch('subprocess.run', side_effect=AssertionError('process')):
-    importlib.import_module('respectedbrain.' + sys.argv[1])
+    importlib.import_module('respected_brain.' + sys.argv[1])
 assert sys.path == before
 '''
         for name in ("core.paths", "installation.setup", "installation.uninstall", "integrations.rendering"):

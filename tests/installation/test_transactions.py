@@ -7,16 +7,16 @@ import tempfile
 import unittest
 
 from tests.support.files import snapshot
-from respectedbrain.core.errors import BusyError, OwnershipConflict
-from respectedbrain.installation.transaction import Transaction, recover_transactions
-from respectedbrain.installation.ownership import OwnedFile, OwnershipManifest, prove_ownership
+from respected_brain.core.errors import BusyError, OwnershipConflict
+from respected_brain.installation.transaction import Transaction, recover_transactions
+from respected_brain.installation.ownership import OwnedFile, OwnershipManifest, prove_ownership
 from tests.support.fakes import Backend
 
 
 class FoundationTransactionsTest(unittest.TestCase):
     def test_commit_refuses_external_edit_after_successful_readback(self):
         from types import SimpleNamespace
-        from respectedbrain.core.errors import OwnershipConflict
+        from respected_brain.core.errors import OwnershipConflict
         change = SimpleNamespace(kind='mcp', key='test', before=None, after=b'new')
         with self.assertRaises(OwnershipConflict):
             with Transaction(self.data, self.backend) as tx:
@@ -29,7 +29,7 @@ class FoundationTransactionsTest(unittest.TestCase):
 
     def test_failed_external_restore_does_not_abort_file_rollback(self):
         from unittest.mock import patch
-        from respectedbrain.core.errors import FoundationError
+        from respected_brain.core.errors import FoundationError
         from types import SimpleNamespace
         change = SimpleNamespace(kind='mcp', key='test', before=None, after=b'new')
         with patch.object(self.backend, 'restore', side_effect=FoundationError('scheduler unavailable')):
@@ -66,7 +66,7 @@ class FoundationTransactionsTest(unittest.TestCase):
 
     def test_invalid_journal_is_rejected_before_any_recovery_mutation(self):
         import json
-        from respectedbrain.core.errors import OwnershipConflict
+        from respected_brain.core.errors import OwnershipConflict
         with Transaction(self.data, self.backend) as tx:
             tx.write(self.target, b'new')
             tx.commit()
@@ -118,7 +118,7 @@ class FoundationTransactionsTest(unittest.TestCase):
 
     def test_restart_recovery_restores_only_unchanged_outputs(self):
         # A real child exits without __exit__, leaving a durable activated journal.
-        program = "from pathlib import Path; import os; from tests.support.fakes import Backend; from respectedbrain.installation.transaction import Transaction; tx=Transaction(Path(%r),Backend()); tx.__enter__(); tx.replace(Path(%r),Path(%r)); os._exit(0)" % (str(self.data), str(self.source), str(self.target))
+        program = "from pathlib import Path; import os; from tests.support.fakes import Backend; from respected_brain.installation.transaction import Transaction; tx=Transaction(Path(%r),Backend()); tx.__enter__(); tx.replace(Path(%r),Path(%r)); os._exit(0)" % (str(self.data), str(self.source), str(self.target))
         child = subprocess.run([sys.executable, "-c", program], cwd=Path(__file__).resolve().parents[2], capture_output=True, timeout=30)
         self.assertEqual(child.returncode, 0, child.stderr)
         self.assertEqual(self.target.read_bytes(), b"new")
@@ -130,7 +130,7 @@ class FoundationTransactionsTest(unittest.TestCase):
     def test_another_process_blocks_operation_before_target_changes(self):
         ready = self.root / "ready"
         release = self.root / "release"
-        program = "from pathlib import Path; import time; from respectedbrain.core.locking import exclusive_lock;\nwith exclusive_lock(Path(%r)):\n Path(%r).touch()\n while not Path(%r).exists(): time.sleep(.02)" % (str(self.data / ".operation.lock"), str(ready), str(release))
+        program = "from pathlib import Path; import time; from respected_brain.core.locking import exclusive_lock;\nwith exclusive_lock(Path(%r)):\n Path(%r).touch()\n while not Path(%r).exists(): time.sleep(.02)" % (str(self.data / ".operation.lock"), str(ready), str(release))
         child = subprocess.Popen([sys.executable, "-c", program])
         try:
             import time

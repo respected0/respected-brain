@@ -37,21 +37,21 @@ Kalıcı bağlam.
 - Açık iş."""
 
 
-from respectedbrain.memory import flush as FLUSH
-from respectedbrain.memory import compile as COMPILER
-from respectedbrain.integrations.hooks import bridge as BRIDGE
-from respectedbrain.providers.runner import ModelRunner
+from respected_brain.memory import flush as FLUSH
+from respected_brain.memory import compile as COMPILER
+from respected_brain.integrations.hooks import bridge as BRIDGE
+from respected_brain.providers.runner import ModelRunner
 from tests.support.files import make_context
 from tests.support.fakes import FakeModel
 
 
 class ScriptsTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.temporary = tempfile.TemporaryDirectory(prefix="secondbrain-tests-")
+        self.temporary = tempfile.TemporaryDirectory(prefix="brain-tests-")
         self.root = Path(self.temporary.name)
         self.vault = self.root / "vault"
         from dataclasses import replace
-        from respectedbrain.core.config import ConfigStore
+        from respected_brain.core.config import ConfigStore
         self.ctx = make_context(self.root, self.vault)
         config = ConfigStore(self.ctx.paths.data_root).update(lambda doc: doc["preferences"].update(summary_provider="claude", provider_priority=["claude"], provider_fallback=False))
         self.ctx = replace(self.ctx, config=config)
@@ -142,7 +142,7 @@ raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
             tree=ast.parse(Path(module.__file__).read_text(encoding="utf-8"))
             names=[node.module for node in ast.walk(tree) if isinstance(node,ast.ImportFrom)] + [alias.name for node in ast.walk(tree) if isinstance(node,ast.Import) for alias in node.names]
             self.assertNotIn("fcntl",names)
-        loader = "import respectedbrain.memory.flush, respectedbrain.memory.compile; print('loaded')"
+        loader = "import respected_brain.memory.flush, respected_brain.memory.compile; print('loaded')"
         result = subprocess.run(
             [
                 sys.executable,
@@ -384,7 +384,7 @@ raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
         self.assertEqual(state["ingested"], {})
 
     def test_compile_promotion_failure_restores_already_promoted_files(self):
-        from respectedbrain.core.context import ModelResult
+        from respected_brain.core.context import ModelResult
         (self.daily / "2026-08-20.md").write_text("daily input", encoding="utf-8")
         before = self._payload_snapshot()
         class Model:
@@ -405,7 +405,7 @@ raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
         self.assertEqual(COMPILER.load_state(self.state / "compile-state.json")["ingested"], {})
 
     def test_compile_failed_rollback_retains_recovery_preimages(self):
-        from respectedbrain.core.context import ModelResult
+        from respected_brain.core.context import ModelResult
         (self.daily / "2026-08-20.md").write_text("daily input", encoding="utf-8")
         index = self.knowledge / "index.md"
         original = index.read_bytes()
@@ -712,7 +712,7 @@ raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
                 "",
             ],
         )
-        self.assertEqual(calls[0]["guard"], "secondbrain-scripts")
+        self.assertEqual(calls[0]["guard"], "brain-scripts")
         self.assertNotEqual(Path(str(calls[0]["cwd"])), self.vault)
         self.assertIn("BEGIN UNTRUSTED TRANSCRIPT DATA", calls[0]["prompt"])
 
@@ -742,7 +742,7 @@ raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
         hook = self._write_hook("concurrent-session", transcript)
         command = [
             sys.executable,
-            "-m", "respectedbrain", "flush", "--vault-id", self.ctx.paths.vault_id,
+            "-m", "respected_brain", "flush", "--vault-id", self.ctx.paths.vault_id,
             "--hook-input",
             str(hook),
             "--reason",
@@ -1385,7 +1385,7 @@ raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
         self.assertEqual(FLUSH.compile_catch_up(self.ctx,model=model,now=now),0)
         self.assertEqual(model.calls,0)
         claim.unlink()
-        from respectedbrain.core.context import ModelResult
+        from respected_brain.core.context import ModelResult
         failed=mock.Mock()
         failed.run.return_value=ModelResult(None,"codex","provider-unavailable")
         self.assertEqual(FLUSH.compile_catch_up(self.ctx,model=failed,now=now),1)
@@ -1683,7 +1683,7 @@ raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
         if os.name != "nt":
             self.assertEqual(call["cwd_mode"], "0o700")
         self.assertFalse(call_cwd.exists())
-        self.assertEqual(call["guard"], "secondbrain-scripts")
+        self.assertEqual(call["guard"], "brain-scripts")
 
     def test_compile_stops_batch_on_first_failure(self) -> None:
         (self.daily / "2026-08-19.md").write_text("bir", encoding="utf-8")
@@ -1709,7 +1709,7 @@ raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
         flush_result = subprocess.run(
             [
                 sys.executable,
-                "-m", "respectedbrain", "flush", "--vault-id", self.ctx.paths.vault_id,
+                "-m", "respected_brain", "flush", "--vault-id", self.ctx.paths.vault_id,
                 "--hook-input",
                 str(missing_hook),
             ],
@@ -1721,7 +1721,7 @@ raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
             check=False,
         )
         compile_result = subprocess.run(
-            [sys.executable, "-m", "respectedbrain", "compile", "--vault-id", self.ctx.paths.vault_id],
+            [sys.executable, "-m", "respected_brain", "compile", "--vault-id", self.ctx.paths.vault_id],
             cwd=self.vault,
             env=environment,
             text=True,

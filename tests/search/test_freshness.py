@@ -9,9 +9,9 @@ import unittest
 from unittest.mock import patch
 from uuid import uuid4
 
-from respectedbrain.core.config import ConfigStore
-from respectedbrain.rpp.integrations import _context
-from respectedbrain.search import freshness
+from respected_brain.core.config import ConfigStore
+from respected_brain.rpp.integrations import _context
+from respected_brain.search import freshness
 
 
 class FreshnessTest(unittest.TestCase):
@@ -44,7 +44,7 @@ class FreshnessTest(unittest.TestCase):
     def test_refresh_while_another_writer_is_admitted_reports_busy_instead_of_failing(self):
         # Two AI sessions ending together: the second flush's best-effort refresh met the first one's admission lock
         # and raised BusyError, so a flush whose summary was already saved exited 1.
-        from respectedbrain.core.locking import exclusive_lock
+        from respected_brain.core.locking import exclusive_lock
         with exclusive_lock(self.ctx.paths.data_root / ".operation.lock"):
             result = freshness.refresh_now(self.ctx, attempts=2, wait=0.01)
         self.assertEqual(result, {"refreshed": False, "reason": "busy"})
@@ -62,7 +62,7 @@ class CaptureModeTest(unittest.TestCase):
     def launch(self, mode, payload=None):
         import dataclasses
         from unittest.mock import MagicMock
-        from respectedbrain.memory import lifecycle
+        from respected_brain.memory import lifecycle
         ctx = dataclasses.replace(self.ctx, config={**self.ctx.config, "preferences": {"capture_mode": mode}})
         with patch.object(lifecycle.subprocess, "Popen", return_value=MagicMock()) as popen:
             lifecycle._launch_flush(ctx, "claude", payload=payload or {"session_id": "s1"}, reason="sessionend", maybe_compile=True)
@@ -79,10 +79,10 @@ class CaptureModeTest(unittest.TestCase):
         self.assertEqual(len(pending), 1)  # ...but the session is remembered so the user can capture it later
 
     def test_capture_run_needs_confirmation_and_runs_the_catch_up(self):
-        from respectedbrain.rpp import memory_capture as rpp_memory_capture
+        from respected_brain.rpp import memory_capture as rpp_memory_capture
         self.assertRaises(Exception, rpp_memory_capture.run, self.data, {})
-        with patch("respectedbrain.memory.flush.catch_up_unflushed_sessions", return_value=2) as catch_up, \
-                patch("respectedbrain.memory.flush.compile_catch_up", return_value=0):
+        with patch("respected_brain.memory.flush.catch_up_unflushed_sessions", return_value=2) as catch_up, \
+                patch("respected_brain.memory.flush.compile_catch_up", return_value=0):
             result = rpp_memory_capture.run(self.data, {"confirm": True})
         self.assertEqual(result, {"captured_sessions": 2, "compile_status": 0, "pending_left": 0})
         self.assertTrue(catch_up.called)
@@ -95,7 +95,7 @@ class OpenCommandTest(unittest.TestCase):
         import io
         from contextlib import redirect_stdout
         from unittest.mock import patch
-        from respectedbrain import cli
+        from respected_brain import cli
         for name in ("open",):
             with patch.object(cli.os, "startfile", create=True) as startfile, patch.object(cli.subprocess, "Popen") as popen, \
                     patch.object(cli, "bootstrap") as boot, redirect_stdout(io.StringIO()) as out:

@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from respectedbrain.rpp import memory_grants as grants
+from respected_brain.rpp import memory_grants as grants
 
 
 class MemoryGrantsTests(unittest.TestCase):

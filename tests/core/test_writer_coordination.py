@@ -6,9 +6,9 @@ import tempfile
 import time
 import unittest
 
-from respectedbrain.core.coordination import writer_lease, quiesce_writers
-from respectedbrain.core.errors import BusyError
-from respectedbrain.installation.transaction import Transaction
+from respected_brain.core.coordination import writer_lease, quiesce_writers
+from respected_brain.core.errors import BusyError
+from respected_brain.installation.transaction import Transaction
 from tests.support.files import make_context
 from tests.support.fakes import Backend
 
@@ -16,12 +16,12 @@ from tests.support.fakes import Backend
 class FoundationWriterCoordinationTest(unittest.TestCase):
     def test_standalone_maps_obeys_operation_admission(self):
         from unittest.mock import patch
-        from respectedbrain.core.locking import exclusive_lock
-        from respectedbrain.vault.maps import rebuild_maps
+        from respected_brain.core.locking import exclusive_lock
+        from respected_brain.vault.maps import rebuild_maps
         with tempfile.TemporaryDirectory() as temporary:
             ctx = make_context(Path(temporary))
             with exclusive_lock(ctx.paths.data_root / ".operation.lock", timeout=0):
-                with patch("respectedbrain.core.coordination.writer_lease", lambda ctx, timeout: writer_lease(ctx, timeout=0)):
+                with patch("respected_brain.core.coordination.writer_lease", lambda ctx, timeout: writer_lease(ctx, timeout=0)):
                     with self.assertRaises(BusyError):
                         rebuild_maps(ctx)
             self.assertFalse((ctx.paths.vault_root / "🎯 100-Command-Center/Vault-Map.md").exists())
@@ -33,7 +33,7 @@ class FoundationWriterCoordinationTest(unittest.TestCase):
             backend = Backend()
             backend.quiesce = lambda identity: quiesce_writers(ctx.paths.data_root, identity)
             ready, release = root / "ready", root / "release"
-            code = "from pathlib import Path; import time; from tests.support.files import make_context; from respectedbrain.core.coordination import writer_lease;\nctx=make_context(Path(%r));\nwith writer_lease(ctx):\n Path(%r).touch()\n while not Path(%r).exists(): time.sleep(.02)" % (str(root), str(ready), str(release))
+            code = "from pathlib import Path; import time; from tests.support.files import make_context; from respected_brain.core.coordination import writer_lease;\nctx=make_context(Path(%r));\nwith writer_lease(ctx):\n Path(%r).touch()\n while not Path(%r).exists(): time.sleep(.02)" % (str(root), str(ready), str(release))
             child = subprocess.Popen([sys.executable, "-c", code], cwd=Path(__file__).resolve().parents[2])
             try:
                 for _ in range(500):

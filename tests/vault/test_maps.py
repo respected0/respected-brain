@@ -21,7 +21,7 @@ def tearDownModule() -> None:
 
 
 def load_builder():
-    from respectedbrain.vault import maps
+    from respected_brain.vault import maps
     return maps
 
 

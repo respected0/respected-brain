@@ -24,11 +24,11 @@ import io
 
 from tests.support.fakes import IntegrationFixture
 from tests.support.files import snapshot
-from respectedbrain.integrations.backend import IntegrationProfile
-from respectedbrain.integrations import rendering as RENDER
+from respected_brain.integrations.backend import IntegrationProfile
+from respected_brain.integrations import rendering as RENDER
 from tests.support.render import render_project_integrations
-from respectedbrain.integrations.hooks import bridge as BRIDGE
-from respectedbrain.providers import runner as MODEL_RUNNER
+from respected_brain.integrations.hooks import bridge as BRIDGE
+from respected_brain.providers import runner as MODEL_RUNNER
 
 ROOT = Path(__file__).resolve().parents[2]
 class MultiAITest(IntegrationFixture, unittest.TestCase):
@@ -40,7 +40,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
 
     @unittest.skipUnless(os.name == 'nt', 'Windows junction boundary')
     def test_codex_notify_refuses_junction_chain_before_forwarding(self):
-        from respectedbrain.integrations.hooks import codex_notify
+        from respected_brain.integrations.hooks import codex_notify
         with tempfile.TemporaryDirectory() as outside_name:
             outside = Path(outside_name)
             (outside / 'codex-notify-chain.json').write_text('{"argv":["foreign.exe"]}', encoding='utf-8')
@@ -61,7 +61,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
     def test_all_provider_configs_point_to_bridge(self):
         artifacts = render_project_integrations(self.ctx, self.profile)
         for content in artifacts.values():
-            self.assertIn('respectedbrain.exe\\" hook', content.decode())  # the program path is quoted (Git Bash eats bare backslashes)
+            self.assertIn('respected-brain.exe\\" hook', content.decode())  # the program path is quoted (Git Bash eats bare backslashes)
             self.assertIn(self.ctx.paths.vault_id, content.decode())
             self.assertNotIn("bridge.py", content.decode())
 
@@ -149,7 +149,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
         self.assertFalse(BRIDGE.inside_vault("relative-project", root))
 
     def test_runner_has_windows_user_local_agy_discovery(self):
-        from respectedbrain.providers import runner
+        from respected_brain.providers import runner
         with mock.patch.object(Path,"is_file",return_value=True):
             executable=runner._windows_vault_binary("agy",Path("/mnt/c/Users/Ada/Vault"))
         self.assertEqual(Path(executable),Path("/mnt/c/Users/Ada/AppData/Local/agy/bin/agy.exe"))
@@ -419,18 +419,18 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(called.call_args.kwargs["cwd"], win_cwd)
 
     def test_summary_provider_can_be_persisted_and_overrides_current_agent(self):
-        from respectedbrain.core.config import ConfigStore
+        from respected_brain.core.config import ConfigStore
         store=ConfigStore(self.data)
         store.update(lambda config:config["preferences"].update(summary_provider="cursor"))
         self.assertEqual(store.read()["preferences"]["summary_provider"],"cursor")
-        from respectedbrain.providers import runner
+        from respected_brain.providers import runner
         with mock.patch.object(runner,"_configured_provider",return_value="cursor"):
             self.assertEqual(runner._available("codex",store.read()["preferences"])[:2],["cursor","codex"])
 
     def test_vault_template_has_no_stale_claude_only_setup(self):
         paths = (
-            ROOT / "src/respectedbrain/resources/vault-template/🎯 100-Command-Center/Dashboard.md",
-            ROOT / "src/respectedbrain/resources/vault-template/🔮 850-Companion/Last-Session.md",
+            ROOT / "src/respected_brain/resources/vault-template/🎯 100-Command-Center/Dashboard.md",
+            ROOT / "src/respected_brain/resources/vault-template/🔮 850-Companion/Last-Session.md",
         )
         text = "\n".join(path.read_text(encoding="utf-8") for path in paths)
         for stale in ("claude CLI YOK", "mevcut Claude aboneliğinin", "terminal aç ve `claude` çalıştır", "with Claude Code"):
@@ -460,7 +460,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
 
     def test_locked_summary_provider_does_not_append_fallback_candidates(self):
         """A non-auto provider is the fail-fast single-model contract."""
-        from respectedbrain.providers import runner
+        from respected_brain.providers import runner
         preferences={"summary_provider":"codex","provider_priority":["codex"],"provider_fallback":False}
         self.assertEqual(runner._available(None,preferences),["codex"])
 
@@ -492,7 +492,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
 
     def test_maintenance_skills_are_canonical_and_discoverable(self):
         names = self.ctx.resources.iter_files("skills")
-        for name in ("secondbrain-doktor", "gecmis-import"):
+        for name in ("brain-doktor", "gecmis-import"):
             self.assertIn(name + "/SKILL.md", names)
 
     def test_global_antigravity_installer_preserves_config_and_is_idempotent(self):
@@ -537,13 +537,13 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
             backend.apply(row)
         self.assertEqual(RENDER.plan_integrations(self.ctx, self.profile, {"global": True}, backend), ())
         parsed = tomllib.loads((self.home / ".codex/config.toml").read_text(encoding="utf-8"))
-        self.assertEqual(parsed["notify"][0], str(self.app / "respectedbrain.exe"))
+        self.assertEqual(parsed["notify"][0], str(self.app / "respected-brain.exe"))
         self.assertIn(self.ctx.paths.vault_id, parsed["notify"])
 
     def test_global_native_hooks_reuse_vaults_verified_python_command(self):
         rows = RENDER.plan_integrations(self.ctx, self.profile, {"global": True}, self.backend())
         commands = " ".join(row.after.decode() for row in rows if row.after and Path(row.key).name == "hooks.json")
-        self.assertIn("respectedbrain.exe", commands)
+        self.assertIn("respected-brain.exe", commands)
         self.assertNotIn("python", commands)
         self.assertIn(self.ctx.paths.vault_id, commands)
 
@@ -578,7 +578,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(snapshot(self.root), before)
 
     def test_windows_wsl_codex_only_syncs_shared_skills_to_runtime_home(self):
-        profile = IntegrationProfile("windows-wsl", ("/opt/respectedbrain",), self.home)
+        profile = IntegrationProfile("windows-wsl", ("/opt/respected-brain",), self.home)
         with mock.patch.object(RENDER.subprocess, "run", return_value=mock.Mock(returncode=0, stdout=self.wsl_registry_output())):
             rows = RENDER.plan_integrations(self.ctx, profile, {"global": True}, self.backend())
         self.assertTrue(any(row.key.startswith(str(self.home / ".agents/skills")) for row in rows))

@@ -1,5 +1,5 @@
 #!/bin/sh
-# Respected SecondBrain installer for macOS: the program bundle is this script's; the product sets up the rest.
+# Respected Brain installer for macOS: the program bundle is this script's; the product sets up the rest.
 #   ./setup.command [--vault DIR] [--set KEY=VALUE]...   install (or repair when already installed)
 #   ./setup.command --uninstall [--purge]                remove (--purge also deletes settings and data, never the vault)
 set -eu
@@ -8,7 +8,7 @@ package="$script_dir/RespectedBrain.app"
 : "${HOME:?HOME is required}"
 : "${RESPECTED_APP_DIR:=$HOME/Applications/RespectedBrain.app}"
 export RESPECTED_APP_DIR
-launcher="$RESPECTED_APP_DIR/Contents/MacOS/respectedbrain"
+launcher="$RESPECTED_APP_DIR/Contents/MacOS/respected-brain"
 if [ "${1:-}" = "--uninstall" ]; then
     shift
     "$launcher" uninstall "$@"

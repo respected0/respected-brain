@@ -91,7 +91,7 @@ def main(argv=None):
         checks.append({"name":name,"status":"VERIFIED" if passed else "FAILED","detail":detail[:500],"duration_seconds":round(duration,3)})
         if not passed: raise RuntimeError(name+": "+detail)
     try:
-        from respectedbrain.installation.payload import validate_package
+        from respected_brain.installation.payload import validate_package
         document=validate_package(package)
         record("clean-environment-has-no-product-bypass",all(key not in env for key in ("RESPECTED_LLM_COMMAND","PYTHONPATH")))
         expected_platform="windows" if os.name=="nt" else "macos" if sys.platform=="darwin" else "linux"
@@ -108,15 +108,15 @@ def main(argv=None):
         record("transactional-fresh-setup",code==0,output,elapsed)
         launcher=app / document["launcher"]
         code,output,elapsed=_run([str(launcher),"--version"],env=env,cwd=root)
-        record("installed-frozen-launcher-version",code==0 and output.strip()=="respected-secondbrain "+document["version"],output,elapsed)
-        from respectedbrain.core.config import ConfigStore
-        from respectedbrain.core.paths import Roots
-        from respectedbrain.vault.registry import build_context
-        from respectedbrain.integrations.backend import ExternalChange,IntegrationProfile,NativeBackend
-        from respectedbrain.integrations.rendering import plan_integrations
-        from respectedbrain.installation.transaction import Transaction
-        from respectedbrain.installation.operations import operation_manifest
-        from respectedbrain.installation.ownership import read_manifest,manifest_document
+        record("installed-frozen-launcher-version",code==0 and output.strip()=="respected-brain "+document["version"],output,elapsed)
+        from respected_brain.core.config import ConfigStore
+        from respected_brain.core.paths import Roots
+        from respected_brain.vault.registry import build_context
+        from respected_brain.integrations.backend import ExternalChange,IntegrationProfile,NativeBackend
+        from respected_brain.integrations.rendering import plan_integrations
+        from respected_brain.installation.transaction import Transaction
+        from respected_brain.installation.operations import operation_manifest
+        from respected_brain.installation.ownership import read_manifest,manifest_document
         ctx=build_context(Roots(app,data,vault),ConfigStore(data),vault=vault,vault_id=None,env={})
         code,output,elapsed=lifecycle("repair")
         record("strict-frozen-repair",code==0,output,elapsed)

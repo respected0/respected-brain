@@ -14,14 +14,14 @@ import unittest
 from unittest import mock
 
 
-from respectedbrain.memory import lifecycle as LIFECYCLE
-from respectedbrain.integrations.hooks import bridge as BRIDGE
-from respectedbrain.providers import runner as MODEL_RUNNER
-from respectedbrain.core import platform as RUNTIME
-from respectedbrain.memory import flush as FLUSH
-from respectedbrain.memory import compile as COMPILE
-from respectedbrain.briefing import service as BRIEFING
-from respectedbrain.maintenance import repair_daily as REPAIR_DAILY
+from respected_brain.memory import lifecycle as LIFECYCLE
+from respected_brain.integrations.hooks import bridge as BRIDGE
+from respected_brain.providers import runner as MODEL_RUNNER
+from respected_brain.core import platform as RUNTIME
+from respected_brain.memory import flush as FLUSH
+from respected_brain.memory import compile as COMPILE
+from respected_brain.briefing import service as BRIEFING
+from respected_brain.maintenance import repair_daily as REPAIR_DAILY
 
 
 VALID_FLUSH_SUMMARY = """## Bağlam
@@ -92,7 +92,7 @@ class RegressionMatrixTest(unittest.TestCase):
         return 0, output
 
     def run_briefing(self, vault, now, *, model_call, compile_call=None):
-        from respectedbrain.core.context import ModelResult
+        from respected_brain.core.context import ModelResult
         class Model:
             def run(self, prompt, *, cwd, mode, timeout):
                 text, error, provider = model_call(prompt, cwd)
@@ -208,7 +208,7 @@ class RegressionMatrixTest(unittest.TestCase):
     # Scenario 8: Antigravity background agy.exe recursion protection
     # -------------------------------------------------------------------------
     def test_08_antigravity_background_agy_recursion_guard(self):
-        with mock.patch.dict(os.environ, {"RESPECTED_INVOKED_BY": "secondbrain-scripts"}):
+        with mock.patch.dict(os.environ, {"RESPECTED_INVOKED_BY": "brain-scripts"}):
             with mock.patch.object(LIFECYCLE, "_launch_flush") as mock_launch:
                 code, stdout = self.handle_event(self.vault, "antigravity", "Stop", {"session_id": "agy-rec"})
                 self.assertEqual(code, 0)
@@ -234,7 +234,7 @@ class RegressionMatrixTest(unittest.TestCase):
     # Scenario 10: Windows -> WSL bridge call re-entrancy prevention
     # -------------------------------------------------------------------------
     def test_10_windows_to_wsl_bridge_reentrancy_prevention(self):
-        with mock.patch.dict(os.environ, {"RESPECTED_INVOKED_BY": "secondbrain-scripts"}):
+        with mock.patch.dict(os.environ, {"RESPECTED_INVOKED_BY": "brain-scripts"}):
             with mock.patch.object(LIFECYCLE, "handle_event") as mock_handle:
                 result = BRIDGE.dispatch(self.ctx, provider="antigravity", event="end", argv=["--global-hook"], stdin="{}")
                 self.assertEqual(result, "")

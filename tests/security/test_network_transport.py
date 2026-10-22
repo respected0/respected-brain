@@ -8,19 +8,19 @@ import unittest
 from unittest import mock
 import urllib.parse
 
-from respectedbrain.maintenance.ingestion.url_safety import (
+from respected_brain.maintenance.ingestion.url_safety import (
     is_private_or_reserved_ip,
     resolve_safe_addresses,
     validate_safe_url,
 )
-from respectedbrain.maintenance.ingestion.defuddle import (
+from respected_brain.maintenance.ingestion.defuddle import (
     fetch_and_clean_url,
     safe_fetch_url,
 )
 from pathlib import Path
-from respectedbrain.maintenance.ingestion.defuddle import _DeadlineReader
-from respectedbrain.providers.runner import Invocation
-from respectedbrain.providers.runner import _run_process_tree
+from respected_brain.maintenance.ingestion.defuddle import _DeadlineReader
+from respected_brain.providers.runner import Invocation
+from respected_brain.providers.runner import _run_process_tree
 import os
 import subprocess
 import sys
@@ -298,7 +298,7 @@ class ResolverCapacityTest(unittest.TestCase):
         with mock.patch('socket.getaddrinfo',side_effect=block):
             threads = [threading.Thread(target=lambda i=i:safe_fetch_url(f'http://h{i}.example.test/',timeout=.12),daemon=True) for i in range(5)]
             for thread in threads: thread.start()
-            time.sleep(.08); workers = [item for item in threading.enumerate() if item.name.startswith('respectedbrain-resolver')]
+            time.sleep(.08); workers = [item for item in threading.enumerate() if item.name.startswith('respected-brain-resolver')]
             self.assertEqual(len(workers),2); release.set()
             for thread in threads: thread.join(1)
 
@@ -309,7 +309,7 @@ class ResolverCapacityTest(unittest.TestCase):
             "def blocked(*args,**kwargs):\n"
             "    entered.set();time.sleep(5);return []\n"
             "socket.getaddrinfo=blocked\n"
-            "from respectedbrain.maintenance.ingestion.defuddle import safe_fetch_url\n"
+            "from respected_brain.maintenance.ingestion.defuddle import safe_fetch_url\n"
             "threading.Thread(target=lambda:safe_fetch_url('http://slow.example.test/',timeout=.05),daemon=True).start()\n"
             "assert entered.wait(5),'resolver did not start'\n"
             "print('resolver-blocked',flush=True)\n"

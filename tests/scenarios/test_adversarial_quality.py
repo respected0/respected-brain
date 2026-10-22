@@ -18,9 +18,9 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 class AdversarialQualityTest(unittest.TestCase):
     def setUp(self) -> None:
-        from respectedbrain.providers import runner
-        from respectedbrain.memory import compile
-        from respectedbrain.core import platform
+        from respected_brain.providers import runner
+        from respected_brain.memory import compile
+        from respected_brain.core import platform
         from tests.support.fakes import memory_context as make_context
         self.runner, self.compiler, self.runtime = runner, compile, platform
         temporary = tempfile.TemporaryDirectory(prefix="adversarial-context-")

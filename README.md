@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🧠 Respected Brain (SecondBrain)
+# 🧠 Respected Brain
 
 ### Ajanlar değişir. Ortak hafıza sizin kasanızda kalır.
 
@@ -12,7 +12,7 @@ Respected Brain, yerel bir Markdown not kasasını AI araçlarınıza bağlayan 
 oturumlarınızı özetleyip günlüğe yazar, günlüklerden bağlantılı bilgi notları derler, notlarınızı arar ve bunları AI
 araçlarına hook ve MCP üzerinden sunar. Kasayı [Obsidian](https://obsidian.md) ile okuyup düzenleyebilirsiniz.
 
-Kaynak kod: [respected0/respected-secondbrain](https://github.com/respected0/respected-secondbrain).
+Kaynak kod: [respected0/respected-brain](https://github.com/respected0/respected-brain).
 
 **Taşınan şey iş bağlamıdır:** kararlar, kurallar, günlük özetleri ve notlar. Sağlayıcıların hesapları ve ham sohbet
 geçmişleri birleştirilmez. Özetleme gibi model işleri bilgisayarınızdaki AI aracının komut satırıyla yapılır; bu araç
@@ -37,9 +37,9 @@ Her sohbetin eksiksiz yakalandığı ya da özetlerin hatasız olduğu garanti e
 
 ## Kurulum
 
-Windows'ta `RespectedSecondBrain-Windows-Setup.exe` kullanıcı başına kurulur, yönetici izni istemez, Python gerekmez.
-Kurucu iki yol sunar: **Respected Hub ile devam et** (Hub'ı kurar ve SecondBrain'i Hub'da açar) ya da **Yalnızca
-SecondBrain** (kimlik, not kasası ve bağlantıları kendisi sorar). Kurucuyu yeniden çalıştırmak onarır/günceller, ayarları
+Windows'ta `RespectedBrain-Windows-Setup.exe` kullanıcı başına kurulur, yönetici izni istemez, Python gerekmez.
+Kurucu iki yol sunar: **Respected Hub ile devam et** (Hub'ı kurar ve Brain'i Hub'da açar) ya da **Yalnızca
+Brain** (kimlik, not kasası ve bağlantıları kendisi sorar). Kurucuyu yeniden çalıştırmak onarır/günceller, ayarları
 değiştirir ya da kaldırır. Ayrıntılar: [Kullanım rehberi](docs/USAGE.md).
 
 | Ne | Nerede |
@@ -48,15 +48,15 @@ değiştirir ya da kaldırır. Ayrıntılar: [Kullanım rehberi](docs/USAGE.md).
 | Ayarlar ve çalışma verisi | `%LOCALAPPDATA%\Respected\RespectedBrain\data` |
 | Not kasası | Kurulumda seçtiğiniz yer (varsayılan `Belgeler\RespectedOS`); hiçbir işlem silmez |
 
-Kurulumdan sonra her şey Hub olmadan da yapılır: `respectedbrain config set briefing_time=07:30`, `respectedbrain repair`,
-`respectedbrain uninstall`. Bütün komutlar: [Komutlar](docs/COMMANDS.md).
+Kurulumdan sonra her şey Hub olmadan da yapılır: `respected-brain config set briefing_time=07:30`, `respected-brain repair`,
+`respected-brain uninstall`. Bütün komutlar: [Komutlar](docs/COMMANDS.md).
 
 ## Sık sorulanlar
 
 **Ek API anahtarı gerekir mi?** Hayır. Model işleri bilgisayarınızdaki AI aracının komut satırıyla yapılır; o aracın
 hesabı, kotası ve ağ erişimi geçerlidir. Ücretsiz ya da sınırsız model kullanımı vaat edilmez.
 
-**Özetleyiciyi değiştirebilir miyim?** `respectedbrain config set summary_provider=codex`. Bu, kod yazdığınız ajanı
+**Özetleyiciyi değiştirebilir miyim?** `respected-brain config set summary_provider=codex`. Bu, kod yazdığınız ajanı
 değiştirmez; yalnızca özetleri hangi aracın çıkardığını belirler.
 
 **İki ajan aynı kasayı kullanabilir mi?** Evet; programın yazıcıları ortak bir kilit kullanır. Aynı notu iki editörde
@@ -77,11 +77,11 @@ python -m pip install -e ".[dev]"
 python -m unittest discover -s tests -t .                   # HOME ve AppData geçici klasöre yönlenir
 python packaging/build_dist.py --platform windows --output dist
 python -m unittest tests.packaging.test_distribution
-python packaging/build_installer.py                         # dist\RespectedSecondBrain-Windows-Setup.exe
+python packaging/build_installer.py                         # dist\RespectedBrain-Windows-Setup.exe
 ```
 
-Kaynak `src/respectedbrain/`, paketle gelen içerik (kasa şablonu, beceriler, talimatlar) `src/respectedbrain/resources/`,
-kurucu `packaging/windows/secondbrain_setup.iss`. Mimari ve güvenlik sınırları: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Üç ürünün
+Kaynak `src/respected_brain/`, paketle gelen içerik (kasa şablonu, beceriler, talimatlar) `src/respected_brain/resources/`,
+kurucu `packaging/windows/brain_setup.iss`. Mimari ve güvenlik sınırları: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Üç ürünün
 ortak sözleşmesi ekosistem kökündeki `docs/PRODUCT_CONTRACT.md` dosyasındadır.
 
 ## Atıf ve lisans

@@ -68,9 +68,9 @@ class PackageContractTest(unittest.TestCase):
             wheel = next(wheels.glob('*.whl'))
             with zipfile.ZipFile(wheel) as archive:
                 files = archive.namelist()
-                self.assertIn('respectedbrain/resources/vault-template/🔮 850-Companion/Core.md', files)
-                self.assertIn('respectedbrain/resources/vault-template/.obsidian/snippets/secondbrain-layout.css', files)
-                self.assertNotIn('respectedbrain/resources/vault-template/.respectedbrain-version', files)
+                self.assertIn('respected_brain/resources/vault-template/🔮 850-Companion/Core.md', files)
+                self.assertIn('respected_brain/resources/vault-template/.obsidian/snippets/brain-layout.css', files)
+                self.assertNotIn('respected_brain/resources/vault-template/.respectedbrain-version', files)
                 self.assertFalse(any('/__pycache__/' in item or '/.state/' in item for item in files))
             isolated = home / 'isolated'
             isolated_env = dict(os.environ, PYTHONUTF8='1', PYTHONIOENCODING='utf-8')
@@ -101,31 +101,31 @@ def audit(event, args):
     if event == 'open' and isinstance(args[0], (str, bytes)) and Path(args[0]).resolve() == blocked:
         raise AssertionError('Import accessed user config')
 sys.addaudithook(audit)
-import respectedbrain
-from respectedbrain.core.resources import ResourceCatalog
+import respected_brain
+from respected_brain.core.resources import ResourceCatalog
 catalog = ResourceCatalog()
-assert respectedbrain.__version__ == sys.argv[2]
+assert respected_brain.__version__ == sys.argv[2]
 assert '🔮 850-Companion/Core.md' in catalog.iter_files('vault-template')
-assert 'SKILL.md' in catalog.iter_files('skills/secondbrain-doktor')
+assert 'SKILL.md' in catalog.iter_files('skills/brain-doktor')
 assert json.loads(catalog.read_text('defaults.json'))['summary_provider'] == 'auto'
-print(respectedbrain.__version__)
+print(respected_brain.__version__)
 '''
             checked = run_package_step('import-resources', [str(python), '-c', probe, str(config), EXPECTED_VERSION], cwd=home, env=env,
                                      capture_output=True, text=True, encoding='utf-8')
             self.assertEqual(checked.returncode, 0, checked.stdout + checked.stderr)
             self.assertEqual(checked.stdout.strip(), EXPECTED_VERSION)
             self.assertEqual(config.read_text(encoding='utf-8'), '{"sentinel": true}')
-            module = run_package_step('module-cli', [str(python), '-m', 'respectedbrain', '--version'], cwd=home, env=env,
+            module = run_package_step('module-cli', [str(python), '-m', 'respected_brain', '--version'], cwd=home, env=env,
                                     capture_output=True, text=True, encoding='utf-8')
-            launcher = isolated / ('Scripts/respectedbrain.exe' if os.name == 'nt' else 'bin/respectedbrain')
+            launcher = isolated / ('Scripts/respected-brain.exe' if os.name == 'nt' else 'bin/respected-brain')
             entry = run_package_step('console-cli', [str(launcher), '--version'], cwd=home, env=env,
                                    capture_output=True, text=True, encoding='utf-8')
-            self.assertEqual((module.returncode, module.stdout), (0, 'respected-secondbrain ' + EXPECTED_VERSION + '\n'))
+            self.assertEqual((module.returncode, module.stdout), (0, 'respected-brain ' + EXPECTED_VERSION + '\n'))
             self.assertEqual((entry.returncode, entry.stdout), (module.returncode, module.stdout))
 
     def test_materialized_resource_canonicalizes_its_owned_temp_allocation(self):
-        from respectedbrain.core import resources
-        from respectedbrain.installation.ownership import safe_path
+        from respected_brain.core import resources
+        from respected_brain.installation.ownership import safe_path
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary).resolve()
             with owned_temp_alias(self, root) as (alias, allocated):
@@ -138,19 +138,19 @@ print(respectedbrain.__version__)
                         self.assertEqual(json.loads(materialized.read_text(encoding='utf-8'))['summary_provider'], 'auto')
 
     def test_resource_names_cannot_escape_package(self):
-        self.assertIsNotNone(importlib.util.find_spec('respectedbrain'), 'Installable package is missing')
-        from respectedbrain.core.resources import ResourceCatalog
+        self.assertIsNotNone(importlib.util.find_spec('respected_brain'), 'Installable package is missing')
+        from respected_brain.core.resources import ResourceCatalog
         catalog = ResourceCatalog()
         for name in ('../config.json', '/config.json', 'C:/config.json', '..\\config.json', 'a/../../config.json'):
             with self.subTest(name=name), self.assertRaises(ValueError):
                 catalog.read_text(name)
 
     def test_materialized_template_is_temporary_and_complete(self):
-        self.assertIsNotNone(importlib.util.find_spec('respectedbrain'), 'Installable package is missing')
-        from respectedbrain.core.resources import ResourceCatalog
+        self.assertIsNotNone(importlib.util.find_spec('respected_brain'), 'Installable package is missing')
+        from respected_brain.core.resources import ResourceCatalog
         with ResourceCatalog().materialize('vault-template') as directory:
             self.assertTrue((directory / '🔮 850-Companion/Core.md').is_file())
-            self.assertTrue((directory / '.obsidian/snippets/secondbrain-layout.css').is_file())
+            self.assertTrue((directory / '.obsidian/snippets/brain-layout.css').is_file())
             self.assertFalse((directory / '.respectedbrain-version').exists())
         self.assertFalse(directory.exists())
 

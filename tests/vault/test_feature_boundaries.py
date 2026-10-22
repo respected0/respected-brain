@@ -7,9 +7,9 @@ import unittest
 from unittest.mock import patch
 
 from tests.support.files import make_context, snapshot
-from respectedbrain.search.engine import SearchEngine
-from respectedbrain.briefing import service
-from respectedbrain.vault.maps import rebuild_maps
+from respected_brain.search.engine import SearchEngine
+from respected_brain.briefing import service
+from respected_brain.vault.maps import rebuild_maps
 
 
 class FakeModel:
@@ -100,7 +100,7 @@ class FoundationFeaturesTest(unittest.TestCase):
         self.assertEqual([item['path'] for item in results], ['knowledge/karar.md'])
 
     def test_metadata_delimiters_inside_values_and_body_are_preserved(self):
-        from respectedbrain.search.engine import parse_markdown_meta
+        from respected_brain.search.engine import parse_markdown_meta
         metadata, body = parse_markdown_meta('---\ntitle: alpha---beta\n---\nBody\n---\nMore')
         self.assertEqual(metadata['title'], 'alpha---beta')
         self.assertEqual(body, 'Body\n---\nMore')
@@ -161,15 +161,15 @@ class FoundationFeaturesTest(unittest.TestCase):
                 saved_cache.rename(cache)
 
     def test_skills_map_uses_uuid_overrides_without_touching_package(self):
-        custom = self.ctx.paths.overrides_dir / "skills/secondbrain-doktor/SKILL.md"
+        custom = self.ctx.paths.overrides_dir / "skills/brain-doktor/SKILL.md"
         custom.parent.mkdir(parents=True)
-        custom.write_text("---\nname: secondbrain-doktor\ndescription: Kişisel kontrol.\n---\n", encoding="utf-8")
+        custom.write_text("---\nname: brain-doktor\ndescription: Kişisel kontrol.\n---\n", encoding="utf-8")
         before_app = snapshot(self.root / "app")
         rebuild_maps(self.ctx)
         skills = (self.vault / "🎯 100-Command-Center/Skills-Map.md").read_text(encoding="utf-8")
         self.assertIn("Kişisel kontrol.", skills)
         self.assertIn("ajan-gecmis-tara", skills)
-        self.assertEqual(skills.count("`secondbrain-doktor`"), 1)
+        self.assertEqual(skills.count("`brain-doktor`"), 1)
         self.assertEqual(snapshot(self.root / "app"), before_app)
 
     def test_dashboard_user_collision_fails_without_final_or_note_changes(self):

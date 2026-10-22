@@ -14,8 +14,8 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-from respectedbrain.core.resources import ResourceCatalog
-from respectedbrain.core.config import ConfigStore
+from respected_brain.core.resources import ResourceCatalog
+from respected_brain.core.config import ConfigStore
 from tests.support.files import make_context
 
 
@@ -54,10 +54,10 @@ sys.exit(0)
         with ResourceCatalog().materialize("vault-template") as template:
             shutil.copytree(template,vault)
         env = {**os.environ, "HOME": str(target_dir / "home"), "USERPROFILE": str(target_dir / "home"), "RESPECTED_APP_DIR": str(target_dir / "app"), "RESPECTED_DATA_DIR": str(target_dir / "data")}
-        registered = subprocess.run([sys.executable, "-m", "respectedbrain", "vault", "register", str(vault)], cwd=target_dir, env=env, capture_output=True, text=True)
+        registered = subprocess.run([sys.executable, "-m", "respected_brain", "vault", "register", str(vault)], cwd=target_dir, env=env, capture_output=True, text=True)
         self.assertEqual(registered.returncode, 0, registered.stderr)
-        from respectedbrain.vault.registry import build_context
-        from respectedbrain.core.paths import Roots
+        from respected_brain.vault.registry import build_context
+        from respected_brain.core.paths import Roots
         store = ConfigStore(target_dir / "data")
         store.update(lambda doc: doc["preferences"].update(summary_provider=provider, provider_priority=[provider], provider_fallback=False))
         self.ctx = build_context(Roots(target_dir / "app", target_dir / "data", vault), store, vault=vault, vault_id=None, env={})
@@ -104,7 +104,7 @@ sys.exit(0)
                     env["RESPECTED_DATA_DIR"] = str(self.ctx.paths.data_root)
 
                     result = subprocess.run(
-                        [sys.executable,"-m","respectedbrain","flush","--vault-id",self.ctx.paths.vault_id,"--hook-input",str(hook_input),"--reason","sessionend"],
+                        [sys.executable,"-m","respected_brain","flush","--vault-id",self.ctx.paths.vault_id,"--hook-input",str(hook_input),"--reason","sessionend"],
                         cwd=vault,
                         env=env,
                         capture_output=True,

@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class FoundationDistributionTest(unittest.TestCase):
     def frozen(self):
-        from respectedbrain.installation.payload import validate_package
+        from respected_brain.installation.payload import validate_package
         platform = "windows" if os.name == "nt" else "macos" if sys.platform == "darwin" else "linux"
         distribution = ROOT / "dist" / ("RespectedBrain.app" if platform == "macos" else "RespectedBrain")
         if not distribution.exists() and not os.environ.get("CI"):
@@ -30,10 +30,10 @@ class FoundationDistributionTest(unittest.TestCase):
     def test_frozen_runs_without_checkout_or_python(self):
         distribution, document = self.frozen()
         with tempfile.TemporaryDirectory(prefix="Türkçe 🧠 ") as temporary:
-            self.assertEqual(self.launcher(distribution, document, temporary, "--version").strip(), "respected-secondbrain " + document["version"])
+            self.assertEqual(self.launcher(distribution, document, temporary, "--version").strip(), "respected-brain " + document["version"])
             self.assertFalse((Path(temporary) / "data").exists())
         self.assertFalse((distribution / "runtime").exists())
-        resources = [name for name in document["files"] if name.endswith("respectedbrain/resources/defaults.json")]
+        resources = [name for name in document["files"] if name.endswith("respected_brain/resources/defaults.json")]
         self.assertEqual(len(resources), 1)
 
     def test_frozen_serves_vault_maps_search_hook_and_mcp(self):
@@ -53,11 +53,11 @@ class FoundationDistributionTest(unittest.TestCase):
             self.assertEqual((vault / "keep.md").read_text(encoding="utf-8"), "# Notum\n")
 
     def test_distribution_tampering_fails_before_launcher(self):
-        from respectedbrain.installation.payload import validate_package
-        from respectedbrain.core.errors import OwnershipConflict
+        from respected_brain.installation.payload import validate_package
+        from respected_brain.core.errors import OwnershipConflict
         from tests.support.packages import seed_package
         with tempfile.TemporaryDirectory() as temporary:
             package = seed_package(Path(temporary))
-            (package / "respectedbrain.exe").write_bytes(b"changed")
+            (package / "respected-brain.exe").write_bytes(b"changed")
             with self.assertRaises(OwnershipConflict):
                 validate_package(package)

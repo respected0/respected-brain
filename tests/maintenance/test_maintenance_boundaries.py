@@ -14,15 +14,15 @@ import unittest
 from unittest import mock
 from unittest.mock import patch
 
-from respectedbrain.core.context import AppContext
-from respectedbrain.core.paths import AppPaths
-from respectedbrain.core.resources import ResourceCatalog
+from respected_brain.core.context import AppContext
+from respected_brain.core.paths import AppPaths
+from respected_brain.core.resources import ResourceCatalog
 
 from tests.support.files import make_context, snapshot
-from respectedbrain.maintenance import run_tool
-from respectedbrain.maintenance import smart_merge, repair_daily, vault_linter, _atomic
-from respectedbrain.maintenance.ingestion.mine_agent_history import AgentHistoryMiner
-from respectedbrain.maintenance.backup import backup_restic, publish_git_snapshot
+from respected_brain.maintenance import run_tool
+from respected_brain.maintenance import smart_merge, repair_daily, vault_linter, _atomic
+from respected_brain.maintenance.ingestion.mine_agent_history import AgentHistoryMiner
+from respected_brain.maintenance.backup import backup_restic, publish_git_snapshot
 
 
 class MaintenanceReviewTest(unittest.TestCase):
@@ -113,8 +113,8 @@ class MaintenanceReviewTest(unittest.TestCase):
         self.assertEqual(snapshot(self.vault), before)
 
     def test_dash_fix_obeys_writer_admission(self):
-        from respectedbrain.core.locking import exclusive_lock
-        from respectedbrain.core.errors import BusyError
+        from respected_brain.core.locking import exclusive_lock
+        from respected_brain.core.errors import BusyError
         note = self.vault / 'a—b.md'
         note.write_text('human', encoding='utf-8')
         with exclusive_lock(self.ctx.paths.data_root / '.operation.lock', timeout=0):
@@ -212,7 +212,7 @@ class FoundationMaintenanceToolsTest(unittest.TestCase):
                              '8c76006b-33bb-4cc0-80ce-52a0c8f38f2a'), {}, ResourceCatalog())
 
     def test_tools_use_selected_vault_without_app_or_other_vault_writes(self):
-        maintenance = importlib.import_module('respectedbrain.maintenance')
+        maintenance = importlib.import_module('respected_brain.maintenance')
         before_app, before_other = snapshot(self.app), snapshot(self.vault2)
         output = io.StringIO()
         with contextlib.redirect_stdout(output):
@@ -223,14 +223,14 @@ class FoundationMaintenanceToolsTest(unittest.TestCase):
         self.assertEqual(snapshot(self.vault2), before_other)
 
     def test_explicit_tool_vault_mismatch_fails_before_mutation(self):
-        maintenance = importlib.import_module('respectedbrain.maintenance')
+        maintenance = importlib.import_module('respected_brain.maintenance')
         before = snapshot(self.root)
         with self.assertRaises(ValueError):
             maintenance.run_tool(self.ctx, name='vault_linter', argv=['--vault', str(self.vault2), '--fix-dashes'])
         self.assertEqual(snapshot(self.root), before)
 
     def test_agent_history_idempotency_is_in_state_not_vault(self):
-        miner_module = importlib.import_module('respectedbrain.maintenance.ingestion.mine_agent_history')
+        miner_module = importlib.import_module('respected_brain.maintenance.ingestion.mine_agent_history')
         miner = miner_module.AgentHistoryMiner(self.vault, state_file=self.ctx.paths.state_dir / 'imported_sessions.json')
         miner.imported_ids.add('session-one')
         miner._save_state()
@@ -238,7 +238,7 @@ class FoundationMaintenanceToolsTest(unittest.TestCase):
         self.assertEqual(another.imported_ids, {'session-one'})
 
     def test_snapshot_receipt_uses_data_and_preserves_interval_guard(self):
-        module = importlib.import_module('respectedbrain.maintenance.backup.publish_git_snapshot')
+        module = importlib.import_module('respected_brain.maintenance.backup.publish_git_snapshot')
         receipt = self.ctx.paths.state_dir / 'git-snapshot-receipt.json'
         remote = self.root / 'snapshot-remote.git'
         subprocess.run(['git', 'init', '--bare', '--initial-branch=main', str(remote)], check=True, capture_output=True)
@@ -257,7 +257,7 @@ class FoundationMaintenanceToolsTest(unittest.TestCase):
         self.assertTrue(receipt.is_file())
 
     def test_restic_restore_verification_temp_is_data_cache(self):
-        module = importlib.import_module('respectedbrain.maintenance.backup.backup_restic')
+        module = importlib.import_module('respected_brain.maintenance.backup.backup_restic')
         restore_targets = []
         def fake_restic(command, **kwargs):
             if command[1] in ('cat', 'init'):  # repository probe / first-run init
@@ -278,8 +278,8 @@ class FoundationMaintenanceToolsTest(unittest.TestCase):
         self.assertFalse(restore_targets[0].exists())
 
     def test_smart_merge_commits_safely_when_vault_is_on_another_volume(self):
-        module = importlib.import_module('respectedbrain.maintenance.smart_merge')
-        maintenance = importlib.import_module('respectedbrain.maintenance')
+        module = importlib.import_module('respected_brain.maintenance.smart_merge')
+        maintenance = importlib.import_module('respected_brain.maintenance')
         source, target = self.vault / 'Source.md', self.vault / 'Target.md'
         source.write_text('---\ntags: source\n---\n# Source\nNew fact\n', encoding='utf-8')
         target.write_text('---\ntags: target\n---\n# Target\nExisting fact\n', encoding='utf-8')
@@ -306,8 +306,8 @@ class FoundationMaintenanceToolsTest(unittest.TestCase):
         self.assertFalse(any(path.is_file() for path in self.ctx.paths.cache_dir.rglob('*')))
 
     def test_backup_cannot_write_an_explicit_repository_under_app_root(self):
-        maintenance = importlib.import_module('respectedbrain.maintenance')
-        module = importlib.import_module('respectedbrain.maintenance.backup.backup_restic')
+        maintenance = importlib.import_module('respected_brain.maintenance')
+        module = importlib.import_module('respected_brain.maintenance.backup.backup_restic')
         before = snapshot(self.app)
         with mock.patch.object(module, 'check_prerequisites', return_value=(True, 'restic')), mock.patch.object(module.subprocess, 'run', side_effect=AssertionError('backup must reject before subprocess')):
             with self.assertRaises(ValueError):
@@ -315,7 +315,7 @@ class FoundationMaintenanceToolsTest(unittest.TestCase):
         self.assertEqual(snapshot(self.app), before)
 
     def test_local_html_ingestion_keeps_existing_conversion(self):
-        maintenance = importlib.import_module('respectedbrain.maintenance')
+        maintenance = importlib.import_module('respected_brain.maintenance')
         source = self.root / 'page.html'
         target = self.root / 'clean.md'
         source.write_text('<html><body><h1>Useful</h1><script>noise()</script><p>A fact</p></body></html>', encoding='utf-8')

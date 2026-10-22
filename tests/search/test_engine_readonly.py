@@ -8,7 +8,7 @@ import sqlite3
 import tempfile
 import unittest
 
-from respectedbrain.search.engine import IndexUnavailable, SearchEngine
+from respected_brain.search.engine import IndexUnavailable, SearchEngine
 from tests.support.files import make_context
 
 

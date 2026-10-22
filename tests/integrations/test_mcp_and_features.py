@@ -20,10 +20,10 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
-from respectedbrain.integrations.mcp.server import RespectedMcpServer
-from respectedbrain.maintenance.ingestion.mine_agent_history import AgentHistoryMiner
+from respected_brain.integrations.mcp.server import RespectedMcpServer
+from respected_brain.maintenance.ingestion.mine_agent_history import AgentHistoryMiner
 
-from respectedbrain.search.engine import SearchEngine
+from respected_brain.search.engine import SearchEngine
 from tests.support.files import make_context
 
 
@@ -101,7 +101,7 @@ class SearchEngineTest(unittest.TestCase):
 class McpServerTest(unittest.TestCase):
     def enable_writes(self, enabled: bool = True) -> None:
         """The user's explicit permission (setting mcp_write); the server reads it fresh on every call."""
-        from respectedbrain.core.config import ConfigStore
+        from respected_brain.core.config import ConfigStore
         ConfigStore(self.server.ctx.paths.data_root).update(lambda document: document.setdefault("preferences", {}).__setitem__("mcp_write", enabled))
 
     def mcp_notes(self):
@@ -416,7 +416,7 @@ class AgentHistoryMinerTest(unittest.TestCase):
 
 class TemplateAndSkillsTest(unittest.TestCase):
     def test_note_template_has_bitemporal_and_aifirst(self) -> None:
-        note_template = ROOT / "src/respectedbrain/resources/vault-template" / "📋 Templates" / "Note.md"
+        note_template = ROOT / "src/respected_brain/resources/vault-template" / "📋 Templates" / "Note.md"
         self.assertTrue(note_template.is_file())
         content = note_template.read_text(encoding="utf-8")
         self.assertIn("valid_at:", content)
@@ -425,9 +425,9 @@ class TemplateAndSkillsTest(unittest.TestCase):
         self.assertIn("Gelecek Ajan İçin", content)
 
     def test_new_skills_exist_and_valid(self) -> None:
-        skills_to_check = ["secondbrain-meydan-oku", "secondbrain-oruntu", "ajan-gecmis-tara"]
+        skills_to_check = ["brain-meydan-oku", "brain-oruntu", "ajan-gecmis-tara"]
         for s in skills_to_check:
-            for skill_dir in [ROOT / "src/respectedbrain/resources/skills"]:
+            for skill_dir in [ROOT / "src/respected_brain/resources/skills"]:
                 skill_file = skill_dir / s / "SKILL.md"
                 self.assertTrue(skill_file.is_file(), f"Skill file missing: {skill_file}")
                 text = skill_file.read_text(encoding="utf-8")
@@ -436,7 +436,7 @@ class TemplateAndSkillsTest(unittest.TestCase):
                 self.assertIn("description:", text)
 
     def test_skills_map_within_lifecycle_cap(self) -> None:
-        skills_map = ROOT / "src/respectedbrain/resources/vault-template" / "🎯 100-Command-Center" / "Skills-Map.md"
+        skills_map = ROOT / "src/respected_brain/resources/vault-template" / "🎯 100-Command-Center" / "Skills-Map.md"
         self.assertTrue(skills_map.is_file())
         text = skills_map.read_text(encoding="utf-8")
         self.assertLessEqual(
@@ -446,7 +446,7 @@ class TemplateAndSkillsTest(unittest.TestCase):
         )
 
     def test_note_template_has_epistemic_fields(self) -> None:
-        note_template = ROOT / "src/respectedbrain/resources/vault-template" / "📋 Templates" / "Note.md"
+        note_template = ROOT / "src/respected_brain/resources/vault-template" / "📋 Templates" / "Note.md"
         self.assertTrue(note_template.is_file())
         content = note_template.read_text(encoding="utf-8")
         self.assertIn("scope:", content)
@@ -454,7 +454,7 @@ class TemplateAndSkillsTest(unittest.TestCase):
         self.assertIn("supersedes:", content)
 
     def test_scan_open_loops(self) -> None:
-        from respectedbrain.briefing.service import _scan_open_loops
+        from respected_brain.briefing.service import _scan_open_loops
 
         with tempfile.TemporaryDirectory() as td:
             v_root = Path(td)
@@ -479,7 +479,7 @@ class TemplateAndSkillsTest(unittest.TestCase):
             self.assertIn("İşlenmeyi bekleyen", loops_text)
 
     def test_precompact_transcript_backup(self) -> None:
-        from respectedbrain.memory import lifecycle
+        from respected_brain.memory import lifecycle
 
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as td:
             v_root = Path(td)

@@ -36,16 +36,16 @@ class EncodingRegressionTest(unittest.TestCase):
         return text
 
     def test_cli_source_is_clean_utf8(self):
-        self._assert_clean("src/respectedbrain/cli.py")
+        self._assert_clean("src/respected_brain/cli.py")
 
 
 class PackagingIncludesInstallationTest(unittest.TestCase):
     """The installation package must ship in the package and the frozen build."""
 
-    def test_frozen_build_collects_all_respectedbrain_submodules(self):
+    def test_frozen_build_collects_all_respected_brain_submodules(self):
         build_source = (REPO_ROOT / "packaging/build_dist.py").read_text(encoding="utf-8")
         self.assertIn('--collect-submodules', build_source)
-        self.assertIn('respectedbrain', build_source)
+        self.assertIn('respected_brain', build_source)
 
     def test_setuptools_discovers_the_installation_package(self):
         pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")

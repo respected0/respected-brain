@@ -4,14 +4,14 @@ from pathlib import Path
 from unittest import TestCase, mock
 from tests.support.fakes import IntegrationFixture
 from tests.support.files import snapshot
-from respectedbrain.integrations.backend import IntegrationProfile, ExternalChange, canonical_task_xml
-from respectedbrain.integrations.scheduling import service as SCHEDULE
-from respectedbrain.installation.transaction import Transaction
-from respectedbrain.core.errors import FoundationError, OwnershipConflict
+from respected_brain.integrations.backend import IntegrationProfile, ExternalChange, canonical_task_xml
+from respected_brain.integrations.scheduling import service as SCHEDULE
+from respected_brain.installation.transaction import Transaction
+from respected_brain.core.errors import FoundationError, OwnershipConflict
 
 class BriefingScheduleTest(IntegrationFixture, TestCase):
     def test_posix_scheduler_refuses_unowned_files_at_uuid_names(self):
-        profile = IntegrationProfile('posix', ('/opt/respectedbrain',), self.home)
+        profile = IntegrationProfile('posix', ('/opt/respected-brain',), self.home)
         for platform in ('linux', 'darwin'):
             backend = mock.Mock()
             backend.read.return_value = b'foreign user content'
@@ -30,7 +30,7 @@ class BriefingScheduleTest(IntegrationFixture, TestCase):
         self.assertIn("IgnoreNew", text)
         self.assertIn("StartWhenAvailable", text)
         self.assertIn("PT30M", text)
-        self.assertIn("respectedbrain.exe", text)
+        self.assertIn("respected-brain.exe", text)
         self.assertNotIn("python", text)
         self.assertNotIn("--provider", text)
 
@@ -38,8 +38,8 @@ class BriefingScheduleTest(IntegrationFixture, TestCase):
         backend = mock.Mock()
         backend.read.return_value = None
         for platform, native in (("windows-wsl", "win32"), ("posix", "linux"), ("posix", "darwin")):
-            profile = IntegrationProfile(platform, ("/opt/respectedbrain",), self.home)
-            with self.subTest(platform=native), mock.patch.object(SCHEDULE.sys, "platform", native), mock.patch("respectedbrain.integrations.rendering.subprocess.run", return_value=mock.Mock(returncode=0, stdout=self.wsl_registry_output())):
+            profile = IntegrationProfile(platform, ("/opt/respected-brain",), self.home)
+            with self.subTest(platform=native), mock.patch.object(SCHEDULE.sys, "platform", native), mock.patch("respected_brain.integrations.rendering.subprocess.run", return_value=mock.Mock(returncode=0, stdout=self.wsl_registry_output())):
                 rows = SCHEDULE.plan_schedule(self.ctx, profile, backend)
                 text = " ".join(row.after.decode() for row in rows if row.after)
                 self.assertIn("briefing", text)
@@ -50,7 +50,7 @@ class BriefingScheduleTest(IntegrationFixture, TestCase):
     def test_plan_pins_explicit_launcher_without_pinning_provider(self):
         row = self.native_plan(time_str="09:35")[0]
         self.assertIn("09:35:00", row.after.decode())
-        self.assertIn(str(self.app / "respectedbrain.exe").replace("\\", "\\\\"), row.after.decode())
+        self.assertIn(str(self.app / "respected-brain.exe").replace("\\", "\\\\"), row.after.decode())
         self.assertNotIn("codex", row.after.decode())
 
     def test_preview_does_not_create_schedule_files(self):
@@ -94,7 +94,7 @@ class BriefingScheduleTest(IntegrationFixture, TestCase):
     def test_linux_plan_definitions_precede_activation(self):
         backend = mock.Mock()
         backend.read.return_value = None
-        profile = IntegrationProfile("posix", ("/opt/respectedbrain",), self.home)
+        profile = IntegrationProfile("posix", ("/opt/respected-brain",), self.home)
         with mock.patch.object(SCHEDULE.sys, "platform", "linux"):
             rows = SCHEDULE.plan_schedule(self.ctx, profile, backend)
         self.assertEqual([row.kind for row in rows], ["file", "file", "task"])
@@ -104,7 +104,7 @@ class BriefingScheduleTest(IntegrationFixture, TestCase):
     def test_macos_plan_plist_precedes_bootstrap(self):
         backend = mock.Mock()
         backend.read.return_value = None
-        profile = IntegrationProfile("posix", ("/opt/respectedbrain",), self.home)
+        profile = IntegrationProfile("posix", ("/opt/respected-brain",), self.home)
         with mock.patch.object(SCHEDULE.sys, "platform", "darwin"):
             rows = SCHEDULE.plan_schedule(self.ctx, profile, backend)
         self.assertEqual([row.kind for row in rows], ["file", "task"])
@@ -112,17 +112,17 @@ class BriefingScheduleTest(IntegrationFixture, TestCase):
         self.assertTrue(rows[-1].key.startswith("launchd:"))
 
     def test_wsl_task_launches_validated_linux_launcher_and_translates_only_cwd(self):
-        profile = IntegrationProfile("windows-wsl", ("/opt/Respected Brain/respectedbrain",), self.home)
+        profile = IntegrationProfile("windows-wsl", ("/opt/Respected Brain/respected-brain",), self.home)
         backend = mock.Mock()
         backend.read.return_value = None
-        with mock.patch("respectedbrain.integrations.rendering.subprocess.run", return_value=mock.Mock(returncode=0, stdout=self.wsl_registry_output())):
+        with mock.patch("respected_brain.integrations.rendering.subprocess.run", return_value=mock.Mock(returncode=0, stdout=self.wsl_registry_output())):
             row = SCHEDULE.plan_schedule(self.ctx, profile, backend)[0]
         self.assertIn("wsl.exe", row.after.decode())
-        self.assertIn("/opt/Respected Brain/respectedbrain", row.after.decode())
+        self.assertIn("/opt/Respected Brain/respected-brain", row.after.decode())
         self.assertNotIn("wslpath", row.after.decode())
 
     def test_non_wsl_windows_task_does_not_invoke_wslpath(self):
-        with mock.patch("respectedbrain.integrations.rendering.subprocess.run") as run:
+        with mock.patch("respected_brain.integrations.rendering.subprocess.run") as run:
             self.native_plan()
         run.assert_not_called()
 
