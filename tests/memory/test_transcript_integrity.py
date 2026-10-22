@@ -224,6 +224,13 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         self.assertEqual(F._session_provenance_path(self.state, SID).read_bytes(), before)
         self.assertEqual(self.catch(), 0)
         self.assertFalse(self.daily.exists())
+    def test_moving_into_a_subfolder_of_the_workspace_keeps_the_session_confirmed(self):
+        nested = self.vault / 'sub-repo'
+        nested.mkdir()
+        self.assertTrue(F.record_hook_workspace(self.state, self.ctx.paths.vault_id, SID, 'codex', {'cwd': str(self.vault)}))
+        self.assertTrue(F.record_hook_workspace(self.state, self.ctx.paths.vault_id, SID, 'codex', {'cwd': str(nested)}))
+        doc = json.loads(F._session_provenance_path(self.state, SID).read_text(encoding='utf-8'))
+        self.assertEqual(doc['status'], 'confirmed')
     def test_same_path_revisions_and_retries_work(self):
         p = self.transcript({'id': SID, 'cwd': str(self.vault)})
         self.assertEqual(self.run_flush(p), 0)

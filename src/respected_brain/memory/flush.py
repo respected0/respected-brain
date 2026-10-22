@@ -868,6 +868,10 @@ def record_hook_workspace(
                 return False
             if existing["workspaces"] == workspaces and existing["provider"] == provider:
                 return True
+            # a session that cd's into a sub- or parent folder of its workspace (a monorepo's repos) is still in that workspace
+            if existing["provider"] == provider and all(any(_workspace_paths_overlap(value, known) for known in existing["workspaces"])
+                                                        for value in workspaces):
+                return True
             document = {
                 **existing, "status": "ambiguous",
                 "conflicting_workspaces": workspaces, "conflicting_provider": provider,
