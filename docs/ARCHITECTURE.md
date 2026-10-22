@@ -190,7 +190,7 @@ sistemini kanıtlamaz. Hub tarafındaki uçtan uca testler gerçek kurucuyu kull
 |---|---|
 | Kod imzası (Authenticode) | yok; SmartScreen uyarır |
 | macOS, Linux, WSL | kod ve betikler var; derlenmez, CI'da test edilmez |
-| Codex, Gemini CLI, Cursor | yalnızca test verileriyle; Claude Code ve Antigravity gerçek oturumla sınandı (Windows). Codex'te `notify` köprüsü gerçek oturumda çalıştı, eklenti hook'larının tetiklendiği doğrulanamadı |
+| Codex, Gemini CLI, Cursor | yalnızca test verileriyle; Claude Code ve Antigravity gerçek oturumla sınandı (Windows). Codex'te `notify` köprüsü gerçek oturumda çalıştı; eklenti hook'ları komut biçimi düzeltildi, kişinin Codex'te onayını bekliyor |
 | Dizin anlık değil | oturum dışı düzenlemeler sonraki oturumda ya da günlük görevde dizine girer |
 | Hafıza izni | `settings.apply` yapabilen herkes izin oluşturabilir (aynı kullanıcı hesabı) |
 | Anlamsal arama | her sorguda sunucu başlar; karma sonuçlarda alaka eşiği yok; yalnızca Windows x64 çalışma ortamı |

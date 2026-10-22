@@ -168,10 +168,10 @@ yedekleri).
 | Gemini CLI | hook'lar, `AfterAgent` |
 
 Eklenti paketi veri klasöründe durur ve kaldırınca silinir. Kurulum ve onarım sonunda `claude plugin marketplace add`/`install` ve
-`codex plugin add` komutlarını da çalıştırır (araç yoksa atlanır, başarısızlık kurulumu bozmaz). Claude eklentiyi ilk açılışta yükler; Codex eklenti hook'ları için
-güven onayı isteyebilir. Eklenti kaydı biçimi gerçek araçlarda henüz doğrulanmadı.
+`codex plugin add` komutlarını da çalıştırır (araç yoksa atlanır, başarısızlık kurulumu bozmaz). Claude eklentiyi ilk açılışta yükler; Codex eklenti hook'larını kurulumda ve
+içerikleri değiştiğinde ayrıca onaylatır (Codex'te `/hooks`); onaylanmadan çalışmazlar, onayı Brain vermez.
 
-Claude Code ve Antigravity gerçek oturumlarla doğrulandı (Windows); Codex'te yalnızca `notify` köprüsü gerçek oturumda görüldü, Gemini CLI ve Cursor test verileriyle sınandı: deneysel sayın. Bağlantı açıkken
+Claude Code ve Antigravity gerçek oturumlarla doğrulandı (Windows); Codex'te `notify` köprüsü gerçek oturumda çalıştı, eklenti hook'ları onay bekliyor, Gemini CLI ve Cursor test verileriyle sınandı: deneysel sayın. Bağlantı açıkken
 ürün o aracın ayar dosyasına yalnızca kendi girdilerini ekler; sizin ve başka araçların girdileri korunur, kapatınca
 yalnızca kendi girdileri geri alınır.
 
