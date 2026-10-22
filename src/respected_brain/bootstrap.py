@@ -9,7 +9,6 @@ from .core.config import ConfigStore
 from .core.context import AppContext
 from .core.paths import Roots, resolve_roots
 from .core.platform import known_folder
-from .vault.registry import build_context
 
 
 def application_roots(*, env: Mapping[str, str] | None = None) -> Roots:
@@ -23,6 +22,7 @@ def application_roots(*, env: Mapping[str, str] | None = None) -> Roots:
 
 def bootstrap(*, vault: Path | None = None, vault_id: str | None = None,
               env: Mapping[str, str] | None = None, allow_missing_vault: bool = False) -> AppContext:
+    from .vault.registry import build_context   # imported here: the RPP start-up path only needs application_roots
     values = os.environ if env is None else env
     roots = application_roots(env=values)
     return build_context(roots, ConfigStore(roots.data_root), vault=vault, vault_id=vault_id, env=values, allow_missing_vault=allow_missing_vault)

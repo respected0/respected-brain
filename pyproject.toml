@@ -20,7 +20,7 @@ Repository = "https://github.com/respected0/respected-brain"
 dev = ["setuptools>=77", "build>=1", "wheel", "pyinstaller>=6", "tomli>=2; python_version < '3.11'"]
 
 [project.scripts]
-respected-brain = "respected_brain.cli:main"
+respected-brain = "respected_brain.launcher:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

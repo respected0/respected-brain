@@ -293,13 +293,8 @@ def _operation_output(result) -> int:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    from .core.platform import ensure_user_environment
-    ensure_user_environment()  # hooks may run with a trimmed environment
-    if sys.platform == "win32":
-        for stream in (sys.stdin, sys.stdout, sys.stderr):  # RPP requests arrive as UTF-8 on stdin; the console code page must not change note names
-            configure = getattr(stream, "reconfigure", None)
-            if callable(configure):
-                configure(encoding="utf-8", errors="replace")
+    from .core.platform import prepare_process
+    prepare_process()
     parser = _parser()
     try:
         args = parser.parse_args(argv)

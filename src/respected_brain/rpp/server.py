@@ -17,7 +17,7 @@ from pathlib import Path
 from .. import settings as product_settings
 from ..core.config import ConfigStore, atomic_write_json
 from ..core.errors import FoundationError, SelectionError
-from . import integrations, memory, memory_grants, memory_capture, memory_index, memory_semantic, memory_workspace, memory_write
+# The memory, search and integration modules are imported inside the operations that use them: a manifest or health call must not load them.
 
 RPP = "1"
 PRODUCT_ID = "respected-brain"
@@ -168,6 +168,7 @@ def _op_readback(operation_id, data_root, payload):
 
 
 def _op_integrations_plan(operation_id, data_root, payload):
+    from . import integrations
     try:
         result = integrations.plan(data_root, payload.get("target") or {})
     except integrations.PlanError as error:
@@ -176,6 +177,7 @@ def _op_integrations_plan(operation_id, data_root, payload):
 
 
 def _memory_reply(operation_id, call):
+    from . import memory, memory_grants
     try:
         return _reply(True, operation_id, call(), None)
     except (memory.MemoryOpError, memory_grants.GrantError) as error:
@@ -183,59 +185,73 @@ def _memory_reply(operation_id, call):
 
 
 def _op_memory_grant(operation_id, data_root, payload):
+    from . import memory
     return _memory_reply(operation_id,
                          lambda: memory.grant(data_root, operation_id, payload))
 
 
 def _op_memory_revoke(operation_id, data_root, payload):
+    from . import memory
     return _memory_reply(operation_id, lambda: memory.revoke(data_root, payload))
 
 
 def _op_memory_write(operation_id, data_root, payload):
+    from . import memory_write
     return _memory_reply(operation_id, lambda: memory_write.write(data_root, operation_id, payload))
 
 
 def _op_memory_write_revert(operation_id, data_root, payload):
+    from . import memory_write
     return _memory_reply(operation_id, lambda: memory_write.revert(data_root, payload))
 
 
 def _op_memory_semantic_status(operation_id, data_root, payload):
+    from . import memory_semantic
     return _memory_reply(operation_id, lambda: memory_semantic.status(data_root))
 
 
 def _op_memory_semantic_configure(operation_id, data_root, payload):
+    from . import memory_semantic
     return _memory_reply(operation_id, lambda: memory_semantic.configure(data_root, payload))
 
 
 def _op_memory_semantic_pull(operation_id, data_root, payload):
+    from . import memory_semantic
     return _memory_reply(operation_id, lambda: memory_semantic.pull(data_root, payload))
 
 
 def _op_memory_capture_run(operation_id, data_root, payload):
+    from . import memory_capture
     return _memory_reply(operation_id, lambda: memory_capture.run(data_root, payload))
 
 
 def _op_memory_search(operation_id, data_root, payload):
+    from . import memory_workspace
     return _memory_reply(operation_id, lambda: memory_workspace.search(data_root, payload))
 
 
 def _op_memory_note_read(operation_id, data_root, payload):
+    from . import memory_workspace
     return _memory_reply(operation_id, lambda: memory_workspace.read(data_root, payload))
 
 
 def _op_memory_capture_note(operation_id, data_root, payload):
+    from . import memory_workspace
     return _memory_reply(operation_id, lambda: memory_workspace.capture(data_root, operation_id, payload))
 
 
 def _op_memory_briefing_run(operation_id, data_root, payload):
+    from . import memory_workspace
     return _memory_reply(operation_id, lambda: memory_workspace.briefing(data_root, payload))
 
 
 def _op_memory_recall(operation_id, data_root, payload):
+    from . import memory
     return _memory_reply(operation_id, lambda: memory.recall(data_root, payload))
 
 
 def _index_reply(operation_id, call):
+    from . import memory_index
     try:
         return _reply(True, operation_id, call(), None)
     except memory_index.MemoryIndexError as error:
@@ -243,10 +259,12 @@ def _index_reply(operation_id, call):
 
 
 def _op_memory_index_status(operation_id, data_root, payload):
+    from . import memory_index
     return _index_reply(operation_id, lambda: memory_index.status(data_root))
 
 
 def _op_memory_index_refresh(operation_id, data_root, payload):
+    from . import memory_index
     return _index_reply(operation_id,
                         lambda: memory_index.refresh(data_root, operation_id, payload))
 

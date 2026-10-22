@@ -11,6 +11,17 @@ from typing import ContextManager, IO
 from uuid import UUID
 
 
+def prepare_process() -> None:
+    """What every command needs before it reads or writes anything: the user environment, and UTF-8 standard streams on Windows."""
+    import sys
+    ensure_user_environment()  # hooks may run with a trimmed environment
+    if sys.platform == "win32":
+        for stream in (sys.stdin, sys.stdout, sys.stderr):  # RPP requests arrive as UTF-8 on stdin; the console code page must not change note names
+            configure = getattr(stream, "reconfigure", None)
+            if callable(configure):
+                configure(encoding="utf-8", errors="replace")
+
+
 def ensure_user_environment(env=None, read=None) -> None:
     """AI tools start hooks with a trimmed environment (no USERPROFILE/APPDATA/LOCALAPPDATA); Python's home lookup and the
     summarizer CLIs we start need them. Fill what is missing from the Windows Known Folders; never override what is set."""
