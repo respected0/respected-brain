@@ -3,7 +3,7 @@
 ; everything else: `setup` (vault, settings, records), `repair`, `config`, `uninstall` (see docs/PRODUCT_CONTRACT.md).
 ; Shared with the Orchestrator installer: the install-path page, the Hub download, the maintenance page, /SET= and /PURGE=1.
 #ifndef AppVersion
-  #define AppVersion "0.1.0b1"
+  #define AppVersion "0.1.0b2"
 #endif
 #ifndef StageDir
   #define StageDir "..\..\dist\RespectedBrain"
