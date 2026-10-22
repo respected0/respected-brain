@@ -43,6 +43,10 @@ Source: "{#StageDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs c
 ; the product removes its integrations and records (and with /PURGE=1 or a yes its settings and data); never the vault
 Filename: "{app}\respected-brain.exe"; Parameters: "{code:UninstallArgs}"; Flags: runhidden waituntilterminated; RunOnceId: "RemoveProduct"
 
+[InstallDelete]
+; an update replaces the program folder whole: files of the previous version (old dist-info, renamed modules) must not stay behind
+Type: filesandordirs; Name: "{app}\app"
+
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
 
@@ -52,6 +56,7 @@ const
   ProductExe = 'respected-brain.exe';
   ProductFolder = 'RespectedBrain';
   HubProductId = 'brain';
+  InstallRecord = 'data\install-manifest.json';  // the product's own install record, relative to its folder
   UninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{2F6A9C41-85D7-4B3E-9A10-C7E4D58B1F23}_is1';
   HubSetupName = 'RespectedHub-Windows-Setup.exe';
   HubReleasesPage = 'https://github.com/respected0/respected-hub/releases/latest';
@@ -116,7 +121,7 @@ end;
 // installed = the program and the product's own install record are both there; anything less is a fresh install
 function IsInstalled(): Boolean;
 begin
-  Result := FileExists(ProgramExe()) and FileExists(DataRoot() + '\install-manifest.json');
+  Result := FileExists(ProgramExe()) and FileExists(ExpandConstant('{localappdata}\Respected\' + ProductFolder + '\' + InstallRecord));
 end;
 
 function HubExe(): String;
@@ -175,10 +180,15 @@ end;
 // runs one of the product's own commands; Output gets its standard output lines
 function RunProduct(Params: String; var Output: TExecOutput): Boolean;
 var
-  Code: Integer;
+  Code, I: Integer;
 begin
   Result := ExecAndCaptureOutput(ProgramExe(), Params, '', SW_HIDE, ewWaitUntilTerminated, Code, Output) and (Code = 0);
-  if not Result then Log(ProductExe + ' ' + Params + ' failed with exit code ' + IntToStr(Code));
+  if not Result then begin
+    Log(ProductExe + ' ' + Params + ' failed with exit code ' + IntToStr(Code));
+    // the product explains the refusal on stdout (JSON conflicts) or stderr; without it the setup log names no cause
+    for I := 0 to GetArrayLength(Output.StdOut) - 1 do Log('  stdout: ' + Output.StdOut[I]);
+    for I := 0 to GetArrayLength(Output.StdErr) - 1 do Log('  stderr: ' + Output.StdErr[I]);
+  end;
 end;
 
 // the value of `config get <key>`, whose output is {"<key>": <value>} (one line or one member per line)
