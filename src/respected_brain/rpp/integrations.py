@@ -87,6 +87,15 @@ def _describe(change):
             "size_after": len(change.after or b"")}
 
 
+def _outcome(prior, result):
+    """What removing our registration leaves behind: nothing (we created it), the exact original, or the file minus our entry."""
+    if result is None:
+        return "delete"
+    from ..integrations.delta import sha256
+    original = sha256(result) == prior.before_sha256 if prior.delta is not None else result == prior.before
+    return "restore" if original else "remove-entry"
+
+
 def _removals(ctx, backend, desired, data_root, planned=frozenset()):
     """Registrations Respected owns that the new choices switch off: exactly what the installer would restore."""
     from ..installation.ownership import read_manifest
@@ -111,8 +120,9 @@ def _removals(ctx, backend, desired, data_root, planned=frozenset()):
         if prior.restored(current):
             continue
         from ..installation.operations import undo_external
-        undo_external(prior, current)  # raises OwnershipConflict only when our own entry was edited
-        rows.append({"kind": prior.kind, "target": str(prior.key), "action": "restore", "summary": _EXPLAIN.get(prior.kind, prior.kind), "size_after": len(prior.before or b"")})
+        result = undo_external(prior, current)  # raises OwnershipConflict only when our own entry was edited
+        rows.append({"kind": prior.kind, "target": str(prior.key), "action": "restore", "outcome": _outcome(prior, result),
+                     "summary": _EXPLAIN.get(prior.kind, prior.kind), "size_after": len(prior.before or b"")})
     return rows
 
 

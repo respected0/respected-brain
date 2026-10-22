@@ -121,6 +121,7 @@ class IntegrationPlanTest(unittest.TestCase):
         self.assertFalse(any(c["action"] == "restore" for c in kept))
         dropped = self.plan({"global": True, "clients": ["claude"]})["result"]["changes"]
         self.assertEqual([c["target"] for c in dropped if c["action"] == "restore"], [str(codex)])
+        self.assertEqual([c["outcome"] for c in dropped if c["action"] == "restore"], ["restore"])   # the file had content before us and gets exactly that back
         self.assertEqual(codex.read_text(encoding="utf-8"), '{"owned": true}')
 
 if __name__ == "__main__":
