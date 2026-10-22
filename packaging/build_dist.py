@@ -119,6 +119,8 @@ def build(*, platform: str, output: Path) -> Path:
     launcher = app / ("RespectedBrain.exe" if platform == "windows" else "RespectedBrain")
     target = app / ("respected-brain.exe" if platform == "windows" else "respected-brain")
     launcher.replace(target)
+    for cache in list(app.rglob("__pycache__")):  # --add-data copies the source tree's bytecode caches too
+        shutil.rmtree(cache)
     if platform != "windows":
         dereference_distribution_links(app)
     if platform == "macos":
