@@ -90,6 +90,24 @@ class IntegrationPlanTest(unittest.TestCase):
         self.assertEqual(self.plan({"mcp": True, "clients": ["nope"]})["error"]["code"], "BAD_REQUEST")
         self.assertEqual(self.plan({"global": True, "clients": []})["result"]["changes"], [])
 
+    def test_what_is_already_installed_and_still_wanted_is_not_a_restore(self):
+        # the preview of the stored choice must say "nothing changes", not "everything returns to its old state"
+        import base64
+        codex = self.home / ".codex/hooks.json"
+        codex.parent.mkdir(parents=True)
+        codex.write_text('{"owned": true}', encoding="utf-8")
+        self.data.mkdir(parents=True, exist_ok=True)
+        encode = lambda text: base64.b64encode(text.encode("utf-8")).decode("ascii")
+        manifest = {"schema_version": 3, "files": [], "external": [{"kind": "file", "key": str(codex), "before": encode("{}"), "after": encode('{"owned": true}')}]}
+        (self.data / "install-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        def still_wanted_and_up_to_date(ctx, profile, desired, backend, planned_keys=None):
+            planned_keys.add(("file", str(codex)))   # planned, but the file already has this content: no change row
+            return ()
+        with patch("respected_brain.integrations.rendering.plan_integrations", still_wanted_and_up_to_date):
+            changes = self.plan({"global": True, "clients": ["codex"]})["result"]["changes"]
+        self.assertEqual(changes, [])
+
     def test_deselecting_a_client_plans_a_restore_of_its_owned_files(self):
         import base64
         codex = self.home / ".codex/hooks.json"

@@ -76,7 +76,8 @@ def _context(data_root, target):
 
 
 def _describe(change):
-    if change.before == change.after:
+    from ..integrations.planning import _same_json
+    if change.before == change.after or (change.before is not None and change.after is not None and _same_json(change.before, change.after)):
         action = "unchanged"
     elif change.before is None:
         action = "create"
@@ -126,8 +127,9 @@ def plan(data_root, target):
         profile = installed_profile(roots, profile_input)
         backend = NativeBackend(Path(data_root))
         discovered = [{"client_config": str(path), "present": path.exists()} for path in mcp_destinations(profile)]
-        planned_changes = plan_integrations(ctx, profile, desired, backend)
-        changes = _removals(ctx, backend, desired, data_root, {(c.kind, str(c.key)) for c in planned_changes}) + [_describe(change) for change in planned_changes]
+        planned = set()  # every registration still wanted, changed or not: only the rest is a dropped client
+        planned_changes = plan_integrations(ctx, profile, desired, backend, planned)
+        changes = _removals(ctx, backend, desired, data_root, planned) + [_describe(change) for change in planned_changes]
     except PlanError:
         raise
     except OwnershipConflict as error:

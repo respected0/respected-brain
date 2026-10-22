@@ -17,6 +17,8 @@ iki yol vardır:
   - **Bağlantılar:** hangi AI araçlarının oturumlarının yakalanacağı, hafızanın MCP sunucusu olarak sunulup sunulmayacağı,
     sabah özeti görevi, masaüstü kısayolu.
 
+Kurucu, kurmadan önce "bilgisayarınızda neler olur" sayfasını gösterir: kurulumda, kullanırken, güncellemede ve kaldırmada neler yazıldığı, değiştiği ve silindiği. Aynı bilgi Hub'ın Kütüphane sayfasındaki ürün kartında da vardır (`packaging/windows/brain_info.txt`).
+
 Kurucu programı `%LOCALAPPDATA%\Respected\RespectedBrain\app` altına yazar ve ürünün kendi `setup` komutunu çalıştırır:
 kasa bir kez oluşturulur, ayarlar yazılır, seçilen bağlantılar kurulur. Bir adım başarısız olursa ürün yaptığı
 değişiklikleri geri alır; kurucu yeniden çalıştırılabilir. Yüklü uygulamalar girdisini kurucu yazar.
