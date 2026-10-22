@@ -110,7 +110,8 @@ def build(*, platform: str, output: Path) -> Path:
         "--contents-directory", "app", "--name", "RespectedBrain",
         "--distpath", str(output), "--workpath", str(ROOT / "build/frozen"),
         "--specpath", str(ROOT / "build"), "--paths", str(ROOT / "src"),
-        "--collect-submodules", "respected_brain", "--copy-metadata", "respected-brain",
+        "--collect-submodules", "respected_brain",
+        *(["--icon", str(ROOT / "packaging/windows/icon.ico")] if platform == "windows" else []), "--copy-metadata", "respected-brain",
         "--add-data", str(ROOT / "src/respected_brain/resources") + os.pathsep + "respected_brain/resources",
         str(ROOT / "packaging/entrypoint.py"),
     ]
