@@ -10,11 +10,6 @@
   anahtarıyla doğrudan model çağırma yok. Anahtarın nerede saklanacağı (ayar şeması `secret` alanı mı, Windows kimlik
   kasası mı) ve fiyat/sağlayıcı seçimi karar bekliyor. Çin modelleri (DeepSeek, Qwen, GLM, Kimi) de bu yoldan gelir.
 - [ ] **ChatGPT** (masaüstü/web): hook yok; yalnızca MCP üzerinden ne kadar bağlanabileceği araştırılmalı.
-- [ ] **Codex eklenti hook'larının onayı**: Codex hook'ları PowerShell ile çalıştırıyor; tırnakla başlayan komut orada ayrıştırma
-  hatasıdır (çıkış kodu 1), bu yüzden Brain'in hook'ları hiç çalışmıyordu. Komutlar artık tırnaksız yazılıyor. Codex her
-  eklenti hook'u için içerik özeti (`hooks.state.*.trusted_hash`) onayı ister ve içerik değişince onayı düşürür
-  (`modified`); onay kişinin güvenlik kararıdır, Brain yazmaz. Kişi Codex'te hook'ları onaylayınca (`/hooks`) gerçek
-  oturumda çalıştıkları görülmeli; bu yapılmadı.
 - [ ] **Gemini CLI ve Cursor gerçek oturumla doğrulama**: yalnızca test verisiyle sınandı (`ARCHITECTURE.md` §9).
 
 ## Token tasarrufu

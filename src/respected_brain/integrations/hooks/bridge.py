@@ -57,7 +57,7 @@ def antigravity_session_from_transcript(transcript_path: str) -> str:
             and parts[index + 2].casefold() == "brain"
             and parts[index + 4].casefold() == ".system_generated"
             and parts[index + 5].casefold() == "logs"
-            and parts[index + 6].casefold() == "transcript.jsonl"
+            and parts[index + 6].casefold() in {"transcript.jsonl", "transcript_full.jsonl"}  # the agy CLI hands out the _full file
         ):
             session_id = parts[index + 3]
             if SESSION_COMPONENT.fullmatch(session_id) and session_id not in {".", ".."}:
