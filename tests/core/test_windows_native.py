@@ -55,7 +55,7 @@ class WindowsNativeTest(unittest.TestCase):
             try:
                 self.temporary.cleanup()
                 return
-            except PermissionError:
+            except OSError:  # a detached hook worker may still hold or fill a folder (WinError 5/32/145)
                 if time.monotonic() >= deadline:
                     raise
                 time.sleep(.05)
