@@ -33,12 +33,18 @@ SetupIconFile=icon.ico
 CloseApplications=yes
 SetupLogging=yes
 WizardStyle=modern
+WizardImageFile=wizard\side-164x314.bmp,wizard\side-192x366.bmp,wizard\side-246x470.bmp,wizard\side-328x628.bmp
+WizardSmallImageFile=wizard\small-55.bmp,wizard\small-64.bmp,wizard\small-83.bmp,wizard\small-110.bmp
+DisableWelcomePage=no
 InfoBeforeFile=brain_info.txt
 
 [Languages]
 Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 
 [Messages]
+turkish.WelcomeLabel1=Respected Brain'e hoş geldin
+turkish.WelcomeLabel2=Brain, AI araçlarının ortak hafızasını not kasanda tutar.%n%nYönetici izni gerekmez; mevcut notlarının üzerine yazılmaz.%n%nDevam etmek için Sonraki'ne tıkla.
+turkish.FinishedHeadingLabel=Respected Brain hazır
 ; the ready page's button is "Kur", not "Sonraki"
 turkish.ReadyLabel2a=Kuruluma devam etmek için Kur düğmesine, ayarları gözden geçirmek ya da değiştirmek için Önceki düğmesine tıklayın.
 turkish.ReadyLabel2b=Kuruluma başlamak için Kur düğmesine tıklayın.
@@ -58,6 +64,8 @@ Type: filesandordirs; Name: "{app}\app"
 Type: filesandordirs; Name: "{app}"
 
 [Code]
+#include "respected_cards.iss"
+
 const
   ProductName = 'Brain';
   ProductExe = 'respected-brain.exe';
@@ -69,7 +77,7 @@ const
   HubReleasesPage = 'https://github.com/respected0/respected-hub/releases/latest';
 
 var
-  ChoicePage, MaintenancePage, IntegrationPage: TInputOptionWizardPage;
+  ChoicePage, MaintenancePage, IntegrationPage: TWizardPage;
   IdentityPage: TInputQueryWizardPage;
   VaultPage: TInputDirWizardPage;
   DownloadPage: TDownloadWizardPage;
@@ -260,17 +268,13 @@ end;
 
 procedure CreateSharedPages;
 begin
-  ChoicePage := CreateInputOptionPage(wpWelcome, 'Kurulum yolu', 'Nasıl devam etmek istersin?',
-    'İkisi de aynı ürünü kurar; fark, güncellemeleri ve ayarları nereden yöneteceğindir.', True, False);
-  ChoicePage.Add('Respected Hub ile devam et (önerilen): kurulum, güncelleme ve ayarlar görsel arayüzden yönetilir');
-  ChoicePage.Add('Yalnızca ' + ProductName + ': Hub olmadan; ayarlar bu kurucudan ya da komutlarla değiştirilir');
-  ChoicePage.SelectedValueIndex := 0;
-  MaintenancePage := CreateInputOptionPage(ChoicePage.ID, ProductName + ' kurulu', 'Ne yapmak istersin?',
-    'Ayarların ve not kasan her seçenekte korunur.', True, False);
-  MaintenancePage.Add('Onar / güncelle: programı bu kurucudaki sürümle (v{#AppVersion}) yenile');
-  MaintenancePage.Add('Ayarları değiştir');
-  MaintenancePage.Add('Kaldır');
-  MaintenancePage.SelectedValueIndex := 0;
+  ChoicePage := NewCardPage(0, wpWelcome, 'Kurulum yolu', 'İkisi de aynı ürünü kurar; fark, güncellemeleri ve ayarları nereden yöneteceğindir.', False);
+  AddCard(ChoicePage, 0, #$E80F, 'Respected Hub ile devam et (önerilen)', 'Kurulum, güncelleme ve ayarlar görsel arayüzden yönetilir.', True);
+  AddCard(ChoicePage, 0, #$E756, 'Yalnızca ' + ProductName, 'Hub olmadan; ayarlar bu kurucudan ya da komutlarla değiştirilir.', False);
+  MaintenancePage := NewCardPage(1, ChoicePage.ID, ProductName + ' kurulu', 'Ayarların ve not kasan her seçenekte korunur.', False);
+  AddCard(MaintenancePage, 1, #$E895, 'Onar / güncelle', 'Programı bu kurucudaki sürümle (v{#AppVersion}) yeniler.', True);
+  AddCard(MaintenancePage, 1, #$E713, 'Ayarları değiştir', 'Programa dokunmadan ayarları yeniden seçersin.', False);
+  AddCard(MaintenancePage, 1, #$E74D, 'Kaldır', 'Programı kaldırır; sana sorarak ayarları ve verileri de siler.', False);
   DownloadPage := CreateDownloadPage('Hub indiriliyor', 'En güncel Respected Hub kurucusu indiriliyor...', @OnDownloadProgress);
 end;
 
@@ -300,12 +304,11 @@ begin
     'Boş veya yeni bir klasör seç. Mevcut notlarının üzerine yazılmaz ve kaldırırken kasan silinmez. Program kendisi sabit bir yere kurulur: ' + ExpandConstant('{localappdata}\Respected\RespectedBrain\app') + '.', False, '');
   VaultPage.Add('');
   VaultPage.Values[0] := CommandValue('VAULT', ExpandConstant('{userdocs}\RespectedOS'));
-  IntegrationPage := CreateInputOptionPage(VaultPage.ID, 'Bağlantılar', 'Brain hangi araçlarla çalışsın?',
-    'Hepsi isteğe bağlı; diğer AI aracı ayarların korunur ve her biri sonradan kapatılabilir. Masaüstü kısayolunun çalışması için not kasasını Obsidian''da en az bir kez açmış olmalısın.', False, False);
-  IntegrationPage.Add('AI araçlarının oturumlarını hafızaya yakala (Claude, Codex, Gemini... hook ve kuralları)');
-  IntegrationPage.Add('AI araçları hafızayı MCP sunucusu olarak kullanabilsin');
-  IntegrationPage.Add('Sabah özeti zamanlanmış görevi (Windows Görev Zamanlayıcı)');
-  IntegrationPage.Add('Masaüstüne not kasasını Obsidian''da açan kısayol');
+  IntegrationPage := NewCardPage(2, VaultPage.ID, 'Bağlantılar', 'Brain hangi araçlarla çalışsın? Hepsi isteğe bağlı, sonradan kapatılabilir ve diğer ayarların korunur.', True);
+  AddCard(IntegrationPage, 2, #$E8F1, 'AI oturumlarını hafızaya yakala', 'Claude, Codex, Gemini gibi araçların oturumları kaydedilir.', False);
+  AddCard(IntegrationPage, 2, #$E8D4, 'AI araçları hafızayı MCP sunucusu olarak kullansın', 'Araçlar notlarını arayıp okuyabilir.', False);
+  AddCard(IntegrationPage, 2, #$E787, 'Sabah özeti görevi', 'Windows Görev Zamanlayıcı ile her sabah özet hazırlanır.', False);
+  AddCard(IntegrationPage, 2, #$E8A7, 'Masaüstüne Obsidian kısayolu', 'Not kasasını açar; kasayı Obsidian''da en az bir kez açmış olmalısın.', False);
 end;
 
 // the answers of the identity and integrations pages as the product's own --set arguments
@@ -316,7 +319,7 @@ begin
   Result := SetArg('user_name=' + IdentityPage.Values[0]) + SetArg('assistant_name=' + IdentityPage.Values[1]) +
             SetArg('user_bio=' + IdentityPage.Values[2]);
   for I := 0 to 3 do
-    if IntegrationPage.Values[I] then Result := Result + SetArg(IntegrationKey(I) + '=true')
+    if CardChecked(2, I) then Result := Result + SetArg(IntegrationKey(I) + '=true')
     else Result := Result + SetArg(IntegrationKey(I) + '=false');
 end;
 
@@ -328,7 +331,7 @@ begin
   IdentityPage.Values[1] := CurrentSetting('assistant_name');
   IdentityPage.Values[2] := CurrentSetting('user_bio');
   for I := 0 to 3 do
-    IntegrationPage.Values[I] := CurrentSetting(IntegrationKey(I)) = 'true';
+    SetCardChecked(2, I, CurrentSetting(IntegrationKey(I)) = 'true');
 end;
 
 { ---- page flow ---- }
@@ -360,14 +363,14 @@ var
 begin
   Result := True;
   if WizardSilent then Exit;
-  if (CurPageID = ChoicePage.ID) and (ChoicePage.SelectedValueIndex = 0) then begin
+  if (CurPageID = ChoicePage.ID) and (CardSelectedIndex(0) = 0) then begin
     ContinueWithHub;
     Result := False;
     Leave;
-  end else if (CurPageID = MaintenancePage.ID) and (MaintenancePage.SelectedValueIndex = 1) then begin
+  end else if (CurPageID = MaintenancePage.ID) and (CardSelectedIndex(1) = 1) then begin
     SettingsMode := True;
     LoadCurrentSettings;
-  end else if (CurPageID = MaintenancePage.ID) and (MaintenancePage.SelectedValueIndex = 2) then begin
+  end else if (CurPageID = MaintenancePage.ID) and (CardSelectedIndex(1) = 2) then begin
     Exec(UninstallerPath(), '', '', SW_SHOWNORMAL, ewNoWait, Code);
     Result := False;
     Leave;
