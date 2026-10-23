@@ -15,6 +15,8 @@
 [Setup]
 AppId={{2F6A9C41-85D7-4B3E-9A10-C7E4D58B1F23}
 AppName=Respected Brain
+AppVerName=Respected Brain
+UninstallDisplayName=Respected Brain
 AppVersion={#AppVersion}
 AppPublisher=Respected
 AppCopyright=Copyright (c) 2026 RESPECTED (MIT)
