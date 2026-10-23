@@ -6,7 +6,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
 import shutil
 import subprocess
 import sys

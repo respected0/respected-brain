@@ -9,12 +9,7 @@ güncelleme ve onarım, yalnızca sahipli girdileri kaldıran kaldırma.
 .\tests\native\smoke\windows-native.ps1 --output .\smoke-windows.json
 ```
 
-```sh
-# WSL / Linux / macOS (doğrulanmadı)
-sh ./tests/native/smoke/wsl.sh --output ./smoke-wsl.json
-sh ./tests/native/smoke/linux.sh --output ./smoke-linux.json
-sh ./tests/native/smoke/macos.sh --output ./smoke-macos.json
-```
+Şimdilik yalnızca Windows desteklenir; Linux ve macOS smoke betikleri o platformlar eklenince yazılır.
 
 Başarı: çıkış kodu `0`, JSON'daki `overall` değeri `VERIFIED` ve her kontrol `VERIFIED`. Kanıt dosyası sistem bilgisi ve
 süreleri içerir; istem ya da döküm metni içermez.

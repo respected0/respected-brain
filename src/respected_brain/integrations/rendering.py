@@ -278,9 +278,6 @@ def detect_clients(profile):
             "windsurf": (home / ".codeium").is_dir(), "claude-desktop": (appdata / "Claude").is_dir(), "vscode-agents": storage_hit}
 
 
-LEGACY_SHORTCUT = "Respected Brain.lnk"   # up to beta.2 the desktop shortcut started `respected-brain open`; it is replaced by a direct Obsidian link
-
-
 def obsidian_shortcut(vault_name, obsidian_exe):
     """The text of an Internet Shortcut (.url) that opens the vault in Obsidian; with Obsidian's own icon when it is installed."""
     from urllib.parse import quote
@@ -305,9 +302,8 @@ def obsidian_state(vault_root, home):
     return "ready" if os.path.normcase(os.path.realpath(vault_root)) in known else "unknown-vault"
 
 
-# The MCP server is registered under the product's name. Up to beta.2 it was 'respected-vault'; that entry (ours, same program) is moved.
+# The MCP server is registered under the product's name.
 MCP_SERVER = "respected-brain"
-LEGACY_MCP_SERVER = "respected-vault"
 
 
 def plan_integrations(ctx, profile, desired, backend, planned_keys=None):
@@ -331,12 +327,7 @@ def plan_integrations(ctx, profile, desired, backend, planned_keys=None):
             servers = document.setdefault("mcpServers", {})
             if not isinstance(servers, dict):
                 raise ValueError(f"Invalid mcpServers: {path}")
-            legacy = servers.get(LEGACY_MCP_SERVER)
-            if isinstance(legacy, dict) and legacy.get("command") == entry["command"] and legacy.get("args") == entry["args"]:
-                servers.pop(LEGACY_MCP_SERVER)   # our own entry under the old name: it moves to the new one
-                previous = legacy
-            else:
-                previous = servers.get(MCP_SERVER)
+            previous = servers.get(MCP_SERVER)
             if previous is not None:
                 same_target = isinstance(previous, dict) and previous.get("command") == entry["command"] and previous.get("args") == entry["args"]
                 if not same_target:

@@ -1,5 +1,4 @@
 - Yeni kurucu tasarımı ve logo.
-- MCP sunucusu artık "respected-brain" adıyla kayıtlı; eski "respected-vault" girdisi güncellemede kaldırılır.
 - Masaüstü kısayolu not kasasını doğrudan Obsidian'da açar; kasa Obsidian'da hiç açılmadıysa uyarı verilir.
 - Hub'dan gelen çağrılar daha hızlı yanıtlanır.
 - Entegrasyon önizlemesi ve kaldırma sonucu daha açık anlatılır.

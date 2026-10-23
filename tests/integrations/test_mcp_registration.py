@@ -62,35 +62,7 @@ class TestMcpRegistration(IntegrationFixture, TestCase):
         self.assertEqual(tool["parameters"]["type"], "object")
 
 
-class TestMcpNameMigration(IntegrationFixture, TestCase):
-    """Beta.2 and older registered the server as 'respected-vault'; it is now 'respected-brain' (the product's name)."""
-
-    def apply(self):
-        backend = self.backend()
-        for row in plan_integrations(self.ctx, self.profile, {"mcp": True}, backend):
-            backend.apply(row)
-
-    def entry(self):
-        return {"command": str(self.app / "respected-brain.exe"), "args": ["mcp", "--vault-id", self.ctx.paths.vault_id]}
-
-    def test_our_old_entry_moves_to_the_new_name_and_other_servers_stay(self):
-        path = self.home / ".cursor/mcp.json"
-        path.parent.mkdir()
-        path.write_text(json.dumps({"mcpServers": {"respected-vault": self.entry(), "existing_mcp": {"command": "npx", "args": []}}}), encoding="utf-8")
-        self.apply()
-        servers = json.loads(path.read_text(encoding="utf-8"))["mcpServers"]
-        self.assertEqual(sorted(servers), ["existing_mcp", "respected-brain"])
-        self.assertEqual(servers["respected-brain"]["args"], self.entry()["args"])
-
-    def test_an_entry_under_the_old_name_that_is_not_ours_is_left_alone(self):
-        path = self.home / ".cursor/mcp.json"
-        path.parent.mkdir()
-        theirs = {"command": "C:/somebody/else.exe", "args": ["serve"]}
-        path.write_text(json.dumps({"mcpServers": {"respected-vault": theirs}}), encoding="utf-8")
-        self.apply()
-        servers = json.loads(path.read_text(encoding="utf-8"))["mcpServers"]
-        self.assertEqual(servers["respected-vault"], theirs)
-        self.assertIn("respected-brain", servers)
+class TestMcpServerName(IntegrationFixture, TestCase):
 
     def test_the_server_introduces_itself_by_the_product_name(self):
         from respected_brain.integrations.mcp.server import RespectedMcpServer

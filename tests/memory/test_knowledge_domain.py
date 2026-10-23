@@ -7,7 +7,6 @@ import importlib.util
 from pathlib import Path
 import shutil
 import tempfile
-from types import ModuleType
 import unittest
 
 

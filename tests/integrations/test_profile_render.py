@@ -1,7 +1,6 @@
 """Deterministic explicit-profile command rendering regressions."""
 import json
 from unittest import TestCase, mock
-from pathlib import PureWindowsPath
 from tests.support.fakes import IntegrationFixture
 from tests.support.files import snapshot
 from respected_brain.integrations.backend import IntegrationProfile

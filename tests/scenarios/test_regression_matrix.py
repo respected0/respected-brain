@@ -19,7 +19,6 @@ from respected_brain.integrations.hooks import bridge as BRIDGE
 from respected_brain.providers import runner as MODEL_RUNNER
 from respected_brain.core import platform as RUNTIME
 from respected_brain.memory import flush as FLUSH
-from respected_brain.memory import compile as COMPILE
 from respected_brain.briefing import service as BRIEFING
 from respected_brain.maintenance import repair_daily as REPAIR_DAILY
 
