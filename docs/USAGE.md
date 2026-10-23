@@ -14,8 +14,10 @@ iki yol vardır:
   - **Kimlik:** adınız, asistanınızın adı, kısa bir tanıtım. Asistan ve sabah özeti size bu adla hitap eder.
   - **Not kasası:** yeni boş bir klasör ya da daha önce Brain'in kullandığı bir kasa. Dolu ama Brain'e ait
     olmayan bir klasöre şablon yazılmaz.
-  - **Bağlantılar:** hangi AI araçlarının oturumlarının yakalanacağı, hafızanın MCP sunucusu olarak sunulup sunulmayacağı,
-    sabah özeti görevi, masaüstü kısayolu.
+  - **Bağlantılar:** oturumları hafızaya yakala, hafıza MCP sunucusu, sabah özeti görevi, masaüstü kısayolu.
+  - **AI araçları:** yalnızca ilk ikisinden biri açıksa sorulur. Oturumları hangi araçlardan yakalayacağını ve hangi araçların
+    hafızayı MCP ile kullanabileceğini seçersin (Hub'daki Kaynaklar ve İzinler listeleriyle aynı). Bilgisayarında bulunan
+    araçlar işaretli gelir.
 
 Kurucu, kurmadan önce "bilgisayarınızda neler olur" sayfasını gösterir: kurulumda, kullanırken, güncellemede ve kaldırmada neler yazıldığı, değiştiği ve silindiği. Aynı bilgi Hub'ın Kütüphane sayfasındaki ürün kartında da vardır (`packaging/windows/brain_info.txt`).
 
@@ -49,10 +51,10 @@ macOS'ta `~/Library/Application Support/RespectedBrain`.
 
 Ürün kuruluyken kurucu tek bir sayfa gösterir:
 
-- **Onar / güncelle:** program dosyaları bu kurucudaki sürümle yenilenir, ardından `respected-brain repair` kayıtları ve
+- **Onar / Güncelle:** program dosyaları bu kurucudaki sürümle yenilenir, ardından `respected-brain repair` kayıtları ve
   bağlantıları doğrular. Ayarlar ve kasa korunur. **Güncelleme budur:** yeni sürümün kurucusunu çalıştırmak (sessiz:
   `/VERYSILENT`). Hub güncellemeyi kendisi önerir ve aynı kurucuyu çalıştırır.
-- **Ayarları değiştir:** Kimlik ve Bağlantılar sayfaları mevcut değerlerle açılır; kaydetmek `config set` ile aynıdır.
+- **Ayarları değiştir:** Kimlik, Bağlantılar ve AI araçları sayfaları mevcut değerlerle açılır; kaydetmek `config set` ile aynıdır.
 - **Kaldır:** ürünün kaldırıcısını açar (bölüm 9).
 
 ## 3. İlk kontrol
@@ -238,7 +240,7 @@ Kaldır; sessiz `unins000.exe /VERYSILENT [/PURGE=1]`. Kaldırıcı "Ayarlar ve 
 | Sabah özeti yok | `integrations.schedule`, `briefing_time`, işletim sisteminin görev zamanlayıcısı, aracın kotası |
 | Arama eski sonuç veriyor | `respected-brain index-refresh` ya da `search --reindex` |
 | MCP bozuk yanıt veriyor | AI aracının ayarındaki komut kurulu programı mı gösteriyor, `respected-brain health` |
-| "Onarım gerekli" | Kurucuyu çalıştırıp **Onar / güncelle** seçin |
+| "Onarım gerekli" | Kurucuyu çalıştırıp **Onar / Güncelle** seçin |
 | Yarım kalan işlem / geri alma çakışması | `respected-brain recover`; değişmiş dosyalar korunur, `backups/` ve `logs/` saklanır |
 
 Kasa denetimi: `respected-brain maintenance vault_linter` (kırık bağlantı, yetim not) ve `tiling_check` (tekrar eden

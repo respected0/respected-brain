@@ -36,14 +36,19 @@ CloseApplications=yes
 SetupLogging=yes
 WizardStyle=modern
 WizardImageFile=wizard\side-164x314.bmp,wizard\side-192x366.bmp,wizard\side-246x470.bmp,wizard\side-328x628.bmp
-WizardSmallImageFile=wizard\small-55.bmp,wizard\small-64.bmp,wizard\small-83.bmp,wizard\small-110.bmp
 DisableWelcomePage=no
+InfoAfterFile=UPDATE_NOTES.md
 InfoBeforeFile=brain_info.txt
 
 [Languages]
 Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 
 [Messages]
+turkish.WizardInfoBefore=Bilgisayarında neler olur
+turkish.InfoBeforeLabel=Kurulumda, kullanırken, güncellemede ve kaldırırken neler olacağını aşağıda okuyabilirsin.
+turkish.WizardInfoAfter=Yenilikler
+turkish.InfoAfterLabel=Bu sürümde neler değişti?
+turkish.InfoAfterClickLabel=Devam etmek için Sonraki'ne tıklayın.
 turkish.WelcomeLabel1=Respected Brain'e hoş geldin
 turkish.WelcomeLabel2=Brain, AI araçlarının ortak hafızasını not kasanda tutar.%n%nYönetici izni gerekmez; mevcut notlarının üzerine yazılmaz.%n%nDevam etmek için Sonraki'ne tıkla.
 turkish.FinishedHeadingLabel=Respected Brain hazır
@@ -81,6 +86,10 @@ const
 var
   ChoicePage, MaintenancePage, IntegrationPage: TWizardPage;
   IdentityPage: TInputQueryWizardPage;
+  ClientPage: TWizardPage;
+  ClientList: TNewCheckListBox;
+  ClientsReady: Boolean;
+  ClientRow: array[0..10] of Integer;
   VaultPage: TInputDirWizardPage;
   DownloadPage: TDownloadWizardPage;
   Maintenance, SettingsMode, Leaving, PurgeData: Boolean;
@@ -274,7 +283,7 @@ begin
   AddCard(ChoicePage, 0, #$E80F, 'Respected Hub ile devam et (önerilen)', 'Kurulum, güncelleme ve ayarlar görsel arayüzden yönetilir.', True);
   AddCard(ChoicePage, 0, #$E756, 'Yalnızca ' + ProductName, 'Hub olmadan; ayarlar bu kurucudan ya da komutlarla değiştirilir.', False);
   MaintenancePage := NewCardPage(1, ChoicePage.ID, ProductName + ' kurulu', 'Ayarların ve not kasan her seçenekte korunur.', False);
-  AddCard(MaintenancePage, 1, #$E895, 'Onar / güncelle', 'Programı bu kurucudaki sürümle (v{#AppVersion}) yeniler.', True);
+  AddCard(MaintenancePage, 1, #$E895, 'Onar / Güncelle', 'Programı bu kurucudaki sürümle (v{#AppVersion}) yeniler.', True);
   AddCard(MaintenancePage, 1, #$E713, 'Ayarları değiştir', 'Programa dokunmadan ayarları yeniden seçersin.', False);
   AddCard(MaintenancePage, 1, #$E74D, 'Kaldır', 'Programı kaldırır; sana sorarak ayarları ve verileri de siler.', False);
   DownloadPage := CreateDownloadPage('Hub indiriliyor', 'En güncel Respected Hub kurucusu indiriliyor...', @OnDownloadProgress);
@@ -293,8 +302,110 @@ begin
   end;
 end;
 
-procedure InitializeWizard;
+{ ---- which AI tools (the Hub's "Kaynaklar" and "İzinler" lists) ---- }
+
+// rows 0..4: tools whose sessions are captured; rows 5..10: tools that may use the memory over MCP
+function ClientId(K: Integer): String;
 begin
+  case K of
+    0, 5: Result := 'claude';
+    1: Result := 'codex';
+    2: Result := 'gemini';
+    3, 6: Result := 'antigravity';
+    4, 7: Result := 'cursor';
+    8: Result := 'windsurf';
+    9: Result := 'claude-desktop';
+  else
+    Result := 'vscode-agents';
+  end;
+end;
+
+function ClientName(Id: String): String;
+begin
+  if Id = 'claude' then Result := 'Claude Code'
+  else if Id = 'codex' then Result := 'Codex'
+  else if Id = 'gemini' then Result := 'Gemini CLI'
+  else if Id = 'antigravity' then Result := 'Antigravity'
+  else if Id = 'cursor' then Result := 'Cursor'
+  else if Id = 'windsurf' then Result := 'Windsurf'
+  else if Id = 'claude-desktop' then Result := 'Claude Desktop'
+  else Result := 'Cline / Roo (VS Code)';
+end;
+
+// the same read-only check the product itself uses: has the tool a configuration folder on this computer
+function ClientDetected(Id: String): Boolean;
+var
+  Home, Storage: String;
+begin
+  Home := ExpandConstant('{%USERPROFILE}');
+  Storage := ExpandConstant('{userappdata}\Code\User\globalStorage\');
+  if Id = 'claude' then Result := DirExists(Home + '\.claude') or FileExists(Home + '\.claude.json')
+  else if Id = 'codex' then Result := DirExists(Home + '\.codex')
+  else if (Id = 'gemini') or (Id = 'antigravity') then Result := DirExists(Home + '\.gemini')
+  else if Id = 'cursor' then Result := DirExists(Home + '\.cursor')
+  else if Id = 'windsurf' then Result := DirExists(Home + '\.codeium')
+  else if Id = 'claude-desktop' then Result := DirExists(ExpandConstant('{userappdata}\Claude'))
+  else Result := DirExists(Storage + 'saoudrizwan.claude-dev') or DirExists(Storage + 'rooveterinaryinc.roo-cline');
+end;
+
+function ClientsNeeded(): Boolean;
+begin
+  Result := CardChecked(2, 0) or CardChecked(2, 1);
+end;
+
+// the checked tools of rows First..Last as the product's comma list
+function CollectClients(First, Last: Integer): String;
+var
+  K: Integer;
+begin
+  Result := '';
+  for K := First to Last do
+    if ClientList.Checked[ClientRow[K]] then begin
+      if Result <> '' then Result := Result + ',';
+      Result := Result + ClientId(K);
+    end;
+end;
+
+// List empty = the product's default (every tool that is installed); otherwise exactly the listed tools
+procedure SelectClients(First, Last: Integer; List: String);
+var
+  K: Integer;
+begin
+  for K := First to Last do
+    if List = '' then ClientList.Checked[ClientRow[K]] := ClientDetected(ClientId(K))
+    else ClientList.Checked[ClientRow[K]] := Pos(',' + ClientId(K) + ',', ',' + List + ',') > 0;
+end;
+
+// a group is only editable when its connection above is switched on
+procedure EnableClientRows;
+var
+  K: Integer;
+begin
+  for K := 0 to 4 do ClientList.ItemEnabled[ClientRow[K]] := CardChecked(2, 0);
+  for K := 5 to 10 do ClientList.ItemEnabled[ClientRow[K]] := CardChecked(2, 1);
+end;
+
+procedure ProductPageChanged(CurPageID: Integer);
+begin
+  if CurPageID <> ClientPage.ID then Exit;
+  if not ClientsReady then begin
+    SelectClients(0, 10, '');
+    ClientsReady := True;
+  end;
+  EnableClientRows;
+end;
+
+// the last page of "change settings": the tool list when it is shown, otherwise the connections page
+function LastSettingsPage(): Integer;
+begin
+  if ClientsNeeded() then Result := ClientPage.ID else Result := IntegrationPage.ID;
+end;
+
+procedure InitializeWizard;
+var
+  K: Integer;
+begin
+  TidyInfoPages;
   Maintenance := IsInstalled();
   CreateSharedPages;
   IdentityPage := CreateInputQueryPage(MaintenancePage.ID, 'Kimlik', 'Seni ve asistanını tanıyalım',
@@ -306,11 +417,19 @@ begin
     'Boş veya yeni bir klasör seç. Mevcut notlarının üzerine yazılmaz ve kaldırırken kasan silinmez. Program kendisi sabit bir yere kurulur: ' + ExpandConstant('{localappdata}\Respected\RespectedBrain\app') + '.', False, '');
   VaultPage.Add('');
   VaultPage.Values[0] := CommandValue('VAULT', ExpandConstant('{userdocs}\RespectedOS'));
-  IntegrationPage := NewCardPage(2, VaultPage.ID, 'Bağlantılar', 'Brain hangi araçlarla çalışsın? Hepsi isteğe bağlı, sonradan kapatılabilir ve diğer ayarların korunur.', True);
-  AddCard(IntegrationPage, 2, #$E8F1, 'AI oturumlarını hafızaya yakala', 'Claude, Codex, Gemini gibi araçların oturumları kaydedilir.', False);
-  AddCard(IntegrationPage, 2, #$E8D4, 'AI araçları hafızayı MCP sunucusu olarak kullansın', 'Araçlar notlarını arayıp okuyabilir.', False);
+  IntegrationPage := NewCardPage(2, VaultPage.ID, 'Bağlantılar', 'Brain hangi araçlarla çalışsın? Hepsi isteğe bağlı, sonradan kapatılabilir.', True);
+  AddCard(IntegrationPage, 2, #$E8F1, 'Oturumları hafızaya yakala', 'Seçtiğin AI araçlarının oturumları hafızaya kaydedilir.', False);
+  AddCard(IntegrationPage, 2, #$E8D4, 'Hafıza MCP sunucusu', 'Seçtiğin AI araçları notlarını arayıp okuyabilir.', False);
   AddCard(IntegrationPage, 2, #$E787, 'Sabah özeti görevi', 'Windows Görev Zamanlayıcı ile her sabah özet hazırlanır.', False);
-  AddCard(IntegrationPage, 2, #$E8A7, 'Masaüstüne Obsidian kısayolu', 'Not kasasını açar; kasayı Obsidian''da en az bir kez açmış olmalısın.', False);
+  AddCard(IntegrationPage, 2, #$E8A7, 'Masaüstü kısayolu', 'Not kasasını açar; kasayı Obsidian''da en az bir kez açmış olmalısın.', False);
+  ClientPage := CreateCustomPage(IntegrationPage.ID, 'AI araçları', 'Hangi araçlar? Bulunanlar işaretli gelir; sonradan Hub''dan değiştirebilirsin.');
+  ClientList := TNewCheckListBox.Create(ClientPage);
+  ClientList.Parent := ClientPage.Surface;
+  ClientList.SetBounds(0, 0, ClientPage.SurfaceWidth, ClientPage.SurfaceHeight);
+  ClientList.AddGroup('Oturumları hafızaya yakalanacak araçlar', '', 0, nil);
+  for K := 0 to 4 do ClientRow[K] := ClientList.AddCheckBox(ClientName(ClientId(K)), '', 1, False, True, False, True, nil);
+  ClientList.AddGroup('Hafızayı MCP ile kullanabilecek araçlar', '', 0, nil);
+  for K := 5 to 10 do ClientRow[K] := ClientList.AddCheckBox(ClientName(ClientId(K)), '', 1, False, True, False, True, nil);
 end;
 
 // the answers of the identity and integrations pages as the product's own --set arguments
@@ -323,17 +442,26 @@ begin
   for I := 0 to 3 do
     if CardChecked(2, I) then Result := Result + SetArg(IntegrationKey(I) + '=true')
     else Result := Result + SetArg(IntegrationKey(I) + '=false');
+  if CardChecked(2, 0) then Result := Result + SetArg('integrations.clients=' + CollectClients(0, 4));
+  if CardChecked(2, 1) then Result := Result + SetArg('integrations.mcp_clients=' + CollectClients(5, 10));
 end;
 
 procedure LoadCurrentSettings;
 var
   I: Integer;
+  Hooks, Mcp: String;
 begin
   IdentityPage.Values[0] := CurrentSetting('user_name');
   IdentityPage.Values[1] := CurrentSetting('assistant_name');
   IdentityPage.Values[2] := CurrentSetting('user_bio');
   for I := 0 to 3 do
     SetCardChecked(2, I, CurrentSetting(IntegrationKey(I)) = 'true');
+  Hooks := CurrentSetting('integrations.clients');
+  Mcp := CurrentSetting('integrations.mcp_clients');
+  if Mcp = '' then Mcp := Hooks;
+  SelectClients(0, 4, Hooks);
+  SelectClients(5, 10, Mcp);
+  ClientsReady := True;
 end;
 
 { ---- page flow ---- }
@@ -344,7 +472,9 @@ begin
   if PageID = ChoicePage.ID then Result := WizardSilent or Maintenance
   else if PageID = MaintenancePage.ID then Result := WizardSilent or not Maintenance
   else if (PageID = IdentityPage.ID) or (PageID = IntegrationPage.ID) then Result := Maintenance and not SettingsMode
-  else if PageID = VaultPage.ID then Result := Maintenance;
+  else if PageID = VaultPage.ID then Result := Maintenance
+  else if PageID = ClientPage.ID then Result := (Maintenance and not SettingsMode) or not ClientsNeeded()
+  else if PageID = wpInfoAfter then Result := not Maintenance;
 end;
 
 procedure CancelButtonClick(CurPageID: Integer; var Cancel, Confirm: Boolean);
@@ -365,6 +495,12 @@ var
 begin
   Result := True;
   if WizardSilent then Exit;
+  // a connection that is on needs at least one tool
+  if (CurPageID = ClientPage.ID) and ((CardChecked(2, 0) and (CollectClients(0, 4) = '')) or (CardChecked(2, 1) and (CollectClients(5, 10) = ''))) then begin
+    MsgBox('Açık bıraktığın bağlantı için en az bir araç seç ya da önceki sayfada o bağlantının işaretini kaldır.', mbInformation, MB_OK);
+    Result := False;
+    Exit;
+  end;
   if (CurPageID = ChoicePage.ID) and (CardSelectedIndex(0) = 0) then begin
     ContinueWithHub;
     Result := False;
@@ -376,7 +512,7 @@ begin
     Exec(UninstallerPath(), '', '', SW_SHOWNORMAL, ewNoWait, Code);
     Result := False;
     Leave;
-  end else if (CurPageID = IntegrationPage.ID) and SettingsMode then begin
+  end else if (CurPageID = LastSettingsPage()) and SettingsMode then begin
     // settings only: the product applies them (and its integrations) itself; the program files are not touched
     if RunProduct('config set' + ConfigArgs(PageSettings()), Output) then
       MsgBox('Ayarlar kaydedildi.', mbInformation, MB_OK)
