@@ -172,7 +172,7 @@ program `distribution.json` hash'leriyle doğrulanır (bu bir yayıncı imzası 
 | `maintenance/`, `security/` | bakım araçları, Restic, Git anlık görüntüsü, sır taraması; ağ güvenliği, girdi sınırları |
 | `packaging/` | paket sözleşmesi, dondurulmuş dağıtım, kurucu |
 | `scenarios/` | çapraz senaryolar, sağlayıcı ve saldırı matrisleri |
-| `native/` | fiziksel paket smoke'u (geçici köklerde) ve WSL köprüsü; elle ya da CI'da paketle çalışır |
+| `native/` | fiziksel paket smoke'u (yalnızca Windows, geçici köklerde); elle ya da CI'da paketle çalışır |
 | `support/` | ortak sahteler (test değil) |
 
 `tests/__init__.py` her çalıştırmada HOME, USERPROFILE, APPDATA ve LOCALAPPDATA'yı geçici klasöre yönlendirir; hiçbir test

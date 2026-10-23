@@ -1,8 +1,7 @@
 # Respected Brain deposu: çalışma kuralları
 
 Gerçeği kod ve testlerden doğrula. Belgeler: `README.md` (giriş), `docs/USAGE.md`, `docs/COMMANDS.md`, `docs/ARCHITECTURE.md`.
-Üç ürünün ortak sözleşmesi `docs/PRODUCT_CONTRACT.md` dosyasındadır ve Hub deposundaki `conformance/` ile ölçülür (üç depo yan yana).
-Bu bilgisayara özel devreye alma kararı Git dışındaki `.local/ROLLOUT.md` kaydındadır.
+Üç ürünün ortak sözleşmesi `docs/PRODUCT_CONTRACT.md` dosyasındadır ve Hub deposundaki `tools/conformance/` ile ölçülür (üç depo yan yana).
 
 ## Yasaklar
 

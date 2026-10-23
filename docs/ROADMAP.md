@@ -1,6 +1,6 @@
 # Brain: gelecekte yapılacaklar
 
-Ürün beklentisiyle bugünkü durum arasındaki açıklar (2026-10-22 değerlendirmesi, aynı gün güncellendi). Yapılan madde silinir.
+Ürün beklentisiyle bugünkü durum arasındaki açıklar (2026-10-23 itibarıyla). Yapılan madde silinir.
 
 ## Tüm AI'lar tek hafıza
 
