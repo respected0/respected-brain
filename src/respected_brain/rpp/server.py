@@ -62,15 +62,34 @@ def install_state(data_root: Path) -> dict:
 
 
 def _owned_files_changed(manifest: Path) -> bool:
+    # every Hub call lands here: a file whose size and mtime are those of its last matching hash is not hashed again
+    cache = manifest.with_name(".verified-files.json")
+    try:
+        seen = json.loads(cache.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        seen = {}
+    if not isinstance(seen, dict):
+        seen = {}
+    fresh = {}
     try:
         for row in json.loads(manifest.read_text(encoding="utf-8")).get("files", []):
             if row.get("role") not in ("application", "launcher"):
                 continue  # technical files such as config.json legitimately change
             path = Path(row["path"])
-            if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() != row["sha256"]:
+            if not path.is_file():
                 return True
+            stat = path.stat()
+            key = [stat.st_size, stat.st_mtime_ns, row["sha256"]]
+            if seen.get(row["path"]) != key and hashlib.sha256(path.read_bytes()).hexdigest() != row["sha256"]:
+                return True
+            fresh[row["path"]] = key
     except (OSError, ValueError, KeyError, TypeError):
         return True
+    if fresh != seen:
+        try:
+            atomic_write_json(cache, fresh)
+        except OSError:
+            pass
     return False
 
 

@@ -21,8 +21,6 @@ import socket
 import sqlite3
 import subprocess
 import time
-import urllib.error
-import urllib.request
 import zipfile
 from contextlib import closing, contextmanager
 from pathlib import Path
@@ -99,6 +97,7 @@ def _model_ok(path: Path, cfg: dict[str, Any]) -> bool:
 
 
 def _call(endpoint: str, path: str, body: dict[str, Any] | None = None, timeout: float = 5.0) -> Any:
+    import urllib.error, urllib.request  # only a real network call needs them: ~50 ms off every call that merely reads status
     data = json.dumps(body).encode("utf-8") if body is not None else None
     request = urllib.request.Request(check_endpoint(endpoint) + path, data=data, headers={"Content-Type": "application/json"} if data else {})
     try:
@@ -123,6 +122,7 @@ def provider_state(data_root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
 
 def _download(url: str, target: Path, sha256: str, size: int) -> None:
     """Fetch a pinned file next to its target, verify size and sha256, then move it into place."""
+    import urllib.error, urllib.request
     target.parent.mkdir(parents=True, exist_ok=True)
     temporary = target.with_name(target.name + ".part")
     digest = hashlib.sha256()
