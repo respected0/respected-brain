@@ -5,7 +5,6 @@ from pathlib import Path
 import re
 import subprocess
 import sys
-from .backend import canonical_json
 from .global_config import *
 from .plugin import bundle_root, bundle_writes, register_claude, register_codex
 from .mcp.tools import WRITE_TOOLS, tool_definitions

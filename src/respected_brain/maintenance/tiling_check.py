@@ -13,7 +13,6 @@ from respected_brain.maintenance import selected_vault, safe_walk
 
 import argparse
 import json
-import os
 from pathlib import Path
 import re
 from typing import Any
