@@ -81,8 +81,8 @@ const
   InstallRecord = 'data\install-manifest.json';  // the product's own install record, relative to its folder
   UninstallKey = 'Software\Microsoft\Windows\CurrentVersion\Uninstall\{2F6A9C41-85D7-4B3E-9A10-C7E4D58B1F23}_is1';
   HubSetupName = 'RespectedHub-Setup.exe';  // local file name only; the release asset carries a version
-  HubReleasesPage = 'https://github.com/respected0/respected-hub/releases/latest';
-  HubReleaseApi = 'https://api.github.com/repos/respected0/respected-hub/releases/latest';
+  HubReleasesPage = 'https://github.com/respected0/respected-hub/releases';
+  HubReleaseApi = 'https://api.github.com/repos/respected0/respected-hub/releases';
 
 var
   ChoicePage, MaintenancePage, IntegrationPage: TWizardPage;
