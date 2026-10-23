@@ -176,6 +176,10 @@ Kaynak `src/respected_brain/`, paketle gelen içerik (kasa şablonu, beceriler, 
 Ekosistemin diğer ürünleri: [Respected Hub](https://github.com/respected0/respected-hub) ·
 [Respected Orchestrator](https://github.com/respected0/respected-orchestrator).
 
+## Destek
+
+Hata bildirimi ve sorular için [GitHub Issues](https://github.com/respected0/respected-brain/issues).
+
 ## Atıf ve lisans
 
 Bilgi derleme yaklaşımı [Andrej Karpathy'nin LLM bilgi tabanı deseninden](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
