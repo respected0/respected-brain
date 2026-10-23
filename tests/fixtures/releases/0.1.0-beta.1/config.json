@@ -1,0 +1,31 @@
+{
+  "schema_version": 3,
+  "active_vault_id": "7266908c-d2ae-45c1-a994-3fb97b4bf676",
+  "vaults": {
+    "7266908c-d2ae-45c1-a994-3fb97b4bf676": {
+      "settings": {
+        "OS_NAME": "vault",
+        "platform": "windows-native",
+        "user_home": "C:\\Users\\test\\AppData\\Local\\Temp\\fixture"
+      },
+      "path": "C:\\Users\\test\\AppData\\Local\\Temp\\fixture\\vault"
+    }
+  },
+  "preferences": {
+    "summary_provider": "auto",
+    "provider_priority": [
+      "claude",
+      "codex",
+      "antigravity",
+      "gemini",
+      "cursor"
+    ],
+    "provider_fallback": true
+  },
+  "integrations": {
+    "global": false,
+    "mcp": false,
+    "schedule": false,
+    "shortcut": false
+  }
+}

@@ -1,0 +1,455 @@
+{
+  "schema_version": 3,
+  "files": [
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\_bz2.pyd",
+      "sha256": "261545bd24f15a783fc0c82568b766a4ab569dde14507a81701cccf5293e6e54",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\_ctypes.pyd",
+      "sha256": "9d6dccb4cd84a44a107f9b06b91c0a44e85766d9bf4debb6abbde8fda7494c2c",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\_decimal.pyd",
+      "sha256": "1e6a5707163d3c103e0eb4695eefedbea4b855fb227c61cc265b168970d6c6f0",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\_elementtree.pyd",
+      "sha256": "26c5c2f3f2b8dac1499f07a50d7afd14315c20a6a541abbe4e306bcd9df404f1",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\_hashlib.pyd",
+      "sha256": "79a26289aef0d92545a082507c7021f10e219621d137cb726c4d0fbbfd4b46ae",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\_lzma.pyd",
+      "sha256": "ee224aacf5cf9c9974a1b842aac8d89d5d9b7eeebbf4d76619ae0ce4da8ecd96",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\_multiprocessing.pyd",
+      "sha256": "db19972cf033b598f5826f8219bc2608412b84061d294f5972b43c2ab95f7af5",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\_queue.pyd",
+      "sha256": "4404c2569443ffb54e7cfffdca8ddf58c9a609175305970728ec12bc1c147b43",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\_socket.pyd",
+      "sha256": "ccbd0f83df3784da08147b8e8765e28c978de28b5c0eddcfba5567b59d43fef9",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\_sqlite3.pyd",
+      "sha256": "4c5fa9341a76ac525fd36e2cb23260934ad9b9f6825725ff139b26c8dc72436d",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\_ssl.pyd",
+      "sha256": "8d2f51fa1dc929073a2ad8d1c7c0c911e8f695870dcf4dda2846f4b75a7f77fb",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\_uuid.pyd",
+      "sha256": "b93832742a2348d6659fd62e8a8aff061594693fc537da74c7d2d1cdf83a8475",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\_wmi.pyd",
+      "sha256": "db45362354fd4965329cb14bd974e60b26525045d09fb4fdfb1674a93b79d60c",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\base_library.zip",
+      "sha256": "1fd43923100f0a8d1f926c6ffbc66a5e2edd4a6bde5fa04ab73a2a0f0973a615",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\libcrypto-3.dll",
+      "sha256": "09499e186cf0e434ffa17ad153aa9a66d6048c54a2c03b823e2a06c49d9affe4",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\libffi-8.dll",
+      "sha256": "eff52743773eb550fcc6ce3efc37c85724502233b6b002a35496d828bd7b280a",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\libssl-3.dll",
+      "sha256": "28c395290279fa4f4f54a57b85cd66d853895f925fefb8f6fdebc0d8b1cdd07c",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\pyexpat.pyd",
+      "sha256": "b9c9c5a9f52af559a7eb4e8ddfd60558185bfc7794f32840bed1747d1ec9026a",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\python313.dll",
+      "sha256": "e820bf024efd2b56bb2b82791e6b6ddc7303f070f8e72cba7637482a8a906238",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\__init__.py",
+      "sha256": "5d5fb89ff919433d5147437742c4b2cb82efe4d995f5ec1ef5c8db12b704b708",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\defaults.json",
+      "sha256": "5f3d511ef367c9402a13ed1098ed0ec62283062c284e56cf5341a93cfec56f58",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\instructions\\default.md",
+      "sha256": "93f5768a3beb7bb40ba5087eb76bb44015cd56727689d6fceaa848fa09247477",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\skills\\ajan-gecmis-tara\\SKILL.md",
+      "sha256": "88eab724467968a9452260e50c5cd5f2d0a422b71b205ab518b1a3bbf840db7f",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\skills\\brain-doktor\\SKILL.md",
+      "sha256": "09b67fc554ea99b8e018bba4ac3ef737d5f8c828f0c6d4319c959603133626b7",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\skills\\brain-meydan-oku\\SKILL.md",
+      "sha256": "34ec297ce26500d078b07fdf16b7d349467e29e5850b00c7c8684bf1f6bbdf2a",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\skills\\brain-oruntu\\SKILL.md",
+      "sha256": "d665f817bf120bd55c3a810622311816763d46e2fb6550993e1cf9fcf3b8c1e8",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\skills\\gecmis-import\\SKILL.md",
+      "sha256": "abb92071f1baf3d21db2a7f0e56a1ea16541bd6da8092b6653fb64f1b1508b9a",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\skills\\inbox-duzenle\\SKILL.md",
+      "sha256": "80d1ee8e9c7d9b3460510aa796caae8c7a197a3e2f188f4348ba17c2658a3e01",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\skills\\obsidian-layout\\SKILL.md",
+      "sha256": "56d2e87ff239bef1fd42b552eab30339629424702c83ea41d9d618c609bec9af",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\skills\\otonom-arastirma\\SKILL.md",
+      "sha256": "06d78ac5a35173141615653b26c872f1ebe0872b61d8c399ef144efb8858e0f9",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\skills\\yazilim-kalite\\SKILL.md",
+      "sha256": "311ece511a49a9a45effc220e4d128999f22f5d47e4cf52c458e842f61e682a7",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\.gitignore",
+      "sha256": "e86c45f9a9aca6ac9ca7abe0f4179aeb83837eea9e6582ad2a7954ae0e2ffb0d",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\.obsidian\\snippets\\brain-layout.css",
+      "sha256": "a68d994c136e134eb1c0b3de548537e9dea94dca576b3730ed92b48bde787b8f",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\.respected.json",
+      "sha256": "00405299374b30168b3a20b58b6e40b8f638d1e337aade0adc8a4eda98b5f4f3",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\daily\\.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\knowledge\\concepts\\.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\knowledge\\connections\\.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\knowledge\\index.md",
+      "sha256": "196cda3d85d2785895ae7300e73a06c7e3b9b4875e381907a5c5c386b8c87eef",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\knowledge\\log.md",
+      "sha256": "2d44d0d76e7cf6c91c8b1d6eb4c8c2efe42d39fe99c291fdbd96b76e869f818c",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\🎯 100-Command-Center\\Briefings\\.gitkeep",
+      "sha256": "06c7caf56cbab9a14ce1ece8dc399f1904b08e9b4cf86c7a2dcc5dc32ec62426",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\🎯 100-Command-Center\\Dashboard.md",
+      "sha256": "5f6616ed4feffce62d26cee052aa1cfd5e5489bdd66428059f49eb5f86b048f1",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\🎯 100-Command-Center\\Skills-Map.md",
+      "sha256": "d87775fe2b08b946fd268213c5bf0dae470257dad50020d2db26cf1c9f4d226b",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\🎯 100-Command-Center\\Vault-Map.md",
+      "sha256": "1e290ee55f2045d00a1a9ee9d7354f6e9c58911cb077f4fe55b1357d6bd73a9f",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\🏰 300-Projects\\.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\📋 Templates\\Base.base",
+      "sha256": "96947dd3f1ca6ddf52229dd51f286e6c64c1a2ac33adf7dc61766fa4f7eda3d6",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\📋 Templates\\Canvas.canvas",
+      "sha256": "3a4c35f44a8723367840ab6f018e9f7738f8816a2829172c7055be087648a0f0",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\📋 Templates\\Note.md",
+      "sha256": "d1f41251ef0dd1cd974138203569a5a5d08e16ef8f0581055ea586694a3fc92e",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\📥 000-Inbox\\Dump\\.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\📦 900-Archive\\.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\🔮 850-Companion\\Core.md",
+      "sha256": "9842fef1afe9bf224d8f30cc6c48692643b2c5e9dc3fdd102feffcd757ea5b35",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\🔮 850-Companion\\events\\.gitkeep",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\🔮 850-Companion\\events\\archive\\.gitkeep",
+      "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\🔮 850-Companion\\Journal.md",
+      "sha256": "fd263a381e032d700fd23fd865be767e81c12566b36cbabd05d726df9a415f1b",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\🔮 850-Companion\\Kurallar.md",
+      "sha256": "949f2d5e5cc9a1b016498e124e5cff52f38ed44fef5c21f42cbe35e3e1267a00",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\🔮 850-Companion\\Last-Session.md",
+      "sha256": "cba76db0f9314faf39de2dfaa9756fc5f988b52e592e9f883690daa0d4e1d40b",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\🔮 850-Companion\\Threads.md",
+      "sha256": "3e40b58efdfcb99c3a13b0732751c2faee68edcba8eb8c13752554b62eb68f93",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\🛠️ 600-Arsenal\\.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain\\resources\\vault-template\\🧠 500-Knowledge\\.gitkeep",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain-0.1.0b1.dist-info\\direct_url.json",
+      "sha256": "1313fe179b9b2af4fa868d7ceae4b1463111029783f2e702a90f109dce5ea6e8",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain-0.1.0b1.dist-info\\entry_points.txt",
+      "sha256": "6123ee0b99ea3d20d6ccb1accff830049f2c66501f7983c2092a57cd4cdf94bb",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain-0.1.0b1.dist-info\\INSTALLER",
+      "sha256": "ceebae7b8927a3227e5303cf5e0f1f7b34bb542ad7250ac03fbcde36ec2f1508",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain-0.1.0b1.dist-info\\licenses\\LICENSE",
+      "sha256": "cc028689f033eef0018fdd494e708ec6af4b34f23c4faafd1bc80e0ac8044345",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain-0.1.0b1.dist-info\\METADATA",
+      "sha256": "fb0d1ae2caae13faaf525c720e531c55e03c4166bdfda9fa3a5d32e65095965f",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain-0.1.0b1.dist-info\\RECORD",
+      "sha256": "61e1d69c6cb817667973b03a03ce5d1469ebf922ed7a8370d852282ae2628a83",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain-0.1.0b1.dist-info\\REQUESTED",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain-0.1.0b1.dist-info\\top_level.txt",
+      "sha256": "80cf4910bcc0f799d97bd5815c2ee5041387d3f2296686cb7e41f96de5e73307",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\respected_brain-0.1.0b1.dist-info\\WHEEL",
+      "sha256": "98e75747d0b7c0c568bfb71263c3d8f970b3a374a6996087bc642be5cb09a1aa",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\select.pyd",
+      "sha256": "024f955349fe46cf1bb2c22c6b57fcf38cf5755d46166fbf63e7e5b92433b111",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\sqlite3.dll",
+      "sha256": "66afefcabb3c5ffcc32b5886ced4f773ea400e0d1218cfb1e1f26912a19d29aa",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\unicodedata.pyd",
+      "sha256": "111e0fdfeef9887c04f6ebf1972ce1ccbec55b226012e4a288c2d4a0b17b216b",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\VCRUNTIME140.dll",
+      "sha256": "d1f4225df2cd877dbf130d5668a021dce3f94118455ff5ec952061c30afc9ce7",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\app\\VCRUNTIME140_1.dll",
+      "sha256": "a7146c08f89fe5b04541ab507cdb59ff7b44534d4ba3c668a426c6450a03434e",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\respected-brain.exe",
+      "sha256": "129d2674107dc539f23fa3586e38744450f1aa1545d74f94957e5edd65a8d51b",
+      "role": "application",
+      "mode": 511
+    },
+    {
+      "path": "C:\\Users\\test\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain\\distribution.json",
+      "sha256": "4f4f411553f7cca5eb373e2dbbf4c8913c5792977c6ee750c7a2f0ae131d5c67",
+      "role": "application",
+      "mode": 438
+    },
+    {
+      "path": "C:\\Users\\test\\AppData\\Local\\Temp\\fixture\\data\\config.json",
+      "sha256": "9c05c5a482dd89de42b5e64cf7975f89d57e9177e45081cee2ea6283fb984d8b",
+      "role": "technical"
+    }
+  ],
+  "external": []
+}

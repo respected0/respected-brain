@@ -1,10 +1,15 @@
 import json
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
 
 from respected_brain.core.errors import FoundationError
 from respected_brain.installation.migrate import CURRENT, SHIPPED, STEPS, migrate_data
+
+
+# one folder per published release: the data files that release wrote, copied from a real install and never edited
+RELEASES = Path(__file__).resolve().parents[1] / "fixtures" / "releases"
 
 
 def write(path, document):
@@ -45,6 +50,26 @@ class MigrateTest(unittest.TestCase):
         for name, target in CURRENT.items():
             for version in range(SHIPPED[name], target):
                 self.assertIn((name, version), STEPS, f"{name}: no step {version} -> {version + 1}")
+
+    def test_every_published_release_moves_to_the_current_format_and_then_stays_put(self):
+        releases = sorted(path for path in RELEASES.iterdir() if path.is_dir())
+        self.assertTrue(releases, "tests/fixtures/releases is empty")
+        for release in releases:
+            with self.subTest(release=release.name):
+                data = self.data / release.name
+                shutil.copytree(release, data)
+                names = [path.name for path in data.glob("*.json")]
+                migrate_data(data)
+                for name in names:
+                    self.assertEqual(json.loads((data / name).read_text("utf-8"))["schema_version"], CURRENT[name], name)
+                settled = {path.name: path.read_bytes() for path in data.glob("*.json")}
+                self.assertEqual(migrate_data(data), [], "a second run must change nothing")
+                self.assertEqual({path.name: path.read_bytes() for path in data.glob("*.json")}, settled)
+
+    def test_the_first_release_data_is_kept_as_a_fixture(self):
+        for name, version in SHIPPED.items():
+            found = [json.loads(path.read_text("utf-8")).get("schema_version") for path in RELEASES.glob(f"*/{name}")]
+            self.assertIn(version, found, f"{name}: add the file of the release that shipped format {version} to tests/fixtures/releases")
 
 
 if __name__ == "__main__":
