@@ -10,6 +10,9 @@ from pathlib import Path
 import shutil
 import tempfile
 
+# Windows runners expose TEMP as an 8.3 short path (RUNNER~1) while resolved paths use the long name.
+tempfile.tempdir = os.path.realpath(tempfile.gettempdir())
+
 if not os.environ.get("RESPECTED_TEST_SANDBOX"):
     _home = Path(tempfile.mkdtemp(prefix="respected-test-home-"))
     for _sub in ("AppData/Roaming", "AppData/Local"):

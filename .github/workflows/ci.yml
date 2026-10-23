@@ -19,26 +19,10 @@ env:
   RESPECTED_TEST_PYTHON: python
 
 jobs:
-  compatibility:
-    # Windows only for now; macOS/Linux code stays in the repository but is not built or tested in CI.
-    name: early compatibility (windows, Python 3.10)
-    runs-on: windows-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-python@v7
-        with:
-          python-version: "3.10"
-      - name: Install editable package
-        run: python -m pip install -e ".[dev]"
-      - name: Verify minimum-version import, wheel and host adapters
-        run: python -m unittest tests.packaging.test_package_contract tests.core.test_platform tests.integrations.test_turn_log_pipeline tests.scenarios.test_provider_matrix -v
-
   native:
     name: native (windows, Python 3.13)
     runs-on: windows-latest
     timeout-minutes: 35
-    needs: compatibility
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
@@ -67,19 +51,15 @@ jobs:
           if-no-files-found: warn
 
   source:
-    name: source (windows, Python ${{ matrix.python }})
+    name: source (windows, Python 3.13)
     needs: native
     runs-on: windows-latest
     timeout-minutes: 25
-    strategy:
-      fail-fast: false
-      matrix:
-        python: ["3.10", "3.13"]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v7
         with:
-          python-version: ${{ matrix.python }}
+          python-version: "3.13"
       - name: Install editable package
         run: python -m pip install -e ".[dev]"
       - uses: actions/download-artifact@v4

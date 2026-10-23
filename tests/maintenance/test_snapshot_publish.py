@@ -14,7 +14,7 @@ class ImmutableSnapshotPublicationTest(unittest.TestCase):
         return result.stdout.decode().strip()
     def _fixture(self, root):
         remote = root/'remote.git'; repo = root/'vault'
-        subprocess.run(['git','init','--bare',str(remote)],check=True,capture_output=True)
+        subprocess.run(['git','init','--bare','--initial-branch=main',str(remote)],check=True,capture_output=True)
         subprocess.run(['git','init','-b','main',str(repo)],check=True,capture_output=True)
         self._git(repo,'config','user.name','Fixture'); self._git(repo,'config','user.email','fixture@example.invalid')
         self._git(repo,'remote','add','origin',str(remote)); (repo/'safe.md').write_text('safe')
@@ -95,7 +95,7 @@ class ImmutableSnapshotChainTest(unittest.TestCase):
     def _fixture(self, root: Path) -> tuple[Path, Path]:
         remote = root / 'remote.git'
         repository = root / 'vault'
-        subprocess.run(['git', 'init', '--bare', str(remote)], check=True, capture_output=True)
+        subprocess.run(['git', 'init', '--bare', '--initial-branch=main', str(remote)], check=True, capture_output=True)
         subprocess.run(['git', 'init', '-b', 'main', str(repository)], check=True, capture_output=True)
         self._git(repository, 'config', 'user.name', 'Fixture')
         self._git(repository, 'config', 'user.email', 'fixture@example.invalid')
@@ -299,7 +299,7 @@ class SnapshotGuardTest(unittest.TestCase):
             local_repo = temp_path / "local"
 
             # 1. Create bare remote
-            subprocess.run([git, "init", "--bare", str(remote_repo)], check=True, capture_output=True)
+            subprocess.run([git, "init", "--bare", "--initial-branch=main", str(remote_repo)], check=True, capture_output=True)
             subprocess.run([git, "symbolic-ref", "HEAD", "refs/heads/main"], cwd=remote_repo, check=True, capture_output=True)
 
             # 2. Clone to local

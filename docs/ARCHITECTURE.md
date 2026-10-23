@@ -177,8 +177,7 @@ program `distribution.json` hash'leriyle doğrulanır (bu bir yayıncı imzası 
 
 `tests/__init__.py` her çalıştırmada HOME, USERPROFILE, APPDATA ve LOCALAPPDATA'yı geçici klasöre yönlendirir; hiçbir test
 gerçek AI aracı ayarına ya da kasaya ulaşamaz. `dist/` yoksa dağıtım testi yerelde atlanır; CI önce derler ve testi zorunlu
-tutar. CI (Windows): Python 3.10 uyumluluk alt kümesi; Python 3.13 ile dondurulmuş derleme, Python'suz başlatma ve fiziksel
-smoke; tam test takımı.
+tutar. CI (Windows, Python 3.13): dondurulmuş derleme, Python'suz başlatma ve fiziksel smoke; tam test takımı.
 
 Neyin neyi kanıtladığı ayrıdır: birim testleri arayüz davranışını, dağıtım testi dondurulmuş programı, fiziksel smoke
 geçici köklerde kurulum/güncelleme/kaldırmayı kanıtlar. Hiçbiri gerçek bir sağlayıcı oturumunu ya da her işletim

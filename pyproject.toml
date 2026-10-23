@@ -10,7 +10,7 @@ readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 authors = [{ name = "RESPECTED" }]
-requires-python = ">=3.10"
+requires-python = ">=3.13"
 dependencies = []
 
 [project.urls]

@@ -54,10 +54,11 @@ def note_target(root: Path, target: Path) -> Path:
 
 def safe_walk(root: Path):
     """Prune link/reparse directories and files before traversing them."""
-    root = mutable_target(None, root)
+    given, root = Path(root), mutable_target(None, root)
     for current, directories, files in os.walk(root, followlinks=False):
         directories[:] = [name for name in directories if path_within_vault(Path(current) / name, root)]
-        yield current, directories, [name for name in files if path_within_vault(Path(current) / name, root)]
+        # Yield under the caller's spelling of the root (Windows 8.3 short names differ from the resolved one).
+        yield str(given / Path(current).relative_to(root)), directories, [name for name in files if path_within_vault(Path(current) / name, root)]
 
 
 @guarded_writer(busy_result=None)
