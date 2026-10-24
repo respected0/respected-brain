@@ -274,7 +274,7 @@ class RespectedMcpServer:
                 continue
             try:
                 req = json.loads(line)
-            except (ValueError, UnicodeError):
+            except (ValueError, UnicodeError, RecursionError):  # deeply nested JSON raises RecursionError
                 self._send({'jsonrpc': '2.0', 'id': None, 'error': {'code': -32700, 'message': 'Parse error'}})
                 continue
             if (not isinstance(req, dict) or req.get('jsonrpc') != '2.0'

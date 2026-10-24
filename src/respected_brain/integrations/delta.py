@@ -150,7 +150,7 @@ def make_delta(before: bytes | None, after: bytes | None) -> bytes:
     """Compact JSON (bytes) with only what differs between two versions of a config file."""
     document: dict[str, Any] = {"v": 1, "before_absent": before is None, "after_absent": after is None}
     try:
-        parsed = [json.loads(item.decode("utf-8-sig")) if item is not None else {} for item in (before, after)]
+        parsed = [json.loads(item.decode("utf-8-sig") or "{}") if item is not None and item.strip() else {} for item in (before, after)]
         if not all(isinstance(item, dict) for item in parsed):
             raise ValueError("not an object")
         pb, pa = _diff(parsed[0], parsed[1])

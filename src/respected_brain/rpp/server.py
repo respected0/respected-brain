@@ -319,7 +319,7 @@ def serve(raw=None, *, data_root=None):
     try:
         text = raw if raw is not None else sys.stdin.read()
         request = json.loads(text) if text and text.strip() else None
-    except (OSError, ValueError):
+    except (OSError, ValueError, RecursionError):  # deeply nested JSON raises RecursionError, which is not a ValueError
         request = None
     if not isinstance(request, dict):
         return _reply(False, None, {}, _error("BAD_REQUEST", "The request must be a single JSON object.", "Send one JSON request on stdin."))

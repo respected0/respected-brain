@@ -77,7 +77,11 @@ class SearchEngine:
         from respected_brain.core.coordination import writer_lease
         with writer_lease(ctx):
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
-            self._init_db()
+            try:
+                self._init_db()
+            except sqlite3.DatabaseError:
+                self._discard_cache()
+                self._init_db()
 
     @classmethod
     def open_read_only(cls, ctx: AppContext) -> "SearchEngine":
@@ -199,8 +203,21 @@ class SearchEngine:
             """)
             con.commit()
 
+    def _discard_cache(self) -> None:
+        """The index is only a cache of the vault: a damaged file is deleted and rebuilt from the notes."""
+        for suffix in ("", "-journal", "-wal", "-shm"):
+            self.db_path.with_name(self.db_path.name + suffix).unlink(missing_ok=True)
+
     @guarded_writer(busy_result=None)
     def index_vault(self, force: bool = False) -> dict[str, int]:
+        try:
+            return self._index_vault(force)
+        except sqlite3.DatabaseError:
+            self._discard_cache()
+            self._init_db()
+            return self._index_vault(True)
+
+    def _index_vault(self, force: bool) -> dict[str, int]:
         """Vault içindeki tüm .md dosyalarını artımlı (incremental) olarak indeksler."""
         indexed = 0
         skipped = 0
@@ -281,6 +298,15 @@ class SearchEngine:
         return {"indexed": indexed, "skipped": skipped, "deleted": deleted, "total": len(current_files)}
 
     def search(self, query: str, limit: int = 10, category: str | None = None) -> list[dict[str, Any]]:
+        try:
+            return self._search(query, limit, category)
+        except sqlite3.DatabaseError:
+            if getattr(self, "_read_only", False):
+                raise IndexUnavailable("INDEX_INVALID") from None
+            self.index_vault(True)  # rebuilds a damaged cache
+            return self._search(query, limit, category)
+
+    def _search(self, query: str, limit: int, category: str | None) -> list[dict[str, Any]]:
         """Sorguyla eşleşen notları BM25 ağırlıklandırmasıyla getirir."""
         clean_query = query.strip()
         if not clean_query or limit <= 0:

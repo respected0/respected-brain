@@ -65,6 +65,23 @@ class FoundationSetupTest(unittest.TestCase):
         self.assertEqual([Path(entry["path"]).resolve() for entry in config["vaults"].values()].count(self.vault.resolve()), 1)
         self.assertTrue((self.vault / ".respected.json").is_file())
 
+    def test_setup_after_a_setup_killed_halfway_rolls_it_back_first_and_succeeds(self):
+        from respected_brain.installation import setup as setup_module
+
+        class Killed(BaseException):
+            pass
+        real = setup_module.VaultRegistry.register
+
+        def register_then_die(registry, *args, **kwargs):
+            real(registry, *args, **kwargs)
+            raise Killed()
+        # a killed process never rolls back: the journal stays active, the vault folder and its registration stay behind
+        with patch.object(setup_module.Transaction, "rollback", lambda self: None),                 patch.object(setup_module.VaultRegistry, "register", register_then_die), self.assertRaises(Killed):
+            self.install()
+        result = self.install()
+        self.assertTrue(result.success, result.conflicts)
+        self.assertTrue((self.vault / ".respected.json").is_file())
+
     def test_repeated_setup_refuses_manifest_file_outside_program_root(self):
         from dataclasses import replace
         from respected_brain.installation.ownership import OwnedFile, digest, manifest_document

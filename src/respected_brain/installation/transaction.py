@@ -1,6 +1,6 @@
 """Write-ahead file/external journal with compare-and-swap rollback."""
 from __future__ import annotations
-from contextlib import ExitStack
+from contextlib import ExitStack, contextmanager
 from dataclasses import dataclass
 import hashlib
 import json
@@ -8,15 +8,37 @@ import os
 import re
 import stat
 import tempfile
+import time
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Callable
 from uuid import uuid4
 
 from respected_brain.core.config import atomic_write_bytes
-from respected_brain.core.errors import FoundationError, OwnershipConflict
+from respected_brain.core.errors import BusyError, FoundationError, OwnershipConflict
 from respected_brain.core.locking import exclusive_lock
 from .ownership import safe_path, digest, encode_bytes, decode_bytes
+
+ADMISSION_WAIT_SECONDS = 15.0
+
+
+@contextmanager
+def _admitted(data_root: Path, backend, vault_id):
+    """Another settings change or a background index run may hold the locks for a moment: queue behind it instead of failing."""
+    deadline = time.monotonic() + ADMISSION_WAIT_SECONDS
+    while True:
+        stack = ExitStack()
+        try:
+            stack.enter_context(exclusive_lock(safe_path(data_root / ".operation.lock"), timeout=0))
+            stack.enter_context(backend.quiesce(vault_id))
+            break
+        except BusyError:
+            stack.close()
+            if time.monotonic() >= deadline:
+                raise
+            time.sleep(0.05)
+    with stack:
+        yield
 
 
 def _file_mode(path: Path) -> int | None:
@@ -147,8 +169,7 @@ class Transaction:
     def __enter__(self):
         try:
             safe_path(self.journal)
-            self._stack.enter_context(exclusive_lock(safe_path(self.data_root / ".operation.lock"), timeout=0))
-            self._stack.enter_context(self.backend.quiesce(self.vault_id))
+            self._stack.enter_context(_admitted(self.data_root, self.backend, self.vault_id))
             safe_path(self.directory).mkdir(parents=True, exist_ok=False)
             self._save()
             return self
@@ -351,7 +372,7 @@ def recover_transactions(data_root: Path, backend) -> tuple[OperationResult, ...
     if not backups.is_dir():
         return ()
     results = []
-    with exclusive_lock(safe_path(data_root / ".operation.lock"), timeout=0), backend.quiesce(None):
+    with _admitted(data_root, backend, None):
         for journal in sorted(backups.glob("tx-*/journal.json")):
             document = json.loads(safe_path(journal).read_text(encoding="utf-8"))
             _validate_journal(document, journal.parent)

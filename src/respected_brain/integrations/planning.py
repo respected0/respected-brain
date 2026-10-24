@@ -1,5 +1,6 @@
 """Planning primitives shared by the integration renderers: launcher/bridge commands, profile validation, ownership checks and the change planner."""
 from __future__ import annotations
+import codecs
 import json
 from pathlib import Path
 import re
@@ -117,7 +118,11 @@ class _Planner:
         return (self.read(path) or b"").decode("utf-8-sig")
     def object(self, path, kind="file"):
         data = self.read(path, kind)
-        value = json.loads(data) if data is not None else {}
+        blank = data is None or not data.removeprefix(codecs.BOM_UTF8).strip()  # a missing, empty or BOM-only file is an empty object
+        try:
+            value = {} if blank else json.loads(data)
+        except ValueError as error:
+            raise ValueError(f"{path} is not valid JSON ({error}); the file was left untouched") from None
         if not isinstance(value, dict):
             raise ValueError(f"{path} is not a JSON object")
         return value

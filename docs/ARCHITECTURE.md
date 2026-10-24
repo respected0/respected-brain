@@ -67,7 +67,8 @@ Biçim denetimleri özetin doğru olduğunu kanıtlamaz; model çıktısıdır.
   eklenir. Kişinin değiştirdiği talimat ve beceriler `vaults/<UUID>/overrides/` altında tutulur ve paketin önüne geçer.
 - **Dış değişiklikler kayıtlıdır.** AI araçlarının ayar dosyalarına, zamanlayıcıya ve kısayola yapılan her değişiklik bir
   işlem günlüğüyle (yedek, kilit, karşılaştır-ve-değiştir, aşamalar) yapılır; yarıda kalan işlem `recover` ile ya da
-  bir sonraki işlemde geri alınır. Sahiplik kaydı dosyaların kopyasını değil, **farkı** tutar: JSON için değişen anahtarlar
+  bir sonraki işlemde geri alınır. Kilidi başka bir ayar değişikliği ya da arka plan dizin tazelemesi tutuyorsa işlem en çok
+  15 saniye sıraya girer, sonra `BusyError` ile bırakır. Sahiplik kaydı dosyaların kopyasını değil, **farkı** tutar: JSON için değişen anahtarlar
   ve liste öğeleri, diğer dosyalar için satır işlemleri, artı SHA-256 parmak izleri. Geri alma bu farkı dosyanın şimdiki
   haline uygular: ürünün girdileri gider, aracın sonradan yaptığı ve kişinin eklediği değişiklikler kalır. Kişinin
   değiştirdiği bir girdi çakışma olarak bildirilir, dokunulmaz. Böylece başka bir aracın `~/.claude.json` içindeki
@@ -93,7 +94,8 @@ içe aktarmaz.
   en fazla 20 sonuç, parça 40–400 karakter; not gövdesinin tamamı dönmez.
 - **Dizin güncelliği.** Dizini ürünün kendi süreçleri artımlı olarak tazeler: `index-refresh`, her AI oturumu başında
   başlayan arka plan `flush --maybe-compile`, her `flush` sonu, sabah görevi ve her `memory.write` sonrası. Dosya izleyici
-  yoktur: oturum dışında düzenlenen bir not bir sonraki oturumda ya da günlük görevde dizine girer.
+  yoktur: oturum dışında düzenlenen bir not bir sonraki oturumda ya da günlük görevde dizine girer. Dizin notların
+  önbelleğidir: bozulmuş bir dosya (kesik ya da hasarlı sayfalar) silinip notlardan yeniden kurulur, kullanıcıya hata göstermez.
   `memory.index.refresh` yalnızca `{confirm: true}` ve işlem kimliğiyle çalışır; Hub kullanır, Orchestrator'ın izni yetmez.
 - **`memory.write` (yazma izniyle).** Not her zaman **yeni** bir dosya olarak `🔮 850-Companion/Inbox/Orchestrator/` altına
   yazılır (var olan dosyaya ya da istenen yola asla); ön bilgide kaynak, izin ve işlem kimliği vardır; en fazla 500 not;

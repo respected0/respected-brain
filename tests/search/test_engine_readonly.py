@@ -128,6 +128,37 @@ class SearchReadOnlyTest(unittest.TestCase):
         self.assertEqual(state["state"], "unknown")
         self.assertEqual(state["checked_files"], 1)
 
+    def _db(self) -> Path:
+        return self.ctx.paths.cache_dir / "search_index.db"
+
+    def test_truncated_file_is_rebuilt_on_open(self) -> None:
+        self._index()
+        self._db().write_bytes(self._db().read_bytes()[:300])
+        engine = SearchEngine(self.ctx)  # opening must not raise
+        engine.index_vault()
+        self.assertTrue(engine.search("python"))
+
+    def test_damaged_pages_are_rebuilt_by_search_and_by_reindex(self) -> None:
+        for i in range(120):  # enough rows that the damage lands in table pages, not the header
+            (self.vault / "knowledge" / f"n{i}.md").write_text(f"# n{i}\nkelime{i} " + "lorem " * 300, encoding="utf-8")
+        engine = self._index()
+        raw = bytearray(self._db().read_bytes())
+        raw[8192:8192 + 4096 * 3] = bytes([0xAB]) * 4096 * 3
+        self._db().write_bytes(bytes(raw))
+        self.assertTrue(engine.search("kelime5"))
+        raw[8192:8192 + 4096 * 3] = bytes([0xAB]) * 4096 * 3
+        self._db().write_bytes(bytes(raw))
+        self.assertEqual(engine.index_vault()["total"], 123)
+        self.assertTrue(engine.search("kelime5"))
+
+    def test_read_only_reports_a_damaged_index_instead_of_writing(self) -> None:
+        self._index()
+        raw = bytearray(self._db().read_bytes())
+        raw[:100] = bytes(100)
+        self._db().write_bytes(bytes(raw))
+        with self.assertRaises(IndexUnavailable):
+            SearchEngine.open_read_only(self.ctx)
+
 
 if __name__ == "__main__":
     unittest.main()

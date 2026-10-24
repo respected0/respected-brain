@@ -37,6 +37,10 @@ def setup(roots: Roots, vault: Path, *, values: Mapping[str, object], backend, p
         if errors:
             raise ValueError("; ".join(error["message"] for error in errors))
         store = ConfigStore(roots.data_root)
+        # an earlier setup killed halfway is rolled back first: what it registered and created must not be mistaken for the current state
+        recovery = recover_transactions(roots.data_root, backend)
+        if any(item.conflicts for item in recovery):
+            raise OwnershipConflict("Unfinished operation has rollback conflicts")
         config = store.read()
         registered = next((identity for identity, entry in config["vaults"].items() if Path(entry["path"]).resolve() == vault.resolve()), None)
         # a registration whose folder was deleted or moved is stale: the vault is created again, the old entry dropped
@@ -51,9 +55,6 @@ def setup(roots: Roots, vault: Path, *, values: Mapping[str, object], backend, p
         if registered is not None:
             VaultRegistry(store).select(vault=vault, vault_id=None, env={})
         document = payload.validate_package(roots.app_root)
-        recovery = recover_transactions(roots.data_root, backend)
-        if any(item.conflicts for item in recovery):
-            raise OwnershipConflict("Unfinished operation has rollback conflicts")
         profile = product_settings.profile_of(values)
         with Transaction(roots.data_root, backend) as tx:
             tx.checkpoint("backup")

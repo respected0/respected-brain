@@ -265,7 +265,7 @@ var
   AppDir: String;
 begin
   AppDir := ExpandConstant('{app}');
-  if not FileExists(AppDir + '' + ProductExe) then Exit;  // a first install has nothing to stop: skip PowerShell and the wait (~1.5 s)
+  if not FileExists(AppDir + '\' + ProductExe) then Exit;  // a first install has nothing to stop: skip PowerShell and the wait (~1.5 s)
   StringChangeEx(AppDir, '''', '''''', True);
   Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
     '-NoProfile -NonInteractive -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -eq ''' + ProductExe +
@@ -332,7 +332,8 @@ begin
   CommitUpdate;
   Log(ProductName + ' ' + Reason + ' Önceki sürüm geri yüklendi.');
   SuppressibleMsgBox(ProductName + ' ' + Reason + #13#10 + 'Önceki sürüm geri yüklendi; ayarlarınız ve verileriniz değişmedi.', mbError, MB_OK, IDOK);
-  Abort;  // a non-zero exit code, so a script or the Hub sees that the update did not happen
+  InstallFailed := True;  // DeinitializeSetup turns this into a non-zero exit code
+  Abort;
 end;
 
 function FolderIsEmpty(Path: String): Boolean;
@@ -371,6 +372,8 @@ begin
   Result := VaultProblem();
   if Result <> '' then Exit;
   StopRunningProduct;
+  // a first install killed while it wrote its uninstaller leaves an empty unins000.dat: Inno would number the new pair unins001 beside it
+  if not Maintenance then DelTree(ExpandConstant('{app}\unins*.*'), False, True, False);
   if not BackUpForUpdate() then
     Result := ProductName + ' güncellenmeden önce yedeği alınamadı (disk dolu ya da dosyalar kullanımda olabilir); hiçbir şey değiştirilmedi.';
 end;
@@ -663,6 +666,12 @@ begin
   // over an installed product the program files were just replaced: the product re-verifies them and its integrations
   if Maintenance then begin
     if not RunProduct('repair', Output) then begin
+      // an install killed halfway: repair first rolls the unfinished transaction back, which also removes the record that was never completed; set up from the start
+      if not FileExists(ExpandConstant('{localappdata}\Respected\' + ProductFolder + '\' + InstallRecord)) then
+        if RunProduct('setup --vault "' + VaultPage.Values[0] + '"' + PageSettings() + SwitchSettings(), Output) then begin
+          CommitUpdate;
+          Exit;
+        end;
       if UpdateBackedUp then RollBackUpdate('onarılamadı.');
       FailInstall(ProductName + ' onarılamadı. Ürün kendi değişikliklerini geri aldı; kurucuyu yeniden çalıştırabilirsin.');
     end;

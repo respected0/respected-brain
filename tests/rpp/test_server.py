@@ -49,6 +49,10 @@ class RppTest(unittest.TestCase):
         self.assertFalse(response["ok"])
         self.assertEqual(response["error"]["code"], "BAD_REQUEST")
 
+    def test_absurdly_nested_json_is_bad_request(self):
+        response = rpp.serve("[" * 100000 + "]" * 100000, data_root=self.root)
+        self.assertEqual(response["error"]["code"], "BAD_REQUEST")
+
     def test_unknown_op(self):
         response = self.call({"op": "does.not.exist"})
         self.assertEqual(response["error"]["code"], "UNKNOWN_OP")

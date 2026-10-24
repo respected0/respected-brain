@@ -109,5 +109,44 @@ class BoundaryRegressionTest(unittest.TestCase):
             self.assertIn("/opt/respected-brain/bin/respected-brain", hooks.read_text(encoding="utf-8"))
 
 
+class AdmissionWaitTest(unittest.TestCase):
+    """A second change that arrives while the first one finishes queues behind it instead of failing."""
+
+    def test_transaction_waits_for_a_briefly_held_operation_lock_and_gives_up_at_the_limit(self):
+        import threading
+        import time
+        from respected_brain.core.errors import BusyError
+        from respected_brain.core.locking import exclusive_lock
+        from respected_brain.installation import transaction
+        with tempfile.TemporaryDirectory() as temporary:
+            data = Path(temporary).resolve() / "data"
+            data.mkdir()
+            backend = mock.MagicMock()
+            ready, release = threading.Event(), threading.Event()
+
+            def hold():
+                with exclusive_lock(data / ".operation.lock", timeout=0):
+                    ready.set()
+                    release.wait(10)
+            holder = threading.Thread(target=hold)
+            holder.start()
+            ready.wait(5)
+            threading.Timer(0.5, release.set).start()
+            started = time.monotonic()
+            with transaction.Transaction(data, backend):
+                self.assertGreaterEqual(time.monotonic() - started, 0.4)
+            holder.join()
+            ready.clear(); release.clear()
+            holder = threading.Thread(target=hold)
+            holder.start()
+            ready.wait(5)
+            try:
+                with mock.patch.object(transaction, "ADMISSION_WAIT_SECONDS", 0.3), self.assertRaises(BusyError):
+                    transaction.Transaction(data, backend).__enter__()
+            finally:
+                release.set()
+                holder.join()
+
+
 if __name__ == "__main__":
     unittest.main()
