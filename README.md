@@ -174,6 +174,7 @@ Kaynak `src/respected_brain/`, paketle gelen içerik (kasa şablonu, beceriler, 
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Mimari ve güvenlik sınırları |
 | [PRODUCT_CONTRACT.md](docs/PRODUCT_CONTRACT.md) | Üç ürünün ortak sözleşmesi |
 | [ROADMAP.md](docs/ROADMAP.md) | Yol haritası |
+| [PRIVACY.md](PRIVACY.md) | Hangi veri nerede durur, neresi dışarı çıkar |
 
 Ekosistemin diğer ürünleri: [Respected Hub](https://github.com/respected0/respected-hub) ·
 [Respected Orchestrator](https://github.com/respected0/respected-orchestrator).
