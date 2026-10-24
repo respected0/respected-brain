@@ -15,8 +15,8 @@ iki yol vardır:
   - **Not kasası:** yeni boş bir klasör ya da daha önce Brain'in kullandığı bir kasa. Dolu ama Brain'e ait
     olmayan bir klasöre şablon yazılmaz.
   - **Bağlantılar:** oturumları hafızaya yakala, hafıza MCP sunucusu, sabah özeti görevi, masaüstü kısayolu.
-  - **AI araçları:** yalnızca ilk ikisinden biri açıksa sorulur. Oturumları hangi araçlardan yakalayacağını ve hangi araçların
-    hafızayı MCP ile kullanabileceğini seçersin (Hub'daki Kaynaklar ve İzinler listeleriyle aynı). Bilgisayarında bulunan
+  - **AI araçları:** yalnızca ilk ikisinden biri açıksa sorulur. Oturumları hangi araçlardan yakalayacağınızı ve hangi araçların
+    hafızayı MCP ile kullanabileceğini seçersiniz (Hub'daki Kaynaklar ve İzinler listeleriyle aynı). Bilgisayarınızda bulunan
     araçlar işaretli gelir.
 
 Kurucu, kurmadan önce "bilgisayarınızda neler olur" sayfasını gösterir: kurulumda, kullanırken, güncellemede ve kaldırmada neler yazıldığı, değiştiği ve silindiği. Aynı bilgi Hub'ın Kütüphane sayfasındaki ürün kartında da vardır (`packaging/windows/brain_info.txt`).
@@ -30,6 +30,9 @@ Sessiz kurulum aynı ayarları anahtarlarla alır (anahtarlar: bölüm 6):
 ```text
 RespectedBrain-Windows-Setup.exe /VERYSILENT /VAULT="D:\Notlar\RespectedOS" /SET=user_name=Ayşe /SET=assistant_name=Jarvis /SET=integrations.mcp=true
 ```
+
+Sessiz kurulum başarısız olursa kurucu sıfırdan farklı bir çıkış koduyla biter (7: kasa klasörü kullanılamıyor, 8: kurulum
+tamamlanamadı) ve geriye hiçbir şey bırakmaz; yarıda kesilirse kurucuyu yeniden çalıştırmak yeterlidir.
 
 AI özetleri için kullanmak istediğiniz aracın (Claude Code, Codex, Gemini CLI…) komut satırında oturum açık olmalıdır.
 Dosya ve arama işlemleri için gerekmez.
@@ -238,6 +241,7 @@ Kaldır; sessiz `unins000.exe /VERYSILENT [/PURGE=1]`. Kaldırıcı "Ayarlar ve 
 |---|---|
 | Kasa bulunamadı / UUID çakışması | `vault list`, kasadaki `.respected.json`, verdiğiniz `--vault`/`--vault-id`, `RESPECTED_VAULT_PATH` |
 | Dolu klasöre kurulmuyor | Boş yeni bir klasör ya da Brain'in kullandığı bir kasa seçin |
+| `health` "degraded", `vault_folder` başarısız | Kasa klasörü yerinde değil (örneğin kasanın durduğu USB sürücü çıkarılmış); takın ya da klasörü yerine koyun. O sürece AI araçları engellenmez, hafıza yazılmaz |
 | `daily` yazılmıyor | Aracın bağlantısı açık mı (`config`), hook etkin ve güvenilir mi, özetleyici aracın oturumu açık mı, `capture_mode` manual mı, veri klasöründeki `logs/` |
 | Sabah özeti yok | `integrations.schedule`, `briefing_time`, işletim sisteminin görev zamanlayıcısı, aracın kotası |
 | Arama eski sonuç veriyor | `respected-brain index-refresh` ya da `search --reindex` |

@@ -1,11 +1,11 @@
 # Brain: gelecekte yapılacaklar
 
-Ürün beklentisiyle bugünkü durum arasındaki açıklar (2026-10-23 itibarıyla). Yapılan madde silinir.
+Ürün beklentisiyle bugünkü durum arasındaki açıklar. Yapılan madde silinir.
 
 ## Tüm AI'lar tek hafıza
 
-- [ ] **OpenCode** desteği: hook ve MCP kaydı (`integrations/`), özetleyici olarak `providers/runner.py`. Bu makinede OpenCode
-  kurulu değil; gerçek oturumla doğrulanamadığı için yazılmadı.
+- [ ] **OpenCode** desteği: hook ve MCP kaydı (`integrations/`), özetleyici olarak `providers/runner.py`. Geliştirme
+  makinesinde OpenCode kurulu değil; gerçek oturumla doğrulanamadığı için yazılmadı.
 - [ ] **OpenRouter / API tabanlı modeller**: bugün özetleme yalnızca kurulu AI aracının komut satırıyla yapılıyor; API
   anahtarıyla doğrudan model çağırma yok. Anahtarın nerede saklanacağı (ayar şeması `secret` alanı mı, Windows kimlik
   kasası mı) ve fiyat/sağlayıcı seçimi karar bekliyor. Çin modelleri (DeepSeek, Qwen, GLM, Kimi) de bu yoldan gelir.

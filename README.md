@@ -77,13 +77,13 @@ Windows'ta `RespectedBrain-Windows-Setup.exe` kullanıcı başına kurulur, **y�
 
 Kurucuyu yeniden çalıştırmak onarır/günceller, ayarları değiştirir ya da kaldırır. Ayrıntılar: [Kullanım rehberi](docs/USAGE.md).
 
-**Kurulumdan sonra bir adım:** Kullandığın AI aracını yeniden başlat ve aracın ilgili yerinden (eklentiler, hook'lar) Brain'in istediği onayları ver. Onaylamazsan hafıza yazılmaz.
+**Kurulumdan sonra bir adım:** Kullandığınız AI aracını yeniden başlatın ve aracın ilgili yerinden (eklentiler, hook'lar) Brain'in istediği onayları verin. Onaylamazsanız hafıza yazılmaz.
 
 | Ne | Nerede |
 |---|---|
 | Program | `%LOCALAPPDATA%\Respected\RespectedBrain\app` (kurucunun) |
 | Ayarlar ve çalışma verisi | `%LOCALAPPDATA%\Respected\RespectedBrain\data` |
-| Not kasası | Kurulumda seçtiğiniz yer (varsayılan `Belgeler\RespectedOS`); hiçbir işlem silmez |
+| Not kasası | Kurulumda seçtiğiniz yer (varsayılan `Belgeler\RespectedOS`; bu betada OneDrive ile eşitlenen bir klasöre koymayın); hiçbir işlem silmez |
 
 Kurulumdan sonra her şey Hub olmadan da yapılır:
 
@@ -175,7 +175,7 @@ Kaynak `src/respected_brain/`, paketle gelen içerik (kasa şablonu, beceriler, 
 | [PRODUCT_CONTRACT.md](docs/PRODUCT_CONTRACT.md) | Üç ürünün ortak sözleşmesi |
 | [ROADMAP.md](docs/ROADMAP.md) | Yol haritası |
 | [PRIVACY.md](PRIVACY.md) | Hangi veri nerede durur, neresi dışarı çıkar |
-| [FOOTPRINT.md](docs/FOOTPRINT.md) | Ne yaparsan nerede ne oluşur: kurulum, AI araçları, kaldırma |
+| [FOOTPRINT.md](docs/FOOTPRINT.md) | Ne yaparsanız nerede ne oluşur: kurulum, AI araçları, kaldırma |
 
 Ekosistemin diğer ürünleri: [Respected Hub](https://github.com/respected0/respected-hub) ·
 [Respected Orchestrator](https://github.com/respected0/respected-orchestrator).

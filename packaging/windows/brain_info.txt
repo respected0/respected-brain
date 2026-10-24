@@ -10,7 +10,7 @@ KURULUMDA NELER OLUR
   - Seçtiğiniz AI araçlarına: oturum yakalama kancaları, kurallar ve beceriler (Claude Code ve Codex'te yerel eklenti olarak), MCP sunucu kaydı. Yalnızca Respected'a ait girdiler yazılır; ayarlarınız ve diğer girdiler korunur.
   - İsteğe bağlı: Windows Görev Zamanlayıcı'da günlük sabah özeti görevi, masaüstü kısayolu.
 
-KULLANIRKEN NELER OLUŞUR
+KULLANIRKEN NELER OLUR
 
   - Oturum özetleri kasanızdaki daily/ ve knowledge/ klasörlerine yazılır.
   - Arama dizini (veri klasöründe) notlarınız değiştikçe güncellenir.
@@ -18,16 +18,17 @@ KULLANIRKEN NELER OLUŞUR
   - Anlamsal arama kapalı başlar; yalnızca siz isterseniz yerel bir model ve sunucusu veri klasörüne indirilir. Notlarınız bilgisayarınızdan çıkmaz.
   - AI araçlarına yapılan her değişiklik kayıtlıdır; yarıda kalırsa geri alınır.
 
-GÜNCELLEMEDE NELER DEĞIŞIR
+GÜNCELLEMEDE NELER DEĞİŞİR
 
   - Programı kullanan süreçler (AI araçlarının açık MCP sunucuları dahil) durdurulur; program klasörü yeni sürümle yenilenir, eski sürümden kalan dosyalar silinir.
   - Ardından ürün kendini onarır: dosyaları doğrular, AI araçlarındaki ve zamanlayıcıdaki kendi kayıtlarını yeni sürüme göre yeniler.
   - Ayarlarınız, kasanız ve notlarınız değişmez. Bir adım başarısız olursa ürün kendi değişikliklerini geri alır.
   - Sizin değiştirdiğiniz bir kayıt üzerine yazılmaz; çakışma olarak bildirilir.
 
-KALDIRINCA NELER SILINIR
+KALDIRINCA NELER SİLİNİR
 
   - Program klasörü ve Windows Uygulamalar girdisi silinir; kurulum kaydı her zaman kalkar.
   - AI araçlarındaki Respected girdileri, zamanlanmış görev ve kısayol geri alınır; sizin ve başka araçların girdileri kalır.
   - Ayarlar ve çalışma verisi (veri klasörü) varsayılan olarak kalır; "çalışma verileri de silinsin" seçeneğiyle silinir.
-  - Not kasanız hiçbir durumda silinmez. Sizin değiştirdiğiniz bir sahipli dosya silinmez, çakışma olarak bildirilir.
+  - Not kasanız hiçbir durumda silinmez.
+  - Respected'ın eklediği bir girdiyi elle değiştirmiş olsanız da kaldırırken o girdi gider; sizin eklediğiniz her şey kalır. Elle değiştirdiğiniz çalışma dosyaları (ayarlar) düz kaldırmada kalır, "çalışma verileri de silinsin" ile silinir.

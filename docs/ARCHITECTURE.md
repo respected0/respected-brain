@@ -52,6 +52,9 @@ oluşturulmaz, süreç başlatılmaz. `vault` program kurmaz; `providers` kasa t
    otomatik derleme yalnızca tamamlanmış önceki günleri alır.
 5. Zamanlayıcı açıksa sabah görevi derleme ve özet üretir.
 
+Hook'lar hata verse bile (örneğin kasa klasörü yoksa: USB sürücü çıkarılmış) çıkış kodu `0` verir ve nedeni stderr'e yazar;
+AI araçları `2`'yi "istemi engelle / durma" diye okur, hafıza hiçbir zaman aracı engellemez.
+
 Biçim denetimleri özetin doğru olduğunu kanıtlamaz; model çıktısıdır.
 
 ## 4. Kurulum, sahiplik ve geri alma
@@ -67,17 +70,18 @@ Biçim denetimleri özetin doğru olduğunu kanıtlamaz; model çıktısıdır.
   eklenir. Kişinin değiştirdiği talimat ve beceriler `vaults/<UUID>/overrides/` altında tutulur ve paketin önüne geçer.
 - **Dış değişiklikler kayıtlıdır.** AI araçlarının ayar dosyalarına, zamanlayıcıya ve kısayola yapılan her değişiklik bir
   işlem günlüğüyle (yedek, kilit, karşılaştır-ve-değiştir, aşamalar) yapılır; yarıda kalan işlem `recover` ile ya da
-  bir sonraki işlemde geri alınır. Kilidi başka bir ayar değişikliği ya da arka plan dizin tazelemesi tutuyorsa işlem en çok
-  15 saniye sıraya girer, sonra `BusyError` ile bırakır. Sahiplik kaydı dosyaların kopyasını değil, **farkı** tutar: JSON için değişen anahtarlar
-  ve liste öğeleri, diğer dosyalar için satır işlemleri, artı SHA-256 parmak izleri. Geri alma bu farkı dosyanın şimdiki
-  haline uygular: ürünün girdileri gider (elle değiştirilmiş olsa da: anahtarı biz eklediysek kalıntı bizimdir), aracın
-  sonradan yaptığı ve kişinin eklediği değişiklikler kalır. Yalnızca önceden var olan bir değeri hem biz hem kişi
-  değiştirdiyse eski hali bilinmez; o girdi çakışma olarak bildirilir, dokunulmaz. `uninstall --purge` ürünün kendi
-  çalışma dosyalarını elle değiştirilmiş olsalar da siler. Böylece başka bir aracın `~/.claude.json` içindeki
-  sırrı ürünün kayıtlarına ya da yedeklerine girmez (işlem bitince günlükler de aynı biçimde sıkıştırılır).
+  bir sonraki işlemde geri alınır. Kilidi başka bir ayar değişikliği ya da arka plan dizin tazelemesi tutuyorsa işlem
+  en çok 15 saniye sıraya girer, sonra `BusyError` ile bırakır.
+- **Sahiplik kaydı farkı tutar, dosyanın kopyasını değil:** JSON için değişen anahtarlar ve liste öğeleri, diğer dosyalar
+  için satır işlemleri, artı SHA-256 parmak izleri. Böylece başka bir aracın `~/.claude.json` içindeki sır ürünün
+  kayıtlarına ya da yedeklerine girmez (işlem bitince günlükler de aynı biçimde sıkıştırılır). Geri alma bu farkı
+  dosyanın şimdiki haline uygular: ürünün girdileri gider (elle değiştirilmiş olsa da: anahtarı biz eklediysek kalıntı
+  bizimdir), aracın sonradan yaptığı ve kişinin eklediği değişiklikler kalır. Yalnızca önceden var olan bir değeri hem
+  biz hem kişi değiştirdiyse eski hali bilinmez; o girdi çakışma olarak bildirilir, dokunulmaz. `uninstall --purge`
+  ürünün kendi çalışma dosyalarını elle değiştirilmiş olsalar da siler.
 - **Ayar değişikliği bir işlemdir.** `config set` bağlantıları, adları ya da sabah özeti saatini değiştirince
   (`installation/reconfigure.py`) ürün kendi dış kayıtlarını aynı işlemde günceller; hata olursa ikisi birlikte geri alınır.
-- **Kaldırma** yalnızca kayıtla eşleşen girdileri kaldırır, kurulum kaydını her zaman siler, `--purge` ile veri kökünü de
+- **Kaldırma** yalnızca kendi eklediği (kayıtlı) girdileri kaldırır, kurulum kaydını her zaman siler, `--purge` ile veri kökünü de
   siler; kasaya hiçbir durumda dokunmaz.
 
 ## 5. Başka ürünlerin hafızaya erişimi
@@ -109,7 +113,7 @@ içe aktarmaz.
   başlatılır ve sonra kapatılır; sürekli çalışan süreç yoktur. Yerel olmayan bir uç nokta reddedilir; tek ağ kullanımı bu
   indirmedir. Vektörler FTS dizininin yanındaki `semantic_index.db`'dedir (not başına bir vektör: başlık + ilk 2000
   karakter). `memory.recall` `mode` alanı `auto` (hazırsa karma, değilse FTS), `fts`, `semantic`, `hybrid` olabilir;
-  sağlayıcı sorunu FTS'ye düşer. Her sorgu sunucuyu başlatır (bu makinede 2,6–4,2 sn).
+  sağlayıcı sorunu FTS'ye düşer. Her sorgu sunucuyu başlatır (ölçülen: 2,6–4,2 sn).
 - **Hub'ın Hafıza sayfası** `memory.search`, `memory.note.read`, `memory.capture.*`, `memory.briefing.run` işlemlerini
   Hub'ın kendi yerel komutlarıyla çağırır; Hub'ın web görünümü `memory.*` işlemlerini doğrudan çağıramaz.
 - **Her istemde otomatik hafıza eklemek bilinçli olarak yapılmadı.** Hafıza AI araçlarına oturum başında, MCP ile ve
