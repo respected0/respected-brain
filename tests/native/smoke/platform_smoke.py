@@ -125,6 +125,7 @@ def main(argv=None):
         profile=IntegrationProfile(profile_name,(str(launcher),),home)
         prior=read_manifest(data / "install-manifest.json")
         # Only temp-home file/MCP registrations are applied, never live scheduler/registry/shortcuts.
+        for folder in (".claude",".codex",".gemini",".cursor"): (home / folder).mkdir(exist_ok=True)  # a tool that is not on the computer is skipped: give the five their settings folders
         changes=plan_integrations(ctx,profile,{"global":True,"mcp":True},backend)
         record("all-five-providers-rendered-without-legacy-engine",all(any(provider in change.key for change in changes) for provider in (".agents", ".gemini", ".codex", ".cursor", ".claude")))
         record("registration-boundary-is-temporary-files",all(row.kind in ("file","mcp") and (Path(row.key).is_relative_to(home) or Path(row.key).is_relative_to(data)) for row in changes))
