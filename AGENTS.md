@@ -1,7 +1,7 @@
 # Respected Brain deposu: çalışma kuralları
 
 Gerçeği kod ve testlerden doğrula. Belgeler: `README.md` (giriş), `docs/USAGE.md`, `docs/COMMANDS.md`, `docs/ARCHITECTURE.md`.
-Üç ürünün ortak sözleşmesi `docs/PRODUCT_CONTRACT.md` dosyasındadır ve Hub deposundaki `tools/conformance/` ile ölçülür (üç depo yan yana).
+Üç ürünün ortak sözleşmesi `docs/PRODUCT_CONTRACT.md` dosyasındadır ve Hub deposundaki `common/conformance/` ile ölçülür (üç depo yan yana).
 
 ## Yasaklar
 
