@@ -57,7 +57,7 @@ class IntegrationPlanTest(unittest.TestCase):
         self.assertEqual(response["error"]["code"], "LIFECYCLE_CONFLICT")
         self.assertEqual(json.loads((self.home / ".claude.json").read_text(encoding="utf-8")), bad)
 
-    def test_switching_off_an_owned_entry_is_planned_as_a_restore_and_user_edits_are_conflicts(self):
+    def test_switching_off_an_owned_entry_is_planned_as_a_restore_even_when_the_entry_was_edited(self):
         import base64
         path = self.home / ".claude.json"
         after = json.dumps({"mcpServers": {"someone-elses": {"command": "x", "args": []}, "respected-brain": {"command": "ours", "args": []}}})
@@ -72,7 +72,7 @@ class IntegrationPlanTest(unittest.TestCase):
         self.assertEqual([c["target"] for c in restore], [str(path)])
         self.assertEqual(path.read_text(encoding="utf-8"), after)
         path.write_text(after.replace('"ours"', '"edited-by-user"'), encoding="utf-8")
-        self.assertEqual(self.plan({})["error"]["code"], "LIFECYCLE_CONFLICT")
+        self.assertTrue(self.plan({})["ok"])  # our own entry is still ours after a hand edit: it is removed, not a conflict
         # a client rewriting the file elsewhere (not our entry) is NOT a conflict (audit P0 #1)
         path.write_text(json.dumps({"counter": 7, **json.loads(after)}), encoding="utf-8")
         self.assertTrue(self.plan({})["ok"])

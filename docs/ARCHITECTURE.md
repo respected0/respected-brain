@@ -70,8 +70,10 @@ Biçim denetimleri özetin doğru olduğunu kanıtlamaz; model çıktısıdır.
   bir sonraki işlemde geri alınır. Kilidi başka bir ayar değişikliği ya da arka plan dizin tazelemesi tutuyorsa işlem en çok
   15 saniye sıraya girer, sonra `BusyError` ile bırakır. Sahiplik kaydı dosyaların kopyasını değil, **farkı** tutar: JSON için değişen anahtarlar
   ve liste öğeleri, diğer dosyalar için satır işlemleri, artı SHA-256 parmak izleri. Geri alma bu farkı dosyanın şimdiki
-  haline uygular: ürünün girdileri gider, aracın sonradan yaptığı ve kişinin eklediği değişiklikler kalır. Kişinin
-  değiştirdiği bir girdi çakışma olarak bildirilir, dokunulmaz. Böylece başka bir aracın `~/.claude.json` içindeki
+  haline uygular: ürünün girdileri gider (elle değiştirilmiş olsa da: anahtarı biz eklediysek kalıntı bizimdir), aracın
+  sonradan yaptığı ve kişinin eklediği değişiklikler kalır. Yalnızca önceden var olan bir değeri hem biz hem kişi
+  değiştirdiyse eski hali bilinmez; o girdi çakışma olarak bildirilir, dokunulmaz. `uninstall --purge` ürünün kendi
+  çalışma dosyalarını elle değiştirilmiş olsalar da siler. Böylece başka bir aracın `~/.claude.json` içindeki
   sırrı ürünün kayıtlarına ya da yedeklerine girmez (işlem bitince günlükler de aynı biçimde sıkıştırılır).
 - **Ayar değişikliği bir işlemdir.** `config set` bağlantıları, adları ya da sabah özeti saatini değiştirince
   (`installation/reconfigure.py`) ürün kendi dış kayıtlarını aynı işlemde günceller; hata olursa ikisi birlikte geri alınır.

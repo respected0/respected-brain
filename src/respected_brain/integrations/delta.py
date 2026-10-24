@@ -83,7 +83,7 @@ def _revert_value(before: Any, after: Any, current: Any) -> Any:
                     else:
                         result[key] = inner
                 else:
-                    raise DeltaConflict(key)
+                    result.pop(key, None)         # our own key whose value was edited by hand: it is still our leftover
                 continue
             result[key] = _revert_value(b, a, c)
         return result

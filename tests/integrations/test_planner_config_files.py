@@ -1,5 +1,6 @@
 """How the planner reads an AI tool's JSON config: blank files are empty objects, broken ones are refused by name."""
 import codecs
+import json
 import unittest
 
 from respected_brain.integrations import delta
@@ -34,6 +35,17 @@ class PlannerConfigFileTest(unittest.TestCase):
         kept = delta.revert(b'{"enabledPlugins": {"respected-brain": true}, "mine": 2}', recorded)
         self.assertIn(b'"mine": 2', kept)
         self.assertNotIn(b"respected-brain", kept)
+
+    def test_our_own_entry_is_removed_even_when_its_value_was_edited_by_hand(self):
+        recorded = delta.make_delta(b'{"theme": "dark"}', b'{"theme": "dark", "market": {"source": {"path": "A"}}, "plugin": true}')
+        edited = b'{"theme": "light", "market": {"source": {"path": "B"}}, "plugin": false, "mine": 1}'
+        result = json.loads(delta.revert(edited, recorded))
+        self.assertEqual(result, {"theme": "light", "mine": 1})
+
+    def test_a_value_that_existed_before_and_was_changed_by_both_sides_is_still_a_conflict(self):
+        recorded = delta.make_delta(b'{"mode": "a"}', b'{"mode": "b"}')
+        with self.assertRaises(delta.DeltaConflict):
+            delta.revert(b'{"mode": "c"}', recorded)
 
 
 if __name__ == "__main__":

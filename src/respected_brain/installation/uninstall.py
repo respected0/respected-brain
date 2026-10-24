@@ -5,7 +5,7 @@ from pathlib import Path
 from respected_brain.core.errors import FoundationError
 from respected_brain.integrations.backend import ExternalChange
 from respected_brain.integrations.plugin import bundle_root, remove_plugins
-from .ownership import read_manifest, prove_ownership
+from .ownership import read_manifest, prove_ownership, digest
 from .operations import validate_manifest_roots
 from .transaction import Transaction, OperationResult, recover_transactions, scrub_committed_journals
 
@@ -56,6 +56,9 @@ def uninstall(ctx, *, backend, purge_data=False) -> OperationResult:
                 tx.apply_external(ExternalChange(change.kind, change.key, current, restored))
             for item in manifest.files:
                 if item.role == "application" or item.role == "technical" and not purge_data or not item.path.exists():
+                    continue
+                if item.role == "technical" and purge_data and item.path.is_file():  # purge: our own working files go even if they were edited by hand
+                    tx.remove(item.path, expected_hash=digest(item.path))
                     continue
                 if not prove_ownership(item.path, manifest):
                     conflicts.append(str(item.path))

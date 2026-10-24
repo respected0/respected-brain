@@ -85,7 +85,7 @@ Brain bu klasörleri **kendisi oluşturmaz**; araç ilk çalıştığında kendi
 
 - Anahtarı kapatırsan ya da aracı listeden çıkarırsan Brain **yalnızca kendi eklediği** blok ve girdileri geri alır. Senin
   ayarların, başka araçların hook'ları ve metinlerin kalır.
-- Bir dosyayı sen elle değiştirdiysen Brain onu "senin" sayar ve üzerine yazmaz; çakışmayı bildirir.
+- Brain'in eklediği bir girdiyi elle değiştirsen de kaldırırken o girdi gider (kalıntı Brain'indir). Senin eklediğin her şey kalır; bir dosyanın tamamı silinmez.
 
 ## 4. "Hafıza MCP sunucusu"
 

@@ -227,7 +227,7 @@ Kaldır; sessiz `unins000.exe /VERYSILENT [/PURGE=1]`. Kaldırıcı "Ayarlar ve 
 |---|---|
 | Program (`app\`) | kaldırıcı siler |
 | AI araçlarındaki kendi girdileri, zamanlanmış görev, kısayol | geri alınır; sizin ve başka araçların girdileri kalır |
-| Sizin değiştirdiğiniz bir sahipli dosya | silinmez, çakışma olarak bildirilir |
+| Elle değiştirdiğiniz sahipli çalışma dosyası (ayarlar vb.) | düz kaldırmada kalır, `--purge` ile silinir |
 | Kurulum kaydı | her zaman kalkar |
 | Ayarlar ve çalışma verisi | kalır; "Evet" / `--purge` / `/PURGE=1` ile silinir |
 | Not kasası | hiçbir durumda silinmez; aynı klasöre yeniden kurunca (`.respected.json` duruyorsa) kasa yeniden kaydedilir, notlara dokunulmaz |

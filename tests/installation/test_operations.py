@@ -85,8 +85,8 @@ class FoundationOperationsTest(unittest.TestCase):
             self.assertIn(owned, read_manifest(self.manifest_path).files)
             self.assertEqual(path.read_bytes(), b'user-edited')
         result = uninstall(self.ctx, backend=self.backend, purge_data=True)
-        self.assertFalse(result.success)
-        self.assertEqual(path.read_bytes(), b'user-edited')
+        self.assertTrue(result.success, result.conflicts)   # purge removes our own working files even when edited by hand
+        self.assertFalse(path.exists())
 
     def test_health_timeout_fails_repair_without_touching_the_program(self):
         import subprocess

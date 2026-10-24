@@ -50,11 +50,10 @@ class JsonDeltaTest(unittest.TestCase):
         commands = [h["command"] for entry in restored["hooks"]["Stop"] for h in entry["hooks"]]
         self.assertEqual(commands, ["other", "user-added"])
 
-    def test_a_user_edit_of_our_own_entry_is_a_conflict_and_a_removed_entry_is_not(self):
+    def test_our_own_entry_is_removed_even_when_edited_by_hand_and_so_is_a_removed_one(self):
         edited = json.loads(j(CLAUDE_AFTER))
-        edited["mcpServers"]["respected-vault"]["command"] = "C:/evil/other.exe"
-        with self.assertRaises(ValueError):
-            self.compact.undo(j(edited))
+        edited["mcpServers"]["respected-vault"]["command"] = "C:/hand/edited.exe"
+        self.assertEqual(json.loads(self.compact.undo(j(edited)))["mcpServers"], CLAUDE_BEFORE["mcpServers"])
         gone = json.loads(j(CLAUDE_AFTER))
         del gone["mcpServers"]["respected-vault"]
         self.assertEqual(json.loads(self.compact.undo(j(gone)))["mcpServers"], CLAUDE_BEFORE["mcpServers"])
