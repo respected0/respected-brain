@@ -85,6 +85,20 @@ class FoundationSetupTest(unittest.TestCase):
         self.assertFalse(self.install().success)
         self.assertEqual(snapshot(self.root), before)
 
+    def test_vault_kept_by_an_uninstall_is_registered_again_without_touching_its_notes(self):
+        import shutil
+        self.assertTrue(self.install().success)
+        identity = json.loads((self.vault / ".respected.json").read_text())["vault_id"]
+        note = self.vault / "🔮 850-Companion/Core.md"
+        note.write_text("my own words", encoding="utf-8")
+        shutil.rmtree(self.roots.data_root)  # uninstall with purge: the registry goes, the vault stays
+        result = self.install()
+        self.assertTrue(result.success, result.conflicts)
+        self.assertEqual(note.read_text(encoding="utf-8"), "my own words")
+        config = ConfigStore(self.roots.data_root).read()
+        self.assertEqual(config["active_vault_id"], identity)
+        self.assertEqual(Path(config["vaults"][identity]["path"]).resolve(), self.vault.resolve())
+
     def test_manifest_records_the_program_but_not_user_notes_and_repeat_preserves_edits(self):
         self.assertTrue(self.install().success)
         core = self.vault / "🔮 850-Companion/Core.md"

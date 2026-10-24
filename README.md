@@ -77,6 +77,8 @@ Windows'ta `RespectedBrain-Windows-Setup.exe` kullanıcı başına kurulur, **y�
 
 Kurucuyu yeniden çalıştırmak onarır/günceller, ayarları değiştirir ya da kaldırır. Ayrıntılar: [Kullanım rehberi](docs/USAGE.md).
 
+**Kurulumdan sonra bir adım:** Kullandığın AI aracını yeniden başlat ve aracın ilgili yerinden (eklentiler, hook'lar) Brain'in istediği onayları ver. Onaylamazsan hafıza yazılmaz.
+
 | Ne | Nerede |
 |---|---|
 | Program | `%LOCALAPPDATA%\Respected\RespectedBrain\app` (kurucunun) |

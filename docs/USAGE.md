@@ -172,8 +172,8 @@ yedekleri).
 | Gemini CLI | hook'lar, `AfterAgent` |
 
 Eklenti paketi veri klasöründe durur ve kaldırınca silinir. Kurulum ve onarım sonunda `claude plugin marketplace add`/`install` ve
-`codex plugin add` komutlarını da çalıştırır (araç yoksa atlanır, başarısızlık kurulumu bozmaz). Claude eklentiyi ilk açılışta yükler; Codex eklenti hook'larını kurulumda ve
-içerikleri değiştiğinde ayrıca onaylatır (Codex'te `/hooks`); onaylanmadan çalışmazlar, onayı Brain vermez.
+`codex plugin add` komutlarını da çalıştırır (araç yoksa atlanır, başarısızlık kurulumu bozmaz). Claude'da eklentiye eklentiler bölümünden izin verilir; Codex eklenti hook'larını kurulumda ve
+içerikleri değiştiğinde ayrıca onaylatır (`/hooks`). Onaylanmadan çalışmazlar, onayı Brain vermez; sonra AI aracı yeniden başlatılır.
 
 Claude Code, Codex ve Antigravity gerçek oturumlarla doğrulandı (Windows; Codex'te hook'lar onaylandıktan sonra); Gemini CLI ve Cursor test verileriyle sınandı: deneysel sayın. Bağlantı açıkken
 ürün o aracın ayar dosyasına yalnızca kendi girdilerini ekler; sizin ve başka araçların girdileri korunur, kapatınca
@@ -228,7 +228,7 @@ Kaldır; sessiz `unins000.exe /VERYSILENT [/PURGE=1]`. Kaldırıcı "Ayarlar ve 
 | Sizin değiştirdiğiniz bir sahipli dosya | silinmez, çakışma olarak bildirilir |
 | Kurulum kaydı | her zaman kalkar |
 | Ayarlar ve çalışma verisi | kalır; "Evet" / `--purge` / `/PURGE=1` ile silinir |
-| Not kasası | hiçbir durumda silinmez |
+| Not kasası | hiçbir durumda silinmez; aynı klasöre yeniden kurunca (`.respected.json` duruyorsa) kasa yeniden kaydedilir, notlara dokunulmaz |
 
 ## 10. Sorun giderme
 

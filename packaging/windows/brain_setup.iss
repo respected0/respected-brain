@@ -52,6 +52,8 @@ turkish.InfoAfterClickLabel=Devam etmek için Sonraki'ne tıklayın.
 turkish.WelcomeLabel1=Respected Brain'e hoş geldin
 turkish.WelcomeLabel2=Brain, AI araçlarının ortak hafızasını not kasanda tutar.%n%nYönetici izni gerekmez; mevcut notlarının üzerine yazılmaz.%n%nDevam etmek için Sonraki'ne tıkla.
 turkish.FinishedHeadingLabel=Respected Brain hazır
+turkish.FinishedLabel=Kurulum bitti.%n%nSon bir adım: kullandığın AI aracını yeniden başlat ve aracın ilgili yerinden (eklentiler, hook'lar) Brain'in istediği onayları ver. Onaylamazsan hafıza yazılmaz.
+turkish.FinishedLabelNoIcons=Kurulum bitti.%n%nSon bir adım: kullandığın AI aracını yeniden başlat ve aracın ilgili yerinden (eklentiler, hook'lar) Brain'in istediği onayları ver. Onaylamazsan hafıza yazılmaz.
 ; the ready page's button is "Kur", not "Sonraki"
 turkish.ReadyLabel2a=Kuruluma devam etmek için Kur düğmesine, ayarları gözden geçirmek ya da değiştirmek için Önceki düğmesine tıklayın.
 turkish.ReadyLabel2b=Kuruluma başlamak için Kur düğmesine tıklayın.
@@ -603,6 +605,14 @@ begin
   end;
 end;
 
+// ends a failed install or repair: the message, then Abort (non-zero exit code); the cards' finish page then says it failed
+procedure FailInstall(Message: String);
+begin
+  InstallFailed := True;
+  SuppressibleMsgBox(Message, mbError, MB_OK, IDOK);
+  Abort;
+end;
+
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   Output: TExecOutput;
@@ -612,17 +622,17 @@ begin
   if Maintenance then begin
     if not RunProduct('repair', Output) then begin
       if UpdateBackedUp then RollBackUpdate('onarılamadı.');
-      RaiseException(ProductName + ' onarılamadı. Ürün kendi değişikliklerini geri aldı; kurucuyu yeniden çalıştırabilirsin.');
+      FailInstall(ProductName + ' onarılamadı. Ürün kendi değişikliklerini geri aldı; kurucuyu yeniden çalıştırabilirsin.');
     end;
     if UpdateBackedUp and HealthyBefore and not RunProduct('health', Output) then RollBackUpdate('güncellemeden sonra sağlıklı çalışmadı.');
     CommitUpdate;
     if SwitchSettings() <> '' then
       if not RunProduct('config set' + ConfigArgs(SwitchSettings()), Output) then
-        RaiseException(ProductName + ' onarıldı ama /SET ayarları uygulanamadı.');
+        FailInstall(ProductName + ' onarıldı ama /SET ayarları uygulanamadı.');
     Exit;
   end;
   if not RunProduct('setup --vault "' + VaultPage.Values[0] + '"' + PageSettings() + SwitchSettings(), Output) then
-    RaiseException(ProductName + ' kurulumu tamamlanamadı. Ürün kendi değişikliklerini geri aldı; kurucuyu yeniden çalıştırabilirsin.');
+    FailInstall(ProductName + ' kurulumu tamamlanamadı. Ürün kendi değişikliklerini geri aldı; kurucuyu yeniden çalıştırabilirsin.');
 end;
 
 { ---- removal ---- }

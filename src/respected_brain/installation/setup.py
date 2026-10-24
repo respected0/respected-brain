@@ -43,7 +43,10 @@ def setup(roots: Roots, vault: Path, *, values: Mapping[str, object], backend, p
         stale = [registered] if registered is not None and not vault.is_dir() else []
         if stale:
             registered = None
-        if registered is None and vault.exists() and any(vault.iterdir()):
+        # an unregistered folder that carries our marker is the vault of an earlier install (uninstall keeps it): it is
+        # registered again and its notes are never rewritten; any other non-empty folder is refused
+        kept = registered is None and (vault / ".respected.json").is_file()
+        if registered is None and not kept and vault.exists() and any(vault.iterdir()):
             return OperationResult(False, "", ("Nonempty target is not registered; use vault register",))
         if registered is not None:
             VaultRegistry(store).select(vault=vault, vault_id=None, env={})
@@ -69,7 +72,7 @@ def setup(roots: Roots, vault: Path, *, values: Mapping[str, object], backend, p
                     if value.get("active_vault_id") in stale:
                         value["active_vault_id"] = None
                 store.update(drop_stale, writer=tx.write_json)
-            if registered is None:
+            if registered is None and not kept:
                 if vault.exists() and any(vault.iterdir()):
                     raise OwnershipConflict("Vault changed during installation")
                 template = {"TODAY": date.today().isoformat(), "VAULT_PATH": str(vault), "OS_NAME": vault.name,
