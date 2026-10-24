@@ -335,9 +335,41 @@ begin
   Abort;  // a non-zero exit code, so a script or the Hub sees that the update did not happen
 end;
 
-function PrepareToInstall(var NeedsRestart: Boolean): String;
+function FolderIsEmpty(Path: String): Boolean;
+var
+  Found: TFindRec;
+begin
+  Result := True;
+  if FindFirst(Path + '\*', Found) then
+    try
+      repeat
+        if (Found.Name <> '.') and (Found.Name <> '..') then begin
+          Result := False;
+          Break;
+        end;
+      until not FindNext(Found);
+    finally
+      FindClose(Found);
+    end;
+end;
+
+// '' when the chosen notes folder can be used: new, empty or a vault Brain made before (its .respected.json is still there);
+// otherwise the reason. The product would refuse such a folder too, but only after the program was already laid down.
+function VaultProblem(): String;
+var
+  Path: String;
 begin
   Result := '';
+  Path := RemoveBackslashUnlessRoot(VaultPage.Values[0]);
+  if Maintenance or not DirExists(Path) or FileExists(Path + '\.respected.json') or FolderIsEmpty(Path) then Exit;
+  Result := 'Seçtiğin klasörde başka dosyalar var ve Brain kasası değil:' + #13#10 + Path + #13#10#13#10 +
+    'Brain mevcut notlarının üzerine yazmaz. Boş ya da yeni bir klasör seç; örneğin bu klasörün içinde yeni bir "RespectedOS" klasörü aç.';
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  Result := VaultProblem();
+  if Result <> '' then Exit;
   StopRunningProduct;
   if not BackUpForUpdate() then
     Result := ProductName + ' güncellenmeden önce yedeği alınamadı (disk dolu ya da dosyalar kullanımda olabilir); hiçbir şey değiştirilmedi.';
@@ -577,6 +609,11 @@ var
 begin
   Result := True;
   if WizardSilent then Exit;
+  if (CurPageID = VaultPage.ID) and (VaultProblem() <> '') then begin
+    MsgBox(VaultProblem(), mbError, MB_OK);
+    Result := False;
+    Exit;
+  end;
   // a connection that is on needs at least one tool
   if (CurPageID = ClientPage.ID) and ((CardChecked(2, 0) and (CollectClients(0, 4) = '')) or (CardChecked(2, 1) and (CollectClients(5, 10) = ''))) then begin
     MsgBox('Açık bıraktığın bağlantı için en az bir araç seç ya da önceki sayfada o bağlantının işaretini kaldır.', mbInformation, MB_OK);
@@ -609,6 +646,11 @@ end;
 procedure FailInstall(Message: String);
 begin
   InstallFailed := True;
+  // a fresh install that did not finish leaves nothing behind: no Installed-apps entry, no unused program folder
+  if not Maintenance then begin
+    RegDeleteKeyIncludingSubkeys(HKCU, UninstallKey);
+    DelTree(ExpandConstant('{app}'), True, True, True);
+  end;
   SuppressibleMsgBox(Message, mbError, MB_OK, IDOK);
   Abort;
 end;

@@ -11,7 +11,7 @@ from respected_brain.installation.setup import setup
 from respected_brain.installation.ownership import read_manifest
 from tests.support.packages import seed_package
 from tests.support.files import snapshot, note_hashes
-from tests.support.fakes import Backend
+from tests.support.fakes import Backend, with_ai_tools
 
 OFF = {"integrations.global": False, "integrations.mcp": False, "integrations.schedule": False, "integrations.shortcut": False}
 
@@ -22,6 +22,7 @@ class FoundationSetupTest(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         (self.root / "home").mkdir()
+        with_ai_tools(self.root / "home")
         self.vault = self.root / "Türkçe 🧠 Vault"
         self.roots = Roots(self.root / "app", self.root / "data", self.vault)
         seed_package(self.roots.app_root)  # what the installer lays down
@@ -188,7 +189,7 @@ class FoundationSetupTest(unittest.TestCase):
     def test_mcp_registration_uses_installed_launcher_and_uuid(self):
         result = self.install(**{"integrations.mcp": True})
         self.assertTrue(result.success, result.conflicts)
-        records = [json.loads(value) for (kind, key), value in self.backend.records.items() if kind == "mcp" and value and "mcpServers" in json.loads(value)]
+        records = [json.loads(value) for (kind, key), value in self.backend.records.items() if kind == "mcp" and value and b'"mcpServers"' in value]
         self.assertTrue(records)
         for record in records:
             command = record["mcpServers"]["respected-brain"]
@@ -206,6 +207,7 @@ class FoundationSetupTest(unittest.TestCase):
             with self.subTest(purge=purge):
                 root = self.root / str(purge)
                 (root / 'home').mkdir(parents=True)
+                with_ai_tools(root / 'home')
                 roots = Roots(root / 'app', root / 'data', root / 'vault')
                 seed_package(roots.app_root)
                 backend = NativeBackend(roots.data_root)

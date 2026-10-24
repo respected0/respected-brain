@@ -9,6 +9,8 @@ from respected_brain.installation.transaction import Transaction
 
 class IntegrationRollbackTest(IntegrationFixture, TestCase):
     def test_failed_apply_removes_new_files_and_directories_after_rollback(self):
+        import shutil
+        shutil.rmtree(self.home / ".codex")  # the directory under test is one the apply creates
         backend = self.backend()
         writes = [ExternalChange("file", str(self.home / ".codex/hooks.json"), None, b"{}\n"), ExternalChange("file", str(self.home / ".codex/AGENTS.md"), None, b"managed\n")]
         original = backend.apply

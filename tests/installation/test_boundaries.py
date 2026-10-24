@@ -19,7 +19,7 @@ from respected_brain.core.paths import Roots
 from respected_brain.integrations.backend import IntegrationProfile
 from respected_brain.installation.transaction import Transaction
 from tests.support.packages import seed_package
-from tests.support.fakes import Backend
+from tests.support.fakes import Backend, with_ai_tools
 from tests.support.files import snapshot
 
 
@@ -94,6 +94,7 @@ class BoundaryRegressionTest(unittest.TestCase):
             ctx = make_context(base / "Ada Brain")
             home = base / "home"
             home.mkdir()
+            with_ai_tools(home)
             backend = NativeBackend(ctx.paths.data_root, user_home=home)
             profile = IntegrationProfile("posix", ("/opt/respected-brain/bin/respected-brain",), home)
             with mock.patch.object(rendering, "windows_path", return_value=None):

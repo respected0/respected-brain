@@ -16,7 +16,7 @@ from respected_brain.integrations.backend import ExternalChange
 from respected_brain.installation.ownership import OwnershipManifest, read_manifest, manifest_document
 from tests.support.packages import seed_package
 from tests.support.files import note_hashes, snapshot
-from tests.support.fakes import Backend
+from tests.support.fakes import Backend, with_ai_tools
 
 OFF = {"integrations.global": False, "integrations.mcp": False, "integrations.schedule": False, "integrations.shortcut": False}
 
@@ -33,6 +33,7 @@ class FoundationOperationsTest(unittest.TestCase):
         self.health.start()
         self.addCleanup(self.health.stop)
         seed_package(self.roots.app_root)
+        with_ai_tools(Path.home())  # the suite points HOME at a temporary folder
         self.assertTrue(setup(self.roots, self.vault, values=OFF, backend=self.backend).success)
         store = ConfigStore(self.roots.data_root)
         store.update(lambda value: value["preferences"].update(summary_provider="codex"))

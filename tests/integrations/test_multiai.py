@@ -22,7 +22,7 @@ from contextlib import redirect_stdout
 import io
 
 
-from tests.support.fakes import IntegrationFixture
+from tests.support.fakes import IntegrationFixture, with_ai_tools
 from tests.support.files import snapshot
 from respected_brain.integrations.backend import IntegrationProfile
 from respected_brain.integrations import rendering as RENDER
@@ -134,7 +134,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
 
     def test_bridge_dispatches_to_shared_lifecycle_without_shell_hooks(self):
         memory = self.vault / "🔮 850-Companion"
-        memory.mkdir()
+        memory.mkdir(exist_ok=True)
         (memory / "Last-Session.md").write_text("## Session: Bridge\nOrtak lifecycle bağlamı.\n## Previous\n", encoding="utf-8")
         with mock.patch.object(BRIDGE.LIFECYCLE, "_launch_flush"):
             response = BRIDGE.dispatch(self.ctx, provider="codex", event="start", argv=[], stdin=json.dumps({"session_id": "bridge-session"}))
@@ -532,7 +532,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
 
     def test_global_codex_installer_chains_existing_notify_without_losing_it(self):
         codex = self.home / ".codex"
-        codex.mkdir()
+        codex.mkdir(exist_ok=True)
         original = [str(self.root / "custom notify.exe"), "turn-ended"]
         (codex / "config.toml").write_text("notify = " + json.dumps(original) + "\nmodel = \"custom\"\n", encoding="utf-8")
         rows = RENDER.plan_integrations(self.ctx, self.profile, {"global": True}, self.backend())
@@ -563,7 +563,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
 
     def test_global_codex_installer_preserves_valid_multiline_notify(self):
         codex = self.home / ".codex"
-        codex.mkdir()
+        codex.mkdir(exist_ok=True)
         (codex / "config.toml").write_text('notify = [\n  "custom.exe",\n  "turn-ended",\n]\nmodel = "custom"\n', encoding="utf-8")
         rows = RENDER.plan_integrations(self.ctx, self.profile, {"global": True}, self.backend())
         backend = self.backend()
@@ -574,7 +574,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
 
     def test_global_codex_installer_fails_closed_on_invalid_notify(self):
         path = self.home / ".codex/config.toml"
-        path.parent.mkdir()
+        path.parent.mkdir(exist_ok=True)
         path.write_text('notify = "invalid"\nmodel = "custom"\n', encoding="utf-8")
         before = snapshot(self.root)
         with self.assertRaises(ValueError):
@@ -583,7 +583,8 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
 
     def test_global_installer_plans_hooks_for_each_given_home_without_writing(self):
         extra = self.root / "extra-home"
-        extra.mkdir()
+        extra.mkdir(exist_ok=True)
+        with_ai_tools(extra)
         before = snapshot(self.root)
         for home in (self.home, extra):
             profile = IntegrationProfile(self.profile.platform, self.profile.launcher, home)

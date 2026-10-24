@@ -48,6 +48,13 @@ class Backend:
         return quiet()
 
 
+def with_ai_tools(home: Path) -> Path:
+    """The configuration folders of every AI tool the product can connect to: planning skips a tool that is not on the computer."""
+    for name in (".claude", ".codex", ".gemini", ".cursor", ".codeium", "AppData/Roaming/Claude"):
+        (home / name).mkdir(parents=True, exist_ok=True)
+    return home
+
+
 class IntegrationFixture:
 
     def setUp(self):
@@ -57,6 +64,7 @@ class IntegrationFixture:
         self.app, self.data, self.vault, self.home = [self.root / name for name in ('app', 'data', 'Türkçe 🧠 Vault', 'home')]
         for path in (self.app, self.vault, self.home):
             path.mkdir()
+        with_ai_tools(self.home)
         self.ctx = AppContext(AppPaths(self.app, self.data, self.vault, '93e9e921-3334-4a6a-a381-1d4c42a9d405'), {'integrations': {}, 'preferences': {'summary_provider': 'codex'}}, ResourceCatalog())
         self.profile = IntegrationProfile('windows-native', (str(self.app / 'respected-brain.exe'),), self.home)
 

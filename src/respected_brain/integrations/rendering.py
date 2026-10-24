@@ -269,8 +269,7 @@ def mcp_client_of(path):
 def detect_clients(profile):
     """Which AI clients have a configuration folder/file on this computer (read-only)."""
     home = profile.user_home
-    present = {path: Path(path).exists() for path in mcp_destinations(profile)}
-    storage_hit = any(mcp_client_of(path) == "vscode-agents" and ok for path, ok in present.items())
+    storage_hit = any(mcp_client_of(path) == "vscode-agents" for path in mcp_destinations(profile))  # listed only when the extension's folder exists
     appdata = home / ("AppData/Roaming" if profile.platform.startswith("windows") else ".config")
     return {"claude": (home / ".claude").is_dir() or (home / ".claude.json").is_file(), "codex": (home / ".codex").is_dir(),
             "gemini": (home / ".gemini").is_dir(), "antigravity": (home / ".gemini").is_dir(), "cursor": (home / ".cursor").is_dir(),
@@ -311,8 +310,13 @@ def plan_integrations(ctx, profile, desired, backend, planned_keys=None):
         return ()
     validate_profile(ctx, profile)
     planner = _Planner(backend)
+    # a tool that is not on this computer is left alone: creating its folders would make it look installed afterwards
+    found = {client for client, there in detect_clients(profile).items() if there}
+
+    def chosen(key="clients"):
+        return selected_clients(desired, key) & found
     if desired.get("global"):
-        clients = selected_clients(desired)
+        clients = chosen()
         writes, _ = _global_writes(ctx, profile, planner, tuple(p for p in SUPPORTED if p in {CLIENTS[c] for c in clients}))
         for key, content in writes:
             planner.put("file", key, content)
@@ -320,7 +324,7 @@ def plan_integrations(ctx, profile, desired, backend, planned_keys=None):
         argv = launch_argv(ctx, profile, "mcp")
         entry = {"command": argv[0], "args": argv[1:]}
         for path in mcp_destinations(profile):
-            if mcp_client_of(path) not in selected_clients(desired, "mcp_clients"):
+            if mcp_client_of(path) not in chosen("mcp_clients"):
                 continue
             document = planner.object(path, "mcp")
             servers = document.setdefault("mcpServers", {})
@@ -336,7 +340,7 @@ def plan_integrations(ctx, profile, desired, backend, planned_keys=None):
                 entry_for_path = entry
             servers[MCP_SERVER] = entry_for_path
             planner.put("mcp", path, json.dumps(document, ensure_ascii=False, indent=2) + "\n")
-    if desired.get("mcp") and "antigravity" in selected_clients(desired, "mcp_clients") and (profile.user_home / ".gemini").is_dir():
+    if desired.get("mcp") and "antigravity" in chosen("mcp_clients"):
         settings = identity_settings(ctx)
         directory = profile.user_home / ".gemini/antigravity-ide/mcp" / MCP_SERVER
         instructions = f"# Respected Brain MCP Server\n\nBu sunucu, kalıcı ikinci beyin vault'una ({ctx.paths.vault_root.name}) doğrudan erişim sağlar.\nBaşka projelerde çalışırken mimari kararları, kuralları veya geçmiş bilgileri sorgulamak için bu araçları kullan.\n"

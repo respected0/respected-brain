@@ -68,7 +68,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
     def test_native_hooks_and_notify_preserve_existing_user_data(self):
         renderer = importlib.import_module('respected_brain.integrations.rendering')
         codex = self.home / '.codex'
-        codex.mkdir()
+        codex.mkdir(exist_ok=True)
         original = 'My own rules\n'
         (codex / 'AGENTS.md').write_text(original, encoding='utf-8')
         (codex / 'config.toml').write_text('model = "custom"\nnotify = ["other-notifier.exe", "turn-ended"]\n', encoding='utf-8')
@@ -92,7 +92,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
     def test_native_mcp_preserves_unknown_servers_and_settings(self):
         renderer = importlib.import_module('respected_brain.integrations.rendering')
         path = self.home / '.cursor/mcp.json'
-        path.parent.mkdir()
+        path.parent.mkdir(exist_ok=True)
         path.write_text(json.dumps({'mcpServers': {'other': {'command': 'other.exe'}}, 'setting': {'keep': True}}), encoding='utf-8')
         changes = renderer.plan_integrations(self.ctx, self.profile, {'mcp': True}, self.backend())
         row = next(row for row in changes if row.key == str(path))
@@ -186,7 +186,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
 
     def test_mcp_antigravity_schemas_are_planned_without_search_cache_creation(self):
         from respected_brain.integrations.rendering import plan_integrations
-        (self.home / ".gemini").mkdir()
+        (self.home / ".gemini").mkdir(exist_ok=True)
         before = snapshot(self.root)
         changes = plan_integrations(self.ctx, self.profile, {"mcp": True}, self.backend())
         names = {Path(row.key).name for row in changes}
@@ -321,7 +321,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
     def test_mcp_registration_preserves_unknown_entry_fields(self):
         from respected_brain.integrations.rendering import plan_integrations
         path = self.home / ".cursor/mcp.json"
-        path.parent.mkdir()
+        path.parent.mkdir(exist_ok=True)
         entry = {"command": str(self.app / "respected-brain.exe"), "args": ["mcp", "--vault-id", self.ctx.paths.vault_id], "env": {"USER_SETTING": "keep"}, "disabled": False}
         path.write_text(json.dumps({"mcpServers": {"respected-brain": entry}}), encoding="utf-8")
         rows = plan_integrations(self.ctx, self.profile, {"mcp": True}, self.backend())
@@ -355,7 +355,7 @@ class FoundationIntegrationsTest(IntegrationFixture, unittest.TestCase):
     def test_global_hooks_refuse_spoofed_managed_flags_and_preserve_empty_user_groups(self):
         from respected_brain.integrations.rendering import plan_integrations
         path=self.home / ".claude/settings.json"
-        path.parent.mkdir()
+        path.parent.mkdir(exist_ok=True)
         path.write_text(json.dumps({"hooks":{"SessionStart":[{"hooks":[{"command":"third-party.exe --global-hook --provider claude"}]}]}}),encoding="utf-8")
         with self.assertRaises(OwnershipConflict):
             plan_integrations(self.ctx,self.profile,{"global":True},self.backend())
