@@ -31,7 +31,7 @@ Zamanlayıcı'ya ve masaüstüne dokunmaz.
    - `data` klasörünü ve `config.json` (ayarlar, kasa kaydı) ile `install-manifest.json` (hangi dosyanın kime ait olduğu)
      dosyalarını yazar.
    - Kasa klasörünü şablondan oluşturur (bölüm 5). Klasör **boşsa ya da yoksa** oluşturur. İçinde sizin notlarınız
-     varsa kurucu bunu **kasa sayfasında baştan** reddeder ("Boş ya da yeni bir klasör seç"); sessiz kurulumda hiçbir şey
+     varsa kurucu bunu **kasa sayfasında baştan** reddeder ("Boş ya da yeni bir klasör seçin"); sessiz kurulumda hiçbir şey
      kurmadan hata koduyla (7) durur. Daha önce Brain'in kasası olmuş bir klasörse (içinde `.respected.json` varsa)
      yeniden kaydeder, notlarına dokunmaz.
    - Seçtiğiniz bağlantıları bölüm 3-4'teki kurallarla yazar.

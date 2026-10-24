@@ -44,16 +44,16 @@ InfoBeforeFile=brain_info.txt
 Name: "turkish"; MessagesFile: "compiler:Languages\Turkish.isl"
 
 [Messages]
-turkish.WizardInfoBefore=Bilgisayarında neler olur
-turkish.InfoBeforeLabel=Kurulumda, kullanırken, güncellemede ve kaldırırken neler olacağını aşağıda okuyabilirsin.
+turkish.WizardInfoBefore=Bilgisayarınızda neler olur
+turkish.InfoBeforeLabel=Kurulumda, kullanırken, güncellemede ve kaldırırken neler olacağını aşağıda okuyabilirsiniz.
 turkish.WizardInfoAfter=Yenilikler
 turkish.InfoAfterLabel=Bu sürümde neler değişti?
 turkish.InfoAfterClickLabel=Devam etmek için Sonraki'ne tıklayın.
-turkish.WelcomeLabel1=Respected Brain'e hoş geldin
-turkish.WelcomeLabel2=Brain, AI araçlarının ortak hafızasını not kasanda tutar.%n%nYönetici izni gerekmez; mevcut notlarının üzerine yazılmaz.%n%nDevam etmek için Sonraki'ne tıkla.
+turkish.WelcomeLabel1=Respected Brain'e hoş geldiniz
+turkish.WelcomeLabel2=Brain, AI araçlarının ortak hafızasını not kasanızda tutar.%n%nYönetici izni gerekmez; mevcut notlarınızın üzerine yazılmaz.%n%nDevam etmek için Sonraki'ne tıklayın.
 turkish.FinishedHeadingLabel=Respected Brain hazır
-turkish.FinishedLabel=Kurulum bitti.%n%nSon bir adım: kullandığın AI aracını yeniden başlat ve aracın ilgili yerinden (eklentiler, hook'lar) Brain'in istediği onayları ver. Onaylamazsan hafıza yazılmaz.
-turkish.FinishedLabelNoIcons=Kurulum bitti.%n%nSon bir adım: kullandığın AI aracını yeniden başlat ve aracın ilgili yerinden (eklentiler, hook'lar) Brain'in istediği onayları ver. Onaylamazsan hafıza yazılmaz.
+turkish.FinishedLabel=Kurulum bitti.%n%nSon bir adım: kullandığınız AI aracını yeniden başlatın ve aracın ilgili yerinden (eklentiler, hook'lar) Brain'in istediği onayları verin. Onaylamazsanız hafıza yazılmaz.
+turkish.FinishedLabelNoIcons=Kurulum bitti.%n%nSon bir adım: kullandığınız AI aracını yeniden başlatın ve aracın ilgili yerinden (eklentiler, hook'lar) Brain'in istediği onayları verin. Onaylamazsanız hafıza yazılmaz.
 ; the ready page's button is "Kur", not "Sonraki"
 turkish.ReadyLabel2a=Kuruluma devam etmek için Kur düğmesine, ayarları gözden geçirmek ya da değiştirmek için Önceki düğmesine tıklayın.
 turkish.ReadyLabel2b=Kuruluma başlamak için Kur düğmesine tıklayın.
@@ -217,7 +217,7 @@ begin
     Exec(HubExe(), '--install=' + HubProductId, '', SW_SHOWNORMAL, ewNoWait, Code)
   else if not WizardSilent then begin
     ShellExec('open', HubReleasesPage, '', '', SW_SHOWNORMAL, ewNoWait, Code);
-    MsgBox('Respected Hub indirilip kurulamadı. Açılan sayfadan Hub kurucusunu (Setup.exe) indirip çalıştır; Hub, ' + ProductName + ' ürününü senin için kuracak.', mbInformation, MB_OK);
+    MsgBox('Respected Hub indirilip kurulamadı. Açılan sayfadan Hub kurucusunu (Setup.exe) indirip çalıştırın; Hub, ' + ProductName + ' ürününü sizin için kuracak.', mbInformation, MB_OK);
   end;
 end;
 
@@ -363,8 +363,8 @@ begin
   Result := '';
   Path := RemoveBackslashUnlessRoot(VaultPage.Values[0]);
   if Maintenance or not DirExists(Path) or FileExists(Path + '\.respected.json') or FolderIsEmpty(Path) then Exit;
-  Result := 'Seçtiğin klasörde başka dosyalar var ve Brain kasası değil:' + #13#10 + Path + #13#10#13#10 +
-    'Brain mevcut notlarının üzerine yazmaz. Boş ya da yeni bir klasör seç; örneğin bu klasörün içinde yeni bir "RespectedOS" klasörü aç.';
+  Result := 'Seçtiğiniz klasörde başka dosyalar var ve Brain kasası değil:' + #13#10 + Path + #13#10#13#10 +
+    'Brain mevcut notlarınızın üzerine yazmaz. Boş ya da yeni bir klasör seçin; örneğin bu klasörün içinde yeni bir "RespectedOS" klasörü açın.';
 end;
 
 function PrepareToInstall(var NeedsRestart: Boolean): String;
@@ -396,13 +396,13 @@ end;
 
 procedure CreateSharedPages;
 begin
-  ChoicePage := NewCardPage(0, wpWelcome, 'Kurulum yolu', 'İkisi de aynı ürünü kurar; fark, güncellemeleri ve ayarları nereden yöneteceğindir.', False);
+  ChoicePage := NewCardPage(0, wpWelcome, 'Kurulum yolu', 'İkisi de aynı ürünü kurar; fark, güncellemeleri ve ayarları nereden yöneteceğinizdir.', False);
   AddCard(ChoicePage, 0, #$E80F, 'Respected Hub ile devam et (önerilen)', 'Kurulum, güncelleme ve ayarlar görsel arayüzden yönetilir.', True);
   AddCard(ChoicePage, 0, #$E756, 'Yalnızca ' + ProductName, 'Hub olmadan; ayarlar bu kurucudan ya da komutlarla değiştirilir.', False);
-  MaintenancePage := NewCardPage(1, ChoicePage.ID, ProductName + ' kurulu', 'Ayarların ve not kasan her seçenekte korunur.', False);
+  MaintenancePage := NewCardPage(1, ChoicePage.ID, ProductName + ' kurulu', 'Ayarlarınız ve not kasanız her seçenekte korunur.', False);
   AddCard(MaintenancePage, 1, #$E895, 'Onar / Güncelle', 'Programı bu kurucudaki sürümle (v{#AppVersion}) yeniler.', True);
-  AddCard(MaintenancePage, 1, #$E713, 'Ayarları değiştir', 'Programa dokunmadan ayarları yeniden seçersin.', False);
-  AddCard(MaintenancePage, 1, #$E74D, 'Kaldır', 'Programı kaldırır; sana sorarak ayarları ve verileri de siler.', False);
+  AddCard(MaintenancePage, 1, #$E713, 'Ayarları değiştir', 'Programa dokunmadan ayarları yeniden seçersiniz.', False);
+  AddCard(MaintenancePage, 1, #$E74D, 'Kaldır', 'Programı kaldırır; size sorarak ayarları ve verileri de siler.', False);
   DownloadPage := CreateDownloadPage('Hub indiriliyor', 'En güncel Respected Hub kurucusu indiriliyor...', @OnDownloadProgress);
 end;
 
@@ -525,21 +525,21 @@ begin
   TidyInfoPages;
   Maintenance := IsInstalled();
   CreateSharedPages;
-  IdentityPage := CreateInputQueryPage(MaintenancePage.ID, 'Kimlik', 'Seni ve asistanını tanıyalım',
+  IdentityPage := CreateInputQueryPage(MaintenancePage.ID, 'Kimlik', 'Sizi ve asistanınızı tanıyalım',
     'Üçü de isteğe bağlı; sonradan bu kurucudan, Hub''dan ya da "respected-brain config set" ile değiştirilebilir.');
   IdentityPage.Add('Adın:', False);
-  IdentityPage.Add('Asistanının adı (ör. Jarvis):', False);
+  IdentityPage.Add('Asistanınızın adı (ör. Jarvis):', False);
   IdentityPage.Add('Kısa tanıtım (ör. Yazılım geliştirici):', False);
-  VaultPage := CreateInputDirPage(IdentityPage.ID, 'Not kasası', 'Notların nerede saklanacak?',
-    'Boş veya yeni bir klasör seç. Mevcut notlarının üzerine yazılmaz ve kaldırırken kasan silinmez. Program kendisi sabit bir yere kurulur: ' + ExpandConstant('{localappdata}\Respected\RespectedBrain\app') + '.', False, '');
+  VaultPage := CreateInputDirPage(IdentityPage.ID, 'Not kasası', 'Notlarınız nerede saklanacak?',
+    'Boş veya yeni bir klasör seçin. Mevcut notlarınızın üzerine yazılmaz ve kaldırırken kasanız silinmez. Program kendisi sabit bir yere kurulur: ' + ExpandConstant('{localappdata}\Respected\RespectedBrain\app') + '.', False, '');
   VaultPage.Add('');
   VaultPage.Values[0] := CommandValue('VAULT', ExpandConstant('{userdocs}\RespectedOS'));
   IntegrationPage := NewCardPage(2, VaultPage.ID, 'Bağlantılar', 'Brain hangi araçlarla çalışsın? Hepsi isteğe bağlı, sonradan kapatılabilir.', True);
-  AddCard(IntegrationPage, 2, #$E8F1, 'Oturumları hafızaya yakala', 'Seçtiğin AI araçlarının oturumları hafızaya kaydedilir.', False);
-  AddCard(IntegrationPage, 2, #$E8D4, 'Hafıza MCP sunucusu', 'Seçtiğin AI araçları notlarını arayıp okuyabilir.', False);
+  AddCard(IntegrationPage, 2, #$E8F1, 'Oturumları hafızaya yakala', 'Seçtiğiniz AI araçlarının oturumları hafızaya kaydedilir.', False);
+  AddCard(IntegrationPage, 2, #$E8D4, 'Hafıza MCP sunucusu', 'Seçtiğiniz AI araçları notlarını arayıp okuyabilir.', False);
   AddCard(IntegrationPage, 2, #$E787, 'Sabah özeti görevi', 'Windows Görev Zamanlayıcı ile her sabah özet hazırlanır.', False);
-  AddCard(IntegrationPage, 2, #$E8A7, 'Masaüstü kısayolu', 'Not kasasını açar; kasayı Obsidian''da en az bir kez açmış olmalısın.', False);
-  ClientPage := CreateCustomPage(IntegrationPage.ID, 'AI araçları', 'Hangi araçlar? Bulunanlar işaretli gelir; sonradan Hub''dan değiştirebilirsin.');
+  AddCard(IntegrationPage, 2, #$E8A7, 'Masaüstü kısayolu', 'Not kasasını açar; kasayı Obsidian''da en az bir kez açmış olmalısınız.', False);
+  ClientPage := CreateCustomPage(IntegrationPage.ID, 'AI araçları', 'Hangi araçlar? Bulunanlar işaretli gelir; sonradan Hub''dan değiştirebilirsiniz.');
   ClientList := TNewCheckListBox.Create(ClientPage);
   ClientList.Parent := ClientPage.Surface;
   ClientList.SetBounds(0, 0, ClientPage.SurfaceWidth, ClientPage.SurfaceHeight);
@@ -619,7 +619,7 @@ begin
   end;
   // a connection that is on needs at least one tool
   if (CurPageID = ClientPage.ID) and ((CardChecked(2, 0) and (CollectClients(0, 4) = '')) or (CardChecked(2, 1) and (CollectClients(5, 10) = ''))) then begin
-    MsgBox('Açık bıraktığın bağlantı için en az bir araç seç ya da önceki sayfada o bağlantının işaretini kaldır.', mbInformation, MB_OK);
+    MsgBox('Açık bıraktığınız bağlantı için en az bir araç seçin ya da önceki sayfada o bağlantının işaretini kaldırın.', mbInformation, MB_OK);
     Result := False;
     Exit;
   end;
@@ -673,7 +673,7 @@ begin
           Exit;
         end;
       if UpdateBackedUp then RollBackUpdate('onarılamadı.');
-      FailInstall(ProductName + ' onarılamadı. Ürün kendi değişikliklerini geri aldı; kurucuyu yeniden çalıştırabilirsin.');
+      FailInstall(ProductName + ' onarılamadı. Ürün kendi değişikliklerini geri aldı; kurucuyu yeniden çalıştırabilirsiniz.');
     end;
     if UpdateBackedUp and HealthyBefore and not RunProduct('health', Output) then RollBackUpdate('güncellemeden sonra sağlıklı çalışmadı.');
     CommitUpdate;
@@ -683,7 +683,7 @@ begin
     Exit;
   end;
   if not RunProduct('setup --vault "' + VaultPage.Values[0] + '"' + PageSettings() + SwitchSettings(), Output) then
-    FailInstall(ProductName + ' kurulumu tamamlanamadı. Ürün kendi değişikliklerini geri aldı; kurucuyu yeniden çalıştırabilirsin.');
+    FailInstall(ProductName + ' kurulumu tamamlanamadı. Ürün kendi değişikliklerini geri aldı; kurucuyu yeniden çalıştırabilirsiniz.');
 end;
 
 { ---- removal ---- }
@@ -695,7 +695,7 @@ begin
   StopRunningProduct;
   PurgeData := CommandValue('PURGE', '') <> '';
   if not UninstallSilent then
-    PurgeData := MsgBox('Ayarlar ve çalışma verileri de silinsin mi?' + #13#10 + '(Not kasan hiçbir durumda silinmez.)', mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES;
+    PurgeData := MsgBox('Ayarlar ve çalışma verileri de silinsin mi?' + #13#10 + '(Not kasanız hiçbir durumda silinmez.)', mbConfirmation, MB_YESNO or MB_DEFBUTTON2) = IDYES;
 end;
 
 function UninstallArgs(Param: String): String;
