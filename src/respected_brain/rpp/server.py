@@ -121,6 +121,10 @@ def _op_health(operation_id, data_root, payload):
     entry = (document.get("vaults") or {}).get(document.get("active_vault_id")) if document else None
     checks.append({"name": "vault_registered", "ok": bool(entry),
                    "detail": f"Vault registered: {entry['path']}" if entry else "No active vault configured"})
+    if entry:  # a notes folder on a drive that is unplugged (or was moved) is not a healthy product
+        present = Path(entry["path"]).is_dir()
+        checks.append({"name": "vault_folder", "ok": present,
+                       "detail": "Vault folder is present" if present else f"Vault folder not found (drive disconnected?): {entry['path']}"})
     if not writable or document is None:
         status = "unhealthy"
     elif all(check["ok"] for check in checks):

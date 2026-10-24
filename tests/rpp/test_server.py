@@ -74,6 +74,14 @@ class RppTest(unittest.TestCase):
         self.assertEqual(names, ["data_root_writable", "config_loads", "vault_registered"])
         self.assertEqual(response["result"]["status"], "degraded")
 
+    def test_health_notices_a_vault_folder_that_is_gone_and_is_healthy_when_it_is_back(self):
+        self.with_vault()
+        gone = self.call({"op": "health"})["result"]
+        self.assertEqual([check["name"] for check in gone["checks"]][-1], "vault_folder")
+        self.assertEqual(gone["status"], "degraded")
+        (self.root.parent / "vault").mkdir()
+        self.assertEqual(self.call({"op": "health"})["result"]["status"], "healthy")
+
     def test_schema_is_the_product_settings_schema_in_turkish(self):
         fields = self.call({"op": "settings.schema"})["result"]["fields"]
         self.assertEqual(fields, product_settings.schema())

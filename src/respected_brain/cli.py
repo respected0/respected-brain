@@ -292,10 +292,19 @@ def _operation_output(result) -> int:
     return 0 if result.success else 1
 
 
+def _hook_fails_open(args, error) -> int | None:
+    """AI tools read a hook's exit code 2 as "block this prompt / do not stop": a missing vault (an unplugged drive) must never do that."""
+    if getattr(args, "command", None) != "hook":
+        return None
+    print(f"respected-brain hook: {error}", file=sys.stderr)
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     from .core.platform import prepare_process
     prepare_process()
     parser = _parser()
+    args = None
     try:
         args = parser.parse_args(argv)
         if args.command is None:
@@ -305,11 +314,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     except SystemExit as error:
         return int(error.code)
     except SettingsError as error:
+        if (code := _hook_fails_open(args, error)) is not None:
+            return code
         _print({"error": {"code": "INVALID_SETTINGS", "message": str(error), "hint": "Geçerli anahtarlar ve değerler için: respected-brain config"}})
         return 2
     except (SelectionError, ValueError) as error:
+        if (code := _hook_fails_open(args, error)) is not None:
+            return code
         _print({"error": {"code": "USAGE", "message": str(error), "hint": "respected-brain --help"}})
         return 2
     except (FoundationError, OSError) as error:
+        if (code := _hook_fails_open(args, error)) is not None:
+            return code
         _print({"error": {"code": "FAILED", "message": str(error), "hint": "İşlem geri alındı; ayrıntı için mesaja bakın."}})
         return 1

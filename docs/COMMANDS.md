@@ -11,6 +11,8 @@ Ortak kurallar (üç ürün aynı, bkz. [PRODUCT_CONTRACT.md](PRODUCT_CONTRACT.m
 - Kasa isteyen komutlar `--vault <yol>` ya da `--vault-id <UUID>` alır (ikisi birden olmaz); verilmezse
   `RESPECTED_VAULT_PATH`, o da yoksa etkin kasa kullanılır.
 - `hook` ve `mcp` komutlarının stdout'u protokol çıktısıdır; tanı mesajları stderr'e ve `logs/` klasörüne gider.
+- `hook` hata verse bile (ör. kasa USB'den çıkarılmış) çıkış kodu `0`'dır: AI araçları `2`'yi "istemi engelle / durma" diye okur.
+  `health`, kasa klasörü yerinde değilse `vault_folder` denetimiyle `degraded` döner.
 
 ## Kurulum ve bakım
 

@@ -38,6 +38,13 @@ class FoundationCliTest(unittest.TestCase):
         self.assertEqual((module.returncode, module.stdout), (entry.returncode, entry.stdout))
         self.assertIn(self.ctx.paths.vault_id, module.stdout)
 
+    def test_a_hook_never_blocks_the_ai_tool_when_the_vault_is_gone(self):
+        # exit code 2 means "block this prompt / do not stop" to AI tools: an unplugged drive must not do that
+        code, out, err = self.call(["hook", "--vault", str(self.root / "unplugged"), "--provider", "claude", "--event", "start"])
+        self.assertEqual(code, 0)
+        self.assertIn("respected-brain hook", err)
+        self.assertEqual(self.call(["search", "--vault", str(self.root / "unplugged"), "x"])[0], 2)
+
     def test_vault_selector_validation(self):
         before = snapshot(self.root)
         self.assertEqual(self.call(["compile", "--vault", str(self.root / "missing")])[0], 2)
