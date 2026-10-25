@@ -4,9 +4,13 @@
 *.bat text eol=crlf
 *.cmd text eol=crlf
 *.iss text eol=crlf
+# Shown as pages of the Windows installer (Inno InfoBeforeFile / InfoAfterFile)
+packaging/windows/*_info.txt text eol=crlf
+packaging/windows/UPDATE_NOTES.md text eol=crlf
 
 # Binary files (prevent CRLF transformations and diff corruption)
 *.png binary
+*.bmp binary
 *.jpg binary
 *.jpeg binary
 *.gif binary
