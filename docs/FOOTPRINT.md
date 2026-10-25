@@ -112,7 +112,8 @@ olmalı.
 | Cursor | `~\.cursor\mcp.json` | |
 | Windsurf | `~\.codeium\windsurf\mcp_config.json` | Yalnızca MCP, hook yok |
 | Cline / Roo | VS Code `globalStorage` altındaki `cline_mcp_settings.json` / `roo_mcp_settings.json` | Eklenti klasörü varsa |
-| Codex, Gemini CLI | **yazılmaz** | Brain bu ikisine MCP kaydı eklemez; hook ve eklenti yolunu kullanır |
+| Codex | Brain'in yerel eklenti paketinde `.mcp.json` (`DataRoot\vaults\<UUID>\plugin\plugin\.mcp.json`) | `config.toml`'a MCP yazılmaz; MCP eklentiyle gelir, bu yüzden Codex'in Kaynaklar'da da açık olması gerekir |
+| Gemini CLI | **yazılmaz** | Brain Gemini CLI'ya MCP kaydı eklemez; hook yolunu kullanır |
 
 `mcp_write` ayarı kapalıyken (varsayılan) araçlar kasadan yalnızca **okur**. Açarsanız yalnızca
 `🔮 850-Companion\Inbox\MCP` içine geri alınabilir not yazabilirler.

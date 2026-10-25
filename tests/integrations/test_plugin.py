@@ -81,3 +81,21 @@ class InstallPluginsTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CodexMcpBundleTest(unittest.TestCase):
+    def _files(self, codex_mcp):
+        import json
+        from pathlib import Path
+        from types import SimpleNamespace
+        from respected_brain.integrations.plugin import bundle_writes
+        ctx = SimpleNamespace(paths=SimpleNamespace(data_root=Path("data"), vault_id="v"))
+        return {path.name if path.name == ".mcp.json" else path.parent.name + "/" + path.name: text for path, text in bundle_writes(ctx, {}, {}, [], codex_mcp)}, json
+
+    def test_codex_plugin_carries_the_mcp_server_only_when_asked(self):
+        files, json = self._files({"command": "brain.exe", "args": ["mcp"]})
+        self.assertEqual(json.loads(files[".mcp.json"]), {"mcpServers": {"respected-brain": {"command": "brain.exe", "args": ["mcp"]}}})
+        self.assertEqual(json.loads(files[".codex-plugin/plugin.json"])["mcpServers"], "./.mcp.json")
+        files, json = self._files(None)
+        self.assertNotIn(".mcp.json", files)
+        self.assertNotIn("mcpServers", json.loads(files[".codex-plugin/plugin.json"]))

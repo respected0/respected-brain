@@ -43,7 +43,7 @@ def skill_writes(ctx, roots):
             contents[path.relative_to(override).as_posix()] = path.read_text(encoding="utf-8")
     return [(base / name, content) for name, content in sorted(contents.items()) for base in roots]
 
-def _global_writes(ctx, profile, planner, providers=SUPPORTED) -> tuple[list[tuple[Path, str | None]], list[Path]]:
+def _global_writes(ctx, profile, planner, providers=SUPPORTED, codex_mcp=None) -> tuple[list[tuple[Path, str | None]], list[Path]]:
     writes: list[tuple[Path, str | None]] = []
     touched: list[Path] = []
     vault, home, platform = ctx.paths.vault_root, profile.user_home, profile.platform
@@ -105,7 +105,9 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED) -> tuple[list[tup
     }
     root = bundle_root(ctx)
     if {"claude", "codex"} & set(providers):
-        writes += bundle_writes(ctx, merge_grouped_hooks({}, "claude", claude_commands, async_events=frozenset({"Stop"})), merge_grouped_hooks({}, "codex", codex_commands), skill_writes(ctx, [root / "plugin/skills"]))
+        writes += bundle_writes(ctx, merge_grouped_hooks({}, "claude", claude_commands, async_events=frozenset({"Stop"})), merge_grouped_hooks({}, "codex", codex_commands), skill_writes(ctx, [root / "plugin/skills"]), codex_mcp)
+        if not codex_mcp and planner.read(root / "plugin/.mcp.json") is not None:  # MCP for Codex was switched off: take our file back out of the plugin
+            writes += [(root / "plugin/.mcp.json", None)]
     def retire_skills(roots):
         """Loose skill copies from before the plugin: remove only the ones still byte-identical to the package."""
         retired = []
@@ -317,7 +319,12 @@ def plan_integrations(ctx, profile, desired, backend, planned_keys=None):
         return selected_clients(desired, key) & found
     if desired.get("global"):
         clients = chosen()
-        writes, _ = _global_writes(ctx, profile, planner, tuple(p for p in SUPPORTED if p in {CLIENTS[c] for c in clients}))
+        # Codex gets its memory MCP server through the plugin (it needs Sources on for Codex too): config.toml is already written as the hooks' file
+        codex_mcp = None
+        if desired.get("mcp") and "codex" in chosen("mcp_clients"):
+            argv = launch_argv(ctx, profile, "mcp")
+            codex_mcp = {"command": argv[0], "args": argv[1:]}
+        writes, _ = _global_writes(ctx, profile, planner, tuple(p for p in SUPPORTED if p in {CLIENTS[c] for c in clients}), codex_mcp)
         for key, content in writes:
             planner.put("file", key, content)
     if desired.get("mcp"):

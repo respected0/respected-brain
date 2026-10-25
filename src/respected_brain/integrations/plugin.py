@@ -22,15 +22,20 @@ def _json(document):
     return json.dumps(document, ensure_ascii=False, indent=2) + "\n"
 
 
-def bundle_writes(ctx, claude_hooks, codex_hooks, skills):
-    """Marketplace + plugin files; `skills` are (path under plugin/skills, text) pairs. Version tracks content so clients refresh their copy."""
+def bundle_writes(ctx, claude_hooks, codex_hooks, skills, codex_mcp=None):
+    """Marketplace + plugin files; `skills` are (path under plugin/skills, text) pairs. Version tracks content so clients refresh their copy.
+
+    `codex_mcp` ({"command", "args"}) makes the Codex plugin carry the memory MCP server (Codex reads its config.toml only through its own CLI)."""
     plugin = bundle_root(ctx) / "plugin"
     files = {plugin / "hooks/claude.json": _json(claude_hooks), plugin / "hooks/codex.json": _json(codex_hooks), **dict(skills)}
+    if codex_mcp:
+        files[plugin / ".mcp.json"] = _json({"mcpServers": {PLUGIN: codex_mcp}})
     digest = hashlib.sha256(json.dumps({str(k.relative_to(plugin)): v for k, v in sorted(files.items())}, sort_keys=True).encode()).hexdigest()[:8]
     version = f"{__version__}+{digest}"
     files[plugin / ".claude-plugin/plugin.json"] = _json({"name": PLUGIN, "version": version, "description": DESCRIPTION, "author": {"name": "Respected"}, "hooks": "./hooks/claude.json"})
     files[plugin / ".codex-plugin/plugin.json"] = _json({
         "name": PLUGIN, "version": version, "description": DESCRIPTION, "skills": "./skills/", "hooks": "./hooks/codex.json",
+        **({"mcpServers": "./.mcp.json"} if codex_mcp else {}),
         "interface": {"displayName": DISPLAY, "shortDescription": DESCRIPTION, "developerName": "Respected", "category": "Productivity", "capabilities": ["Instructions", "Lifecycle hooks"]},
     })
     files[bundle_root(ctx) / ".claude-plugin/marketplace.json"] = _json({
