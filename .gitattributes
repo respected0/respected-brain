@@ -1,44 +1,8 @@
-# ==============================================================================
-# Git Line Endings & Encoding Attributes
-# ==============================================================================
-
-# Set default behavior: auto-detect text files and normalize line endings to LF on commit
+# Text is LF everywhere (repository and working tree); only Windows command scripts keep CRLF.
 * text=auto eol=lf
-
-# Configuration and repository metadata (always LF)
-.gitattributes text eol=lf
-.gitignore text eol=lf
-.editorconfig text eol=lf
-
-# POSIX Shell & Linux scripts (LF required for POSIX shebang execution)
-*.sh text eol=lf
-*.command text eol=lf
-*.bash text eol=lf
-*.zsh text eol=lf
-
-# Windows PowerShell & Batch scripts (CRLF standard)
 *.ps1 text eol=crlf
-*.psm1 text eol=crlf
-*.psd1 text eol=crlf
 *.bat text eol=crlf
 *.cmd text eol=crlf
-
-# Source code & templates (always LF)
-*.py text eol=lf
-*.json text eol=lf
-*.yml text eol=lf
-*.yaml text eol=lf
-*.toml text eol=lf
-*.ini text eol=lf
-*.cfg text eol=lf
-*.base text eol=lf
-
-# Documentation & Markdown (always LF)
-*.md text eol=lf
-*.mdc text eol=lf
-*.txt text eol=lf
-*.rst text eol=lf
-*.svg text eol=lf
 
 # Binary files (prevent CRLF transformations and diff corruption)
 *.png binary
