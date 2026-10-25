@@ -74,7 +74,11 @@ def plan_connections(ctx, backend, previous):
     owned = {(change.kind, change.key): change for change in retained}
     for change in changes:
         prior = owned.get((change.kind, change.key))
-        owned[(change.kind, change.key)] = ExternalChange(change.kind, change.key, undo_external(prior, change.before) if prior else change.before, change.after)
+        try:
+            baseline = undo_external(prior, change.before) if prior else change.before
+        except OwnershipConflict:  # the client rewrote our entry (Codex took over `notify`, dropped its tables): nothing of ours is left to undo, the file as it is now becomes the baseline
+            baseline = change.before
+        owned[(change.kind, change.key)] = ExternalChange(change.kind, change.key, baseline, change.after)
     return (*disabled, *changes), tuple(owned.values())
 
 

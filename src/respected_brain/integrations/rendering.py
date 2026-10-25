@@ -78,6 +78,17 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED, codex_mcp=None) -
             return False
         expected = codex_notify_argv(vault, platform)
         return argv[:len(expected)] == expected
+    def _wrapped_codex_notify(argv):
+        """Another tool (the Codex app's computer-use) took `notify` over and calls ours as its `--previous-notify`: capture still works, replacing it would loop."""
+        expected = codex_notify_argv(vault, platform)
+        for item in argv or ():
+            try:
+                inner = json.loads(item)
+            except ValueError:
+                continue
+            if isinstance(inner, list) and inner[:len(expected)] == expected:
+                return True
+        return False
     def copy_skills(vault, roots):
         writes = skill_writes(ctx, roots)
         for target, _content in writes:
@@ -177,7 +188,10 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED, codex_mcp=None) -
                 "dizisini tek satıra getirip yeniden deneyin"
             )
         chain_path = ctx.paths.state_dir / "codex-notify-chain.json"
-        if existing_notify and not _managed_codex_notify(existing_notify):
+        wrapped = bool(existing_notify) and not _managed_codex_notify(existing_notify) and _wrapped_codex_notify(existing_notify)
+        if wrapped:
+            pass
+        elif existing_notify and not _managed_codex_notify(existing_notify):
             notify_cmd += ["--chain-file", _runtime_path(chain_path, platform)]
             writes += [(chain_path, json.dumps({"argv": existing_notify}, ensure_ascii=False, indent=2) + "\n")]
             touched += [chain_path]
@@ -187,7 +201,7 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED, codex_mcp=None) -
             if not isinstance(chain_argv, list) or not chain_argv or not all(isinstance(item, str) for item in chain_argv):
                 raise ValueError(f"geçersiz Codex notify zinciri: {chain_path}")
             notify_cmd += ["--chain-file", _runtime_path(chain_path, platform)]
-        updated_toml = register_codex(update_codex_config_toml(existing_toml, notify_cmd), str(root))
+        updated_toml = register_codex(existing_toml if wrapped else update_codex_config_toml(existing_toml, notify_cmd), str(root))
         writes += [(config_toml_path, updated_toml)]
         touched += [config_toml_path]
 

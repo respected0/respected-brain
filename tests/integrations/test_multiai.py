@@ -544,6 +544,20 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(json.loads(chain.read_text(encoding="utf-8")), {"argv": original})
         self.assertIn('model = "custom"', (codex / "config.toml").read_text(encoding="utf-8"))
 
+    def test_global_codex_installer_leaves_notify_alone_when_another_tool_wraps_ours(self):
+        rows = RENDER.plan_integrations(self.ctx, self.profile, {"global": True}, self.backend())
+        backend = self.backend()
+        for row in rows:
+            backend.apply(row)
+        path = self.home / ".codex/config.toml"
+        ours = tomllib.loads(path.read_text(encoding="utf-8"))["notify"]
+        wrapper = ["computer-use.exe", "turn-ended", "--previous-notify", json.dumps(ours)]
+        path.write_text("notify = " + json.dumps(wrapper) + "\n", encoding="utf-8")  # the Codex app took `notify` over and drops our tables
+        again = RENDER.plan_integrations(self.ctx, self.profile, {"global": True}, backend)
+        text = next(row.after.decode() for row in again if Path(row.key) == path)
+        self.assertEqual(tomllib.loads(text)["notify"], wrapper)
+        self.assertIn('[plugins."respected-brain@respected-brain"]', text)
+
     def test_global_codex_installer_writes_valid_toml_for_non_bmp_vault_name(self):
         rows = RENDER.plan_integrations(self.ctx, self.profile, {"global": True}, self.backend())
         backend = self.backend()

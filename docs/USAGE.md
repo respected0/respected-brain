@@ -178,7 +178,7 @@ Eklenti paketi veri klasöründe durur ve kaldırınca silinir. Kurulum ve onar�
 `codex plugin add` komutlarını da çalıştırır (araç yoksa atlanır, başarısızlık kurulumu bozmaz). Claude'da eklentiye eklentiler bölümünden izin verilir; Codex eklenti hook'larını kurulumda ve
 içerikleri değiştiğinde ayrıca onaylatır (`/hooks`). Onaylanmadan çalışmazlar, onayı Brain vermez; sonra AI aracı yeniden başlatılır.
 
-Bilgisayarda kurulu olmayan (ayar klasörü bulunmayan) bir araca hiçbir şey yazılmaz ve klasörü oluşturulmaz; araç sonradan kurulunca bağlantı onarım ya da ayarları yeniden kaydetmekle yazılır.
+Bilgisayarda kurulu olmayan (ayar klasörü bulunmayan) bir araca hiçbir şey yazılmaz ve klasörü oluşturulmaz; araç sonradan kurulunca bağlantı onarım ya da ayarları yeniden kaydetmekle yazılır. Codex uygulaması `notify` ayarını kendi sarmalayıcısıyla değiştirip Brain'inkini `--previous-notify` olarak çağırıyorsa Brain bu ayara dokunmaz (oturum yakalama sürer, çift çağrı döngüsü olmaz); araç Brain'in kayıtlarını kendi yeniden yazdığında onarım, kullanıcı değişikliği saymadan o dosyayı olduğu hâliyle baz alır ve eksik kayıtları geri ekler.
 
 Claude Code, Codex ve Antigravity gerçek oturumlarla doğrulandı (Windows; Codex'te hook'lar onaylandıktan sonra); Gemini CLI ve Cursor test verileriyle sınandı: deneysel sayın. Bağlantı açıkken
 ürün o aracın ayar dosyasına yalnızca kendi girdilerini ekler; sizin ve başka araçların girdileri korunur, kapatınca
