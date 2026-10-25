@@ -121,16 +121,16 @@ def _find(lines: list[str], chunk: list[str]) -> int:
     return -1
 
 
-def _revert_text(current: bytes, ops: list[dict], created_by_us: bool) -> bytes:
+def _revert_text(current: bytes, ops: list[dict]) -> bytes:
     lines = _lines(current)
     for op in reversed(ops):
         added, removed = op["after"], op["before"]
         if added:
             at = _find(lines, added)
             if at < 0:
-                # A block we inserted into a file that existed: if none of its lines is left the user removed it - nothing to
-                # undo. Lines we replaced, a whole file we created, or a partly edited block: someone else's content - conflict.
-                if removed or created_by_us or any(line.strip() and line in lines for line in added):
+                # Nothing of what we wrote is left (the user or the client removed or rewrote it, e.g. Codex taking `notify` over):
+                # nothing to undo, and what stands there now is not ours to put back over. A partly edited block is a conflict.
+                if any(line.strip() and line in lines for line in added):
                     raise DeltaConflict("text")
                 continue
             lines[at:at + len(added)] = removed
@@ -182,7 +182,7 @@ def revert(current: bytes | None, delta: bytes) -> bytes | None:
         return json.dumps(result, ensure_ascii=False, indent=2).encode("utf-8") + bytes([10])
     if current is None:
         return None
-    result = _revert_text(current, document["ops"], document["before_absent"])
+    result = _revert_text(current, document["ops"])
     if document["before_absent"] and not result.strip():
         return None
     return result

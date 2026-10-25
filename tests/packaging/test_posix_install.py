@@ -80,6 +80,23 @@ class FoundationPosixInstallTest(unittest.TestCase):
         self.assertEqual(changes, ())
         self.assertEqual(owned, rows)
 
+    def test_a_client_that_rewrote_our_entry_does_not_stop_the_refresh(self):
+        """Codex took `notify` over: nothing of ours is left to undo, so the file as it is now becomes the baseline instead of a conflict."""
+        ctx = self.install()
+        ConfigStore(ctx.paths.data_root).update(lambda value: value["integrations"].update({"global": True}))
+        from respected_brain.installation.ownership import OwnershipManifest
+        from respected_brain.installation.operations import plan_connections
+        from respected_brain.integrations.backend import ExternalChange
+        key = str(self.home / ".codex/config.toml")
+        prior = ExternalChange("file", key, b'notify = ["mine"]\n', b'notify = ["ours"]\n')
+        now = b'notify = ["wrapper", "--previous-notify", "[\\"ours\\"]"]\n'
+        planned = ExternalChange("file", key, now, now + b'[plugins."respected-brain@respected-brain"]\nenabled = true\n')
+        self.backend.records[("file", key)] = now
+        with patch("respected_brain.integrations.rendering.plan_integrations", return_value=(planned,)):
+            changes, owned = plan_connections(ctx, self.backend, OwnershipManifest(3, (), (prior,)))
+        self.assertEqual(changes, (planned,))
+        self.assertEqual([(row.key, row.before, row.after) for row in owned], [(key, now, planned.after)])
+
     def test_required_launcher_is_owned_independent_of_all_disabled_integrations(self):
         ctx = self.install()
         self.assertTrue(self.launcher.is_file(), "Linux install must create the required PATH launcher")

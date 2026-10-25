@@ -139,12 +139,20 @@ class FoundationOperationsTest(unittest.TestCase):
         self.assertEqual(note_hashes(self.vault), before)
 
     def test_owned_record_changed_by_user_is_retained(self):
-        self.owned_external(ExternalChange("mcp", "test", b"old", b"owned"))
-        self.backend.records[("mcp", "test")] = b"user"
+        self.owned_external(ExternalChange("mcp", "test", b'{"mode": "old"}', b'{"mode": "owned"}'))
+        self.backend.records[("mcp", "test")] = b'{"mode": "user"}'
         result = uninstall(self.ctx, backend=self.backend)
         self.assertFalse(result.success)
-        self.assertEqual(self.backend.read("mcp", "test"), b"user")
+        self.assertEqual(self.backend.read("mcp", "test"), b'{"mode": "user"}')
         self.assertIn("mcp:test", result.conflicts)
+
+    def test_text_record_another_tool_rewrote_is_left_alone_by_uninstall(self):
+        """Nothing of ours is left in the text (Codex took `notify` over): there is nothing to undo, so the uninstall goes through and the file stays as it is."""
+        self.owned_external(ExternalChange("mcp", "test", b"old\n", b"owned\n"))
+        self.backend.records[("mcp", "test")] = b"user\n"
+        result = uninstall(self.ctx, backend=self.backend)
+        self.assertTrue(result.success, result.conflicts)
+        self.assertEqual(self.backend.read("mcp", "test"), b"user\n")
 
     def test_disabled_owned_integrations_restore_original_records(self):
         change = ExternalChange("mcp", str(self.root / "home/.cursor/mcp.json"), b"user-original", b"managed")
@@ -156,12 +164,20 @@ class FoundationOperationsTest(unittest.TestCase):
         self.assertEqual(read_manifest(self.manifest_path).external, ())
 
     def test_disabling_user_changed_integration_is_a_conflict(self):
-        change = ExternalChange("mcp", str(self.root / "mcp.json"), None, b"managed")
+        change = ExternalChange("mcp", str(self.root / "mcp.json"), b'{"mode": "a"}', b'{"mode": "b"}')
         self.owned_external(change)
-        self.backend.records[(change.kind, change.key)] = b"edited"
+        self.backend.records[(change.kind, change.key)] = b'{"mode": "c"}'  # a value that existed before, changed by both sides
         result = repair(self.ctx, backend=self.backend)
         self.assertFalse(result.success)
-        self.assertEqual(self.backend.read(change.kind, change.key), b"edited")
+        self.assertEqual(self.backend.read(change.kind, change.key), b'{"mode": "c"}')
+
+    def test_disabling_a_text_record_another_tool_rewrote_leaves_it_alone(self):
+        change = ExternalChange("mcp", str(self.root / "mcp.toml"), None, b"managed\n")
+        self.owned_external(change)
+        self.backend.records[(change.kind, change.key)] = b"edited\n"
+        result = repair(self.ctx, backend=self.backend)
+        self.assertTrue(result.success, result.conflicts)
+        self.assertEqual(self.backend.read(change.kind, change.key), b"edited\n")
 
 
 if __name__ == "__main__":

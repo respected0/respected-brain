@@ -47,6 +47,20 @@ class PlannerConfigFileTest(unittest.TestCase):
         with self.assertRaises(delta.DeltaConflict):
             delta.revert(b'{"mode": "c"}', recorded)
 
+    def test_text_lines_another_tool_rewrote_are_left_alone_not_a_conflict(self):
+        """Codex took `notify` over and dropped our tables: nothing of ours is left, and the new value is not ours to put the old one over."""
+        before = b'model = "x"\nnotify = ["mine"]\n'
+        after = b'model = "x"\nnotify = ["ours"]\n[plugins.ours]\nenabled = true\n'
+        recorded = delta.make_delta(before, after)
+        current = b'model = "x"\nnotify = ["wrapper", "--previous-notify", "ours"]\n'
+        self.assertEqual(delta.revert(current, recorded), current)
+
+    def test_text_block_of_ours_is_still_removed_and_a_half_edited_one_is_a_conflict(self):
+        recorded = delta.make_delta(b"a = 1\n", b"a = 1\n[ours]\nenabled = true\nlevel = 2\n")
+        self.assertEqual(delta.revert(b"a = 1\n[ours]\nenabled = true\nlevel = 2\n", recorded), b"a = 1\n")
+        with self.assertRaises(delta.DeltaConflict):
+            delta.revert(b"a = 1\n[ours]\nenabled = true\nlevel = 9\n", recorded)  # one of our lines is still there, edited around
+
 
 if __name__ == "__main__":
     unittest.main()
