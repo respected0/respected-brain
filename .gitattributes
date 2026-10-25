@@ -3,7 +3,7 @@
 # ==============================================================================
 
 # Set default behavior: auto-detect text files and normalize line endings to LF on commit
-* text=auto
+* text=auto eol=lf
 
 # Configuration and repository metadata (always LF)
 .gitattributes text eol=lf
