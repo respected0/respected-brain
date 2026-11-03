@@ -26,6 +26,7 @@ from ..core.context import AppContext, ModelService
 from ..core.config import atomic_write_json as _atomic_write_json
 from .diagnostics import reason_for, record_health, safe_reason
 from .provenance import build_provenance, enrich_frontmatter, session_ids_in_text
+from .untrusted import DIRECTIVE_SHAPED, inert
 
 
 DEFAULT_MAX_CALLS = 3
@@ -248,7 +249,7 @@ def build_compile_prompt(
 ) -> str:
     nonce = secrets.token_hex(8)  # the notes cannot close a delimiter they cannot know (same as flush.py)
     def neutral(text: str) -> str:
-        return text.replace("UNTRUSTED ", "UNTRUSTED_")
+        return inert(text.replace("UNTRUSTED ", "UNTRUSTED_"))
 
     return COMPILE_PROMPT.format(
         index_text=neutral(index_text),

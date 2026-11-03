@@ -132,16 +132,20 @@ içe aktarmaz.
 ## 6. Gizlilik
 
 - **MCP ile not yazma bir izindir** (`mcp_write`, varsayılan kapalı, her çağrıda yeniden okunur). Kapalıyken yazma araçları
-  listelenmez. Açıkken notlar yalnızca `🔮 850-Companion/Inbox/MCP` altına, var olanın üzerine yazmadan, `source: mcp` ve
-  `review: pending` ön bilgisiyle gider; `confidence: verified` `inferred` olarak saklanır (model kendine kefil olamaz).
-  Hiçbir not seçilmiş klasörlere kendiliğinden taşınmaz.
+  listelenmez. İzin yalnızca sunucunun bağlı olduğu kasa etkin kasaysa ve kayıtlı yol o kasanın köküne çözülüyorsa geçerlidir;
+  başka kasaya geçiş eski sunucunun yazmasını kapatır. Açıkken notlar yalnızca `🔮 850-Companion/Inbox/MCP` altına, var
+  olanın üzerine yazmadan, `source: mcp` ve `review: pending` ön bilgisiyle gider; `confidence: verified` `inferred`
+  olarak saklanır (model kendine kefil olamaz). Hiçbir not seçilmiş klasörlere kendiliğinden taşınmaz.
 - **Dökümler varsayılan olarak saklanmaz.** `archive_transcripts` açıksa döküm kasaya değil veri kökündeki
   `session-archive/` klasörüne, maskelenmiş olarak yazılır ve `transcript_retention_days` sonra silinir.
   `capture_mode = manual` hiçbir şey kopyalamaz.
 - **Maskeleme** (`memory/redact.py`): özel anahtar blokları, JWT, bearer/basic kimlik bilgileri, sağlayıcı anahtarları
   (OpenAI, Anthropic, GitHub, Hugging Face, Slack, AWS, Google, npm), adreslerdeki kimlik bilgileri ve adı sır olduğunu
-  söyleyen `ad = değer` çiftleri (İngilizce ve Türkçe) özetleyiciye gitmeden, `daily`'ye yazılmadan ve arşivlenmeden önce
-  ayıklanır. Düz metinle yazılmış bir parola tanınmaz.
+  söyleyen `ad = değer` çiftleri (İngilizce ve Türkçe), `ad is değer` / `şifrem değer` kalıpları ve sorgu dizesindeki
+  `?token=` / `&api_key=` değerleri özetleyiciye gitmeden, `daily`'ye yazılmadan ve arşivlenmeden önce ayıklanır.
+- **Dış metin talimat değildir.** Döküm, günlük ve gelen kutusundan alınan metin model istemine girerken talimat
+  görünümlü satırlar (`SYSTEM:`, `IGNORE ALL PREVIOUS`, `TALİMAT:` vb.) `[UNTRUSTED_DATA]` önekiyle işaretlenir; metin
+  okunur kalır ama komut olarak sunulmaz. Bu işaretleme kural, izin veya yapılandırma dosyalarını değiştirmez.
 - Özet isteğindeki veri sınırlayıcıları her istekte rastgele bir kod taşır; döküm veri bloğunu kapatamaz.
 
 ## 7. Güvenlik sınırları

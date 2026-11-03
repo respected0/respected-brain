@@ -80,7 +80,13 @@ class RespectedMcpServer:
         """Saving notes through MCP is a user permission (setting `mcp_write`, default off), read fresh on every call."""
         try:
             from respected_brain.core.config import ConfigStore
-            return (ConfigStore(self.ctx.paths.data_root).read().get("preferences") or {}).get("mcp_write") is True
+            config = ConfigStore(self.ctx.paths.data_root).read()
+            registered = (config.get("vaults") or {}).get(self.ctx.paths.vault_id) or {}
+            return (
+                (config.get("preferences") or {}).get("mcp_write") is True
+                and config.get("active_vault_id") == self.ctx.paths.vault_id
+                and Path(str(registered.get("path", ""))).resolve() == self.ctx.paths.vault_root.resolve()
+            )
         except Exception:
             return False
 

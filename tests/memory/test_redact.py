@@ -15,10 +15,15 @@ SECRETS = {
     "json-key": '"apiKey": "' + "k9Zq8Xw7Vv6Uu5Tt4Ss3" + '"',
     "env-style": "DATABASE_PASSWORD=" + "hunter2hunter2",
     "private-key": "-----BEGIN RSA PRIVATE KEY-----\nMIIEowIBAAKCAQEA\n-----END RSA PRIVATE KEY-----",
+    "turkish-prose": "şifrem " + "hunter2hunter2",
+    "english-prose": "password is " + "hunter2hunter2",
+    "query-token": "https://api.test/x?token=" + "q7W8e9R0t1Y2" + "&page=1",
+    "short-basic": "Basic " + "dXNlcjpwYXNz",
 }
 VALUES = {"openai": SECRETS["openai"], "anthropic": SECRETS["anthropic"], "github": SECRETS["github"], "aws": SECRETS["aws"],
           "bearer": "abcdEFGH1234ijklMNOP5678", "jwt": "dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
-          "url-password": "S3cretPassw0rd", "json-key": "k9Zq8Xw7Vv6Uu5Tt4Ss3", "env-style": "hunter2hunter2", "private-key": "MIIEowIBAAKCAQEA"}
+          "url-password": "S3cretPassw0rd", "json-key": "k9Zq8Xw7Vv6Uu5Tt4Ss3", "env-style": "hunter2hunter2", "private-key": "MIIEowIBAAKCAQEA",
+          "turkish-prose": "hunter2hunter2", "english-prose": "hunter2hunter2", "query-token": "q7W8e9R0t1Y2", "short-basic": "dXNlcjpwYXNz"}
 
 
 class RedactTest(unittest.TestCase):
@@ -40,6 +45,13 @@ class RedactTest(unittest.TestCase):
         prompt = F.build_flush_prompt("kullanıcı: anahtarım " + SECRETS["openai"] + " ve DB_PASSWORD=" + "hunter2hunter2")
         self.assertNotIn(VALUES["openai"], prompt)
         self.assertNotIn("hunter2hunter2", prompt)
+
+    def test_natural_language_and_query_string_secrets_are_removed(self):
+        for text in (SECRETS["turkish-prose"], SECRETS["english-prose"], SECRETS["query-token"], SECRETS["short-basic"]):
+            with self.subTest(text=text):
+                clean = redact(text)
+                self.assertIn("[REDACTED", clean)
+                self.assertEqual(redact(clean), clean)
 
 
 if __name__ == "__main__":

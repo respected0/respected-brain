@@ -193,7 +193,7 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
 
 ## M4 — Güvenlik ve yayın kalitesi
 
-### [ ] BR-013 · Memory Poisoning & Privacy Tests (P0, M)
+### [x] BR-013 · Memory Poisoning & Privacy Tests (P0, M)
 
 - Zararlı README, web sayfası, döküm ve not örnekleri.
 - Dış metnin kalıcı kullanıcı talimatına dönüşmemesi.
@@ -735,5 +735,44 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - `br012-focus.log`, `br012-neighbor-*.log`, `br012-full.log` → yerel/ignore, commit edilmedi
 - Bilinen sınırlar / risk: Token tahmini karakter/4'tür; gerçek model tokenizasyonu farklı olabilir. `compact-60` cevap terimlerini kırptığı için doğruluk düşüyor; varsayılan 600 bu nedenle korunuyor. Semantik/hibrit görünümler yerel model olmadan ölçülmedi. Benchmark sentetiktir ve gerçek kullanıcı kasası okunmadı; ham not gövdesi, döküm veya secret kanıta konmadı. `T01` bilinen sıralama hatası olarak kaldı.
 - Sonuç: **uygulandı; odak, komşu regresyon, benchmark ve tam paket testleriyle doğrulandı**.
+
+### BR-013 · Memory Poisoning & Privacy Tests — TAMAMLANDI
+- Tarih/saat: 2026-11-03 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `267f858` (BR-012 sonrası)
+- Değişen dosyalar:
+  - `src/respected_brain/memory/untrusted.py` (yeni): talimat görünümlü satırları `[UNTRUSTED_DATA]` önekiyle işaretler.
+  - `src/respected_brain/memory/redact.py`: düz metin `ad is değer` / iyelik (`şifrem değer`) ve sorgu dizesi sırları; kısa bearer/basic.
+  - `src/respected_brain/memory/flush.py`, `src/respected_brain/memory/compile.py`, `src/respected_brain/briefing/service.py`: dış metni model istemine girmeden önce inert işaretle.
+  - `src/respected_brain/integrations/mcp/server.py`: yazma izni etkin kasa ve kayıtlı kasaya çözülen yol ile sınırlandı.
+  - `tests/memory/test_untrusted_input.py` (yeni), `tests/memory/test_redact.py`, `tests/memory/test_transcript_integrity.py`,
+    `tests/integrations/test_mcp_and_features.py`, `tests/scenarios/test_regression_matrix.py`.
+  - `docs/ARCHITECTURE.md`: gizlilik ve güven sınırı davranışı güncellendi.
+- Komutlar ve sonuçlar:
+  - `python -m unittest tests.memory.test_redact tests.memory.test_untrusted_input tests.memory.test_session_scripts tests.memory.test_transcript_integrity tests.integrations.test_mcp_and_features tests.scenarios.test_regression_matrix` → 181 test OK, 2 skip
+  - `python -m unittest tests.evals.test_summarization_eval tests.memory.test_redact` → 22 test OK (maskelenmiş değerin ikinci kez maskelenmesi düzeltildikten sonra)
+  - `python -m unittest discover -s tests -t .` → 1018 test OK, 15 skip (`br013-full.log`, yerel/ignore)
+- Kabul eşlemesi:
+  - Zararlı README, web sayfası, döküm ve not örnekleri: Scenario 21 metni README ve web anlık görüntüsünden okuyup Threads/daily üzerinden istem üreticilerine veriyor; döküm ve not örnekleri `test_untrusted_input` ile kapsanıyor.
+  - Dış metnin kalıcı kullanıcı talimatına dönüşmemesi: talimat görünümlü satırlar üç istem yolunda da `[UNTRUSTED_DATA]` taşıyor; Threads.md ve config/kurallar diskte değişmiyor.
+  - Secret maskeleme genişletmesi: düz metin parola/iyelik ve sorgu dizesi örnekleri, kısa basic kimlik bilgisi ve arşiv kopyası test edildi; maskelenmiş değer idempotent.
+  - MCP izinsiz yazma, yetki iptali, kasa değişimi: yazma aracının görünmemesi, izin iptalinde iz bırakmaması ve eski sunucunun yeni etkin kasaya yazamaması test edildi.
+  - Arşiv açık/kapalı ve saklama süresi: varsayılan kopyalamama, açıkken maskeli kopya, kasa dışı konum ve süre sonunda silme test edildi.
+  - Saldırı regresyonu: Scenario 21 yayın öncesi regresyon matrisine eklendi.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/memory/untrusted.py` → `CEE5CFBE44A0919F5708139BE87FB746696516DCF42DA0CF1EF983F3985C3EBB`
+  - `src/respected_brain/memory/redact.py` → `5AD7B382A3CF87A5AC5483619200F5DDAB7CDEF7783D82D09185FD0259834C77`
+  - `src/respected_brain/memory/flush.py` → `17B0E49A4D7EEE9171E261F7EC9F11BF55E5CFFA6ABA0AF8585F76654BA131F7`
+  - `src/respected_brain/memory/compile.py` → `E017438C8BF7F98E8DC242BCC6405E74F4796C101B98EFDB05BAB4042FE5F989`
+  - `src/respected_brain/briefing/service.py` → `E1EBD8BDA17E7131B31DDF3EEECB7F4DBED0EC05F33F813DA3E153EDDCF48B9E`
+  - `src/respected_brain/integrations/mcp/server.py` → `E46E440601F18A6DF07E87226D70FD12930BA9D9687E35B7A43D6236D248ABC0`
+  - `tests/memory/test_untrusted_input.py` → `1DAB963BB30DC4B99EACCD53664DE9DA371F7022AE1440D548F0798489EF50E6`
+  - `tests/memory/test_redact.py` → `396DB22D8B27D6C390B4467ABB79E7F6ACD12C4C35C79B48A28582D9E590E437`
+  - `tests/memory/test_transcript_integrity.py` → `C11AB3FB0C0810958D23DD0EA40BA5E0EC47BEA35D084821737D2BB692AA3C8E`
+  - `tests/integrations/test_mcp_and_features.py` → `D8A516D145D7326DA8244D5268F47757B2C169CF7444EBDF450911198DD31A0A`
+  - `tests/scenarios/test_regression_matrix.py` → `0E37B291DB888C943EB2936309F995128926E35CB02095479512A74E399745B1`
+  - `docs/ARCHITECTURE.md` → `2B40D21AB6B665B1486BC02EEAAB92BF5EA641CDEEE31ACEBF4A612CAF339793`
+  - `br013-full.log` → yerel/ignore, commit edilmedi
+- Bilinen sınırlar / risk: Inert işaretleme kalıp tabanlıdır; talimat görünümü taşımayan ikna edici metin modeli yönlendirebilir. Maskeleme bilinen kalıplarla sınırlıdır; yeni/rastgele sır biçimleri kaçabilir. Arşiv kapalıyken kopya oluşturulmaz ama sağlayıcının kendi dökümü silinmez. Testler sentetik metin kullanır; gerçek kullanıcı kasası, dökümü veya sırrı okunmadı ve kanıta konmadı.
+- Sonuç: **uygulandı; odak, komşu regresyon ve tam paket testleriyle doğrulandı**.
 
 <!-- EVIDENCE:END -->

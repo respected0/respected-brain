@@ -18,6 +18,7 @@ import time
 
 from respected_brain.core import platform as runtime_platform
 from respected_brain.core.context import AppContext, ModelService
+from respected_brain.memory.untrusted import inert
 from respected_brain.core.errors import BusyError
 from respected_brain.core.locking import exclusive_lock
 
@@ -164,7 +165,7 @@ def _prompt(vault_root: Path, now: datetime) -> str:
     nonce = secrets.token_hex(8)  # the notes cannot close a delimiter they cannot know (same as flush.py)
     blocks = []
     for name, value in sources.items():
-        value = value.replace("UNTRUSTED ", "UNTRUSTED_")
+        value = inert(value.replace("UNTRUSTED ", "UNTRUSTED_"))
         blocks.append(f"--- BEGIN UNTRUSTED {name} DATA {nonce} ---\n{value}\n--- END UNTRUSTED {name} DATA {nonce} ---")
     headings = "\n".join(f"## {heading}" for heading in HEADINGS)
     return (

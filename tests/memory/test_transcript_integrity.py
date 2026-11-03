@@ -51,7 +51,7 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         data = records if records is not None else ([] if payload is None else [{'type': 'session_meta', 'payload': payload}])
         data = data + [{'role': 'user', 'content': marker}]
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text('\n'.join(json.dumps(r) for r in data) + '\n', encoding='utf-8')
+        path.write_text('\n'.join(json.dumps(r, ensure_ascii=False) for r in data) + '\n', encoding='utf-8')
         os.utime(path, (NOW.timestamp()-60, NOW.timestamp()-60))
         return path
     def transcript(self, payload=None):
@@ -343,7 +343,8 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
     def test_precompact_archive_is_opt_in_redacted_and_outside_the_vault(self):
         import dataclasses
         from respected_brain.memory import lifecycle as L
-        path = self.transcript({'id': SID, 'cwd': str(self.vault), 'note': 'key sk-' + 'a1B2c3D4e5F6g7H8i9J0k1L2'})
+        path = self.transcript({'id': SID, 'cwd': str(self.vault),
+                                'note': 'key sk-' + 'a1B2c3D4e5F6g7H8i9J0k1L2' + ' ve şifrem hunter2hunter2'})
         archive = self.ctx.paths.data_root / 'session-archive'
         def precompact(ctx):
             with mock.patch.object(L, '_launch_flush', return_value=True):
@@ -359,6 +360,7 @@ class F7TranscriptIntegrityTest(unittest.TestCase):
         text = logs[0].read_text(encoding='utf-8')
         self.assertIn('[REDACTED:provider-token]', text)
         self.assertNotIn('a1B2c3D4e5F6g7H8i9J0k1L2', text)     # the stored copy never contains the credential
+        self.assertNotIn('hunter2hunter2', text)
         self.assertFalse((self.vault / '🔮 850-Companion/Session-Logs').exists())
         old = logs[0]
         os.utime(old, (1, 1))                                   # retention: an expired copy is purged by the next run
