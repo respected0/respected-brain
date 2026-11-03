@@ -118,7 +118,7 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
 
 ## M2 — Kaynaklı, güncel ve doğrulanabilir hafıza
 
-### [ ] BR-007 · Memory Provenance Metadata (P0, M)
+### [x] BR-007 · Memory Provenance Metadata (P0, M)
 
 - Mevcut Markdown biçimiyle uyumlu metadata.
 - Kaynak agent, oturum, kayıt tarihi, kayıt türü, inceleme durumu.
@@ -478,4 +478,53 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - `tests/evals/results/br006-full-suite.log` → `A6F92F50FF9C3443C48F53FADA6BA0431AD0925F3E79E98DD3885778BCB34251`
 - Bilinen sınırlar / risk: Sentetik Türkçe dökümler kullanıldı; gerçek kullanıcı oturumu/kasası okunmadı. Model çağrısı gerçek CLI ve gerçek oturum profiliyle yapıldı; profil yalnızca alt süreç ortamında geri verildi, kasa/veri yolları izole kaldı. Model çıktısı deterministik değil; final veri setinde 36 koşu %100 olsa da bu bir güven aralığı değil. Baseline v1 ile final v2 aynı veri seti değil: B08 saldırısı bölüm hedefli hale getirildi ve enjeksiyon işareti `forbidden` listesinden çıkarıldı (alıntıyı uydurma karar sayan ölçüm hatası); ürün değişikliği yalnızca pencere ve pencere davranışı deterministik testlerle sabit. Bölüm yerleşimi finalde %84.7: bazı gerekçe/SLA gerçekleri `Önemli Konuşmalar` içinde doğru ama `Alınan Kararlar` yerine yazılıyor; içerik doğru, yerleşim üslup açığı. 15.000 karakter / 30 tur bütçesi hâlâ sert; atlanan ortadaki bir karar kaybolabilir, artık `prompt_coverage` ve "atlandı" işaretiyle görünür. Tam paket çıkış kodu PowerShell `2>&1` nedeniyle 1 görünüyor; logda `OK (skipped=15)` ve hata yok (BR-005'teki aynı kozmetik durum). Ham döküm, secret ve özel not gövdesi kanıta konmadı.
 - Sonuç: **uygulandı; gerçek modelle, odak testleriyle ve tam paketle test edildi**.
+
+### BR-007 · Memory Provenance Metadata — TAMAMLANDI
+- Tarih/saat: 2026-11-03 (Europe/Istanbul)
+- Sürüm/git: taban `094c5a6`; BR-007 değişiklikleri bu kanıt bloğuyla tek commit olarak işlendi.
+- Değişen dosyalar:
+  - `src/respected_brain/memory/provenance.py` (yeni)
+  - `src/respected_brain/memory/compile.py`
+  - `src/respected_brain/memory/flush.py`
+  - `src/respected_brain/memory/inbox.py`
+  - `src/respected_brain/rpp/memory_workspace.py`
+  - `tests/memory/test_br007_provenance.py` (yeni)
+  - `tests/fixtures/memory-provenance/v0-legacy.md` (yeni)
+  - `tests/fixtures/memory-provenance/v1-model-inference.md` (yeni)
+  - `tests/fixtures/memory-provenance/v1-user-approved.md` (yeni)
+  - `docs/ARCHITECTURE.md`
+  - `docs/ROADMAP-EXECUTION.md`
+- Uygulama:
+  - `provenance_version: 1` alanları: `source_agent`, `session_id`, `recorded_at`, `record_type`, `review_status`, `origin`, `source_ref`, `source_sha256`. Alanlar mevcut YAML frontmatter'a eklenir; günlük oturum özetlerinde yönetilen blok içinde `RESPECTED-PROVENANCE` HTML yorumu kullanılır.
+  - `read_provenance` bilinmeyen/eksik alanları `legacy`, `unreviewed`, `unknown` olarak okur; eski dosyanın baytlarına dokunmaz. `migrate_text` isteğe bağlı taşıma yapar, gövdeyi korur ve özgün metnin SHA-256'sını yazar.
+  - Model çıkarımı `origin: model_inference` + `pending` kalır; `build_provenance` model kaydını `approved` yazmayı reddeder. Kullanıcı onayı yalnızca `user_approved` ile temsil edilir.
+  - Inbox/MCP yazımında çağıranın `extra_front` provenance anahtarları filtrelenir; MCP ve Orchestrator içeriği `model_inference`/`pending`, Hub yakalaması `user_authored` olur. Derleyici `knowledge/concepts` ve `connections` çıktısını kaynak günlük dosyası + SHA-256 + oturum kimliğiyle `pending` işaretler.
+  - Günlük özet yorumu şema başlıklarından sonra yazılır; `validate_summary` ve mevcut tüketiciler bozulmaz. Özete provenance işareti enjekte eden model çıktısı `daily-summary-markers-invalid` ile reddedilir.
+- Testler ve komut:
+  - `python -m unittest tests.memory.test_br007_provenance` → 9 test OK
+  - `python -m unittest discover -s tests/memory -t .` → 188 test OK, 2 skip
+  - `python -m unittest tests.rpp.test_memory_write tests.integrations.test_mcp_and_features` → 39 test OK
+  - `python -m unittest tests.memory.test_session_scripts` → 62 test OK, 2 skip
+  - `python -m unittest tests.evals.test_summarization_eval` (odakla birlikte) → 27 test OK
+  - `python -m unittest discover -s tests -t .` → 971 test OK, 15 skip (`tests/evals/results/br007-full-suite.log`)
+  - İlk tam koşu 1 hata verdi: provenance yorumu özetin başında olduğu için şema denetimi `## Bağlam` öncesinde metin gördü. Yorum bloğun sonuna taşındı; odak ve tam paket yeniden çalıştırıldı, hata kalmadı.
+- Kabul eşlemesi:
+  - Her yeni kritik kayıtta kaynak agent, oturum, tarih, tür, inceleme durumu, kaynak referansı ve hash ayırt edilebiliyor.
+  - Model çıkarımı ile kullanıcı onaylı bilgi ayrı; model kendi kaydını `approved` yapamıyor, MCP/Orchestrator yazımı `pending` kalıyor.
+  - Eski notlar `legacy/unreviewed/unknown` okunuyor ve dosya baytları değişmiyor; sürüm fixture'ları v0 ile v1 model/onaylı biçimlerini kapsıyor.
+  - Migration `migrate_text` ve v0/v1 fixture'larıyla test edildi; mevcut notlar toplu olarak değiştirilmiyor.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/memory/provenance.py` → `DA538FB8F53CF636C0C2B86A76AF8929279BDFCE69F5E1D8CE85E24029DCE76C`
+  - `src/respected_brain/memory/compile.py` → `FDE27A1D66241C0753883881C6E377C65100643E9CF8CCF9E4C05761E1C36C9E`
+  - `src/respected_brain/memory/flush.py` → `11DE1B44A1BF17F912C2C6F9479184F31D8B1D7F661267C3ED6D1794E605321D`
+  - `src/respected_brain/memory/inbox.py` → `F3BEE78AEA24E8C4B9D8F190DDC756657811296BEB1A646A960FE817789C42CD`
+  - `src/respected_brain/rpp/memory_workspace.py` → `DB1EE870E542D4F65C14B7AF2CFEE0858B797FD78D62858F0553866EBF1297DE`
+  - `tests/memory/test_br007_provenance.py` → `836465D1DEC9C7A2E6ED12358DFEDD4F67438F127CF85368D73F36CC8DB8E598`
+  - `tests/fixtures/memory-provenance/v0-legacy.md` → `69713124276B487D7F60B88C741B33A9789E03AF6554A6BB83CDABEFD5C894B5`
+  - `tests/fixtures/memory-provenance/v1-model-inference.md` → `FF9A8F2E7B29B051F432B02D5803D6612B457C481C17308B69D53B8806042E08`
+  - `tests/fixtures/memory-provenance/v1-user-approved.md` → `C13A02A3110D50669B967EF920FB1F88C2035C16E93DF419F7BB4CCC1DF969E5`
+  - `docs/ARCHITECTURE.md` → `EFECCDC5BAF1D94120FF21BBE24587B8A8F01F53182BB23BDD6271AD9B6519D7`
+  - `tests/evals/results/br007-full-suite.log` → `70A8A4BF489D7113FFE6842531395B708DFAB8ED18D020CECED7341A311E9832`
+- Bilinen sınırlar / risk: Mevcut kasadaki notlar otomatik taşınmıyor; taşıma bilinçli olarak isteğe bağlıdır ve kullanıcı verisini kendiliğinden değiştirmez. Günlük özetin `source_sha256` değeri özet metninin bütünlüğünü kanıtlar, ham dökümün içeriğini değil: ham döküm varsayılan olarak saklanmaz. Frontmatter okuyucusu küçük, satır tabanlı bir YAML alt kümesidir; iç içe YAML yapılarını çözmez. Tam paket logunda bir CLI reddi testinden gelen `--wsl-worker` stderr satırı vardır; sonuç `OK (skipped=15)` ve çıkış 0. Gerçek kullanıcı kasası okunmadı/yazılmadı; ham döküm, secret ve özel not gövdesi kanıta konmadı.
+- Sonuç: **uygulandı; odak, komşu regresyon ve tam paket testleriyle doğrulandı**.
 <!-- EVIDENCE:END -->

@@ -19,6 +19,7 @@ from ..core.config import atomic_write_json
 from ..core.coordination import writer_lease
 from ..core.errors import BusyError
 from ..integrations.notes import create_note, note_path, read_note
+from ..memory.provenance import build_provenance, render_fields
 from .integrations import _context
 from .memory import MemoryOpError, _active_vault_id, _bad, _clean, _int_in, run_query
 
@@ -106,8 +107,18 @@ def capture(data_root: Path, operation_id: Any, payload: Any) -> dict[str, Any]:
     now = dt.datetime.now()
     slug = re.sub(r"[-\s]+", "-", re.sub(r"[^\w\s-]", "", title.lower())).strip("-")[:40] or "note"
     filename = f"{now:%Y%m%d_%H%M%S}_{slug}.md"
+    metadata = build_provenance(
+        source_agent="respected-hub",
+        timestamp=dt.datetime.now(dt.timezone.utc),
+        record_type="capture",
+        review_status="pending",
+        origin="user_authored",
+        source_ref=f"hub://capture/{operation_id}",
+        sha256=hashlib.sha256(content.encode("utf-8")).hexdigest(),
+    )
     front = ["---", f"title: {json.dumps(title, ensure_ascii=False)}", f'created: "{now:%Y-%m-%d %H:%M:%S}"', "type: capture", 'category: "Dump"',
-             "status: inbox", "source: hub_quick_capture", "tags:", *(["  - " + json.dumps(t, ensure_ascii=False) for t in tags] or ["  []"]), "---", ""]
+             "status: inbox", "source: hub_quick_capture", "tags:", *(["  - " + json.dumps(t, ensure_ascii=False) for t in tags] or ["  []"]),
+             *render_fields(metadata), "---", ""]
     body = "\n".join(front) + f"\n# {title}\n\n{content}\n"
     try:
         with writer_lease(ctx):

@@ -30,6 +30,7 @@ from ..core.config import ConfigStore, atomic_write_bytes, atomic_write_json as 
 from ..core.errors import OwnershipConflict
 from . import events
 from .diagnostics import record_health, reason_for, safe_reason
+from .provenance import build_provenance, provenance_comment, source_hash
 
 
 MAX_TURNS = 30
@@ -1178,7 +1179,7 @@ def _upsert_daily_session(
     session_id: str,
     provider: str,
 ) -> None:
-    if "<!-- RESPECTED-SESSION:" in summary:
+    if "<!-- RESPECTED-SESSION:" in summary or "<!-- RESPECTED-PROVENANCE:" in summary:
         raise OSError("daily-summary-markers-invalid")
     daily_dir = vault_root / "daily"
     if not runtime_platform.path_within_vault(daily_dir, vault_root):
@@ -1196,10 +1197,21 @@ def _upsert_daily_session(
     begin = f"<!-- RESPECTED-SESSION:{identity}:BEGIN -->"
     end = f"<!-- RESPECTED-SESSION:{identity}:END -->"
     suffix = ", compaction öncesi" if reason == "precompact" else ""
+    metadata = build_provenance(
+        source_agent=provider,
+        session_id=session_id,
+        timestamp=now,
+        record_type="session_summary",
+        review_status="pending",
+        origin="model_inference",
+        source_ref=f"session://{provider}/{session_id}",
+        sha256=source_hash(summary),
+    )
     entry = (
         f"{begin}\n"
         f"### Oturum ({now.strftime('%H:%M')}){suffix}\n\n"
         f"{summary.rstrip()}\n"
+        f"\n{provenance_comment(metadata)}\n"
         f"{end}"
     )
     with _daily_thread_lock(lock_path):

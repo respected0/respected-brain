@@ -109,6 +109,12 @@ içe aktarmaz.
   yazılır (var olan dosyaya ya da istenen yola asla); ön bilgide kaynak, izin ve işlem kimliği vardır; en fazla 500 not;
   aynı işlem kimliği aynı içerikle tekrarlanırsa ilk sonuç döner. `memory.write.revert` yalnızca bu iznin yazdığı ve
   değişmemiş notu siler.
+- **Kaynak izi (provenance).** Yeni kritik kayıtlar (`memory.write`, MCP yazımı, Hub yakalaması, günlük oturum özeti,
+  derleyici çıktısı) `provenance_version: 1` ile kaynak agent, oturum, kayıt tarihi, kayıt türü, inceleme durumu,
+  kaynak referansı ve SHA-256 taşır. Model çıkarımı `origin: model_inference` ve `pending` kalır; `approved` yalnızca
+  kullanıcı işlemiyle (`user_approved`) yazılır. Oturum özetleri günlük dosyasında yönetilen blok içinde
+  `RESPECTED-PROVENANCE` HTML yorumu olarak durur. Bu alanları taşımayan eski notlar `legacy`, `unreviewed`, `unknown`
+  olarak okunur ve baytları değişmez; taşıma isteğe bağlıdır (`memory/provenance.py:migrate_text`).
 - **Anlamsal arama (isteğe bağlı).** `memory.semantic.pull {confirm}` sabitlenmiş bir llama.cpp `llama-server` (Windows x64)
   ve bge-m3 modelini (Q4_K_M, MIT lisanslı, Türkçe dahil çok dilli) veri kökündeki `semantic-runtime/` klasörüne indirir;
   boyut ve SHA-256 doğrulanır, arşivden yol kaçışı reddedilir. Sunucu yalnızca bir işlem için boş bir yerel porta

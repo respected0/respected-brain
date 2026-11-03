@@ -25,6 +25,7 @@ from ..core import platform as runtime_platform
 from ..core.context import AppContext, ModelService
 from ..core.config import atomic_write_json as _atomic_write_json
 from .diagnostics import reason_for, record_health, safe_reason
+from .provenance import build_provenance, enrich_frontmatter, session_ids_in_text
 
 
 DEFAULT_MAX_CALLS = 3
@@ -579,6 +580,41 @@ def _run_model(prompt: str, stage: Path, model: ModelService) -> str | None:
         return "model-runner-error"
 
 
+def _apply_compile_provenance(
+    stage: Path,
+    changed_files: list[str],
+    *,
+    daily_name: str,
+    daily_body: str,
+    source_sha256: str,
+    timestamp: str,
+) -> None:
+    session_id = ",".join(session_ids_in_text(daily_body))
+    for relative in changed_files:
+        if relative in {"knowledge/index.md", "knowledge/log.md"}:
+            continue
+        path = stage / relative
+        record_type = "knowledge_connection" if relative.startswith("knowledge/connections/") else "knowledge_concept"
+        fields = build_provenance(
+            source_agent="compiler",
+            session_id=session_id,
+            timestamp=timestamp,
+            record_type=record_type,
+            review_status="pending",
+            origin="model_inference",
+            source_ref=f"daily/{daily_name}",
+            sha256=source_sha256,
+        )
+        try:
+            content = path.read_text(encoding="utf-8")
+            enriched = enrich_frontmatter(content, fields)
+        except ValueError as exc:
+            raise PolicyError("provenance-frontmatter-invalid") from exc
+        if enriched == content:
+            raise PolicyError("provenance-not-applied")
+        path.write_text(enriched, encoding="utf-8", newline="\n")
+
+
 def _compile_one(
     vault_root: Path,
     state_dir: Path,
@@ -629,6 +665,14 @@ def _compile_one(
             return "source-changed", "source-changed-after-call"
         after = _manifest(stage)
         changed_files = _validate_manifest_diff(before, after)
+        _apply_compile_provenance(
+            stage,
+            changed_files,
+            daily_name=daily_path.name,
+            daily_body=daily_body,
+            source_sha256=expected_digest,
+            timestamp=timestamp,
+        )
         _promote_changes(stage, vault_root, changed_files, live_baseline)
         return None, ""
     except PromotionRecoveryError as exc:

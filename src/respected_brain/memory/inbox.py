@@ -20,6 +20,7 @@ from ..core.config import atomic_write_json
 from ..core.coordination import writer_lease
 from ..core.errors import BusyError
 from ..core.platform import path_within_vault
+from .provenance import PROVENANCE_KEYS, build_provenance, render_fields
 
 _OPERATIONS_DIR = "memory-write-operations"
 _OP_ID_RE = re.compile(r"^[A-Za-z0-9_-]{8,64}$")
@@ -67,7 +68,8 @@ def create_note(open_context, data_root: Path, operation_id: str, *, grant_id: s
     """Create one new inbox note (never overwrites), idempotent per operation id, with a revert record."""
     title = clean_text(title)
     body = body.replace("\r\n", "\n").replace("\x00", "").strip() + "\n"
-    digest = hashlib.sha256(json.dumps({"title": title, "body": body, "tags": tags, "grant": grant_id, "extra": extra_front or []},
+    extra_front = [line for line in (extra_front or []) if line.partition(":")[0].strip().lower() not in PROVENANCE_KEYS]
+    digest = hashlib.sha256(json.dumps({"title": title, "body": body, "tags": tags, "grant": grant_id, "extra": extra_front},
                                        sort_keys=True).encode("utf-8")).hexdigest()
     record_path = data_root / _OPERATIONS_DIR / f"{operation_id}.json"
     record = _read_json(record_path)
@@ -82,8 +84,20 @@ def create_note(open_context, data_root: Path, operation_id: str, *, grant_id: s
     created = datetime.now(timezone.utc)
     name = f"{created:%Y-%m-%d}-{_slug(title)}-{operation_id[:8]}.md"
     target = inbox / name
+    record_type = next((line.partition(":")[2].strip() for line in extra_front
+                        if line.partition(":")[0].strip().lower() == "type"), "capture") or "capture"
+    metadata = build_provenance(
+        source_agent=source,
+        timestamp=created,
+        record_type=record_type,
+        review_status="pending",
+        origin="user_authored" if source not in {"mcp", "orchestrator"} else "model_inference",
+        source_ref=f"{source}://operation/{operation_id}",
+        sha256=hashlib.sha256(body.encode("utf-8")).hexdigest(),
+    )
     front = ["---", f"title: {json.dumps(title, ensure_ascii=False)}", f"source: {source}",
-             f"grant: {grant_id}", f"operation_id: {operation_id}", f"created: {created.isoformat()}", *(extra_front or [])]
+             f"grant: {grant_id}", f"operation_id: {operation_id}", f"created: {created.isoformat()}",
+             *extra_front, *render_fields(metadata)]
     if tags:
         front.append("tags: [" + ", ".join(tags) + "]")
     content = "\n".join([*front, "---", "", f"# {title}", "", body])
