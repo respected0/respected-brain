@@ -1,0 +1,44 @@
+{
+  "base_version": "0.1.0b1",
+  "new_version": "0.1.0b1",
+  "dataset_sha256": "c0cdb91c5e9960da32e09dbdefdd1a574790c2e06d6cfd419bb85b402c60e662",
+  "modes": {
+    "none": {
+      "base_status": "ok",
+      "new_status": "ok",
+      "deltas": {
+        "pass_rate": 0.0,
+        "hit1": 0.0,
+        "hit5": 0.0,
+        "mrr": 0.0,
+        "answer_accuracy": 0.0,
+        "source_coverage": 0.0,
+        "no_answer_accuracy": 0.0,
+        "stale_above_current": 0
+      }
+    },
+    "fts": {
+      "base_status": "ok",
+      "new_status": "ok",
+      "deltas": {
+        "pass_rate": 0.0,
+        "hit1": 0.0,
+        "hit5": 0.0,
+        "mrr": 0.0,
+        "answer_accuracy": 0.0,
+        "source_coverage": 0.0,
+        "no_answer_accuracy": 0.0,
+        "stale_above_current": 0,
+        "latency_ms.p50": 0.0,
+        "latency_ms.p95": 0.0
+      }
+    },
+    "hybrid": {
+      "base_status": "unavailable",
+      "new_status": "unavailable",
+      "deltas": {}
+    }
+  },
+  "regressions": [],
+  "ok": true
+}
