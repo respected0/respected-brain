@@ -45,6 +45,7 @@ MODELS = {"bge-m3-Q4_K_M": {"url": "https://huggingface.co/gpustack/bge-m3-GGUF/
 DOWNLOAD_MB = round((RUNTIME["size"] + MODELS["bge-m3-Q4_K_M"]["size"]) / 1e6)
 _LOOPBACK = {"127.0.0.1", "localhost", "::1"}
 _MAX_CHARS = 2000
+MIN_SCORE = 0.25
 _BATCH = 16
 
 
@@ -316,4 +317,4 @@ def search(ctx: AppContext, cfg: dict[str, Any], query: str, limit: int) -> list
             v.frombytes(blob)
             scored.append((rel, sum(a * b for a, b in zip(q, v)) / norm))
     scored.sort(key=lambda item: -item[1])
-    return scored[:limit]
+    return [(rel, score) for rel, score in scored[:limit] if score >= MIN_SCORE]

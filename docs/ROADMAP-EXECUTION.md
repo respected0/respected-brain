@@ -166,7 +166,7 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
 
 **Kabul:** Dışarıdan değişen not kısa sürede yeni sürümüyle bulunuyor; eski sürüm güvenilir sonuç gibi dönmüyor.
 
-### [ ] BR-011 · Retrieval Quality (P1, L)
+### [x] BR-011 · Retrieval Quality (P1, L)
 
 - FTS5, semantik, hibrit benchmark karşılaştırması.
 - Alaka eşiği ve sıralama stratejisi.
@@ -641,4 +641,49 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - `br010-full.log` → `9DBAA58D8A402FCFCF8E620C6EC5DFD9AA669283F4C42318EA5CE4BBCC945754` (commit edilmez, `.gitignore`)
 - Bilinen sınırlar / risk: Tazelik taraması mtime tabanlıdır ve `max_files=5000` ile sınırlıdır; üstünde durum `unknown` olur ve ön tarama yapılmaz (isabet doğrulaması yine korur). Mtime'ı korunmuş bir dosyada tamamen yeni bir terim eklenirse ve sorgu eski içerikle eşleşmiyorsa terim bir sonraki tam/artımlı indekslemeye kadar görünmeyebilir. Hash doğrulaması yalnızca dönen isabetler içindir, tüm kasa taranmaz. Dosya sistemi bildirimi/watcher yoktur; tazelik sorgu anında kontrollü taramayla sağlanır. Eşzamanlılık testi aynı süreçte iş parçacıkları ve dosya kilidiyle yapıldı; ayrı süreçlerde yarış testi yok. Gerçek kullanıcı kasası üzerinde ölçüm yapılmadı; ham döküm veya özel not gövdesi kanıta konmadı.
 - Sonuç: **uygulandı; odak, komşu regresyon ve tam paket testleriyle doğrulandı**.
+
+### BR-011 · Retrieval Quality — TAMAMLANDI
+- Tarih/saat: 2026-11-03 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1`, `2df9b47` (BR-010 sonrası)
+- Değişen dosyalar:
+  - `src/respected_brain/search/engine.py`
+  - `src/respected_brain/search/semantic.py`
+  - `tests/search/test_br011_retrieval_quality.py` (yeni)
+  - `tests/evals/results/br011-retrieval.json` (yeni)
+  - `tests/evals/results/br011-retrieval.md` (yeni)
+  - `docs/ARCHITECTURE.md`
+  - `docs/ROADMAP-EXECUTION.md`
+- Uygulama:
+  - Uzun not gövdesi 1200 karakterlik parça sınırıyla paragraf sınırlarından bölünür; her parça ayrı FTS satırıdır. Kısa not tek satır kalır; parçalar `rel_path` ile not başlığına bağlıdır.
+  - Sorgu terimlerinin en az üçte birini taşımayan FTS satırı elenir; böylece tek kelimelik OR gürültüsü sonuca girmiyor.
+  - Sıralama deterministiktir: normalize BM25 alaka + 0,25 yakınlık + 0,12 güven + eski-yol cezası. `review_status: approved` ve `origin: user_approved|user_authored` öne, `rejected` geriye, geçerliliği dolmuş `valid_until` kararı geriye düşer; yolu `old`, `previous`, `archived`, `deprecated`, `superseded`, `eski`, `onceki` içeren not ceza alır.
+  - Aynı yol ve aynı başlık+parça bir kez döner; `limit` dolunca sıralama kesilir. FTS aday havuzu `max(limit*8, 50)` ile sınırlıdır.
+  - `files_meta` şemasına `trust` kolonu eklendi; eski şema algılanınca FTS ve meta satırları silinip notlardan okunabilir yeniden kurulum yapılır.
+  - Semantik isabetler 0,25 kosinüs eşiğinin altında elenir. Sağlayıcı hatasında `auto`/`hybrid` FTS5'e düşer; açık `semantic` modu hatayı korur.
+- Testler ve komut:
+  - `python -m unittest tests.search.test_br011_retrieval_quality -v` → 8 test OK
+  - `python -m unittest tests.search tests.integrations.test_mcp_and_features tests.rpp tests.vault.test_feature_boundaries tests.evals` → 45 test OK
+  - `python -m unittest discover -s tests -t .` → 1000 test OK, 15 skip (`br011-full.log`, yerel/ignore)
+  - `python -m tests.evals.harness --modes none,fts,hybrid --repeats 2 --json-out tests/evals/results/br011-retrieval.json --md-out tests/evals/results/br011-retrieval.md` → 50 senaryo, 2 tekrar; `fts` iki tekrarda da %94,0 (stdev 0,0)
+- Sonuç (FTS, benchmark):
+  - Pass %94,0 (başlangıç %64,0); Hit@1 %92,9 (başlangıç %57,1); Hit@5 %100; MRR 0,964 (başlangıç 0,786); cevap %100; kaynak kapsamı %100; eski-not-üstte 0 (başlangıç 10); bilinmeyen-sorgu %100; P50 30,53 ms, P95 36,98 ms.
+  - Kategori: recall 12/12, multi_session 10/10, temporal 7/10, update 10/10, unknown 8/8.
+- Kabul eşlemesi:
+  - Doğru kaynağı bulma başlangıcın altına inmiyor: pass, Hit@1 ve MRR belirgin yükseldi; Hit@5 %100 korunuyor.
+  - Eski karar yeni kararın önüne hatalı geçmiyor: `stale_above_current` 10 → 0; update kategorisi 10/10. `valid_until`, `supersedes` ve güven sinyalleri sıralamaya katılıyor.
+  - Uzun notların anlamlı parçalara ayrılması: 1200 karakterlik paragraf sınırlı parçalama; odak testleri uzun notun bölündüğünü ve doğru parçanın bulunduğunu doğruluyor.
+  - Tekrarlı sonuçların azaltılması: yol ve başlık+parça tekilleştirmesi; aynı not farklı parçalardan tek kez dönüyor.
+  - `active` kararlar ve güvenilir kaynakların öne çıkarılması: onay/güven artısı, reddedilen ve süresi dolmuş kayıt cezası; testlerle sabitlendi.
+  - Semantik hatasında güvenli FTS5 fallback: mevcut `auto`/`hybrid` düşüşü korunuyor; eşik altı isabetler eleniyor.
+  - Hız ve doğruluğun birlikte ölçülmesi: P50 30,53 ms / P95 36,98 ms, önceki baseline 40,86/53,8 ms'den hızlı.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/search/engine.py` → `0EA20A130D5BD036AEB1D71CA9BD685DC0558F37CAF1D6E31D38D59332F53031`
+  - `src/respected_brain/search/semantic.py` → `AF3463FEA87BF24051DCA0D7D2F8D07E03F51BBAC402D37D4E6C2D4EFEF5E3AC`
+  - `tests/search/test_br011_retrieval_quality.py` → `FE4795C5C3E2A4D8D9074BE9C8EE8BCFC08060CF6CC9AEF2F78792EF3F93C1FC`
+  - `tests/evals/results/br011-retrieval.json` → `7EF864476F9C0CE78D04FFB50DDD9FD423D09BC28EE39DDFD75842C7C959F5B5`
+  - `tests/evals/results/br011-retrieval.md` → `D0E99E0548DD46E24746D13712BB337EC5FC96E389280FA01B3A4783F701508B`
+  - `br011-full.log` → yerel/ignore, commit edilmedi
+- Bilinen sınırlar / risk: Semantik/hibrit kip yerel model etkin olmadığı için ölçülemedi (`SEMANTIC_OFF`); karşılaştırma yalnızca `none` ve `fts` üzerinde. Kalan FTS hataları T01, T02 ve T07: beklenen güncel kaynak ilk sırada değil; bu senaryolar zaman ifadesi ve dosya adı çıkarımına dayanıyor. Güven ve eski-yol sinyalleri sezgiseldir; yolu istemeden `old`/`eski` içeren meşru not ceza alabilir. Parçalama düz metin paragraf sınırlarına dayanır; çok uzun tek paragraf cümle ortasından bölünebilir. Şema yükseltmesi ilk açılışta tam yeniden indeksleme ister. Gerçek kullanıcı kasası üzerinde ölçüm yapılmadı; ham döküm veya özel not gövdesi kanıta konmadı.
+- Sonuç: **uygulandı; odak, komşu regresyon ve tam paket testleriyle doğrulandı**.
+
 <!-- EVIDENCE:END -->

@@ -122,6 +122,7 @@ içe aktarmaz.
   indirmedir. Vektörler FTS dizininin yanındaki `semantic_index.db`'dedir (not başına bir vektör: başlık + ilk 2000
   karakter). `memory.recall` `mode` alanı `auto` (hazırsa karma, değilse FTS), `fts`, `semantic`, `hybrid` olabilir;
   sağlayıcı sorunu FTS'ye düşer. Her sorgu sunucuyu başlatır (ölçülen: 2,6–4,2 sn).
+- **Arama kalitesi (BR-011).** Uzun notlar 1200 karakterde paragraf sınırından parçalanır; her parça ayrı FTS satırıdır. Sorgu terimlerinin en az üçte birini taşımayan satır elenir. Sıralama deterministiktir: normalize edilmiş BM25 alaka + 0,25 yakınlık + 0,12 güven; `approved`/`user_approved` öne, `rejected` geriye, geçerliliği dolmuş `valid_until` kararı geriye düşer; yolu `old`, `previous`, `archived`, `deprecated`, `superseded`, `eski` ya da `onceki` içeren not ceza alır. Aynı yol ve aynı başlık+parça tek kez döner. Semantik isabetler 0,25 benzerlik eşiğinin altındaysa elenir; sağlayıcı hatası FTS5'e düşer.
 - **Hub'ın Hafıza sayfası** `memory.search`, `memory.note.read`, `memory.capture.*`, `memory.briefing.run` işlemlerini
   Hub'ın kendi yerel komutlarıyla çağırır; Hub'ın web görünümü `memory.*` işlemlerini doğrudan çağıramaz.
 - **Her istemde otomatik hafıza eklemek bilinçli olarak yapılmadı.** Hafıza AI araçlarına oturum başında, MCP ile ve
@@ -209,4 +210,4 @@ sistemini kanıtlamaz. Hub tarafındaki uçtan uca testler gerçek kurucuyu kull
 | Boşluklu program yolu | Codex ve Antigravity hook komutları tırnaksız olmalı: boşluklu yol Windows'un 8.3 kısa adıyla yazılır. Kısa ad yoksa Codex `& "yol"` biçimine döner, Antigravity (tırnakları yeniden kaçırır) ve WSL profili çalışmaz |
 | Dizin anlık değil | oturum dışı düzenlemeler sonraki oturumda ya da günlük görevde dizine girer |
 | Hafıza izni | `settings.apply` yapabilen herkes izin oluşturabilir (aynı kullanıcı hesabı) |
-| Anlamsal arama | her sorguda sunucu başlar; karma sonuçlarda alaka eşiği yok; yalnızca Windows x64 çalışma ortamı |
+| Anlamsal arama | her sorguda sunucu başlar; yalnızca Windows x64 çalışma ortamı; yerel model etkin değilken semantik/hibrit ölçülemez, FTS5 kullanılır |

@@ -7,6 +7,7 @@ vault içindeki tüm notlarda yüksek hızlı, anlamsal ve kök tabanlı arama y
 
 from __future__ import annotations
 
+import datetime as dt
 import hashlib
 import os
 from pathlib import Path
@@ -21,6 +22,55 @@ from respected_brain.core.errors import BusyError
 from respected_brain.core.platform import path_within_vault
 
 _FRONTMATTER = re.compile(r"\A\ufeff?---\r?\n(.*?)^---[ \t]*(?:\r?\n|$)", re.MULTILINE | re.DOTALL)
+_DECISION_MARKER = re.compile(r"\[(supersedes|yerine|valid_until)\s*:\s*([^\]]*)\]", re.IGNORECASE)
+_CHUNK_CHARS = 1200
+
+
+def _chunks(text: str) -> list[str]:
+    """Split a long note at paragraph boundaries; short notes stay one row."""
+    if len(text) <= _CHUNK_CHARS:
+        return [text]
+    chunks: list[str] = []
+    current = ""
+    for paragraph in re.split(r"\n\s*\n", text):
+        if current and len(current) + len(paragraph) + 2 > _CHUNK_CHARS:
+            chunks.append(current)
+            current = ""
+        while len(paragraph) > _CHUNK_CHARS:
+            chunks.append(paragraph[:_CHUNK_CHARS])
+            paragraph = paragraph[_CHUNK_CHARS:]
+        current = f"{current}\n\n{paragraph}".strip()
+    if current:
+        chunks.append(current)
+    return chunks or [text]
+
+
+def _trust(fields: dict[str, Any], body: str) -> int:
+    """Tie-break rank: approved/user-authored notes ahead; expired decisions behind."""
+    origin = str(fields.get("origin") or "").lower()
+    review = str(fields.get("review_status") or "").lower()
+    score = 2 if review == "approved" else 0
+    if origin in {"user_approved", "user_authored"}:
+        score += 1
+    if review == "rejected":
+        score -= 3
+    for name, value in _DECISION_MARKER.findall(body):
+        if name.lower() in {"supersedes", "yerine"}:
+            score += 1
+        elif name.lower() == "valid_until":
+            try:
+                if dt.date.fromisoformat(value.strip()[:10]) < dt.date.today():
+                    score -= 2
+            except ValueError:
+                pass
+    return score
+
+
+def _relevant(terms: list[str], text: str) -> bool:
+    """Require at least a third of the query words, which keeps OR search from returning single-word noise."""
+    lowered = text.casefold()
+    matched = sum(1 for term in terms if re.search(rf"(?<!\w){re.escape(term.casefold())}", lowered))
+    return matched > 0 and matched * 3 >= len(terms)
 
 
 def parse_markdown_meta(content: str) -> tuple[dict[str, Any], str]:
@@ -189,9 +239,15 @@ class SearchEngine:
                     mtime REAL NOT NULL,
                     sha256 TEXT NOT NULL,
                     title TEXT NOT NULL,
-                    category TEXT NOT NULL
+                    category TEXT NOT NULL,
+                    trust INTEGER NOT NULL DEFAULT 0
                 );
             """)
+            columns = {row[1] for row in con.execute("PRAGMA table_info(files_meta)")}
+            if "trust" not in columns:
+                con.execute("DELETE FROM vault_fts")
+                con.execute("DELETE FROM files_meta")
+                con.execute("ALTER TABLE files_meta ADD COLUMN trust INTEGER NOT NULL DEFAULT 0")
             con.execute("""
                 CREATE VIRTUAL TABLE IF NOT EXISTS vault_fts USING fts5(
                     rel_path UNINDEXED,
@@ -279,13 +335,14 @@ class SearchEngine:
                     con.execute("DELETE FROM vault_fts WHERE rel_path = ?", (rel_path,))
 
                     con.execute(
-                        "INSERT INTO files_meta (rel_path, mtime, sha256, title, category) VALUES (?, ?, ?, ?, ?)",
-                        (rel_path, mtime, sha256, title, category),
+                        "INSERT INTO files_meta (rel_path, mtime, sha256, title, category, trust) VALUES (?, ?, ?, ?, ?, ?)",
+                        (rel_path, mtime, sha256, title, category, _trust(fm, body)),
                     )
-                    con.execute(
-                        "INSERT INTO vault_fts (rel_path, title, content, tags, category) VALUES (?, ?, ?, ?, ?)",
-                        (rel_path, title, body, tags, category),
-                    )
+                    for chunk in _chunks(body):
+                        con.execute(
+                            "INSERT INTO vault_fts (rel_path, title, content, tags, category) VALUES (?, ?, ?, ?, ?)",
+                            (rel_path, title, chunk, tags, category),
+                        )
                     indexed += 1
 
             stale_files = set(existing_records.keys()) - current_files
@@ -376,23 +433,27 @@ class SearchEngine:
 
         sql = """
             SELECT
-                rel_path,
-                title,
-                category,
-                tags,
+                vault_fts.rel_path AS rel_path,
+                vault_fts.title AS title,
+                vault_fts.category AS category,
+                vault_fts.tags AS tags,
+                vault_fts.content AS content,
+                files_meta.mtime AS mtime,
+                files_meta.trust AS trust,
                 snippet(vault_fts, 2, '>>>', '<<<', '...', 20) AS snippet,
                 bm25(vault_fts, 5.0, 1.0, 3.0, 1.0) AS rank
             FROM vault_fts
+            JOIN files_meta ON files_meta.rel_path = vault_fts.rel_path
             WHERE vault_fts MATCH ?
         """
         params: list[Any] = [fts_expr]
 
         if category:
-            sql += " AND category = ?"
+            sql += " AND vault_fts.category = ?"
             params.append(category)
 
         sql += " ORDER BY rank LIMIT ?"
-        params.append(limit)
+        params.append(max(limit * 8, 50))
 
         results: list[dict[str, Any]] = []
         with self._get_connection() as con:
@@ -401,6 +462,9 @@ class SearchEngine:
                 for row in cursor.fetchall():
                     if not self._visible_path(row['rel_path']):
                         continue
+                    text = f"{row['title']} {row['content']} {row['tags']}"
+                    if not _relevant(terms, text):
+                        continue
                     results.append({
                         "path": row["rel_path"],
                         "title": row["title"],
@@ -408,10 +472,13 @@ class SearchEngine:
                         "tags": row["tags"],
                         "snippet": row["snippet"].replace("\n", " ").strip(),
                         "score": round(float(row["rank"]), 4),
+                        "_rank": float(row["rank"]),
+                        "_trust": int(row["trust"] or 0),
+                        "_mtime": float(row["mtime"] or 0.0),
                     })
             except sqlite3.OperationalError:
                 fallback_sql = """
-                    SELECT rel_path, title, category, '' AS tags, '' AS snippet, 0.0 AS rank
+                    SELECT rel_path, title, category, '' AS tags, '' AS snippet, 0.0 AS rank, trust
                     FROM files_meta
                     WHERE (title LIKE ? OR rel_path LIKE ?)
                 """
@@ -433,9 +500,37 @@ class SearchEngine:
                         "tags": "",
                         "snippet": "",
                         "score": 1.0,
+                        "_rank": 0.0,
+                        "_trust": int(row["trust"] or 0),
+                        "_mtime": 0.0,
                     })
 
-        return results
+        if results:
+            best_rank = min(hit["_rank"] for hit in results)
+            mtimes = [hit["_mtime"] for hit in results]
+            oldest, newest = min(mtimes), max(mtimes)
+            span = newest - oldest
+            for hit in results:
+                relevance = hit["_rank"] / best_rank if best_rank < 0 else 0.0
+                recency = (hit["_mtime"] - oldest) / span if span else 0.0
+                legacy = -1.0 if re.search(
+                    r"(?:^|[-_.])(old|previous|prev|archived?|deprecated|superseded|eski|onceki)(?:[-_.]|$)",
+                    Path(hit["path"]).stem, re.IGNORECASE) else 0.0
+                hit["_final"] = relevance + 0.25 * recency + 0.12 * hit["_trust"] + legacy
+        results.sort(key=lambda hit: (-hit.get("_final", 0.0), hit["path"]))
+        unique: list[dict[str, Any]] = []
+        seen_paths: set[str] = set()
+        seen_text: set[tuple[str, str]] = set()
+        for hit in results:
+            signature = (hit["title"].casefold().strip(), hit["snippet"].casefold())
+            if hit["path"] in seen_paths or signature in seen_text:
+                continue
+            seen_paths.add(hit["path"])
+            seen_text.add(signature)
+            unique.append({key: value for key, value in hit.items() if not key.startswith("_")})
+            if len(unique) >= limit:
+                break
+        return unique
 
     def get_backlinks(self, target_name: str, limit: int = 100) -> list[str]:
         """Not adına verilen referansları (backlinks) SQLite FTS5 üzerinden disk taraması yapmadan getirir."""
