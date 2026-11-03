@@ -117,6 +117,8 @@ def _removals(ctx, backend, desired, data_root, planned=frozenset()):
     for prior in read_manifest(manifest).external:
         if prior.kind == "file" and Path(prior.key).is_relative_to(ctx.paths.vault_root):
             continue  # the vault's own hooks stay on independently of the optional global ones
+        if prior.kind == "file" and Path(prior.key).is_relative_to(ctx.paths.state_dir):
+            continue  # Respected's own bookkeeping, not a user-facing registration
         flag = "schedule" if prior.kind == "file" and prior.key in schedule_paths else flag_by_kind.get(prior.kind)
         dropped_client = (("clients" in desired or "mcp_clients" in desired) and flag in ("global", "mcp") and desired.get(flag, False)
                           and (prior.kind, str(prior.key)) not in planned)  # a client that is no longer selected
@@ -152,7 +154,8 @@ def plan(data_root, target):
         raise PlanError("LIFECYCLE_CONFLICT", f"Integration refused to protect existing configuration: {error}",
                         "Resolve or remove the conflicting entry, or leave this integration off.")
     except (FoundationError, SelectionError, ValueError, OSError) as error:
-        raise PlanError("BAD_REQUEST", f"Integration plan failed: {error}", "Check the selected options.")
+        raise PlanError("BAD_REQUEST", f"Bağlantı planı oluşturulamadı: {error}",
+                        "Seçilen araçları ve araçların yapılandırma dosyalarını kontrol edin.")
     from ..integrations.rendering import detect_clients, obsidian_state
     warnings = []
     if desired["shortcut"]:

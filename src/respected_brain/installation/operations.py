@@ -23,11 +23,13 @@ def validate_manifest_roots(ctx, manifest):
             raise OwnershipConflict(f"Ownership manifest exceeds application/data boundary: {item.path}")
 
 
-def undo_external(prior, current):
+def undo_external(prior, current, *, keep_user_change=False):
     """Our registration undone inside what the client/user has since written; refuses only when they changed our own entry."""
     try:
         return prior.undo(current)
     except ValueError:
+        if keep_user_change:  # the user owns the entry now: leave their file alone and forget our claim
+            return None
         raise OwnershipConflict(f"User changed integration: {prior.kind}:{prior.key}") from None
 
 
@@ -53,7 +55,9 @@ def plan_connections(ctx, backend, previous):
             current = backend.read(prior.kind, prior.key)
             if prior.restored(current):
                 continue
-            disabled.append(ExternalChange(prior.kind, prior.key, current, undo_external(prior, current)))
+            undone = undo_external(prior, current, keep_user_change=prior.kind == 'file')
+            if undone is not None:
+                disabled.append(ExternalChange(prior.kind, prior.key, current, undone))
         else:
             retained.append(prior)
     if not any(desired.get(key, False) for key in ("global", "mcp", "schedule", "shortcut")):
@@ -69,7 +73,9 @@ def plan_connections(ctx, backend, previous):
             current = backend.read(prior.kind, prior.key)
             if prior.restored(current):
                 continue
-            disabled.append(ExternalChange(prior.kind, prior.key, current, undo_external(prior, current)))
+            undone = undo_external(prior, current, keep_user_change=prior.kind == 'file')
+            if undone is not None:
+                disabled.append(ExternalChange(prior.kind, prior.key, current, undone))
         retained = [prior for prior in retained if prior not in dropped]
     owned = {(change.kind, change.key): change for change in retained}
     for change in changes:

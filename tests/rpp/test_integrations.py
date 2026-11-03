@@ -135,5 +135,24 @@ class IntegrationPlanTest(unittest.TestCase):
         self.assertEqual([c["outcome"] for c in dropped if c["action"] == "restore"], ["restore"])   # the file had content before us and gets exactly that back
         self.assertEqual(codex.read_text(encoding="utf-8"), '{"owned": true}')
 
+    def test_respected_owned_internal_state_is_never_shown_as_a_removal(self):
+        import base64
+        from uuid import NAMESPACE_URL, uuid5
+        internal = self.data / "vaults" / str(uuid5(NAMESPACE_URL, str(self.vault.resolve()))) / "state/codex-notify-chain.json"
+        internal.parent.mkdir(parents=True)
+        internal.write_text('{"owned": true}', encoding="utf-8")
+        external = self.home / ".codex/hooks.json"
+        external.parent.mkdir(parents=True)
+        external.write_text('{"owned": true}', encoding="utf-8")
+        encode = lambda text: base64.b64encode(text.encode("utf-8")).decode("ascii")
+        rows = [{"kind": "file", "key": str(path), "before": encode("{}"), "after": encode('{"owned": true}')}
+                for path in (internal, external)]
+        (self.data / "install-manifest.json").write_text(json.dumps({"schema_version": 3, "files": [], "external": rows}), encoding="utf-8")
+        response = self.plan({})
+        self.assertTrue(response["ok"], response)
+        targets = {c["target"] for c in response["result"]["changes"] if c["action"] == "restore"}
+        self.assertIn(str(external), targets)
+        self.assertNotIn(str(internal), targets)
+
 if __name__ == "__main__":
     unittest.main()

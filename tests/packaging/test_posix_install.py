@@ -97,6 +97,23 @@ class FoundationPosixInstallTest(unittest.TestCase):
         self.assertEqual(changes, (planned,))
         self.assertEqual([(row.key, row.before, row.after) for row in owned], [(key, now, planned.after)])
 
+    def test_a_user_edited_registration_is_left_alone_instead_of_failing_repair(self):
+        """Reinstall must not fail when the user removed/changed our entry: nothing of ours is left to undo."""
+        ctx = self.install()
+        ConfigStore(ctx.paths.data_root).update(lambda value: value["integrations"].update({"global": False}))
+        from respected_brain.installation.ownership import OwnershipManifest
+        from respected_brain.installation.operations import plan_connections
+        from respected_brain.integrations.backend import ExternalChange
+        key = str(self.home / ".codex/config.toml")
+        prior = ExternalChange("file", key, b'model = "x"\n',
+                               b'model = "x"\n[plugins."respected-brain@respected-brain"]\nenabled = true\n').compact()
+        now = b'model = "x"\n[plugins."respected-brain@respected-brain"]\nenabled = false\n'
+        self.backend.records[("file", key)] = now
+        with patch("respected_brain.integrations.rendering.plan_integrations", return_value=()):
+            changes, owned = plan_connections(ctx, self.backend, OwnershipManifest(3, (), (prior,)))
+        self.assertEqual(changes, ())
+        self.assertEqual(owned, ())
+
     def test_required_launcher_is_owned_independent_of_all_disabled_integrations(self):
         ctx = self.install()
         self.assertTrue(self.launcher.is_file(), "Linux install must create the required PATH launcher")
