@@ -229,7 +229,10 @@ def _dispatch_event(ctx, *, provider, event, argv, stdin):
             context = LIFECYCLE.handle_event(ctx, event=event, session_id=payload["session_id"], transcript=transcript, payload=payload, now=now)
         except Exception as error:
             ctx.paths.state_dir.mkdir(parents=True, exist_ok=True)
-            LIFECYCLE._record_health(ctx.paths.state_dir, event, f"bridge-error:{type(error).__name__}:{error}", now)
+            LIFECYCLE._record_health(
+                ctx.paths.state_dir, event, f"bridge-error:{type(error).__name__}", now,
+                session_id=payload.get("session_id"), provider=provider,
+            )
     result = io.StringIO()
     with contextlib.redirect_stdout(result):
         output(provider, event, context)

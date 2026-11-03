@@ -1,0 +1,163 @@
+{
+  "task": "BR-005",
+  "title": "Yakalama dayanıklılığı ve idempotency",
+  "status": "completed",
+  "generated_at": "2026-10-30T04:01:04Z",
+  "timezone": "Europe/Istanbul",
+  "version": "0.1.0-beta.1 (0.1.0b1)",
+  "git_commit": "95fe4263ec5f42d5da5d17974c93e7c9335505c3",
+  "environment": {
+    "platform": "Windows",
+    "python": "3.x (proje sanal ortamı)",
+    "isolation": "Geçici dizinler ve sahte home; gerçek kullanıcı kasası ve AI ayarları kullanılmadı."
+  },
+  "working_tree": {
+    "scoped_modified": [
+      "src/respected_brain/memory/flush.py",
+      "tests/memory/test_session_scripts.py"
+    ],
+    "scoped_added": [
+      "tests/memory/test_br005_resilience.py",
+      "tests/evals/results/br005-evidence.json",
+      "tests/evals/results/br005-focus.log",
+      "tests/evals/results/br005-regression.log",
+      "tests/evals/results/br005-full-suite.log"
+    ],
+    "unrelated_changes": "BR-001–BR-004 ve önceden var olan kapsam dışı değişiklikler korundu; geri alınmadı."
+  },
+  "changes": [
+    {
+      "path": "src/respected_brain/memory/flush.py",
+      "purpose": "Bozuk JSONL dökümünü model veya günlük yazımından önce sınırlı bir yakalama hatası olarak kaydetmek; JSON parse hatasını metadata bozulmasından ayırmak.",
+      "sha256": "484AF5A79794070F2FD6D0720E56CBA64A9FF5F784FE0752F17E4C07BCA62E2D"
+    },
+    {
+      "path": "tests/memory/test_br005_resilience.py",
+      "purpose": "Bozuk döküm, sınırlı yeniden deneme, kapalı terminal ve köprü istisnası senaryolarını kapsamak.",
+      "sha256": "7F1A0765A57D5066E3E84FC5F47AE709B601A6A47CF859EA41F92BEDDD59007A"
+    },
+    {
+      "path": "tests/memory/test_session_scripts.py",
+      "purpose": "Hook kaynaklı bozuk dökümün catch-up tarafından kabul edilip sınırlı biçimde başarısız sayıldığını doğrulamak.",
+      "sha256": "286719F854FEFA3DF92A1EEAAB35CB48E6D99EAEFA8533D3944F53821FEFAB21"
+    }
+  ],
+  "commands": [
+    {
+      "purpose": "Yeni BR-005 testleri",
+      "command": "$env:PYTHONIOENCODING='utf-8'; $env:PYTHONPATH=\"$PWD\\src\"; python -m unittest tests.memory.test_br005_resilience -v",
+      "exit_code": 0,
+      "result": "Ran 5 tests; OK",
+      "log": "tests/evals/results/br005-new-after.log",
+      "sha256": "C563609B40A35686DA43C38D505F577FA2E500CD9855A4561B9CAB50350E230E"
+    },
+    {
+      "purpose": "Odak testleri (yeni testler + güncellenen hook/catch-up testi)",
+      "command": "$env:PYTHONIOENCODING='utf-8'; $env:PYTHONPATH=\"$PWD\\src\"; python -m unittest tests.memory.test_br005_resilience tests.memory.test_session_scripts.ScriptsTest.test_catch_up_bounds_malformed_transcript_with_hook_provenance -v 2>&1 | Tee-Object -FilePath tests/evals/results/br005-focus.log",
+      "exit_code": 0,
+      "result": "Ran 6 tests; OK",
+      "log": "tests/evals/results/br005-focus.log",
+      "sha256": "4B4E6E90FF3B1E4156702DAED478631B546AC06AE2A01EA77217E8E178F1319D"
+    },
+    {
+      "purpose": "Hafıza ve regresyon odaklı testler",
+      "command": "$env:PYTHONIOENCODING='utf-8'; $env:PYTHONPATH=\"$PWD\\src\"; python -m unittest tests.memory.test_compile_flush tests.memory.test_transcript_integrity tests.memory.test_lifecycle tests.scenarios.test_regression_matrix tests.memory.test_br005_resilience -v 2>&1 | Tee-Object -FilePath tests/evals/results/br005-regression.log",
+      "exit_code": 0,
+      "result": "Ran 103 tests; OK",
+      "log": "tests/evals/results/br005-regression.log",
+      "sha256": "4B740AD6C35BC51AA1D24E48A6FEB1C1B73814715CD56C6AC9B6793946CB98B2"
+    },
+    {
+      "purpose": "Tam test paketi",
+      "command": "$env:PYTHONIOENCODING='utf-8'; $env:PYTHONPATH=\"$PWD\\src\"; python -m unittest discover -s tests -t . -v 2>&1 | Tee-Object -FilePath tests/evals/results/br005-full-suite.log",
+      "exit_code": 0,
+      "result": "Ran 942 tests; OK (skipped=15)",
+      "log": "tests/evals/results/br005-full-suite.log",
+      "sha256": "34646E5929ED4C10AC0A61DC5270AFCEACE8D97A3D788D7255F6165264CDC779"
+    }
+  ],
+  "test_summary": {
+    "focused": { "ran": 6, "passed": 6, "failed": 0, "skipped": 0 },
+    "regression": { "ran": 103, "passed": 103, "failed": 0, "skipped": 0 },
+    "full_suite": { "ran": 942, "passed": 927, "failed": 0, "skipped": 15 }
+  },
+  "acceptance": [
+    {
+      "criterion": "Aynı olay iki kez geldiğinde tekrarlı hafıza yazılmaması",
+      "status": "passed",
+      "evidence": [
+        "tests.scenarios.test_regression_matrix.RegressionMatrixTest.test_13_flush_idempotency_prevents_duplicate_append: aynı oturum iki kez flush edildiğinde günlükte tek '### Oturum' bloğu kalıyor.",
+        "tests.memory.test_transcript_integrity.F7TranscriptIntegrityTest.test_failed_session_catch_up_retry_writes_one_summary: başarısız oturumun catch-up tekrarı tek özet ve tek BEGIN bloğu üretiyor.",
+        "tests.memory.test_compile_flush: compile claim ve flush idempotency yeniden başlatma sonrasında korunuyor."
+      ]
+    },
+    {
+      "criterion": "Yarım kalan özetleme ve kapanış senaryolarının sınırlandırılması",
+      "status": "passed",
+      "evidence": [
+        "tests.memory.test_br005_resilience.Br005ResilienceTest.test_persistent_model_failure_is_bounded_after_two_attempts: kalıcı sağlayıcı hatasında attempts=2 oluyor, üçüncü catch-up failure-bound ile atlanıyor ve günlük yazılmıyor.",
+        "tests.memory.test_br005_resilience.Br005ResilienceTest.test_malformed_catch_up_is_bounded_without_model_or_daily_write: bozuk döküm iki denemeden sonra failure-bound ile duruyor; model çağrısı ve günlük yazımı yok."
+      ]
+    },
+    {
+      "criterion": "Kota, kapanan terminal, geçici kasa hatası ve bozuk döküm testleri",
+      "status": "passed",
+      "evidence": [
+        "tests.memory.test_br005_resilience.Br005ResilienceTest.test_persistent_model_failure_is_bounded_after_two_attempts: provider-timeout ve provider-quota-exceeded ayrı ayrı sınırlandı.",
+        "tests.memory.test_br005_resilience.Br005ResilienceTest.test_closed_terminal_records_launch_failure_without_raising: Popen OSError durumunda istisna yükselmiyor; health kaydı flush-launch-failed.",
+        "tests.memory.test_transcript_integrity.F7TranscriptIntegrityTest.test_daily_failure_preserves_pending_owner_for_retry: geçici günlük yazma OSError hatası sahipliği koruyor ve sonraki denemede başarıyla yazıyor.",
+        "tests.memory.test_br005_resilience.Br005ResilienceTest.test_malformed_transcript_is_recorded_as_bounded_failure ve güncellenen test_catch_up_bounds_malformed_transcript_with_hook_provenance: bozuk JSONL transcript-jsonl-invalid olarak kaydediliyor."
+      ]
+    },
+    {
+      "criterion": "Güvenli ve sınırlı yeniden deneme politikası",
+      "status": "passed",
+      "evidence": [
+        "Kalıcı hata iki denemeden sonra catch-up raporunda failure-bound nedeniyle atlanıyor.",
+        "Bozuk dökümde her catch-up attempts değerini artırıyor; üçüncü deneme model çağırmadan atlanıyor.",
+        "Yeniden deneme yalnızca aynı transcript sahipliği ve aynı sağlayıcı kapsamı içinde yapılıyor."
+      ]
+    },
+    {
+      "criterion": "Provider değişiminde oturum kimliği ve hafıza kapsamının karışmaması",
+      "status": "passed",
+      "evidence": [
+        "tests.memory.test_transcript_integrity.F7TranscriptIntegrityTest.test_provider_change_cannot_reinterpret_owned_session: sağlayıcı değişiminde model çağrılmıyor; state ve günlük baytları değişmiyor.",
+        "tests.memory.test_transcript_integrity.F7TranscriptIntegrityTest.test_native_provider_path_cannot_be_mislabeled: yanlış sağlayıcı etiketi reddediliyor; state ve günlük oluşmuyor."
+      ]
+    },
+    {
+      "criterion": "Hata anında agent'ın normal çalışmasını engellememe",
+      "status": "passed",
+      "evidence": [
+        "tests.memory.test_br005_resilience.Br005ResilienceTest.test_closed_terminal_records_launch_failure_without_raising: kapalı terminalde handle_event boş yanıt dönüyor ve istisna yükselmiyor.",
+        "tests.memory.test_br005_resilience.Br005ResilienceTest.test_bridge_exception_keeps_native_json_and_records_health: köprü istisnasında istemciye geçerli boş JSON dönüyor; hata health kaydına yazılıyor."
+      ]
+    }
+  ],
+  "failure_categories": [
+    "transcript-jsonl-invalid",
+    "flush-launch-failed",
+    "bridge-error",
+    "provider-timeout",
+    "provider-quota-exceeded",
+    "failure-bound"
+  ],
+  "sanitization": {
+    "excluded": [
+      "Ham transcript içeriği",
+      "Secret, auth token ve parola",
+      "Kullanıcı kasasındaki özel not gövdesi",
+      "Model istem metni ve ham sağlayıcı stderr"
+    ],
+    "health_payload": "Yalnızca sınırlı hata kodu, aşama ve oturum/işlem kimliği; satır numarası veya ham parse metni yok."
+  },
+  "known_limitations": [
+    "Doğrulama birim/entegrasyon testleriyle yapıldı; gerçek agent oturumunun yeniden oynatılması değildir (BR-004 kapsamı).",
+    "Tam paket 15 testi platform/ortam gereksinimi nedeniyle atladı (Linux/POSIX, sembolik bağlantı ve benzeri); hata yok.",
+    "Odak logundaki PowerShell 'NativeCommandError' satırları 2>&1 yönlendirmesinden kaynaklanan kozmetik çıktıdır; unittest sonucu OK ve çıkış kodu 0.",
+    "Kalıcı sağlayıcı hatası için üst sınır iki denemedir; bu politika ileride yapılandırılabilir hale getirilirse ayrı görev açılmalı."
+  ],
+  "result_level": "uygulandı; odak, regresyon ve tam paket test edildi",
+  "next_task": "BR-006 başlatılmadı."
+}
