@@ -1,0 +1,66 @@
+{
+  "home": "C:\\Users\\Furkan\\Documents\\respected-ecosystem\\respected-brain\\tests\\evals\\runs\\br004-20261030-053546\\home-matrix",
+  "writes_nothing": true,
+  "clients": [
+    {
+      "id": "claude",
+      "detected": true,
+      "installed": true,
+      "executable": "C:\\Users\\Furkan\\.local\\bin\\claude.EXE",
+      "connected": true,
+      "approved": null,
+      "real_test_passed": true,
+      "support": "full"
+    },
+    {
+      "id": "codex",
+      "detected": true,
+      "installed": true,
+      "executable": "C:\\Users\\Furkan\\AppData\\Local\\Programs\\OpenAI\\Codex\\bin\\codex.EXE",
+      "connected": true,
+      "approved": true,
+      "real_test_passed": true,
+      "support": "full"
+    },
+    {
+      "id": "antigravity",
+      "detected": false,
+      "installed": true,
+      "executable": "C:\\Users\\Furkan\\AppData\\Local\\agy\\bin\\agy.EXE",
+      "connected": true,
+      "approved": null,
+      "real_test_passed": true,
+      "support": "full"
+    },
+    {
+      "id": "cursor",
+      "detected": false,
+      "installed": false,
+      "executable": "",
+      "connected": false,
+      "approved": null,
+      "real_test_passed": false,
+      "support": "limited"
+    },
+    {
+      "id": "gemini",
+      "detected": true,
+      "installed": false,
+      "executable": "",
+      "connected": false,
+      "approved": null,
+      "real_test_passed": false,
+      "support": "limited"
+    }
+  ],
+  "cross_agent": {
+    "claude_to_codex": {
+      "passed": true,
+      "reason": "orbit-731 geri cagrildi"
+    },
+    "codex_to_antigravity": {
+      "passed": true,
+      "reason": "vega-42 geri cagrildi"
+    }
+  }
+}

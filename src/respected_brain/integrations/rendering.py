@@ -287,8 +287,10 @@ def detect_clients(profile):
     home = profile.user_home
     storage_hit = any(mcp_client_of(path) == "vscode-agents" for path in mcp_destinations(profile))  # listed only when the extension's folder exists
     appdata = home / ("AppData/Roaming" if profile.platform.startswith("windows") else ".config")
+    gemini = home / ".gemini"
+    antigravity = gemini.is_dir() and any(path.is_dir() for path in gemini.glob("antigravity*"))
     return {"claude": (home / ".claude").is_dir() or (home / ".claude.json").is_file(), "codex": (home / ".codex").is_dir(),
-            "gemini": (home / ".gemini").is_dir(), "antigravity": (home / ".gemini").is_dir(), "cursor": (home / ".cursor").is_dir(),
+            "gemini": gemini.is_dir(), "antigravity": antigravity, "cursor": (home / ".cursor").is_dir(),
             "windsurf": (home / ".codeium").is_dir(), "claude-desktop": (appdata / "Claude").is_dir(), "vscode-agents": storage_hit}
 
 

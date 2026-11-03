@@ -1,0 +1,328 @@
+{
+    "generated_at":  "2026-10-30T03:11:00Z",
+    "environment":  {
+                        "app":  "C:\\Users\\Furkan\\Documents\\respected-ecosystem\\respected-brain\\tests\\evals\\runs\\br004-20261030-053546\\app",
+                        "data":  "C:\\Users\\Furkan\\Documents\\respected-ecosystem\\respected-brain\\tests\\evals\\runs\\br004-20261030-053546\\data",
+                        "vault":  "C:\\Users\\Furkan\\Documents\\respected-ecosystem\\respected-brain\\tests\\evals\\runs\\br004-20261030-053546\\vault",
+                        "home":  "C:\\Users\\Furkan\\Documents\\respected-ecosystem\\respected-brain\\tests\\evals\\runs\\br004-20261030-053546\\home-matrix"
+                    },
+    "clients":  {
+                    "claude":  {
+                                   "command":  "claude -p \u0027\u003cprompt\u003e\u0027 (izole RESPECTED_APP_DIR/DATA_DIR, PYTHONPATH; hook --provider claude)",
+                                   "session_ids":  [
+                                                       "5f517528-a2c0-4443-ac35-9a1e73610b96",
+                                                       "f734d10e-33f5-4acf-9a74-ff5d1a686413"
+                                                   ],
+                                   "events":  [
+                                                  {
+                                                      "event":  "start",
+                                                      "ok":  true
+                                                  },
+                                                  {
+                                                      "event":  "prompt",
+                                                      "ok":  true
+                                                  },
+                                                  {
+                                                      "event":  "turn",
+                                                      "ok":  true
+                                                  },
+                                                  {
+                                                      "event":  "end",
+                                                      "ok":  true
+                                                  }
+                                              ],
+                                   "artifacts":  [
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/vault/daily/2026-10-30.md",
+                                                         "sha256":  "EF606562F09012AA7F5275E4518A79A1380DC6AE633A0313A369708D402E1747"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/Last-Session.md",
+                                                         "sha256":  "9068A9D772C77AE35A4D1A881BA8165E702886C9FE214FC6A5D5E8A8AA86B0D2"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T023949Z-claude-session_end-a2609d0e.json",
+                                                         "sha256":  "B13B7656C6BF44B6CBB6D929D9C73FEF74A275B42E26BFB24CC7A27C0C935141"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T024053Z-claude-turn-fe2c30f8.json",
+                                                         "sha256":  "38B0FB1E3B8EE19726DCC8D48ED7022ED7302232F58EF52235C2A0B78D69D00F"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T024709Z-codex-turn-18714c83.json",
+                                                         "sha256":  "B037E8CE6F54CF2618191C2A9DEB4FA71EB3CD8F0D9D58B80A7F2CFD7F373E3D"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T024736Z-codex-turn-4093edd5.json",
+                                                         "sha256":  "EE4D9028B80CC4820AAC0F483AFF1A404CFEF07B9D3818E3B904F8B82FCE4B56"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T025258Z-antigravity-turn-35b78a47.json",
+                                                         "sha256":  "F8E94222B5C75170A380A7E74C0D3D09296DCF4DFB9A2656B52F60DD3B4C6D72"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T025725Z-antigravity-turn-5b5873b2.json",
+                                                         "sha256":  "299D08AD3D9B8F170997F47C2A51C1D15D0DF452434DD3068553429626524C12"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T030245Z-antigravity-turn-62d3ffae.json",
+                                                         "sha256":  "E22645B010EB64EA06646947E675FD45AEA333D9674BFD6F3218317FAE086274"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/claude-session1.out.json",
+                                                         "sha256":  "81A8B60F3C85D5424E1ED31E8EC3A65766830E22CEB6DF6B1866BE4BD0541691"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/claude-session2.out.json",
+                                                         "sha256":  "541F3CB65F0352008D11389240080609C6C50DBBDFC5E05B6A929A58897F3C3C"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/codex-session1b.out.jsonl",
+                                                         "sha256":  "F2DC83337D5F9465CB7E80494B7DD25698BE4352E593CF28BF09F9E9DCBE0892"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/codex-session2.out.jsonl",
+                                                         "sha256":  "686F3BAFF445C7DC72A5EC482F109DBA4AFA4D4C582EA7AFDB6D72529A339EC1"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/codex-session3-cross.out.jsonl",
+                                                         "sha256":  "E5262CC889322460C1BA08CCEF9C75A99635A8D9DA832E918AE50B0BE27032F0"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/agy-session1b.out.json",
+                                                         "sha256":  "CA15EAA144D640736D4E5661FF977B3AEE5D06DAE999190AFCD444CE30FEBC6A"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/agy-session2.out.json",
+                                                         "sha256":  "3B75C0A5148818B559D961408AB243551D5E5919443507D3C4265907C1A398C4"
+                                                     },
+                                                     {
+                                                         "path":  "tests/evals/runs/br004-20261030-053546/agy-session3-cross.out.json",
+                                                         "sha256":  "8FF926B79365899C80498D9AC17A437F6568B25CC3B2580D81EF091E7009950D"
+                                                     }
+                                                 ],
+                                   "first_session_recorded":  true,
+                                   "second_session_recalled":  true,
+                                   "recall_answer_sanitized":  "orbit-731",
+                                   "real_test_passed":  true,
+                                   "support":  "full",
+                                   "limitation":  ""
+                               },
+                    "codex":  {
+                                  "command":  "codex exec -C \u003cwork\u003e --json --skip-git-repo-check --dangerously-bypass-hook-trust \u0027\u003cprompt\u003e\u0027 (izole CODEX_HOME)",
+                                  "session_ids":  [
+                                                      "01a18ab4-1b23-7252-b5f6-bcd56859a5d3",
+                                                      "01a18ab4-89ed-7471-87c0-0f4391eba896",
+                                                      "01a18ab5-01b3-7483-b9d2-fdc118cd7c0e"
+                                                  ],
+                                  "events":  [
+                                                 {
+                                                     "event":  "start",
+                                                     "ok":  true
+                                                 },
+                                                 {
+                                                     "event":  "prompt",
+                                                     "ok":  true
+                                                 },
+                                                 {
+                                                     "event":  "turn",
+                                                     "ok":  true
+                                                 },
+                                                 {
+                                                     "event":  "end",
+                                                     "ok":  true
+                                                 }
+                                             ],
+                                  "artifacts":  [
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/vault/daily/2026-10-30.md",
+                                                        "sha256":  "EF606562F09012AA7F5275E4518A79A1380DC6AE633A0313A369708D402E1747"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/Last-Session.md",
+                                                        "sha256":  "9068A9D772C77AE35A4D1A881BA8165E702886C9FE214FC6A5D5E8A8AA86B0D2"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T023949Z-claude-session_end-a2609d0e.json",
+                                                        "sha256":  "B13B7656C6BF44B6CBB6D929D9C73FEF74A275B42E26BFB24CC7A27C0C935141"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T024053Z-claude-turn-fe2c30f8.json",
+                                                        "sha256":  "38B0FB1E3B8EE19726DCC8D48ED7022ED7302232F58EF52235C2A0B78D69D00F"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T024709Z-codex-turn-18714c83.json",
+                                                        "sha256":  "B037E8CE6F54CF2618191C2A9DEB4FA71EB3CD8F0D9D58B80A7F2CFD7F373E3D"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T024736Z-codex-turn-4093edd5.json",
+                                                        "sha256":  "EE4D9028B80CC4820AAC0F483AFF1A404CFEF07B9D3818E3B904F8B82FCE4B56"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T025258Z-antigravity-turn-35b78a47.json",
+                                                        "sha256":  "F8E94222B5C75170A380A7E74C0D3D09296DCF4DFB9A2656B52F60DD3B4C6D72"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T025725Z-antigravity-turn-5b5873b2.json",
+                                                        "sha256":  "299D08AD3D9B8F170997F47C2A51C1D15D0DF452434DD3068553429626524C12"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T030245Z-antigravity-turn-62d3ffae.json",
+                                                        "sha256":  "E22645B010EB64EA06646947E675FD45AEA333D9674BFD6F3218317FAE086274"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/claude-session1.out.json",
+                                                        "sha256":  "81A8B60F3C85D5424E1ED31E8EC3A65766830E22CEB6DF6B1866BE4BD0541691"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/claude-session2.out.json",
+                                                        "sha256":  "541F3CB65F0352008D11389240080609C6C50DBBDFC5E05B6A929A58897F3C3C"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/codex-session1b.out.jsonl",
+                                                        "sha256":  "F2DC83337D5F9465CB7E80494B7DD25698BE4352E593CF28BF09F9E9DCBE0892"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/codex-session2.out.jsonl",
+                                                        "sha256":  "686F3BAFF445C7DC72A5EC482F109DBA4AFA4D4C582EA7AFDB6D72529A339EC1"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/codex-session3-cross.out.jsonl",
+                                                        "sha256":  "E5262CC889322460C1BA08CCEF9C75A99635A8D9DA832E918AE50B0BE27032F0"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/agy-session1b.out.json",
+                                                        "sha256":  "CA15EAA144D640736D4E5661FF977B3AEE5D06DAE999190AFCD444CE30FEBC6A"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/agy-session2.out.json",
+                                                        "sha256":  "3B75C0A5148818B559D961408AB243551D5E5919443507D3C4265907C1A398C4"
+                                                    },
+                                                    {
+                                                        "path":  "tests/evals/runs/br004-20261030-053546/agy-session3-cross.out.json",
+                                                        "sha256":  "8FF926B79365899C80498D9AC17A437F6568B25CC3B2580D81EF091E7009950D"
+                                                    }
+                                                ],
+                                  "first_session_recorded":  true,
+                                  "second_session_recalled":  true,
+                                  "recall_answer_sanitized":  "vega-42",
+                                  "real_test_passed":  true,
+                                  "support":  "full",
+                                  "limitation":  "Ilk --ephemeral denemesi transcript uretmedi; basarili test --ephemeral olmadan calistirildi. --dangerously-bypass-hook-trust kullanildi; SessionEnd zaman asimi 3 saniyeye kisaltildi."
+                              },
+                    "antigravity":  {
+                                        "command":  "agy --output-format json --print=\u0027\u003cprompt\u003e\u0027 --dangerously-skip-permissions (workspace .agents/hooks.json, izole HOME/USERPROFILE)",
+                                        "session_ids":  [
+                                                            "d062d78b-a36c-49cf-8819-5d632e702aae",
+                                                            "476afeab-89a9-466b-a1e5-1c1531e4c753",
+                                                            "00ff3e60-d869-44a1-ae42-e1ba124b68e7"
+                                                        ],
+                                        "events":  [
+                                                       {
+                                                           "event":  "start",
+                                                           "ok":  true
+                                                       },
+                                                       {
+                                                           "event":  "turn",
+                                                           "ok":  true
+                                                       }
+                                                   ],
+                                        "artifacts":  [
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/vault/daily/2026-10-30.md",
+                                                              "sha256":  "EF606562F09012AA7F5275E4518A79A1380DC6AE633A0313A369708D402E1747"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/Last-Session.md",
+                                                              "sha256":  "9068A9D772C77AE35A4D1A881BA8165E702886C9FE214FC6A5D5E8A8AA86B0D2"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T023949Z-claude-session_end-a2609d0e.json",
+                                                              "sha256":  "B13B7656C6BF44B6CBB6D929D9C73FEF74A275B42E26BFB24CC7A27C0C935141"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T024053Z-claude-turn-fe2c30f8.json",
+                                                              "sha256":  "38B0FB1E3B8EE19726DCC8D48ED7022ED7302232F58EF52235C2A0B78D69D00F"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T024709Z-codex-turn-18714c83.json",
+                                                              "sha256":  "B037E8CE6F54CF2618191C2A9DEB4FA71EB3CD8F0D9D58B80A7F2CFD7F373E3D"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T024736Z-codex-turn-4093edd5.json",
+                                                              "sha256":  "EE4D9028B80CC4820AAC0F483AFF1A404CFEF07B9D3818E3B904F8B82FCE4B56"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T025258Z-antigravity-turn-35b78a47.json",
+                                                              "sha256":  "F8E94222B5C75170A380A7E74C0D3D09296DCF4DFB9A2656B52F60DD3B4C6D72"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T025725Z-antigravity-turn-5b5873b2.json",
+                                                              "sha256":  "299D08AD3D9B8F170997F47C2A51C1D15D0DF452434DD3068553429626524C12"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/vault/🔮 850-Companion/events/20261030T030245Z-antigravity-turn-62d3ffae.json",
+                                                              "sha256":  "E22645B010EB64EA06646947E675FD45AEA333D9674BFD6F3218317FAE086274"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/claude-session1.out.json",
+                                                              "sha256":  "81A8B60F3C85D5424E1ED31E8EC3A65766830E22CEB6DF6B1866BE4BD0541691"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/claude-session2.out.json",
+                                                              "sha256":  "541F3CB65F0352008D11389240080609C6C50DBBDFC5E05B6A929A58897F3C3C"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/codex-session1b.out.jsonl",
+                                                              "sha256":  "F2DC83337D5F9465CB7E80494B7DD25698BE4352E593CF28BF09F9E9DCBE0892"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/codex-session2.out.jsonl",
+                                                              "sha256":  "686F3BAFF445C7DC72A5EC482F109DBA4AFA4D4C582EA7AFDB6D72529A339EC1"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/codex-session3-cross.out.jsonl",
+                                                              "sha256":  "E5262CC889322460C1BA08CCEF9C75A99635A8D9DA832E918AE50B0BE27032F0"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/agy-session1b.out.json",
+                                                              "sha256":  "CA15EAA144D640736D4E5661FF977B3AEE5D06DAE999190AFCD444CE30FEBC6A"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/agy-session2.out.json",
+                                                              "sha256":  "3B75C0A5148818B559D961408AB243551D5E5919443507D3C4265907C1A398C4"
+                                                          },
+                                                          {
+                                                              "path":  "tests/evals/runs/br004-20261030-053546/agy-session3-cross.out.json",
+                                                              "sha256":  "8FF926B79365899C80498D9AC17A437F6568B25CC3B2580D81EF091E7009950D"
+                                                          }
+                                                      ],
+                                        "first_session_recorded":  true,
+                                        "second_session_recalled":  true,
+                                        "recall_answer_sanitized":  "lyra-10",
+                                        "real_test_passed":  true,
+                                        "support":  "full",
+                                        "limitation":  "Global ~/.gemini/config/hooks.json otomatik yuklenmedi; workspace .agents/hooks.json kullanildi. Ilk oturum (e190c3ab) global hook nedeniyle kaydedilmedi."
+                                    },
+                    "cursor":  {
+                                   "real_test_passed":  false,
+                                   "support":  "limited",
+                                   "limitation":  "cursor-agent/cursor executable yok; .cursor ayari yok."
+                               },
+                    "gemini":  {
+                                   "real_test_passed":  false,
+                                   "support":  "limited",
+                                   "limitation":  "gemini executable yok."
+                               }
+                },
+    "cross_agent":  {
+                        "claude_to_codex":  {
+                                                "passed":  true,
+                                                "reason":  "orbit-731 geri cagrildi"
+                                            },
+                        "codex_to_antigravity":  {
+                                                     "passed":  true,
+                                                     "reason":  "vega-42 geri cagrildi"
+                                                 }
+                    }
+}

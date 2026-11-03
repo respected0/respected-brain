@@ -50,7 +50,7 @@ class Backend:
 
 def with_ai_tools(home: Path) -> Path:
     """The configuration folders of every AI tool the product can connect to: planning skips a tool that is not on the computer."""
-    for name in (".claude", ".codex", ".gemini", ".cursor", ".codeium", "AppData/Roaming/Claude"):
+    for name in (".claude", ".codex", ".gemini", ".gemini/antigravity-ide", ".cursor", ".codeium", "AppData/Roaming/Claude"):
         (home / name).mkdir(parents=True, exist_ok=True)
     return home
 

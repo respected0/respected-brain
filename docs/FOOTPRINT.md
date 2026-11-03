@@ -81,7 +81,8 @@ yine `0`'dır ve neden stderr'e yazılır; AI araçları `2` kodunu "istemi enge
 |---|---|
 | Claude Code | `~\.claude` klasörü ya da `~\.claude.json` dosyası var |
 | Codex | `~\.codex` klasörü var |
-| Gemini CLI ve Antigravity | `~\.gemini` klasörü var (ikisi için ortak) |
+| Gemini CLI | `~\.gemini` klasörü var |
+| Antigravity | `~\.gemini` altında `antigravity*` klasörü var (`antigravity-ide`, `antigravity-cli`) |
 | Cursor | `~\.cursor` klasörü var |
 | Windsurf | `~\.codeium` klasörü var |
 | Claude Desktop | `%APPDATA%\Claude` klasörü var |
