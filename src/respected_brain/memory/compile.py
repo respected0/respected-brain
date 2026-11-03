@@ -18,11 +18,13 @@ import stat
 import tempfile
 import time
 from typing import Any
+from uuid import uuid4
 
 
 from ..core import platform as runtime_platform
 from ..core.context import AppContext, ModelService
 from ..core.config import atomic_write_json as _atomic_write_json
+from .diagnostics import reason_for, record_health, safe_reason
 
 
 DEFAULT_MAX_CALLS = 3
@@ -125,37 +127,28 @@ class PromotionRecoveryError(PolicyError):
     """A failed promotion needs its retained staging preimages for recovery."""
 
 
-def write_health(state_dir: Path, error: str, warning: bool = False) -> None:
-    """Record the latest compiler problem and preserve warning history."""
-    try:
-        payload: dict[str, Any] = {}
-        health_path = state_dir / "health.json"
-        if not _path_within(health_path, state_dir):
-            return
-        if health_path.exists():
-            try:
-                loaded = json.loads(health_path.read_text(encoding="utf-8"))
-                if isinstance(loaded, dict):
-                    payload.update(loaded)
-            except (OSError, ValueError, json.JSONDecodeError):
-                pass
-        payload.update(
-            {
-                "ts": int(time.time()),
-                "component": "compile",
-                "error": error,
-            }
-        )
-        if warning:
-            warnings = payload.get("warnings", [])
-            if not isinstance(warnings, list):
-                warnings = []
-            if error not in warnings:
-                warnings.append(error)
-            payload["warnings"] = warnings[-20:]
-        _atomic_write_json(health_path, payload)
-    except OSError:
-        pass
+def write_health(
+    state_dir: Path,
+    error: str | BaseException,
+    warning: bool = False,
+    *,
+    stage: str = "compile",
+    operation_id: str | None = None,
+    session_id: str | None = None,
+    provider: str | None = None,
+) -> None:
+    """Record the latest compiler problem without exposing free-form text."""
+    reason = reason_for(error) if isinstance(error, BaseException) else safe_reason(error)
+    record_health(
+        state_dir,
+        stage=stage,
+        reason=reason,
+        component="compile",
+        warning=warning,
+        operation_id=operation_id,
+        session_id=session_id,
+        provider=provider,
+    )
 
 
 def _default_state() -> dict[str, Any]:
@@ -594,6 +587,8 @@ def _compile_one(
     timestamp: str,
     model: ModelService,
     cache_dir: Path,
+    *,
+    operation_id: str | None = None,
 ) -> tuple[str | None, str]:
     stage: Path | None = None
     retain_stage = False
@@ -619,6 +614,7 @@ def _compile_one(
                 state_dir,
                 "warn:directive-shaped-input",
                 warning=True,
+                operation_id=operation_id,
             )
         prompt = build_compile_prompt(
             index_text,
@@ -682,7 +678,7 @@ def _record_failure(
     reason: str,
     detail: str = "",
     trigger_claim: Path | None = None,
-    *, state_dir: Path, now: dt.datetime,
+    *, state_dir: Path, now: dt.datetime, operation_id: str | None = None,
 ) -> None:
     timestamp = now.isoformat()
     state["last_run"] = timestamp
@@ -692,7 +688,7 @@ def _record_failure(
         _save_state(state_path, state)
     except OSError:
         pass
-    write_health(state_dir, detail or reason)
+    write_health(state_dir, detail or reason, operation_id=operation_id)
     _release_trigger_claim(trigger_claim, state_dir)
 
 
@@ -712,14 +708,14 @@ def _validated_trigger_claim(path: Path | None, state_dir: Path) -> Path | None:
     return path
 
 
-def _run_locked(args: argparse.Namespace, trigger_claim: Path | None, ctx: AppContext, model: ModelService, now: dt.datetime) -> int:
+def _run_locked(args: argparse.Namespace, trigger_claim: Path | None, ctx: AppContext, model: ModelService, now: dt.datetime, *, operation_id: str | None = None) -> int:
     state_dir = ctx.paths.state_dir
     state_path = state_dir / "compile-state.json"
     try:
         state = load_state(state_path)
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         # Corrupt ingestion history is recovery evidence, not an empty history.
-        write_health(state_dir, str(exc))
+        write_health(state_dir, reason_for(exc), operation_id=operation_id)
         return 1
     try:
         changed = changed_daily_logs(
@@ -733,9 +729,9 @@ def _run_locked(args: argparse.Namespace, trigger_claim: Path | None, ctx: AppCo
             state,
             "",
             "state-or-daily-read-failed",
-            str(exc),
+            reason_for(exc),
             trigger_claim,
-            state_dir=state_dir, now=now,
+            state_dir=state_dir, now=now, operation_id=operation_id,
         )
         return 1
 
@@ -751,7 +747,7 @@ def _run_locked(args: argparse.Namespace, trigger_claim: Path | None, ctx: AppCo
         try:
             _save_state(state_path, state)
         except OSError:
-            write_health(state_dir, "state-write-failed")
+            write_health(state_dir, "state-write-failed", operation_id=operation_id)
             _release_trigger_claim(trigger_claim, state_dir)
             return 1
         return 0
@@ -766,6 +762,7 @@ def _run_locked(args: argparse.Namespace, trigger_claim: Path | None, ctx: AppCo
             timestamp,
             model,
             ctx.paths.cache_dir,
+            operation_id=operation_id,
         )
         if reason is not None:
             _record_failure(
@@ -775,7 +772,7 @@ def _run_locked(args: argparse.Namespace, trigger_claim: Path | None, ctx: AppCo
                 reason,
                 detail,
                 trigger_claim,
-                state_dir=state_dir, now=now,
+                state_dir=state_dir, now=now, operation_id=operation_id,
             )
             return 1
 
@@ -787,7 +784,7 @@ def _run_locked(args: argparse.Namespace, trigger_claim: Path | None, ctx: AppCo
         try:
             _save_state(state_path, state)
         except OSError:
-            write_health(state_dir, "state-write-failed")
+            write_health(state_dir, "state-write-failed", operation_id=operation_id)
             _release_trigger_claim(trigger_claim, state_dir)
             return 1
     return 0
@@ -803,6 +800,7 @@ def compile_pending(ctx: AppContext, *, model: ModelService, now: dt.datetime,
                     trigger_claim: Path | None = None, before_date: dt.date | None = None,
                     max_calls: int = DEFAULT_MAX_CALLS, dry_run: bool = False) -> int:
     state_dir = ctx.paths.state_dir
+    operation_id = uuid4().hex
     if os.environ.get("RESPECTED_INVOKED_BY"):
         return 0
     try:
@@ -813,12 +811,12 @@ def compile_pending(ctx: AppContext, *, model: ModelService, now: dt.datetime,
         return 0
     for path in (ctx.paths.cache_dir, state_dir / "compile.lock", state_dir / "compile-state.json", state_dir / "health.json"):
         if not _path_within(path, ctx.paths.data_root):
-            write_health(state_dir, "unsafe-compile-path")
+            write_health(state_dir, "unsafe-compile-path", operation_id=operation_id)
             return 1
     try:
         validated_claim = _validated_trigger_claim(trigger_claim, state_dir)
     except (OSError, ValueError) as error:
-        write_health(state_dir, str(error))
+        write_health(state_dir, reason_for(error), operation_id=operation_id)
         return 1
     trigger_claim = validated_claim
     try:
@@ -831,19 +829,21 @@ def compile_pending(ctx: AppContext, *, model: ModelService, now: dt.datetime,
                     return 1
                 args = argparse.Namespace(before_date=before_date, max_calls=max_calls, dry_run=dry_run)
                 try:
-                    return _run_locked(args, trigger_claim, ctx, model, now)
+                    return _run_locked(args, trigger_claim, ctx, model, now,
+                                       operation_id=operation_id)
                 except Exception as error:
                     state_path = state_dir / "compile-state.json"
                     try:
                         state = load_state(state_path)
                     except (OSError, ValueError, json.JSONDecodeError):
-                        write_health(state_dir, "compile-state-read-failed")
+                        write_health(state_dir, "compile-state-read-failed", operation_id=operation_id)
                         return 1
-                    _record_failure(state_path, state, "", "unexpected", error.__class__.__name__,
-                                    trigger_claim, state_dir=state_dir, now=now)
+                    _record_failure(state_path, state, "", "unexpected", reason_for(error),
+                                    trigger_claim, state_dir=state_dir, now=now,
+                                    operation_id=operation_id)
                     return 1
     except (OSError, ValueError) as error:
-        write_health(state_dir, str(error))
+        write_health(state_dir, reason_for(error), operation_id=operation_id)
         return 1
     finally:
         _release_trigger_claim(trigger_claim, state_dir)

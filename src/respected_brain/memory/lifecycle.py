@@ -20,6 +20,7 @@ import uuid
 from ..core import platform as runtime_platform
 from ..core.config import atomic_write_text
 from ..core.context import AppContext
+from .diagnostics import record_health, reason_for, safe_reason
 
 
 MAX_CONTEXT = 16_000
@@ -194,17 +195,28 @@ def _fit_context(sections: dict[str, str], reflection: str) -> str:
     return context if len(context) <= MAX_CONTEXT else CAP_DIAGNOSTIC
 
 
-def _record_health(state_dir: Path, event: str, error: str, now: datetime) -> None:
-    payload = {
-        "status": "degraded",
-        "event": event,
-        "error": error,
-        "updated_at": now.isoformat(timespec="seconds"),
-    }
-    try:
-        _atomic_write(state_dir / "health.json", json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
-    except OSError:
-        pass
+def _record_health(
+    state_dir: Path,
+    event: str,
+    error: str | BaseException,
+    now: datetime,
+    *,
+    operation_id: str | None = None,
+    session_id: str | None = None,
+    provider: str | None = None,
+) -> None:
+    reason = reason_for(error) if isinstance(error, BaseException) else safe_reason(error)
+    record_health(
+        state_dir,
+        stage="capture",
+        reason=reason,
+        component="lifecycle",
+        event=event,
+        operation_id=operation_id,
+        session_id=session_id,
+        provider=provider,
+        now=now,
+    )
 
 
 def _launch_flush(ctx: AppContext, provider: str, *, payload: dict[str, Any] | None = None,
@@ -379,6 +391,8 @@ def _finish_session(
     now: datetime,
     provider: str,
     ctx: AppContext,
+    *,
+    operation_id: str | None = None,
 ) -> str:
     key = session_key(payload["session_id"])
     start_file = state_dir / f"session_start_time.{key}"
@@ -419,6 +433,7 @@ def _finish_session(
                     vault_root, state_dir, t_path, payload["session_id"], "precompact", now,
                     None, ctx.paths.cache_dir, ctx=ctx, provider=provider,
                     hook_payload=payload, archive_path=target_log, archive_store=store,
+                    operation_id=operation_id,
                 )
                 if not archived:
                     raise ValueError("session-archive-rejected")
@@ -436,7 +451,10 @@ def _finish_session(
         reason=launch_reason,
     )
     if not launched:
-        _record_health(state_dir, reason, "flush-launch-failed", now)
+        _record_health(
+            state_dir, reason, "flush-launch-failed", now,
+            operation_id=operation_id, session_id=payload.get("session_id"), provider=provider,
+        )
     if reason == "end":
         start_file.unlink(missing_ok=True)
         prompt_file.unlink(missing_ok=True)
@@ -476,6 +494,7 @@ def handle_event(ctx: AppContext, *, event: str, session_id: str, transcript: Pa
     vault = ctx.paths.vault_root
     state_dir = ctx.paths.state_dir
     provider = payload.get("provider", "auto")
+    operation_id = uuid.uuid4().hex
     value = dict(payload)
     value["session_id"] = session_id
     value["provider"] = provider
@@ -483,27 +502,34 @@ def handle_event(ctx: AppContext, *, event: str, session_id: str, transcript: Pa
         value["transcript_path"] = str(transcript)
     state_dir.mkdir(parents=True, exist_ok=True)
     if _is_reentrant():
-        _record_health(state_dir, event, "warn:reentrant-hook-ignored", now)
+        _record_health(state_dir, event, "warn:reentrant-hook-ignored", now,
+                       operation_id=operation_id, session_id=session_id, provider=provider)
         return ""
     if not isinstance(session_id, str) or not session_id:
-        _record_health(state_dir, event, "missing-session-id", now)
+        _record_health(state_dir, event, "missing-session-id", now,
+                       operation_id=operation_id, session_id=session_id, provider=provider)
         return ""
     try:
         from .flush import record_hook_workspace
         record_hook_workspace(state_dir, ctx.paths.vault_id, session_id, provider, value)
     except (OSError, ValueError, TypeError):
-        _record_health(state_dir, event, "provenance-write-failed", now)
+        _record_health(state_dir, event, "provenance-write-failed", now,
+                       operation_id=operation_id, session_id=session_id, provider=provider)
     try:
         if event == "start":
             context = start_context(vault, state_dir, session_id, now, ctx)
             if not _launch_flush(ctx, provider, maybe_compile=True):
-                _record_health(state_dir, event, "catch-up-launch-failed", now)
+                _record_health(state_dir, event, "catch-up-launch-failed", now,
+                               operation_id=operation_id, session_id=session_id, provider=provider)
             return context
         if event == "prompt":
             return count_prompt(state_dir, session_id)
         if event in ("turn", "end", "precompact", "postcompact"):
-            return _finish_session(vault, state_dir, value, event, now, provider, ctx)
-        _record_health(state_dir, event, "unknown-event", now)
+            return _finish_session(vault, state_dir, value, event, now, provider, ctx,
+                                   operation_id=operation_id)
+        _record_health(state_dir, event, "unknown-event", now,
+                       operation_id=operation_id, session_id=session_id, provider=provider)
     except Exception as error:
-        _record_health(state_dir, event, f"{type(error).__name__}: {error}", now)
+        _record_health(state_dir, event, error, now,
+                       operation_id=operation_id, session_id=session_id, provider=provider)
     return ""
