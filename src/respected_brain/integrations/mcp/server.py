@@ -11,6 +11,7 @@ from respected_brain.core.platform import path_within_vault
 from respected_brain.core.coordination import guarded_writer
 from respected_brain.search.engine import SearchEngine
 from respected_brain.memory import decisions as decision_lifecycle
+from respected_brain.memory import context as memory_context
 from respected_brain.memory import events as memory_events
 from ..notes import MAX_NOTE_BYTES, note_path, read_note
 from .tools import WRITE_TOOLS, tool_definitions
@@ -142,6 +143,28 @@ class RespectedMcpServer:
                 lines.append(f"- **[{r['title']}]({r['path']})** (Kategori: `{r['category']}`, Skor: {r['score']})")
                 if r.get("snippet"):
                     lines.append(f"  > {r['snippet']}\n")
+            return "\n".join(lines)
+
+        elif name == "respected_recall":
+            task = str(arguments.get("task", "")).strip()
+            if not task:
+                return "Hata: Görev metni boş olamaz."
+            limit = max(0, min(20, arguments.get("limit", 5)))
+            budget = arguments.get("budget_tokens", memory_context.DEFAULT_BUDGET_TOKENS)
+            detail = arguments.get("detail", "summary")
+            results = self.search_engine.search(task, limit=limit, category=arguments.get("category"))
+            if not results:
+                return f"'{task}' görevi için eşleşen not bulunamadı."
+            context = memory_context.build_context(results, budget_tokens=budget, detail=detail)
+            if not context["text"]:
+                return f"'{task}' için bütçeye sığan kaynak bulunamadı."
+            note = " (bütçe nedeniyle kısaltıldı)" if context["truncated"] else ""
+            lines = [
+                f"### {self.os_name} — Görev Bağlamı ({context['tokens']}/{context['budget_tokens']} token, "
+                f"{len(context['items'])} kaynak){note}\n",
+                context["text"],
+                "\nTam metin için yolu `respected_get_note` ile aç.",
+            ]
             return "\n".join(lines)
 
         elif name == "respected_get_note":

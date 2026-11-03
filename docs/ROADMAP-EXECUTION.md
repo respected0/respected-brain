@@ -178,7 +178,7 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
 
 **Kabul:** Doğru kaynağı bulma başlangıcın altına inmiyor; eski karar yeni kararın önüne hatalı geçmiyor.
 
-### [ ] BR-012 · Progressive Memory Retrieval (P1, M)
+### [x] BR-012 · Progressive Memory Retrieval (P1, M)
 
 - Kısa ve önceliklendirilmiş başlangıç bağlamı.
 - Kısa sonuç → kaynak özeti → tam not akışı.
@@ -685,5 +685,55 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - `br011-full.log` → yerel/ignore, commit edilmedi
 - Bilinen sınırlar / risk: Semantik/hibrit kip yerel model etkin olmadığı için ölçülemedi (`SEMANTIC_OFF`); karşılaştırma yalnızca `none` ve `fts` üzerinde. Kalan FTS hataları T01, T02 ve T07: beklenen güncel kaynak ilk sırada değil; bu senaryolar zaman ifadesi ve dosya adı çıkarımına dayanıyor. Güven ve eski-yol sinyalleri sezgiseldir; yolu istemeden `old`/`eski` içeren meşru not ceza alabilir. Parçalama düz metin paragraf sınırlarına dayanır; çok uzun tek paragraf cümle ortasından bölünebilir. Şema yükseltmesi ilk açılışta tam yeniden indeksleme ister. Gerçek kullanıcı kasası üzerinde ölçüm yapılmadı; ham döküm veya özel not gövdesi kanıta konmadı.
 - Sonuç: **uygulandı; odak, komşu regresyon ve tam paket testleriyle doğrulandı**.
+
+### BR-012 · Progressive Memory Retrieval — TAMAMLANDI
+- Tarih/saat: 2026-11-03 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `6ccba93` (BR-011 sonrası)
+- Değişen dosyalar:
+  - `src/respected_brain/memory/context.py` (yeni)
+  - `src/respected_brain/integrations/mcp/tools.py`
+  - `src/respected_brain/integrations/mcp/server.py`
+  - `tests/memory/test_br012_progressive_context.py` (yeni)
+  - `tests/evals/progressive.py` (yeni)
+  - `tests/evals/results/br012-progressive.json` (yeni)
+  - `tests/evals/results/br012-progressive.md` (yeni)
+  - `docs/ARCHITECTURE.md`
+  - `docs/ROADMAP-EXECUTION.md`
+- Uygulama:
+  - `memory.context.build_context` sıralı arama sonuçlarını token bütçeli, kısa görev bağlamına çevirir. Varsayılan bütçe 600, üst sınır 4000 token; `detail=short` yalnızca başlık/yol, `summary` odaklı parça döndürür. Bütçe dolunca düşük sıralı sonuç düşer, uzun parçalar kelime sınırında kırpılır ve `truncated`, `tokens`, `items`, `expand` alanları raporlanır.
+  - MCP `respected_recall` aracı görev metni, bütçe, sonuç sayısı, ayrıntı ve kategori alır; mevcut FTS sıralamasını kullanır. Tam not gövdesi döndürmez, dönen yol `respected_get_note` ile açılır.
+  - Mevcut MCP yazma izinleri, kasa sınırları ve araç görünürlüğü değişmedi. Her mesaja otomatik hafıza ekleme yapılmaz; bağlam yalnızca çağrıldığında üretilir.
+  - `tests/evals/progressive.py`, cevap taşıyan notları en az 3000 karakterlik ilgisiz metinle doldurup `search`, `full`, `compact-600`, `compact-120`, `compact-60` görünümlerini aynı 50 senaryoda karşılaştırır.
+- Testler ve komutlar:
+  - `python -m unittest tests.memory.test_br012_progressive_context` → 10 test OK
+  - `python -m unittest discover -s tests/memory -t .` → 211 test OK, 2 skip
+  - `python -m unittest discover -s tests/integrations -t .` → 216 test OK
+  - `python -m unittest discover -s tests/evals -t .` → 36 test OK
+  - `python -m unittest discover -s tests -t .` → 1010 test OK, 15 skip (`br012-full.log`, yerel/ignore)
+  - `python -m tests.evals.progressive --json-out tests/evals/results/br012-progressive.json --md-out tests/evals/results/br012-progressive.md` → 50 senaryo; veri kümesi sha256 `c0cdb91c5e9960da32e09dbdefdd1a574790c2e06d6cfd419bb85b402c60e662`
+- Sonuç (benchmark):
+  - `full`: pass %98,0; Hit@1 %97,6; Hit@5 %100; MRR 0,988; cevap %100; eski-not-üstte 0; ortalama 1103,458 token.
+  - `compact-600` ve `compact-120`: aynı doğruluk; ortalama 47,452 token (tam not görünümünün yaklaşık 0,04 katı); cevap %100.
+  - `compact-60`: pass %80,0; cevap %78,6; ortalama 29,186 token. Aşırı dar bütçe alt sınır olarak kaydedildi.
+  - Kalan senaryo hatası: `T01`.
+- Kabul eşlemesi:
+  - Aynı görevlerde eşit/daha iyi doğruluk: `compact-600` ve `compact-120`, `full` ile aynı pass/Hit@1/Hit@5/MRR/cevap değerlerini koruyor.
+  - Daha az gereksiz hafıza metni: ortalama bağlam maliyeti 1103,458 → 47,452 token; uzun not gövdesi yerine odaklı parça dönüyor.
+  - Kısa sonuç → kaynak özeti → tam not akışı: `respected_recall` başlık/yol ve özet parça veriyor; tam gövde `respected_get_note` ile ayrıca isteniyor.
+  - Görev bazlı ve token bütçeli bağlam: `task`, `budget_tokens`, `detail`, `limit` ve `category` girdileri odak testleriyle doğrulandı.
+  - Mevcut MCP erişim sınırları korunuyor: araç görünürlüğü ve yazma izinleri değişmedi; komşu MCP testleri geçti.
+  - Her mesaja tam hafıza eklememe kararı korunuyor: yeni akış istek üzerine çalışıyor, oturum/mesaj kancası eklenmedi.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/memory/context.py` → `FBB7D48FAD9138A55630182E38FF08672C55D76BC3183FAD01567A37B41DB0C6`
+  - `src/respected_brain/integrations/mcp/tools.py` → `2087ADA6E5EF8D123509F96B212D712F600CE7A48E2387CAAAC209C9236328CD`
+  - `src/respected_brain/integrations/mcp/server.py` → `6D822748951AD7B4B4DB86A208F01ACC7C92CDE9A9636681759D2A1CFA1C3A6B`
+  - `tests/memory/test_br012_progressive_context.py` → `C7D05253F49A487727616CA000B677185D34AE4B6EE4A1ACABD892887A4E7F50`
+  - `tests/evals/progressive.py` → `4E303ABD96D7A38AF39CAE94371F411B1369D619C921EBCAB170920A62C3149D`
+  - `tests/evals/results/br012-progressive.json` → `A0A3BDFDB39684FB7D3100641D20210B4D80CDA123FAC4A5C1F1C45FF425B694`
+  - `tests/evals/results/br012-progressive.md` → `9618C1BF68D35F67C05BB786CE1B51F13DC5D964BE859B67526DBCCC23C67896`
+  - `docs/ARCHITECTURE.md` → `E17AA4298497CB73D14B028167C02BEFD2C56F0AB727A6BC222A88C666AADD59`
+  - `br012-focus.log`, `br012-neighbor-*.log`, `br012-full.log` → yerel/ignore, commit edilmedi
+- Bilinen sınırlar / risk: Token tahmini karakter/4'tür; gerçek model tokenizasyonu farklı olabilir. `compact-60` cevap terimlerini kırptığı için doğruluk düşüyor; varsayılan 600 bu nedenle korunuyor. Semantik/hibrit görünümler yerel model olmadan ölçülmedi. Benchmark sentetiktir ve gerçek kullanıcı kasası okunmadı; ham not gövdesi, döküm veya secret kanıta konmadı. `T01` bilinen sıralama hatası olarak kaldı.
+- Sonuç: **uygulandı; odak, komşu regresyon, benchmark ve tam paket testleriyle doğrulandı**.
 
 <!-- EVIDENCE:END -->

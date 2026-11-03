@@ -123,6 +123,7 @@ içe aktarmaz.
   karakter). `memory.recall` `mode` alanı `auto` (hazırsa karma, değilse FTS), `fts`, `semantic`, `hybrid` olabilir;
   sağlayıcı sorunu FTS'ye düşer. Her sorgu sunucuyu başlatır (ölçülen: 2,6–4,2 sn).
 - **Arama kalitesi (BR-011).** Uzun notlar 1200 karakterde paragraf sınırından parçalanır; her parça ayrı FTS satırıdır. Sorgu terimlerinin en az üçte birini taşımayan satır elenir. Sıralama deterministiktir: normalize edilmiş BM25 alaka + 0,25 yakınlık + 0,12 güven; `approved`/`user_approved` öne, `rejected` geriye, geçerliliği dolmuş `valid_until` kararı geriye düşer; yolu `old`, `previous`, `archived`, `deprecated`, `superseded`, `eski` ya da `onceki` içeren not ceza alır. Aynı yol ve aynı başlık+parça tek kez döner. Semantik isabetler 0,25 benzerlik eşiğinin altındaysa elenir; sağlayıcı hatası FTS5'e düşer.
+- **Aşamalı bağlam (BR-012).** MCP `respected_recall` görev metniyle aynı FTS sıralamasını kullanır; `budget_tokens` (varsayılan 600, en fazla 4000) ve `detail` (`short`: başlık/yol, `summary`: odaklı parça) ile kısa, önceliklendirilmiş bağlam döndürür. Tam not gövdesi döndürülmez; dönen yol `respected_get_note` ile açılır. Bütçe dolunca düşük sıralı kaynaklar düşer ve uzun parçalar kelime sınırında kırpılır; token tahmini karakter/4'tür. Her mesaja hafıza ekleme bilinçli olarak yapılmaz; bağlam yalnızca istendiğinde gelir.
 - **Hub'ın Hafıza sayfası** `memory.search`, `memory.note.read`, `memory.capture.*`, `memory.briefing.run` işlemlerini
   Hub'ın kendi yerel komutlarıyla çağırır; Hub'ın web görünümü `memory.*` işlemlerini doğrudan çağıramaz.
 - **Her istemde otomatik hafıza eklemek bilinçli olarak yapılmadı.** Hafıza AI araçlarına oturum başında, MCP ile ve
@@ -211,3 +212,4 @@ sistemini kanıtlamaz. Hub tarafındaki uçtan uca testler gerçek kurucuyu kull
 | Dizin anlık değil | oturum dışı düzenlemeler sonraki oturumda ya da günlük görevde dizine girer |
 | Hafıza izni | `settings.apply` yapabilen herkes izin oluşturabilir (aynı kullanıcı hesabı) |
 | Anlamsal arama | her sorguda sunucu başlar; yalnızca Windows x64 çalışma ortamı; yerel model etkin değilken semantik/hibrit ölçülemez, FTS5 kullanılır |
+| Aşamalı bağlam | token tahmini karakter/4 (gerçek tokenizer değil); bütçe kesin üst sınır değil, kırpma kelime sınırında yapılır |

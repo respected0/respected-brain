@@ -1,0 +1,5395 @@
+{
+  "generated_at": "2026-11-03T04:05:32.990441+00:00",
+  "brain_version": "0.1.0b1",
+  "environment": {
+    "python": "3.13.15",
+    "platform": "Windows-11-10.0.26300-SP0"
+  },
+  "dataset": {
+    "path": "C:\\Users\\Furkan\\Documents\\respected-ecosystem\\respected-brain\\tests\\evals\\scenarios.json",
+    "sha256": "c0cdb91c5e9960da32e09dbdefdd1a574790c2e06d6cfd419bb85b402c60e662"
+  },
+  "settings": {
+    "limit": 5,
+    "snippet_chars": 400,
+    "budgets": [
+      600,
+      120,
+      60
+    ],
+    "pad_chars": 3000
+  },
+  "prompt": "retrieval-only: same FTS hits, progressive context views scored by the BR-001 harness rules",
+  "views": {
+    "search": {
+      "scenarios": 50,
+      "evaluated": 50,
+      "pass_rate": 0.98,
+      "hit1": 0.9762,
+      "hit5": 1.0,
+      "mrr": 0.9881,
+      "answer": 1.0,
+      "coverage": 1.0,
+      "stale_above_current": 0,
+      "no_answer": 1.0,
+      "tokens": 47.452,
+      "tokens_p50": 63.8,
+      "tokens_p95": 71.5,
+      "failures": [
+        "T01"
+      ]
+    },
+    "full": {
+      "scenarios": 50,
+      "evaluated": 50,
+      "pass_rate": 0.98,
+      "hit1": 0.9762,
+      "hit5": 1.0,
+      "mrr": 0.9881,
+      "answer": 1.0,
+      "coverage": 1.0,
+      "stale_above_current": 0,
+      "no_answer": 1.0,
+      "tokens": 1103.458,
+      "tokens_p50": 1532.5,
+      "tokens_p95": 1533.0,
+      "failures": [
+        "T01"
+      ]
+    },
+    "compact-600": {
+      "scenarios": 50,
+      "evaluated": 50,
+      "pass_rate": 0.98,
+      "hit1": 0.9762,
+      "hit5": 1.0,
+      "mrr": 0.9881,
+      "answer": 1.0,
+      "coverage": 1.0,
+      "stale_above_current": 0,
+      "no_answer": 1.0,
+      "tokens": 47.452,
+      "tokens_p50": 63.8,
+      "tokens_p95": 71.5,
+      "failures": [
+        "T01"
+      ]
+    },
+    "compact-120": {
+      "scenarios": 50,
+      "evaluated": 50,
+      "pass_rate": 0.98,
+      "hit1": 0.9762,
+      "hit5": 1.0,
+      "mrr": 0.9881,
+      "answer": 1.0,
+      "coverage": 1.0,
+      "stale_above_current": 0,
+      "no_answer": 1.0,
+      "tokens": 47.452,
+      "tokens_p50": 63.8,
+      "tokens_p95": 71.5,
+      "failures": [
+        "T01"
+      ]
+    },
+    "compact-60": {
+      "scenarios": 50,
+      "evaluated": 50,
+      "pass_rate": 0.8,
+      "hit1": 0.9762,
+      "hit5": 1.0,
+      "mrr": 0.9881,
+      "answer": 0.7857,
+      "coverage": 0.9048,
+      "stale_above_current": 0,
+      "no_answer": 1.0,
+      "tokens": 29.186,
+      "tokens_p50": 33.5,
+      "tokens_p95": 41.0,
+      "failures": [
+        "M01",
+        "M03",
+        "M04",
+        "M05",
+        "M06",
+        "M07",
+        "M08",
+        "M09",
+        "M10",
+        "T01"
+      ]
+    }
+  },
+  "scenarios": {
+    "search": [
+      {
+        "id": "R01",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/database.md"
+          ]
+        },
+        "tokens": 30.2
+      },
+      {
+        "id": "R02",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/api.md"
+          ]
+        },
+        "tokens": 29.5
+      },
+      {
+        "id": "R03",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/tooling.md"
+          ]
+        },
+        "tokens": 32.2
+      },
+      {
+        "id": "R04",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/release/branch.md"
+          ]
+        },
+        "tokens": 35.2
+      },
+      {
+        "id": "R05",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/backend/migrations.md"
+          ]
+        },
+        "tokens": 36.0
+      },
+      {
+        "id": "R06",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/errors.md"
+          ]
+        },
+        "tokens": 31.2
+      },
+      {
+        "id": "R07",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/backup.md"
+          ]
+        },
+        "tokens": 31.2
+      },
+      {
+        "id": "R08",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ci/runner.md"
+          ]
+        },
+        "tokens": 30.8
+      },
+      {
+        "id": "R09",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/design/tokens.md"
+          ]
+        },
+        "tokens": 33.2
+      },
+      {
+        "id": "R10",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/support/contact.md"
+          ]
+        },
+        "tokens": 34.8
+      },
+      {
+        "id": "R11",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/timezone.md"
+          ]
+        },
+        "tokens": 34.0
+      },
+      {
+        "id": "R12",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/retries.md"
+          ]
+        },
+        "tokens": 34.5
+      },
+      {
+        "id": "M01",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/billing-name.md",
+            "sessions/billing-port.md"
+          ]
+        },
+        "tokens": 65.8
+      },
+      {
+        "id": "M02",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/parser-version.md",
+            "sessions/parser-lib.md"
+          ]
+        },
+        "tokens": 65.8
+      },
+      {
+        "id": "M03",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/bug-cause.md",
+            "sessions/bug-fix.md"
+          ]
+        },
+        "tokens": 63.8
+      },
+      {
+        "id": "M04",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/flag-name.md",
+            "sessions/flag-default.md"
+          ]
+        },
+        "tokens": 64.8
+      },
+      {
+        "id": "M05",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/db-rotation.md",
+            "sessions/db-host.md"
+          ]
+        },
+        "tokens": 73.0
+      },
+      {
+        "id": "M06",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/build-cmd.md",
+            "sessions/artifact.md"
+          ]
+        },
+        "tokens": 67.5
+      },
+      {
+        "id": "M07",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/auth.md",
+            "sessions/endpoint.md"
+          ]
+        },
+        "tokens": 68.0
+      },
+      {
+        "id": "M08",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/incident-cause.md",
+            "sessions/incident-date.md"
+          ]
+        },
+        "tokens": 65.2
+      },
+      {
+        "id": "M09",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/decision.md",
+            "sessions/rationale.md"
+          ]
+        },
+        "tokens": 67.8
+      },
+      {
+        "id": "M10",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/test-command.md",
+            "sessions/fixtures.md"
+          ]
+        },
+        "tokens": 73.5
+      },
+      {
+        "id": "T01",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": false,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": false,
+          "hit5": true,
+          "mrr": 0.5,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": false,
+          "paths": [
+            "releases/v1.md",
+            "releases/v2.md"
+          ]
+        },
+        "tokens": 54.0
+      },
+      {
+        "id": "T02",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "ops/migrations-2026-10.md",
+            "ops/migrations-2026-05.md"
+          ]
+        },
+        "tokens": 65.0
+      },
+      {
+        "id": "T03",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "team/owner-oct.md",
+            "team/owner-aug.md"
+          ]
+        },
+        "tokens": 65.5
+      },
+      {
+        "id": "T04",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "api/version-new.md",
+            "api/version-old.md"
+          ]
+        },
+        "tokens": 64.2
+      },
+      {
+        "id": "T05",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "finance/q4.md",
+            "finance/q3.md"
+          ]
+        },
+        "tokens": 62.2
+      },
+      {
+        "id": "T06",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "ops/incident-october.md",
+            "ops/incident-june.md"
+          ]
+        },
+        "tokens": 60.5
+      },
+      {
+        "id": "T07",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "meetings/october.md",
+            "meetings/july.md"
+          ]
+        },
+        "tokens": 65.8
+      },
+      {
+        "id": "T08",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "security/rotation-october.md",
+            "security/rotation-april.md"
+          ]
+        },
+        "tokens": 70.5
+      },
+      {
+        "id": "T09",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "frontend/react-new.md",
+            "frontend/react-old.md"
+          ]
+        },
+        "tokens": 61.5
+      },
+      {
+        "id": "T10",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sprints/sprint-18.md",
+            "sprints/sprint-12.md"
+          ]
+        },
+        "tokens": 64.5
+      },
+      {
+        "id": "U01",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/framework.md",
+            "decisions/framework-old.md"
+          ]
+        },
+        "tokens": 68.8
+      },
+      {
+        "id": "U02",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/cache.md",
+            "decisions/cache-old.md"
+          ]
+        },
+        "tokens": 66.8
+      },
+      {
+        "id": "U03",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/tests.md",
+            "decisions/tests-old.md"
+          ]
+        },
+        "tokens": 63.8
+      },
+      {
+        "id": "U04",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/protocol.md",
+            "decisions/protocol-old.md"
+          ]
+        },
+        "tokens": 64.5
+      },
+      {
+        "id": "U05",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/package-manager.md",
+            "decisions/package-manager-old.md"
+          ]
+        },
+        "tokens": 65.8
+      },
+      {
+        "id": "U06",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/postgres.md",
+            "decisions/postgres-old.md"
+          ]
+        },
+        "tokens": 68.5
+      },
+      {
+        "id": "U07",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/storage.md",
+            "decisions/storage-old.md"
+          ]
+        },
+        "tokens": 66.2
+      },
+      {
+        "id": "U08",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/auth.md",
+            "decisions/auth-old.md"
+          ]
+        },
+        "tokens": 69.2
+      },
+      {
+        "id": "U09",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/repo.md",
+            "decisions/repo-old.md"
+          ]
+        },
+        "tokens": 71.5
+      },
+      {
+        "id": "U10",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/lint.md",
+            "decisions/lint-old.md"
+          ]
+        },
+        "tokens": 65.8
+      },
+      {
+        "id": "N01",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N02",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N03",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N04",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N05",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N06",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N07",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N08",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      }
+    ],
+    "full": [
+      {
+        "id": "R01",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/database.md"
+          ]
+        },
+        "tokens": 766.2
+      },
+      {
+        "id": "R02",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/api.md"
+          ]
+        },
+        "tokens": 766.2
+      },
+      {
+        "id": "R03",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/tooling.md"
+          ]
+        },
+        "tokens": 766.2
+      },
+      {
+        "id": "R04",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/release/branch.md"
+          ]
+        },
+        "tokens": 766.2
+      },
+      {
+        "id": "R05",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/backend/migrations.md"
+          ]
+        },
+        "tokens": 766.2
+      },
+      {
+        "id": "R06",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/errors.md"
+          ]
+        },
+        "tokens": 766.2
+      },
+      {
+        "id": "R07",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/backup.md"
+          ]
+        },
+        "tokens": 766.2
+      },
+      {
+        "id": "R08",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ci/runner.md"
+          ]
+        },
+        "tokens": 766.2
+      },
+      {
+        "id": "R09",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/design/tokens.md"
+          ]
+        },
+        "tokens": 766.2
+      },
+      {
+        "id": "R10",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/support/contact.md"
+          ]
+        },
+        "tokens": 766.2
+      },
+      {
+        "id": "R11",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/timezone.md"
+          ]
+        },
+        "tokens": 766.2
+      },
+      {
+        "id": "R12",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/retries.md"
+          ]
+        },
+        "tokens": 766.2
+      },
+      {
+        "id": "M01",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/billing-name.md",
+            "sessions/billing-port.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "M02",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/parser-version.md",
+            "sessions/parser-lib.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "M03",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/bug-cause.md",
+            "sessions/bug-fix.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "M04",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/flag-name.md",
+            "sessions/flag-default.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "M05",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/db-rotation.md",
+            "sessions/db-host.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "M06",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/build-cmd.md",
+            "sessions/artifact.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "M07",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/auth.md",
+            "sessions/endpoint.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "M08",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/incident-cause.md",
+            "sessions/incident-date.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "M09",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/decision.md",
+            "sessions/rationale.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "M10",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/test-command.md",
+            "sessions/fixtures.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "T01",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": false,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": false,
+          "hit5": true,
+          "mrr": 0.5,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": false,
+          "paths": [
+            "releases/v1.md",
+            "releases/v2.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "T02",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "ops/migrations-2026-10.md",
+            "ops/migrations-2026-05.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "T03",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "team/owner-oct.md",
+            "team/owner-aug.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "T04",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "api/version-new.md",
+            "api/version-old.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "T05",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "finance/q4.md",
+            "finance/q3.md"
+          ]
+        },
+        "tokens": 1533.5
+      },
+      {
+        "id": "T06",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "ops/incident-october.md",
+            "ops/incident-june.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "T07",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "meetings/october.md",
+            "meetings/july.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "T08",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "security/rotation-october.md",
+            "security/rotation-april.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "T09",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "frontend/react-new.md",
+            "frontend/react-old.md"
+          ]
+        },
+        "tokens": 1533.0
+      },
+      {
+        "id": "T10",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sprints/sprint-18.md",
+            "sprints/sprint-12.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "U01",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/framework.md",
+            "decisions/framework-old.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "U02",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/cache.md",
+            "decisions/cache-old.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "U03",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/tests.md",
+            "decisions/tests-old.md"
+          ]
+        },
+        "tokens": 1533.0
+      },
+      {
+        "id": "U04",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/protocol.md",
+            "decisions/protocol-old.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "U05",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/package-manager.md",
+            "decisions/package-manager-old.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "U06",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/postgres.md",
+            "decisions/postgres-old.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "U07",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/storage.md",
+            "decisions/storage-old.md"
+          ]
+        },
+        "tokens": 1533.0
+      },
+      {
+        "id": "U08",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/auth.md",
+            "decisions/auth-old.md"
+          ]
+        },
+        "tokens": 1533.0
+      },
+      {
+        "id": "U09",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/repo.md",
+            "decisions/repo-old.md"
+          ]
+        },
+        "tokens": 1532.5
+      },
+      {
+        "id": "U10",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/lint.md",
+            "decisions/lint-old.md"
+          ]
+        },
+        "tokens": 1533.0
+      },
+      {
+        "id": "N01",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N02",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N03",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N04",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N05",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N06",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N07",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N08",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      }
+    ],
+    "compact-600": [
+      {
+        "id": "R01",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/database.md"
+          ]
+        },
+        "tokens": 30.2
+      },
+      {
+        "id": "R02",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/api.md"
+          ]
+        },
+        "tokens": 29.5
+      },
+      {
+        "id": "R03",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/tooling.md"
+          ]
+        },
+        "tokens": 32.2
+      },
+      {
+        "id": "R04",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/release/branch.md"
+          ]
+        },
+        "tokens": 35.2
+      },
+      {
+        "id": "R05",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/backend/migrations.md"
+          ]
+        },
+        "tokens": 36.0
+      },
+      {
+        "id": "R06",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/errors.md"
+          ]
+        },
+        "tokens": 31.2
+      },
+      {
+        "id": "R07",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/backup.md"
+          ]
+        },
+        "tokens": 31.2
+      },
+      {
+        "id": "R08",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ci/runner.md"
+          ]
+        },
+        "tokens": 30.8
+      },
+      {
+        "id": "R09",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/design/tokens.md"
+          ]
+        },
+        "tokens": 33.2
+      },
+      {
+        "id": "R10",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/support/contact.md"
+          ]
+        },
+        "tokens": 34.8
+      },
+      {
+        "id": "R11",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/timezone.md"
+          ]
+        },
+        "tokens": 34.0
+      },
+      {
+        "id": "R12",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/retries.md"
+          ]
+        },
+        "tokens": 34.5
+      },
+      {
+        "id": "M01",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/billing-name.md",
+            "sessions/billing-port.md"
+          ]
+        },
+        "tokens": 65.8
+      },
+      {
+        "id": "M02",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/parser-version.md",
+            "sessions/parser-lib.md"
+          ]
+        },
+        "tokens": 65.8
+      },
+      {
+        "id": "M03",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/bug-cause.md",
+            "sessions/bug-fix.md"
+          ]
+        },
+        "tokens": 63.8
+      },
+      {
+        "id": "M04",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/flag-name.md",
+            "sessions/flag-default.md"
+          ]
+        },
+        "tokens": 64.8
+      },
+      {
+        "id": "M05",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/db-rotation.md",
+            "sessions/db-host.md"
+          ]
+        },
+        "tokens": 73.0
+      },
+      {
+        "id": "M06",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/build-cmd.md",
+            "sessions/artifact.md"
+          ]
+        },
+        "tokens": 67.5
+      },
+      {
+        "id": "M07",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/auth.md",
+            "sessions/endpoint.md"
+          ]
+        },
+        "tokens": 68.0
+      },
+      {
+        "id": "M08",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/incident-cause.md",
+            "sessions/incident-date.md"
+          ]
+        },
+        "tokens": 65.2
+      },
+      {
+        "id": "M09",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/decision.md",
+            "sessions/rationale.md"
+          ]
+        },
+        "tokens": 67.8
+      },
+      {
+        "id": "M10",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/test-command.md",
+            "sessions/fixtures.md"
+          ]
+        },
+        "tokens": 73.5
+      },
+      {
+        "id": "T01",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": false,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": false,
+          "hit5": true,
+          "mrr": 0.5,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": false,
+          "paths": [
+            "releases/v1.md",
+            "releases/v2.md"
+          ]
+        },
+        "tokens": 54.0
+      },
+      {
+        "id": "T02",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "ops/migrations-2026-10.md",
+            "ops/migrations-2026-05.md"
+          ]
+        },
+        "tokens": 65.0
+      },
+      {
+        "id": "T03",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "team/owner-oct.md",
+            "team/owner-aug.md"
+          ]
+        },
+        "tokens": 65.5
+      },
+      {
+        "id": "T04",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "api/version-new.md",
+            "api/version-old.md"
+          ]
+        },
+        "tokens": 64.2
+      },
+      {
+        "id": "T05",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "finance/q4.md",
+            "finance/q3.md"
+          ]
+        },
+        "tokens": 62.2
+      },
+      {
+        "id": "T06",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "ops/incident-october.md",
+            "ops/incident-june.md"
+          ]
+        },
+        "tokens": 60.5
+      },
+      {
+        "id": "T07",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "meetings/october.md",
+            "meetings/july.md"
+          ]
+        },
+        "tokens": 65.8
+      },
+      {
+        "id": "T08",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "security/rotation-october.md",
+            "security/rotation-april.md"
+          ]
+        },
+        "tokens": 70.5
+      },
+      {
+        "id": "T09",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "frontend/react-new.md",
+            "frontend/react-old.md"
+          ]
+        },
+        "tokens": 61.5
+      },
+      {
+        "id": "T10",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sprints/sprint-18.md",
+            "sprints/sprint-12.md"
+          ]
+        },
+        "tokens": 64.5
+      },
+      {
+        "id": "U01",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/framework.md",
+            "decisions/framework-old.md"
+          ]
+        },
+        "tokens": 68.8
+      },
+      {
+        "id": "U02",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/cache.md",
+            "decisions/cache-old.md"
+          ]
+        },
+        "tokens": 66.8
+      },
+      {
+        "id": "U03",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/tests.md",
+            "decisions/tests-old.md"
+          ]
+        },
+        "tokens": 63.8
+      },
+      {
+        "id": "U04",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/protocol.md",
+            "decisions/protocol-old.md"
+          ]
+        },
+        "tokens": 64.5
+      },
+      {
+        "id": "U05",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/package-manager.md",
+            "decisions/package-manager-old.md"
+          ]
+        },
+        "tokens": 65.8
+      },
+      {
+        "id": "U06",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/postgres.md",
+            "decisions/postgres-old.md"
+          ]
+        },
+        "tokens": 68.5
+      },
+      {
+        "id": "U07",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/storage.md",
+            "decisions/storage-old.md"
+          ]
+        },
+        "tokens": 66.2
+      },
+      {
+        "id": "U08",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/auth.md",
+            "decisions/auth-old.md"
+          ]
+        },
+        "tokens": 69.2
+      },
+      {
+        "id": "U09",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/repo.md",
+            "decisions/repo-old.md"
+          ]
+        },
+        "tokens": 71.5
+      },
+      {
+        "id": "U10",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/lint.md",
+            "decisions/lint-old.md"
+          ]
+        },
+        "tokens": 65.8
+      },
+      {
+        "id": "N01",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N02",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N03",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N04",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N05",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N06",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N07",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N08",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      }
+    ],
+    "compact-120": [
+      {
+        "id": "R01",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/database.md"
+          ]
+        },
+        "tokens": 30.2
+      },
+      {
+        "id": "R02",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/api.md"
+          ]
+        },
+        "tokens": 29.5
+      },
+      {
+        "id": "R03",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/tooling.md"
+          ]
+        },
+        "tokens": 32.2
+      },
+      {
+        "id": "R04",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/release/branch.md"
+          ]
+        },
+        "tokens": 35.2
+      },
+      {
+        "id": "R05",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/backend/migrations.md"
+          ]
+        },
+        "tokens": 36.0
+      },
+      {
+        "id": "R06",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/errors.md"
+          ]
+        },
+        "tokens": 31.2
+      },
+      {
+        "id": "R07",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/backup.md"
+          ]
+        },
+        "tokens": 31.2
+      },
+      {
+        "id": "R08",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ci/runner.md"
+          ]
+        },
+        "tokens": 30.8
+      },
+      {
+        "id": "R09",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/design/tokens.md"
+          ]
+        },
+        "tokens": 33.2
+      },
+      {
+        "id": "R10",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/support/contact.md"
+          ]
+        },
+        "tokens": 34.8
+      },
+      {
+        "id": "R11",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/timezone.md"
+          ]
+        },
+        "tokens": 34.0
+      },
+      {
+        "id": "R12",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/retries.md"
+          ]
+        },
+        "tokens": 34.5
+      },
+      {
+        "id": "M01",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/billing-name.md",
+            "sessions/billing-port.md"
+          ]
+        },
+        "tokens": 65.8
+      },
+      {
+        "id": "M02",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/parser-version.md",
+            "sessions/parser-lib.md"
+          ]
+        },
+        "tokens": 65.8
+      },
+      {
+        "id": "M03",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/bug-cause.md",
+            "sessions/bug-fix.md"
+          ]
+        },
+        "tokens": 63.8
+      },
+      {
+        "id": "M04",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/flag-name.md",
+            "sessions/flag-default.md"
+          ]
+        },
+        "tokens": 64.8
+      },
+      {
+        "id": "M05",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/db-rotation.md",
+            "sessions/db-host.md"
+          ]
+        },
+        "tokens": 73.0
+      },
+      {
+        "id": "M06",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/build-cmd.md",
+            "sessions/artifact.md"
+          ]
+        },
+        "tokens": 67.5
+      },
+      {
+        "id": "M07",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/auth.md",
+            "sessions/endpoint.md"
+          ]
+        },
+        "tokens": 68.0
+      },
+      {
+        "id": "M08",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/incident-cause.md",
+            "sessions/incident-date.md"
+          ]
+        },
+        "tokens": 65.2
+      },
+      {
+        "id": "M09",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/decision.md",
+            "sessions/rationale.md"
+          ]
+        },
+        "tokens": 67.8
+      },
+      {
+        "id": "M10",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/test-command.md",
+            "sessions/fixtures.md"
+          ]
+        },
+        "tokens": 73.5
+      },
+      {
+        "id": "T01",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": false,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": false,
+          "hit5": true,
+          "mrr": 0.5,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": false,
+          "paths": [
+            "releases/v1.md",
+            "releases/v2.md"
+          ]
+        },
+        "tokens": 54.0
+      },
+      {
+        "id": "T02",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "ops/migrations-2026-10.md",
+            "ops/migrations-2026-05.md"
+          ]
+        },
+        "tokens": 65.0
+      },
+      {
+        "id": "T03",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "team/owner-oct.md",
+            "team/owner-aug.md"
+          ]
+        },
+        "tokens": 65.5
+      },
+      {
+        "id": "T04",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "api/version-new.md",
+            "api/version-old.md"
+          ]
+        },
+        "tokens": 64.2
+      },
+      {
+        "id": "T05",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "finance/q4.md",
+            "finance/q3.md"
+          ]
+        },
+        "tokens": 62.2
+      },
+      {
+        "id": "T06",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "ops/incident-october.md",
+            "ops/incident-june.md"
+          ]
+        },
+        "tokens": 60.5
+      },
+      {
+        "id": "T07",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "meetings/october.md",
+            "meetings/july.md"
+          ]
+        },
+        "tokens": 65.8
+      },
+      {
+        "id": "T08",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "security/rotation-october.md",
+            "security/rotation-april.md"
+          ]
+        },
+        "tokens": 70.5
+      },
+      {
+        "id": "T09",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "frontend/react-new.md",
+            "frontend/react-old.md"
+          ]
+        },
+        "tokens": 61.5
+      },
+      {
+        "id": "T10",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sprints/sprint-18.md",
+            "sprints/sprint-12.md"
+          ]
+        },
+        "tokens": 64.5
+      },
+      {
+        "id": "U01",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/framework.md",
+            "decisions/framework-old.md"
+          ]
+        },
+        "tokens": 68.8
+      },
+      {
+        "id": "U02",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/cache.md",
+            "decisions/cache-old.md"
+          ]
+        },
+        "tokens": 66.8
+      },
+      {
+        "id": "U03",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/tests.md",
+            "decisions/tests-old.md"
+          ]
+        },
+        "tokens": 63.8
+      },
+      {
+        "id": "U04",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/protocol.md",
+            "decisions/protocol-old.md"
+          ]
+        },
+        "tokens": 64.5
+      },
+      {
+        "id": "U05",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/package-manager.md",
+            "decisions/package-manager-old.md"
+          ]
+        },
+        "tokens": 65.8
+      },
+      {
+        "id": "U06",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/postgres.md",
+            "decisions/postgres-old.md"
+          ]
+        },
+        "tokens": 68.5
+      },
+      {
+        "id": "U07",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/storage.md",
+            "decisions/storage-old.md"
+          ]
+        },
+        "tokens": 66.2
+      },
+      {
+        "id": "U08",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/auth.md",
+            "decisions/auth-old.md"
+          ]
+        },
+        "tokens": 69.2
+      },
+      {
+        "id": "U09",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/repo.md",
+            "decisions/repo-old.md"
+          ]
+        },
+        "tokens": 71.5
+      },
+      {
+        "id": "U10",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/lint.md",
+            "decisions/lint-old.md"
+          ]
+        },
+        "tokens": 65.8
+      },
+      {
+        "id": "N01",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N02",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N03",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N04",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N05",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N06",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N07",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N08",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      }
+    ],
+    "compact-60": [
+      {
+        "id": "R01",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/database.md"
+          ]
+        },
+        "tokens": 30.2
+      },
+      {
+        "id": "R02",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/api.md"
+          ]
+        },
+        "tokens": 29.5
+      },
+      {
+        "id": "R03",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/tooling.md"
+          ]
+        },
+        "tokens": 32.2
+      },
+      {
+        "id": "R04",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/release/branch.md"
+          ]
+        },
+        "tokens": 35.2
+      },
+      {
+        "id": "R05",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/backend/migrations.md"
+          ]
+        },
+        "tokens": 36.0
+      },
+      {
+        "id": "R06",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/errors.md"
+          ]
+        },
+        "tokens": 31.2
+      },
+      {
+        "id": "R07",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/backup.md"
+          ]
+        },
+        "tokens": 31.2
+      },
+      {
+        "id": "R08",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ci/runner.md"
+          ]
+        },
+        "tokens": 30.8
+      },
+      {
+        "id": "R09",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/design/tokens.md"
+          ]
+        },
+        "tokens": 33.2
+      },
+      {
+        "id": "R10",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/support/contact.md"
+          ]
+        },
+        "tokens": 34.8
+      },
+      {
+        "id": "R11",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/timezone.md"
+          ]
+        },
+        "tokens": 34.0
+      },
+      {
+        "id": "R12",
+        "category": "recall",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "notes/ops/retries.md"
+          ]
+        },
+        "tokens": 34.5
+      },
+      {
+        "id": "M01",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": false,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": false,
+          "coverage": 0.5,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/billing-name.md"
+          ]
+        },
+        "tokens": 33.5
+      },
+      {
+        "id": "M02",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 0.5,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/parser-version.md"
+          ]
+        },
+        "tokens": 30.5
+      },
+      {
+        "id": "M03",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": false,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": false,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/bug-cause.md",
+            "sessions/bug-fix.md"
+          ]
+        },
+        "tokens": 36.8
+      },
+      {
+        "id": "M04",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": false,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": false,
+          "coverage": 0.5,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/flag-name.md"
+          ]
+        },
+        "tokens": 32.0
+      },
+      {
+        "id": "M05",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": false,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": false,
+          "coverage": 0.5,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/db-rotation.md"
+          ]
+        },
+        "tokens": 36.5
+      },
+      {
+        "id": "M06",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": false,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": false,
+          "coverage": 0.5,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/build-cmd.md"
+          ]
+        },
+        "tokens": 33.5
+      },
+      {
+        "id": "M07",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": false,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": false,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/auth.md",
+            "sessions/endpoint.md"
+          ]
+        },
+        "tokens": 39.8
+      },
+      {
+        "id": "M08",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": false,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": false,
+          "coverage": 0.5,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/incident-cause.md"
+          ]
+        },
+        "tokens": 33.5
+      },
+      {
+        "id": "M09",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": false,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": false,
+          "coverage": 0.5,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/decision.md"
+          ]
+        },
+        "tokens": 33.5
+      },
+      {
+        "id": "M10",
+        "category": "multi_session",
+        "status": "ok",
+        "score": {
+          "pass": false,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": false,
+          "coverage": 0.5,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sessions/test-command.md"
+          ]
+        },
+        "tokens": 36.5
+      },
+      {
+        "id": "T01",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": false,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": false,
+          "hit5": true,
+          "mrr": 0.5,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": false,
+          "paths": [
+            "releases/v1.md",
+            "releases/v2.md"
+          ]
+        },
+        "tokens": 44.5
+      },
+      {
+        "id": "T02",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "ops/migrations-2026-10.md"
+          ]
+        },
+        "tokens": 32.5
+      },
+      {
+        "id": "T03",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "team/owner-oct.md",
+            "team/owner-aug.md"
+          ]
+        },
+        "tokens": 39.2
+      },
+      {
+        "id": "T04",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "api/version-new.md"
+          ]
+        },
+        "tokens": 32.5
+      },
+      {
+        "id": "T05",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "finance/q4.md",
+            "finance/q3.md"
+          ]
+        },
+        "tokens": 44.8
+      },
+      {
+        "id": "T06",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "ops/incident-october.md"
+          ]
+        },
+        "tokens": 30.5
+      },
+      {
+        "id": "T07",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "meetings/october.md",
+            "meetings/july.md"
+          ]
+        },
+        "tokens": 41.0
+      },
+      {
+        "id": "T08",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "security/rotation-october.md"
+          ]
+        },
+        "tokens": 35.2
+      },
+      {
+        "id": "T09",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "frontend/react-new.md",
+            "frontend/react-old.md"
+          ]
+        },
+        "tokens": 37.0
+      },
+      {
+        "id": "T10",
+        "category": "temporal",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "sprints/sprint-18.md"
+          ]
+        },
+        "tokens": 32.2
+      },
+      {
+        "id": "U01",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/framework.md"
+          ]
+        },
+        "tokens": 35.2
+      },
+      {
+        "id": "U02",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/cache.md"
+          ]
+        },
+        "tokens": 33.5
+      },
+      {
+        "id": "U03",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/tests.md",
+            "decisions/tests-old.md"
+          ]
+        },
+        "tokens": 38.5
+      },
+      {
+        "id": "U04",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/protocol.md"
+          ]
+        },
+        "tokens": 32.2
+      },
+      {
+        "id": "U05",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/package-manager.md"
+          ]
+        },
+        "tokens": 32.8
+      },
+      {
+        "id": "U06",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/postgres.md"
+          ]
+        },
+        "tokens": 34.0
+      },
+      {
+        "id": "U07",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/storage.md"
+          ]
+        },
+        "tokens": 33.5
+      },
+      {
+        "id": "U08",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/auth.md"
+          ]
+        },
+        "tokens": 35.5
+      },
+      {
+        "id": "U09",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/repo.md"
+          ]
+        },
+        "tokens": 36.0
+      },
+      {
+        "id": "U10",
+        "category": "update",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": false,
+          "no_answer_ok": null,
+          "hit1": true,
+          "hit5": true,
+          "mrr": 1.0,
+          "answer": true,
+          "coverage": 1.0,
+          "stale_above_current": 0,
+          "top1_ok": true,
+          "paths": [
+            "decisions/lint.md",
+            "decisions/lint-old.md"
+          ]
+        },
+        "tokens": 39.8
+      },
+      {
+        "id": "N01",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N02",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N03",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N04",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N05",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N06",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N07",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      },
+      {
+        "id": "N08",
+        "category": "unknown",
+        "status": "ok",
+        "score": {
+          "pass": true,
+          "no_answer": true,
+          "no_answer_ok": true,
+          "hit1": null,
+          "hit5": null,
+          "mrr": null,
+          "answer": null,
+          "coverage": null,
+          "stale_above_current": 0,
+          "paths": []
+        },
+        "tokens": 0.0
+      }
+    ]
+  }
+}

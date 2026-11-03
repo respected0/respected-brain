@@ -24,6 +24,24 @@ def tool_definitions(os_name: str, companion_name: str) -> list[dict[str, Any]]:
             },
         },
         {
+            "name": "respected_recall",
+            "description": (
+                "Görev bazlı, token bütçeli kısa hafıza bağlamı döndürür: sıralı kaynak yolları ve isteğe bağlı odaklı özet. "
+                "Tam metin gerekirse dönen yolu respected_get_note ile aç; bu araç not gövdesini döndürmez."
+            ),
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "task": {"type": "string", "description": "Yapılan görev, soru veya aranan konu"},
+                    "budget_tokens": {"type": "integer", "description": "Bağlam için yaklaşık token bütçesi (varsayılan: 600, en fazla 4000)", "default": 600},
+                    "limit": {"type": "integer", "description": "Değerlendirilecek en fazla kaynak sayısı (varsayılan: 5, en fazla: 20)", "default": 5},
+                    "detail": {"type": "string", "enum": ["short", "summary"], "description": "short: yalnızca başlık/yol; summary: odaklı parça ile", "default": "summary"},
+                    "category": {"type": "string", "description": "Filtrelenecek klasör/kategori (örn: '🧠 500-Knowledge')"},
+                },
+                "required": ["task"],
+            },
+        },
+        {
             "name": "respected_get_note",
             "description": "Vault içindeki belirli bir markdown notunun tam metnini okur.",
             "inputSchema": {
