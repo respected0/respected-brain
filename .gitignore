@@ -98,6 +98,10 @@ $RECYCLE.BIN/
 *.log
 logs/
 
+# Local evaluation runs and scratch probes (real session output stays outside Git)
+tests/evals/runs/
+tests/evals/results/_*
+
 # CI smoke outputs
 native-smoke.json
 native-payload.tar.gz
