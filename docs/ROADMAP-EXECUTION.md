@@ -214,7 +214,7 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
 
 **Kabul:** Kullanıcı son oturumun neden alınmadığını hassas log paylaşmadan anlıyor.
 
-### [ ] BR-015 · Release & Migration Gate (P0, M)
+### [x] BR-015 · Release & Migration Gate (P0, M)
 
 - Tam birim ve entegrasyon testleri.
 - Şema migration ve eski sürüm fixture testleri.
@@ -809,5 +809,50 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - `br014-full.log` → `CA0C85E510D82E3F3ACD372D6ADF50637D07DE3857F744FAB027DF0F3C10E005` (commit edilmez, `.gitignore`)
 - Bilinen sınırlar / risk: `capture_integration` kayıtlı ayarı okur; AI aracının canlı hook dosyasını yeniden ayrıştırmaz. `last_capture` en yeni durum dosyasını esas alır; farklı oturumların bitiş sırası ile durum yazımı arasında küçük sapma olabilir. Arşiv kaydı bilinçli olarak özet yokluğu sayılmıyor. İndeks tazeliği tam kasa taraması yapmaz; yalnızca dosya varlığı, boşluk ve son yenileme kaydını okur. Hub'a Türkçe etiket eşlemesi eklenmedi; genel gösterim makine adını ve ayrıntıyı gösterir. Testler sentetiktir; gerçek kullanıcı kasası, dökümü veya sırrı okunmadı ve kanıta konmadı.
 - Sonuç: **uygulandı; odak, komşu regresyon ve tam paket testleriyle doğrulandı**.
+
+### BR-015 · Release & Migration Gate — TAMAMLANDI
+- Tarih/saat: 2026-11-03 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `b882a08` (BR-014 sonrası)
+- Değişen dosyalar:
+  - `src/respected_brain/installation/operations.py`: başarılı silme ile kullanıcı değişikliğini ayıran sentinel ve plugin sahiplik temizliği.
+  - `tests/installation/test_operations.py`: yeni plugin paketinin kaldırma sırasında silinmesi ve sahiplik kaydının düşmesi regresyon testi.
+  - `tests/native/smoke/platform_smoke.py`: kaldırma sonrası yeniden kurulum, kasa kaydı ve dondurulmuş başlatıcı kontrolleri.
+  - `tests/evals/results/br015-native-smoke.json`: Windows x64 fiziksel smoke raporu.
+  - `docs/RELEASE-GATE.md` (yeni), `docs/ARCHITECTURE.md`: yayın kapısı matrisi ve doğrulama sınırları.
+- Uygulama:
+  - Kök neden: `undo_external()` başarılı silmeyi ve kullanıcı düzenlemesini aynı `None` değeriyle temsil ediyordu. Bu yüzden onarımda sahibi olunan ve yeni oluşturulmuş plugin dosyası transaction'a silme olarak eklenmiyor, sahiplik kaydı da veri kökünde kalıyordu.
+  - `KEEP_USER_CHANGE` sentinel'i eklendi. `None` artık gerçek silme olarak uygulanıyor; yalnızca sentinel kullanıcı değişikliğini koruyup sahiplik kaydını düşürüyor. Kullanıcı değiştirdiği MCP/ayar kaydında çakışma davranışı değişmedi.
+  - Fiziksel smoke; kurulum → onarım → iki güncelleme → iki aşamalı oturum flush'ı → kaldırma → yeniden kurulum akışını geçici köklerde çalıştırıyor. Güncelleme/kaldırma notu bayt bayt koruyor; state, kullanıcı dosyası ve kasa işareti yaşıyor; yeniden kurulum kasayı bir kez kaydediyor.
+  - `docs/RELEASE-GATE.md`, Windows x64 geçen kapıları, doğrulanmamış platformları ve imza durumunu ayrı kaydediyor. Authenticode sertifikası olmadığı için imza kapısı başarı sayılmıyor.
+- Komutlar ve sonuçlar:
+  - `python -m unittest tests.installation.test_operations tests.installation.test_uninstall -v` → 30 test OK
+  - `python -m unittest tests.installation.test_migrate -v` → 6 test OK
+  - `python packaging/build_dist.py --platform windows --output dist` → başarılı, `0.1.0b1`
+  - `python -m unittest tests.packaging.test_distribution -v` → 3 test OK
+  - Hub deposunda `python -m unittest discover -s common/conformance -v` → 9 test OK (üç ürünün ortak sözleşme kopyası)
+  - `python tests/native/smoke/platform_smoke.py --package dist/RespectedBrain --output tests/evals/results/br015-native-smoke.json` → 25/25 VERIFIED, `overall=VERIFIED`
+  - `python -m unittest discover -s tests -t .` → 1028 test OK, 15 skip
+- Kabul eşlemesi:
+  - Tam birim ve entegrasyon testleri: tam paket 1028 OK, 15 skip.
+  - Şema migration ve eski sürüm fixture'ları: 6 migration testi OK; `tests/fixtures/releases/0.1.0-beta.1/` yayınlanmış ilk veri biçimini koruyor.
+  - Dondurulmuş Windows paketi ve fiziksel smoke: `0.1.0b1` paketi geçici köklerde 25/25 doğrulandı.
+  - Kurulum → onarım → güncelleme → kaldırma → yeniden kurulum: smoke check'lerinin tamamı `VERIFIED`.
+  - Notlar ve diğer araç ayarlarının korunması: güncelleme notu bayt bayt koruyor; kaldırma kullanıcı dosyasını, state'i ve kasa işaretini koruyor; geçici HOME kayıtları geri alınıyor.
+  - Hub/Brain/Orchestrator conformance: Hub ortak conformance'ı üç depodaki sözleşme kopyasını denetleyerek 9 test OK verdi; ayrı Orchestrator ikili smoke'u bu görevde çalıştırılmadı.
+  - Desteklenen/doğrulanmamış platformlar: `docs/RELEASE-GATE.md` Windows x64'ü doğrulanmış, macOS/Linux/WSL'i doğrulanmamış olarak ayırıyor.
+  - Authenticode: sertifika yok; uygulanmadı ve yayın kapısı başarısı sayılmadı.
+  - Kabul: yayın test raporu var; kasa kaybı, yetkisiz değişiklik veya kritik veri bütünlüğü regresyonu görülmedi.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/installation/operations.py` → `488E5C1D6E2EEB1C1576CEE1BB7D3C493F0F5D4FEED67BEC8E193935799F7A3B`
+  - `tests/installation/test_operations.py` → `3E2F5C6AC70753FF5ECA1549588B7DA76793686C507B7E7F4B3365616849E255`
+  - `tests/native/smoke/platform_smoke.py` → `613EB7A6834B91FE05F52767C250F1B03C86F4342BAFFB8009087015A9509288`
+  - `tests/evals/results/br015-native-smoke.json` → `8C38825EBFA5949A54F1C528ABEDFD9D8567C042F214D4C28E6A671EEC82D290`
+  - `docs/RELEASE-GATE.md` → `7D61A20FC7B4281211EA814941A8E49F29ED6A373F3CE31A98E93D6F80135326`
+  - `docs/ARCHITECTURE.md` → `486BBEDC610B02BBFAFBBDBC70BB42C893530EB2C5549A92969E22A566E7A23D`
+  - `dist/RespectedBrain/respected-brain.exe` → `03905F6342833BA4221A6F890DABF9FB1CAA53018C1D9BD1E196538932947C7F`
+  - `dist/RespectedBrain/distribution.json` → `0EB41921D75ED4E8584C0719A377E38F6220EC4F6691B593087ABEED2F21DD88`
+  - `br015-full.log` → yerel/ignore, commit edilmedi
+- Bilinen sınırlar / risk: Fiziksel smoke sentetik döküm ve geçici kökler kullanır; gerçek kullanıcı kasası, gerçek AI aracı oturumu veya sağlayıcı davranışı kanıtlanmadı. macOS, Linux ve WSL doğrulanmadı. Authenticode sertifikası yok; SmartScreen uyarısı beklenir. Hub ortak conformance'ı çalıştı; ayrı Orchestrator dağıtım smoke'u ve gerçek kurucu ile üç ürün uçtan uca testi bu görevde tekrarlanmadı. `dist/` çıktısı kaynak deposuna commit edilmez.
+- Sonuç: **uygulandı; Windows x64 odak testleri, migration, dondurulmuş dağıtım, fiziksel smoke ve tam paket ile doğrulandı; diğer platformlar ve kod imzası doğrulanmadı**.
 
 <!-- EVIDENCE:END -->

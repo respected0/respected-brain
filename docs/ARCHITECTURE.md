@@ -207,6 +207,8 @@ Neyin neyi kanıtladığı ayrıdır: birim testleri arayüz davranışını, da
 geçici köklerde kurulum/güncelleme/kaldırmayı kanıtlar. Hiçbiri gerçek bir sağlayıcı oturumunu ya da her işletim
 sistemini kanıtlamaz. Hub tarafındaki uçtan uca testler gerçek kurucuyu kullanır (`respected-hub/README.md`).
 
+Yayın kapısı, test sonuçları ve doğrulanmamış platform sınırları `docs/RELEASE-GATE.md` içinde tutulur.
+
 ## 9. Açık sınırlar
 
 | Konu | Durum |

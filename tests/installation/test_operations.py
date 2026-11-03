@@ -163,6 +163,16 @@ class FoundationOperationsTest(unittest.TestCase):
         self.assertEqual(self.backend.read(change.kind, change.key), change.before)
         self.assertEqual(read_manifest(self.manifest_path).external, ())
 
+    def test_disabled_owned_new_plugin_bundle_is_deleted_and_forgotten(self):
+        path = self.roots.data_root / "vaults" / self.ctx.paths.vault_id / "plugin/.claude-plugin/marketplace.json"
+        change = ExternalChange("file", str(path), None, b'{"name": "respected-brain"}')
+        self.owned_external(change)
+        self.backend.records[(change.kind, change.key)] = change.after
+        result = repair(self.ctx, backend=self.backend)
+        self.assertTrue(result.success, result.conflicts)
+        self.assertIsNone(self.backend.read(change.kind, change.key))
+        self.assertEqual(read_manifest(self.manifest_path).external, ())
+
     def test_disabling_user_changed_integration_is_a_conflict(self):
         change = ExternalChange("mcp", str(self.root / "mcp.json"), b'{"mode": "a"}', b'{"mode": "b"}')
         self.owned_external(change)

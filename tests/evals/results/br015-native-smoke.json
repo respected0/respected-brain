@@ -1,0 +1,173 @@
+{
+  "schema_version": 3,
+  "host": "windows-native",
+  "profile": "windows-native",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": {
+    "version": "3.13.15",
+    "executable": "C:\\Users\\Furkan\\AppData\\Local\\Programs\\Python\\Python313\\python.exe"
+  },
+  "wsl_distribution": null,
+  "providers": [
+    "antigravity",
+    "gemini",
+    "codex",
+    "cursor",
+    "claude"
+  ],
+  "package": "C:\\Users\\Furkan\\Documents\\respected-ecosystem\\respected-brain\\dist\\RespectedBrain",
+  "workspace": "deleted-after-run",
+  "checks": [
+    {
+      "name": "clean-environment-has-no-product-bypass",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0
+    },
+    {
+      "name": "host-matching-real-distribution",
+      "status": "VERIFIED",
+      "detail": "windows",
+      "duration_seconds": 0
+    },
+    {
+      "name": "transactional-fresh-setup",
+      "status": "VERIFIED",
+      "detail": "{\n  \"success\": true,\n  \"tx_id\": \"tx-de0cd913-313c-4f42-ac3f-88b400355269\",\n  \"conflicts\": []\n}\n",
+      "duration_seconds": 1.899
+    },
+    {
+      "name": "installed-frozen-launcher-version",
+      "status": "VERIFIED",
+      "detail": "respected-brain 0.1.0b1\n",
+      "duration_seconds": 0.152
+    },
+    {
+      "name": "strict-frozen-repair",
+      "status": "VERIFIED",
+      "detail": "{\n  \"success\": true,\n  \"tx_id\": \"tx-aac7fccc-b9d8-436c-8d9f-ec074fa30c10\",\n  \"conflicts\": []\n}\n",
+      "duration_seconds": 0.682
+    },
+    {
+      "name": "uuid-state-separated-from-pure-vault",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0
+    },
+    {
+      "name": "all-five-providers-rendered-without-legacy-engine",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0
+    },
+    {
+      "name": "registration-boundary-is-temporary-files",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0
+    },
+    {
+      "name": "global-registration-retains-owned-project-hooks",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0
+    },
+    {
+      "name": "five-provider-temp-home-global-and-mcp-registration",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0
+    },
+    {
+      "name": "turn-flush-revision-1",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0.486
+    },
+    {
+      "name": "turn-flush-revision-2",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0.472
+    },
+    {
+      "name": "one-daily-log",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0
+    },
+    {
+      "name": "turn-flush-upserts-one-complete-session",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0
+    },
+    {
+      "name": "installer-update-then-repair-1",
+      "status": "VERIFIED",
+      "detail": "{\n  \"success\": true,\n  \"tx_id\": \"tx-17d7fc0e-1195-43c3-8342-3a75722eb067\",\n  \"conflicts\": []\n}\n",
+      "duration_seconds": 1.831
+    },
+    {
+      "name": "installer-update-then-repair-2",
+      "status": "VERIFIED",
+      "detail": "{\n  \"success\": true,\n  \"tx_id\": \"tx-7931482c-1a7c-4fde-bf93-2513347d6a7f\",\n  \"conflicts\": []\n}\n",
+      "duration_seconds": 1.404
+    },
+    {
+      "name": "update-preserves-daily-byte-for-byte",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0
+    },
+    {
+      "name": "transactional-owned-only-uninstall",
+      "status": "VERIFIED",
+      "detail": "{\n  \"success\": true,\n  \"tx_id\": \"tx-c454cf62-34d3-4a4f-ad63-e59817b15d43\",\n  \"conflicts\": []\n}\n",
+      "duration_seconds": 0.33
+    },
+    {
+      "name": "uninstall-preserves-notes-state-and-user-file",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0
+    },
+    {
+      "name": "uninstall-restores-original-temp-home-registration",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0
+    },
+    {
+      "name": "uninstall-removes-owned-project-hooks",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0
+    },
+    {
+      "name": "reinstall-after-uninstall",
+      "status": "VERIFIED",
+      "detail": "{\n  \"success\": true,\n  \"tx_id\": \"tx-1e7cc67e-4ee4-4567-96f4-2bbce1a69bd6\",\n  \"conflicts\": []\n}\n",
+      "duration_seconds": 1.308
+    },
+    {
+      "name": "reinstall-preserves-notes-state-and-user-file",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0
+    },
+    {
+      "name": "reinstall-registers-the-kept-vault-once",
+      "status": "VERIFIED",
+      "detail": "",
+      "duration_seconds": 0
+    },
+    {
+      "name": "reinstalled-frozen-launcher-version",
+      "status": "VERIFIED",
+      "detail": "respected-brain 0.1.0b1\n",
+      "duration_seconds": 0.155
+    }
+  ],
+  "overall": "VERIFIED"
+}

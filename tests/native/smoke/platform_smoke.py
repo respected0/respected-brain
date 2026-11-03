@@ -163,6 +163,15 @@ def main(argv=None):
         record("uninstall-restores-original-temp-home-registration",all(backend.read(row.kind,row.key)==row.before for row in changes))
         local_hooks=(".agents/hooks.json",".claude/settings.json",".codex/hooks.json",".cursor/hooks.json",".gemini/settings.json")
         record("uninstall-removes-owned-project-hooks",all(not (vault / name).exists() for name in local_hooks))
+        marker_hash=_sha256(vault / ".respected.json")
+        lay_down()
+        code,output,elapsed=lifecycle("setup")
+        record("reinstall-after-uninstall",code==0,output,elapsed)
+        record("reinstall-preserves-notes-state-and-user-file",_sha256(daily)==daily_hash and ctx.paths.state_dir.exists() and sentinel.read_bytes()==b"keep" and marker_hash==_sha256(vault / ".respected.json"))
+        registered=[entry for entry in ConfigStore(data).read()["vaults"].values() if Path(entry["path"]).resolve()==vault.resolve()]
+        record("reinstall-registers-the-kept-vault-once",len(registered)==1)
+        code,output,elapsed=_run([str(app / document["launcher"]),"--version"],env=env,cwd=root)
+        record("reinstalled-frozen-launcher-version",code==0 and output.strip()=="respected-brain "+document["version"],output,elapsed)
     except Exception as error:
         if not checks or checks[-1]["status"]!="FAILED": checks.append({"name":"smoke-runner","status":"FAILED","detail":str(error),"duration_seconds":0})
     report={"schema_version":3,"host":host,"profile":profile_name,"platform":platform.platform(),"python":{"version":platform.python_version(),"executable":sys.executable},"wsl_distribution":os.environ.get("WSL_DISTRO_NAME"),"providers":list(PROVIDERS),"package":str(package),"workspace":str(root) if args.keep else "deleted-after-run","checks":checks,"overall":"VERIFIED" if checks and all(row["status"]=="VERIFIED" for row in checks) else "FAILED"}

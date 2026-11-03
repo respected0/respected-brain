@@ -9,6 +9,9 @@ from .common import ensure_linux_launcher, installed_profile, linux_launcher_pat
 from .ownership import safe_path, OwnedFile, OwnershipManifest, digest, manifest_document
 
 
+KEEP_USER_CHANGE = object()
+
+
 def validate_manifest_roots(ctx, manifest):
     for item in manifest.files:
         safe_path(item.path)
@@ -29,7 +32,7 @@ def undo_external(prior, current, *, keep_user_change=False):
         return prior.undo(current)
     except ValueError:
         if keep_user_change:  # the user owns the entry now: leave their file alone and forget our claim
-            return None
+            return KEEP_USER_CHANGE
         raise OwnershipConflict(f"User changed integration: {prior.kind}:{prior.key}") from None
 
 
@@ -56,7 +59,7 @@ def plan_connections(ctx, backend, previous):
             if prior.restored(current):
                 continue
             undone = undo_external(prior, current, keep_user_change=prior.kind == 'file')
-            if undone is not None:
+            if undone is not KEEP_USER_CHANGE:
                 disabled.append(ExternalChange(prior.kind, prior.key, current, undone))
         else:
             retained.append(prior)
@@ -74,7 +77,7 @@ def plan_connections(ctx, backend, previous):
             if prior.restored(current):
                 continue
             undone = undo_external(prior, current, keep_user_change=prior.kind == 'file')
-            if undone is not None:
+            if undone is not KEEP_USER_CHANGE:
                 disabled.append(ExternalChange(prior.kind, prior.key, current, undone))
         retained = [prior for prior in retained if prior not in dropped]
     owned = {(change.kind, change.key): change for change in retained}
