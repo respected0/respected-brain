@@ -268,6 +268,16 @@ def _op_memory_briefing_run(operation_id, data_root, payload):
     return _memory_reply(operation_id, lambda: memory_workspace.briefing(data_root, payload))
 
 
+def _op_memory_review_queue(operation_id, data_root, payload):
+    from . import memory_workspace
+    return _memory_reply(operation_id, lambda: memory_workspace.review_queue(data_root, payload))
+
+
+def _op_memory_review_apply(operation_id, data_root, payload):
+    from . import memory_workspace
+    return _memory_reply(operation_id, lambda: memory_workspace.review_apply(data_root, operation_id, payload))
+
+
 def _op_memory_recall(operation_id, data_root, payload):
     from . import memory
     return _memory_reply(operation_id, lambda: memory.recall(data_root, payload))
@@ -313,6 +323,8 @@ _OPS = {
     "memory.note.read": _op_memory_note_read,
     "memory.capture.note": _op_memory_capture_note,
     "memory.briefing.run": _op_memory_briefing_run,
+    "memory.review.queue": _op_memory_review_queue,
+    "memory.review.apply": _op_memory_review_apply,
     "memory.write": _op_memory_write,
     "memory.write.revert": _op_memory_write_revert,
 }

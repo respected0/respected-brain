@@ -149,3 +149,37 @@ def briefing(data_root: Path, payload: Any) -> dict[str, Any]:
     _, ctx = _context(Path(data_root), {})
     status = run_if_due(ctx, model=ModelRunner(ctx), now=dt.datetime.now().astimezone())
     return {"status": status}
+
+def review_queue(data_root: Path, payload: Any) -> dict[str, Any]:
+    """The user's pending review queue; deferred items stay hidden unless requested."""
+    if not isinstance(payload, dict) or set(payload) - {"include_deferred"}:
+        raise _bad("Invalid review queue payload.", "Send only include_deferred.")
+    include = payload.get("include_deferred", False)
+    if not isinstance(include, bool):
+        raise _bad("include_deferred must be a boolean.", "")
+    _vault_id(Path(data_root))
+    _, ctx = _context(Path(data_root), {})
+    from ..memory import review
+    return review.queue(ctx.paths.vault_root, Path(data_root), include_deferred=include)
+
+
+def review_apply(data_root: Path, operation_id: Any, payload: Any) -> dict[str, Any]:
+    """Accept, reject, correct or defer one inbox proposal as the user."""
+    allowed = {"path", "action", "corrected_body", "corrected_title", "reason", "until"}
+    if not isinstance(payload, dict) or set(payload) - allowed:
+        raise _bad("Invalid review payload.", "Send path, action and optional correction fields.")
+    path, action = payload.get("path"), payload.get("action")
+    if not isinstance(path, str) or not 1 <= len(path) <= 500:
+        raise _bad("Invalid path.", "Use the inbox path returned by memory.review.queue.")
+    if action not in ("accept", "reject", "correct", "defer"):
+        raise _bad("Invalid action.", "Use accept, reject, correct or defer.")
+    for key in ("corrected_body", "corrected_title", "reason", "until"):
+        if key in payload and not isinstance(payload[key], str):
+            raise _bad(f"{key} must be a string.", "")
+    _vault_id(Path(data_root))
+    _, ctx = _context(Path(data_root), {})
+    from ..memory import review
+    return review.apply(ctx, path, action, corrected_body=payload.get("corrected_body"),
+                        corrected_title=payload.get("corrected_title"), reason=payload.get("reason", ""),
+                        until=payload.get("until", ""), operation_id=str(operation_id or ""))
+

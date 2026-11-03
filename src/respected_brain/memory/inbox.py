@@ -69,6 +69,8 @@ def create_note(open_context, data_root: Path, operation_id: str, *, grant_id: s
     title = clean_text(title)
     body = body.replace("\r\n", "\n").replace("\x00", "").strip() + "\n"
     extra_front = [line for line in (extra_front or []) if line.partition(":")[0].strip().lower() not in PROVENANCE_KEYS]
+    from . import review as review_flow
+    proposal_flags = review_flow.proposal_check(Path(data_root), source, title, body)
     digest = hashlib.sha256(json.dumps({"title": title, "body": body, "tags": tags, "grant": grant_id, "extra": extra_front},
                                        sort_keys=True).encode("utf-8")).hexdigest()
     record_path = data_root / _OPERATIONS_DIR / f"{operation_id}.json"
@@ -97,7 +99,8 @@ def create_note(open_context, data_root: Path, operation_id: str, *, grant_id: s
     )
     front = ["---", f"title: {json.dumps(title, ensure_ascii=False)}", f"source: {source}",
              f"grant: {grant_id}", f"operation_id: {operation_id}", f"created: {created.isoformat()}",
-             *extra_front, *render_fields(metadata)]
+             *extra_front, *render_fields(metadata),
+             *[f"{key}: {value}" for key, value in proposal_flags.items()]]
     if tags:
         front.append("tags: [" + ", ".join(tags) + "]")
     content = "\n".join([*front, "---", "", f"# {title}", "", body])

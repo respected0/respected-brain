@@ -140,7 +140,7 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
 
 **Kabul:** Express → Fastify senaryosunda yeni oturum güncel kararı getiriyor; geçmiş sorgusu eski kararı da buluyor.
 
-### [ ] BR-009 · Memory Review & Promotion (P0, M)
+### [x] BR-009 · Memory Review & Promotion (P0, M)
 
 - Inbox ve `review: pending` yaklaşımının genişletilmesi.
 - Kabul, ret, düzeltme, erteleme işlemleri.
@@ -565,5 +565,44 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - `tests/memory/test_br008_decision_lifecycle.py` → `64C286657E78F43FA24CDE13F02A26CCB5F60E01EAE39411286C57EB559A2616`
   - `br008-full.log` → `DC2FFBD9F9DEDBE3DB9F450E7DB466D2C391594C0A115A0A8D1A2BD4E6C46FD6` (commit edilmez, `.gitignore`)
 - Bilinen sınırlar / risk: Yaşam döngüsü yalnızca `decisions` alanındaki metin işaretlerinden türetilir; serbest metinli kararlar otomatik olarak anahtarlanmaz ve çelişki tespiti `key` yoksa yapılmaz. `supersedes` eşleşmesi kimlik, anahtar veya normalize metin üzerinden yapılır; çok kısa (4 karakterden az) referanslar metin eşleşmesine girmez. İnceleme durumu `pending` olarak başlar; BR-009 onay/ret akışını ekleyene kadar otomatik `approved` yapılmaz. Projeksiyon her çağrıda tüm olaylardan yeniden hesaplanır; çok büyük günlüklerde maliyet artabilir. Gerçek kullanıcı kasası okunmadı/yazılmadı; ham döküm, secret ve özel not gövdesi kanıta konmadı.
+- Sonuç: **uygulandı; odak, komşu regresyon ve tam paket testleriyle doğrulandı**.
+
+### BR-009 · Memory Review & Promotion — TAMAMLANDI
+- Tarih/saat: 2026-11-03 (Europe/Istanbul)
+- Sürüm/temel commit: `3b7f6f2` (BR-008 sonrası)
+- Değişen dosyalar:
+  - `src/respected_brain/memory/review.py` (yeni)
+  - `src/respected_brain/memory/inbox.py`
+  - `src/respected_brain/rpp/memory_workspace.py`
+  - `src/respected_brain/rpp/server.py`
+  - `tests/memory/test_br009_review.py` (yeni)
+  - `docs/ROADMAP-EXECUTION.md`
+- Uygulama:
+  - `🔮 850-Companion/Inbox` altındaki `review_status: pending` notları kuyruğa alınır; eski `review: pending` alanı da okunur. `memory.review.queue` varsayılan olarak ertelenenleri gizler, `include_deferred: true` ile gösterir.
+  - Kullanıcı işlemleri `memory.review.apply` üzerinden yürür: `accept`, `reject`, `correct`, `defer`. İsteğe bağlı `reason`, düzeltmede `corrected_title`/`corrected_body`, ertelemede `until` kabul edilir.
+  - `accept` ve `correct` notu `🧠 500-Knowledge/Reviewed/` altına yeni dosya olarak yükseltir; var olan dosya ezilmez. Kalıcı not `review_status: approved`, `origin: user_approved`, `promoted_from` ve `promoted_at` taşır. Düzeltmede gövde ve `source_sha256` güncellenir.
+  - `reject` kalıcı bilgi üretmez; not `rejected` olur ve ret parmak izi `memory-review/ledger.jsonl` dosyasına yazılır. Aynı başlık+gövde yeniden önerilirse `REJECTED_REPROPOSAL` ile engellenir; aynı başlık farklı gövdeyle gelirse `review_reason: repeated-rejection` ve `learning_candidate: true` ile işaretlenir. İkinci ret ledger'da öğrenim adayı olarak da işaretlenir.
+  - Defter yalnızca eylem, yol, önce/sonra SHA-256, parmak izi, sınırlı neden ve işlem kimliği tutar; not gövdesi, ham döküm veya secret yazmaz. Her işlem kullanıcı incelemesi olarak `reviewed_by: user` ile izlenir.
+  - Model kendi kaydını inceleyemez: `reviewer` yalnızca `user` olabilir; aksi halde `MODEL_REVIEW_FORBIDDEN`. MCP'nin `confidence: verified` değerini düşürmesi ve provenance'ın model kaydını `approved` yazmayı reddetmesi korunur.
+- Testler ve komut:
+  - `python -m unittest tests.memory.test_br009_review` → 6 test OK
+  - `python -m unittest discover -s tests/memory -t .` → 201 test OK, 2 skip
+  - `python -m unittest discover -s tests/rpp -t .` → 99 test OK, 1 skip
+  - `python -m unittest tests.integrations.test_mcp_and_features tests.rpp.test_memory_write` → 39 test OK
+  - `python -m unittest discover -s tests -t .` → 984 test OK, 15 skip (`br009-full.log`, yerel/ignore)
+  - İlk odak koşusunda ret parmak izi not gövdesindeki `# başlık` satırı yüzünden yeniden öneriyle eşleşmedi; parmak izi başlık satırını normalize edecek şekilde düzeltildi, testler yeniden koşuldu.
+- Kabul eşlemesi:
+  - Onaylanmamış içerik kalıcı kullanıcı kuralına dönüşmüyor: yalnızca `accept`/`correct` Knowledge altına yazıyor; `reject` ve `defer` yazmıyor.
+  - Kabul ve düzeltme izlenebilir: defterde eylem, önce/sonra hash, yükseltilen yol ve kullanıcı damgası var; notta `promoted_to`/`promoted_from` bağlantısı bulunuyor.
+  - Model kendi kaydını `verified`/`approved` yapamıyor; inceleme yalnızca açık kullanıcı eylemiyle yürüyor.
+  - Reddedilen içerik aynen yeniden önerilemiyor; tekrarlanan başlıklar öğrenim adayı olarak işaretleniyor.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/memory/review.py` → `B8B26EB80AE4361D1D4EEB13F9CB06C3D1DE3C4EDC3C5BF6D24D836B39E1BBD5`
+  - `src/respected_brain/memory/inbox.py` → `85F17E836094EFEBE000943C74FED6E307F18B50C6992145F18FBD6B6A51A87C`
+  - `src/respected_brain/rpp/memory_workspace.py` → `189D42BEF1B1C7544419BA969C9A01781D12717AE8C41E31B7E454E7C25311C0`
+  - `src/respected_brain/rpp/server.py` → `20A613C7E2EA552FE2B962A8A2F41C1DBE1544E056E51B16B7FED214C306D91C`
+  - `tests/memory/test_br009_review.py` → `66ADF91452E721875B9666DFCDEDCD8F726A257CDE0F8BEB8F766B829D4D1A17`
+  - `br009-full.log` → `8BDA60D1FD5A173397736F545128AA26B308ECEFB09B52D13818CB58EF227171` (commit edilmez, `.gitignore`)
+- Bilinen sınırlar / risk: Kuyruk yalnızca `🔮 850-Companion/Inbox` altını tarar; `📥 000-Inbox/Dump` ve eski `unreviewed` notlar otomatik kuyruğa girmez. Ret kontrolü başlık+gövde parmak izine dayanır; anlamca aynı ama yeniden yazılmış önerileri yakalamaz. Öğrenim adaylığı başlık tekrarına dayalı basit bir sezgidir; semantik kümeleme yapmaz. Yükseltme dosya adı tarih+slug+parmak izinin ilk 8 karakteridir; aynı gün aynı başlık/gövde ikinci kez onaylanırsa mevcut içerikle eşleşiyorsa yeniden kullanılır, farklıysa `PROMOTION_CONFLICT` verir. Defter sınırsız büyüyebilir (okuma son 5000 satırla sınırlı); arşivleme/rotasyon yok. Gerçek kullanıcı kasası okunmadı/yazılmadı; ham döküm, secret ve özel not gövdesi kanıta konmadı.
 - Sonuç: **uygulandı; odak, komşu regresyon ve tam paket testleriyle doğrulandı**.
 <!-- EVIDENCE:END -->
