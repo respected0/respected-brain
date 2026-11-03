@@ -11,6 +11,7 @@ import json
 import os
 import re
 import sys
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -99,6 +100,155 @@ def _op_manifest(operation_id, data_root, payload):
     return _reply(True, operation_id, result, None)
 
 
+_SAFE_CODE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,63}\Z")
+
+
+def _safe_code(value, default="unclassified"):
+    text = str(value or "")
+    return text if _SAFE_CODE.fullmatch(text) else default
+
+
+def _check(name, ok, detail, category, hint):
+    return {"name": name, "ok": bool(ok), "detail": detail, "category": category, "hint": hint}
+
+
+def _json_object(path):
+    try:
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return None
+    return loaded if isinstance(loaded, dict) else None
+
+
+def _vault_state_dir(data_root, document):
+    identity = document.get("active_vault_id") if document else None
+    if not isinstance(identity, str):
+        return None
+    try:
+        identity = str(uuid.UUID(identity))
+    except ValueError:
+        return None
+    return data_root / "vaults" / identity / "state"
+
+
+def _epoch_text(value):
+    try:
+        return datetime.fromtimestamp(float(value), tz=timezone.utc).isoformat(timespec="seconds")
+    except (TypeError, ValueError, OSError, OverflowError):
+        return ""
+
+
+def _iso_text(value):
+    if not isinstance(value, str):
+        return ""
+    try:
+        return datetime.fromisoformat(value).isoformat(timespec="seconds")
+    except ValueError:
+        return ""
+
+
+def _latest_capture(state_dir):
+    try:
+        paths = list(state_dir.glob("flush-*.json"))
+    except OSError:
+        return None
+    newest = None
+    for path in paths:
+        record = _json_object(path)
+        if record is not None and isinstance(record.get("ts"), (int, float)):
+            if newest is None or float(record["ts"]) > float(newest["ts"]):
+                newest = record
+    return newest
+
+
+def _capture_integration_check(document, integrations):
+    hooks = integrations.get("global") is True
+    mcp = integrations.get("mcp") is True
+    clients = integrations.get("clients")
+    names = ",".join(_safe_code(client, "") for client in clients if isinstance(client, str)) if isinstance(clients, list) else ""
+    detail = "Configuration unavailable" if document is None else (
+        f"Hooks: {'on' if hooks else 'off'}; MCP: {'on' if mcp else 'off'}; Clients: {names or 'all detected'}")
+    hint = "Hub'da Yakalama'y\u0131 a\u00e7\u0131n ve AI arac\u0131nda Respected hook iznini onaylay\u0131n."
+    return _check("capture_integration", document is not None and hooks, detail, "capture", hint)
+
+
+def _last_capture_check(state_dir):
+    record = _latest_capture(state_dir) if state_dir else None
+    if record is None:
+        return _check("last_capture", True, "No capture recorded yet", "capture",
+                      "Bir AI arac\u0131nda oturumu tamamlay\u0131n; oturum sonu yakalamay\u0131 tetikler.")
+    status = _safe_code(record.get("status"), "unknown")
+    code = _safe_code(record.get("detail"), "")
+    when = _epoch_text(record.get("ts"))
+    if status == "ok":
+        if code == "below-minimum-turns":
+            detail = "Last session was skipped: too few turns"
+        elif code == "flush-bos":
+            detail = "Last session was skipped: summary was empty"
+        else:
+            detail = f"Last capture succeeded{' at ' + when if when else ''}"
+        return _check("last_capture", True, detail, "capture", "")
+    if status == "archived":
+        return _check("last_capture", True, "Last session was archived without a summary", "capture", "")
+    if status == "pending":
+        return _check("last_capture", False, f"Last capture is pending ({code or 'unknown'})", "capture",
+                      "Yar\u0131m kalan i\u015flemi respected-brain recover ile geri al\u0131n; \u00f6zetleyiciyi kontrol edin.")
+    return _check("last_capture", False, f"Last capture failed ({code or status})", "capture",
+                  "Sa\u011flay\u0131c\u0131 ayar\u0131n\u0131 ve logs klas\u00f6r\u00fcndeki g\u00fcvenli \u00f6zeti kontrol edin; gerekirse respected-brain recover \u00e7al\u0131\u015ft\u0131r\u0131n.")
+
+
+def _pipeline_check(state_dir):
+    path = state_dir / "health.json" if state_dir else None
+    if path is None or not path.is_file():
+        return _check("memory_pipeline", True, "No pipeline errors recorded", "pipeline", "")
+    payload = _json_object(path)
+    if payload is None:
+        return _check("memory_pipeline", False, "Pipeline health record is unreadable", "pipeline",
+                      "respected-brain repair ile \u00e7al\u0131\u015fma kay\u0131tlar\u0131n\u0131 yenileyin.")
+    warnings = payload.get("warnings")
+    warning_count = len(warnings) if isinstance(warnings, list) else 0
+    if payload.get("status") == "degraded" or (payload.get("error") and not warning_count):
+        code = _safe_code(payload.get("reason") or payload.get("error"))
+        stage = _safe_code(payload.get("stage"), "memory")
+        return _check("memory_pipeline", False, f"Pipeline problem: {code} ({stage})", "pipeline",
+                      "Sa\u011flay\u0131c\u0131 ayar\u0131n\u0131 ve logs klas\u00f6r\u00fcndeki g\u00fcvenli \u00f6zeti kontrol edin; yar\u0131m i\u015flem varsa respected-brain recover \u00e7al\u0131\u015ft\u0131r\u0131n.")
+    detail = f"Pipeline has {warning_count} warning(s)" if warning_count else "No pipeline errors recorded"
+    return _check("memory_pipeline", True, detail, "pipeline", "")
+
+
+def _index_check(state_dir, data_root):
+    hint = "Aramada eski sonu\u00e7 g\u00f6r\u00fcrseniz respected-brain index-refresh \u00e7al\u0131\u015ft\u0131r\u0131n."
+    missing = _check("index_freshness", True, "Search index is not built yet; the first search builds it", "index", hint)
+    if state_dir is None:
+        return missing
+    index_db = state_dir.parent / "cache" / "search_index.db"
+    try:
+        present = index_db.is_file()
+        size = index_db.stat().st_size if present else 0
+    except OSError:
+        return missing
+    if not present:
+        return missing
+    if size == 0:
+        return _check("index_freshness", False, "Search index file is empty", "index",
+                      "respected-brain index-refresh ile arama dizinini yeniden kurun.")
+    refresh = _json_object(data_root / "memory-index-refresh.json")
+    at = _iso_text(refresh.get("at")) if refresh else ""
+    detail = f"Search index refreshed at {at}" if at else "Search index present; last refresh time unknown"
+    return _check("index_freshness", True, detail, "index", "")
+
+
+def _health_checks(data_root, document):
+    integrations = (document or {}).get("integrations")
+    integrations = integrations if isinstance(integrations, dict) else {}
+    checks = [_capture_integration_check(document, integrations)]
+    state_dir = _vault_state_dir(data_root, document)
+    checks.append(_last_capture_check(state_dir))
+    checks.append(_pipeline_check(state_dir))
+    checks.append(_index_check(state_dir, data_root))
+    return checks
+
+
 def _op_health(operation_id, data_root, payload):
     checks = []
     writable = False
@@ -110,28 +260,36 @@ def _op_health(operation_id, data_root, payload):
             detail = f"Not writable: {data_root}"
     except OSError as error:
         detail = f"Cannot prepare data root: {error}"
-    checks.append({"name": "data_root_writable", "ok": writable, "detail": detail})
+    checks.append(_check("data_root_writable", writable, detail, "storage",
+                         "Veri klasörünün yazılabilir olduğundan emin olun; izinleri respected-brain repair ile yenileyin."))
     document = None
     config_detail = "Configuration loaded"
     try:
         document = ConfigStore(data_root).read()
     except (SelectionError, OSError, ValueError) as error:
         config_detail = f"Configuration unavailable: {error}"
-    checks.append({"name": "config_loads", "ok": document is not None, "detail": config_detail})
+    checks.append(_check("config_loads", document is not None, config_detail, "config",
+                         "respected-brain repair ayarları ve kurulum kaydını yeniden okur."))
     entry = (document.get("vaults") or {}).get(document.get("active_vault_id")) if document else None
-    checks.append({"name": "vault_registered", "ok": bool(entry),
-                   "detail": f"Vault registered: {entry['path']}" if entry else "No active vault configured"})
+    checks.append(_check("vault_registered", bool(entry),
+                         f"Vault registered: {entry['path']}" if entry else "No active vault configured", "vault",
+                         "Hub'da bir not kasası seçin ya da respected-brain repair çalıştırın."))
     if entry:  # a notes folder on a drive that is unplugged (or was moved) is not a healthy product
         present = Path(entry["path"]).is_dir()
-        checks.append({"name": "vault_folder", "ok": present,
-                       "detail": "Vault folder is present" if present else f"Vault folder not found (drive disconnected?): {entry['path']}"})
+        checks.append(_check("vault_folder", present,
+                             "Vault folder is present" if present else f"Vault folder not found (drive disconnected?): {entry['path']}", "vault",
+                             "Kasanın bulunduğu sürücüyü (ör. USB) takın ya da klasörü eski yerine koyun."))
+    checks.extend(_health_checks(data_root, document))
     if not writable or document is None:
         status = "unhealthy"
     elif all(check["ok"] for check in checks):
         status = "healthy"
     else:
         status = "degraded"
-    return _reply(True, operation_id, {"status": status, "version": _product_version(), "checks": checks}, None)
+    recovery = [{"check": check["name"], "category": check["category"], "action": check["hint"]}
+                for check in checks if not check["ok"] and check["hint"]]
+    return _reply(True, operation_id, {"status": status, "version": _product_version(), "checks": checks,
+                                       "recovery": recovery}, None)
 
 
 def _op_schema(operation_id, data_root, payload):

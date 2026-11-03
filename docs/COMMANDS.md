@@ -14,6 +14,8 @@ Ortak kurallar (üç ürün aynı, bkz. [PRODUCT_CONTRACT.md](PRODUCT_CONTRACT.m
 - `hook` hata verse bile (ör. kasa USB'den çıkarılmış) çıkış kodu `0`'dır: AI araçları `2`'yi "istemi engelle / durma" diye okur.
   `health`, kasa klasörü yerinde değilse `vault_folder` denetimiyle `degraded` döner.
 
+`health` her denetim için `category` ve `hint`, başarısızlar için `recovery` listesinde güvenli çözüm önerisi döndürür. Son yakalama nedeni `provider-timeout`, `below-minimum-turns` gibi güvenli kodlarla gösterilir; oturum kimliği, döküm yolu veya not gövdesi yanıta girmez.
+
 ## Kurulum ve bakım
 
 | Komut | Ne yapar |
@@ -25,7 +27,7 @@ Ortak kurallar (üç ürün aynı, bkz. [PRODUCT_CONTRACT.md](PRODUCT_CONTRACT.m
 | `config` | Bütün ayarları gösterir. |
 | `config get ANAHTAR` | Bir ayarı gösterir. |
 | `config set A=D [A=D...]` | Doğrular ve uygular; geçersizse hiçbir şey yazmaz (çıkış 2). Anahtarlar: [USAGE.md](USAGE.md#6-ayarlar). |
-| `health` | Sağlık kontrolü (RPP `health` ile aynı); sağlıklıysa 0. |
+| `health` | Sağlık kontrolü (RPP `health` ile aynı): veri kökü, ayar, kasa, yakalama hook'u/istemcileri, son yakalama, hafıza hattı ve arama dizini. Sağlıklıysa 0, `degraded` ise 1. |
 
 ## Kasa
 

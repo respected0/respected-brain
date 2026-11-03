@@ -204,7 +204,7 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
 
 **Kabul:** Saldırı örnekleri yetkisiz kalıcı kural/izin değişikliği oluşturamıyor; hassas içerik sızmıyor.
 
-### [ ] BR-014 · Kullanıcıya dönük Health & Recovery (P1, M)
+### [x] BR-014 · Kullanıcıya dönük Health & Recovery (P1, M)
 
 - `health` komutunun genişletilmesi.
 - İstemci bağlantısı, hook onayı, son başarılı yakalama, indeks güncelliği.
@@ -773,6 +773,41 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - `docs/ARCHITECTURE.md` → `2B40D21AB6B665B1486BC02EEAAB92BF5EA641CDEEE31ACEBF4A612CAF339793`
   - `br013-full.log` → yerel/ignore, commit edilmedi
 - Bilinen sınırlar / risk: Inert işaretleme kalıp tabanlıdır; talimat görünümü taşımayan ikna edici metin modeli yönlendirebilir. Maskeleme bilinen kalıplarla sınırlıdır; yeni/rastgele sır biçimleri kaçabilir. Arşiv kapalıyken kopya oluşturulmaz ama sağlayıcının kendi dökümü silinmez. Testler sentetik metin kullanır; gerçek kullanıcı kasası, dökümü veya sırrı okunmadı ve kanıta konmadı.
+- Sonuç: **uygulandı; odak, komşu regresyon ve tam paket testleriyle doğrulandı**.
+
+### BR-014 · Kullanıcıya dönük Health & Recovery — TAMAMLANDI
+- Tarih/saat: 2026-11-03 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `9db81af` (BR-013 sonrası)
+- Değişen dosyalar:
+  - `src/respected_brain/rpp/server.py`: health denetimleri; kategori, çözüm önerisi, `recovery` listesi, son yakalama ve dizin tazeliği.
+  - `tests/rpp/test_server.py`: yeni denetimler, güvenli neden kodları, bozuk kayıt ve sızıntı testleri.
+  - `docs/COMMANDS.md`, `docs/USAGE.md`, `docs/ARCHITECTURE.md`: health çıktısı ve sorun giderme anlatımı.
+- Uygulama:
+  - Health artık veri kökü, ayar, kasa kaydı/klasörü yanında `capture_integration`, `last_capture`, `memory_pipeline` ve `index_freshness` denetimlerini döndürüyor. Her denetim `name`, `ok`, `detail`, `category`, `hint` taşıyor; başarısızlar `recovery` listesinde `{check, category, action}` olarak öneriye dönüşüyor.
+  - `capture_integration`: kayıtlı `integrations.global`, `mcp` ve istemci listesini özetliyor; yakalama kapalıysa Hub'da açma ve AI aracında hook izni onaylama önerisi veriyor.
+  - `last_capture`: aktif kasanın `state/flush-*.json` kayıtlarından en yeni `ts` değerini okuyor. Başarı, çok kısa oturum (`below-minimum-turns`), boş özet (`flush-bos`), arşiv, bekleyen ve başarısız durumlar ayrı anlatılıyor. Yalnızca `status`, güvenli `detail` kodu ve zaman kullanılıyor; oturum kimliği, döküm yolu ve kayıt gövdesi yanıta kopyalanmıyor.
+  - `memory_pipeline`: maskelenmiş `state/health.json` kaydını okuyor. `status=degraded` veya uyarısız hata `degraded`; yalnızca uyarılar sağlıklı; bozuk JSON çökmeden "okunamıyor" olarak raporlanıyor.
+  - `index_freshness`: `cache/search_index.db` yoksa tembel kurulum bilgisi, varsa son `memory-index-refresh.json` zamanı; boş indeks dosyası hata, zaman bilinmiyorsa açık "bilinmiyor" durumu dönüyor. Ağır arama/CLI modülleri yüklenmiyor; başlangıç maliyeti testi korunuyor.
+  - Hub tarafında mevcut genel gösterim bilinmeyen denetim adlarını ve `detail` metnini gizlemeden gösteriyor; Hub deposuna dokunulmadı.
+- Komutlar ve sonuçlar:
+  - `python -m unittest tests.rpp.test_server -v` → 25 test OK
+  - `python -m unittest tests.rpp.test_startup_cost tests.rpp.test_server tests.rpp.test_memory_index tests.rpp.test_memory` → 56 test OK, 1 skip
+  - `python -m unittest discover -s tests -t .` → 1027 test OK, 15 skip (`br014-full.log`, yerel/ignore)
+- Kabul eşlemesi:
+  - Son oturumun neden alınmadığını hassas log paylaşmadan anlama: `last_capture` güvenli neden kodlarını (`provider-timeout`, `summary-empty`, `below-minimum-turns`, `companion-sync-pending`…) ve zamanı gösteriyor; testler oturum kimliği, döküm yolu ve gövdenin yanıtta bulunmadığını doğruluyor.
+  - İstemci bağlantısı ve hook onayı: `capture_integration` hook/MCP/istemci özetini ve açma/onaylama önerisini veriyor.
+  - İndeks güncelliği: eksik, boş ve son yenileme zamanı ayrı durumlar olarak raporlanıyor.
+  - Anlaşılır sorun kategorileri: her denetim `category` taşıyor; `recovery` listesi kategori ve eylem veriyor.
+  - `repair` ve `recover` akışlarına güvenli öneri: bozuk ayar/health kaydı `repair`, yarım yakalama `recover` öneriyor; öneriler eylem metni olarak dönüyor, kendiliğinden yazma yapılmıyor.
+  - Hub'da gösterim: RPP yanıt biçimi korunuyor; genel Hub gösterimi yeni denetimleri ve ayrıntılarını görünür tutuyor.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/rpp/server.py` → `E24AB0C8B55A177E9D0F5495E9A699FD2F2769FADAA641CE8C76403C33153485`
+  - `tests/rpp/test_server.py` → `0AF352325ABF3AD32ADA7D208A282EF03390F6EC737A6F089D7262716590A095`
+  - `docs/ARCHITECTURE.md` → `8F9BE873E5558648D8F001DAE725B28C9D2270DAB54E7AFF92CBB54F6A11DBF6`
+  - `docs/COMMANDS.md` → `5F0B349FF9084E58B1F66075AC85094C9759B0B4D0A043A573288B29008018C1`
+  - `docs/USAGE.md` → `137F2F9B5469F466B4D314048DD18ADF24EA9B5D1F8752382F391113FB41690E`
+  - `br014-full.log` → `CA0C85E510D82E3F3ACD372D6ADF50637D07DE3857F744FAB027DF0F3C10E005` (commit edilmez, `.gitignore`)
+- Bilinen sınırlar / risk: `capture_integration` kayıtlı ayarı okur; AI aracının canlı hook dosyasını yeniden ayrıştırmaz. `last_capture` en yeni durum dosyasını esas alır; farklı oturumların bitiş sırası ile durum yazımı arasında küçük sapma olabilir. Arşiv kaydı bilinçli olarak özet yokluğu sayılmıyor. İndeks tazeliği tam kasa taraması yapmaz; yalnızca dosya varlığı, boşluk ve son yenileme kaydını okur. Hub'a Türkçe etiket eşlemesi eklenmedi; genel gösterim makine adını ve ayrıntıyı gösterir. Testler sentetiktir; gerçek kullanıcı kasası, dökümü veya sırrı okunmadı ve kanıta konmadı.
 - Sonuç: **uygulandı; odak, komşu regresyon ve tam paket testleriyle doğrulandı**.
 
 <!-- EVIDENCE:END -->

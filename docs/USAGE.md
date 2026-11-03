@@ -68,6 +68,8 @@ respected-brain vault list
 respected-brain health
 ```
 
+`health`, Hub'ın gördüğü denetimleri yazar: veri/ayar/kasa, yakalama hook'u ve istemciler, son yakalama, hafıza hattı ve arama dizini. `degraded` çıktısındaki `recovery` listesi sırayla uygulanacak güvenli adımları söyler. Son oturum alınmadıysa neden güvenli bir kodla gösterilir; dökümünüz, oturum kimliğiniz veya not gövdeniz paylaşılmaz.
+
 Kasayı Obsidian'da klasör olarak açın. `🔮 850-Companion` altında `Core.md` asistanın kimliği ve sizin hakkınızdaki
 bağlam, `Kurallar.md` kalıcı çalışma tercihleriniz, `Threads.md` açık konular, `Last-Session.md` son oturumun devir
 notudur. Bunları siz düzenlersiniz; program üzerine yazmaz.
@@ -242,6 +244,8 @@ Kaldır; sessiz `unins000.exe /VERYSILENT [/PURGE=1]`. Kaldırıcı "Ayarlar ve 
 | Kasa bulunamadı / UUID çakışması | `vault list`, kasadaki `.respected.json`, verdiğiniz `--vault`/`--vault-id`, `RESPECTED_VAULT_PATH` |
 | Dolu klasöre kurulmuyor | Boş yeni bir klasör ya da Brain'in kullandığı bir kasa seçin |
 | `health` "degraded", `vault_folder` başarısız | Kasa klasörü yerinde değil (örneğin kasanın durduğu USB sürücü çıkarılmış); takın ya da klasörü yerine koyun. O sürece AI araçları engellenmez, hafıza yazılmaz |
+| `health` "degraded", `capture_integration` başarısız | Yakalama kapalı: Hub'da Yakalama'yı açın, AI aracında hook iznini onaylayın ve aracı yeniden başlatın |
+| `health` "degraded", `last_capture` başarısız | Son oturum özetlenemedi. `detail` güvenli nedeni (`provider-timeout`, `summary-empty`…) söyler; sağlayıcı oturumunu ve `logs/` klasörünü kontrol edip `respected-brain recover` deneyin. Döküm ve not gövdesi health'e girmez |
 | `daily` yazılmıyor | Aracın bağlantısı açık mı (`config`), hook etkin ve güvenilir mi, özetleyici aracın oturumu açık mı, `capture_mode` manual mı, veri klasöründeki `logs/` |
 | Sabah özeti yok | `integrations.schedule`, `briefing_time`, işletim sisteminin görev zamanlayıcısı, aracın kotası |
 | Arama eski sonuç veriyor | `respected-brain index-refresh` ya da `search --reindex` |

@@ -59,6 +59,8 @@ AI araçları `2`'yi "istemi engelle / durma" diye okur, hafıza hiçbir zaman a
 
 Biçim denetimleri özetin doğru olduğunu kanıtlamaz; model çıktısıdır.
 
+`health` (RPP `health`) okunur denetimleri raporlar: veri kökü, ayar, kasa kaydı/klasörü, yakalama hook'u ve istemci özeti, son yakalama durumu, hafıza hattı ve arama dizini tazeliği. Her denetim `category` ve `hint` taşır; başarısızlar `recovery` listesinde eylem önerisine dönüşür. Son yakalama yalnızca durum, zaman ve güvenli neden koduyla okunur; `flush-*.json` içindeki oturum kimliği, döküm yolu ve not gövdesi yanıta kopyalanmaz. Sağlık çağrısı ağır arama/CLI modüllerini yüklemez; yalnızca dosya varlığı ve küçük JSON kayıtlarını okur.
+
 ## 4. Kurulum, sahiplik ve geri alma
 
 - **Program dosyaları kurucunundur.** `setup` ve `repair` kurulu programı `distribution.json`'daki SHA-256 değerleriyle
