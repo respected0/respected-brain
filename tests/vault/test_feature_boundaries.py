@@ -144,7 +144,7 @@ class FoundationFeaturesTest(unittest.TestCase):
             notes.rename(saved_notes)
             subprocess.run(['cmd','/c','mklink','/J',str(notes),str(outside)],check=True,capture_output=True)
             try:
-                self.assertEqual(engine.search('SQLite'),[])
+                self.assertEqual([hit['path'] for hit in engine.search('SQLite')], ['saved-knowledge/karar.md'])
             finally:
                 os.rmdir(notes)
                 saved_notes.rename(notes)

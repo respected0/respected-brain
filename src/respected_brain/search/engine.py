@@ -16,7 +16,8 @@ from typing import Any
 from urllib.parse import quote
 
 from respected_brain.core.context import AppContext
-from respected_brain.core.coordination import guarded_writer
+from respected_brain.core.coordination import guarded_writer, writer_lease
+from respected_brain.core.errors import BusyError
 from respected_brain.core.platform import path_within_vault
 
 _FRONTMATTER = re.compile(r"\A\ufeff?---\r?\n(.*?)^---[ \t]*(?:\r?\n|$)", re.MULTILINE | re.DOTALL)
@@ -75,7 +76,7 @@ class SearchEngine:
         self.db_path = ctx.paths.cache_dir / "search_index.db"
         self._validate_db_path()
         from respected_brain.core.coordination import writer_lease
-        with writer_lease(ctx):
+        with writer_lease(ctx, timeout=10):
             self.db_path.parent.mkdir(parents=True, exist_ok=True)
             try:
                 self._init_db()
@@ -297,7 +298,38 @@ class SearchEngine:
 
         return {"indexed": indexed, "skipped": skipped, "deleted": deleted, "total": len(current_files)}
 
-    def search(self, query: str, limit: int = 10, category: str | None = None) -> list[dict[str, Any]]:
+    def search(self, query: str, limit: int = 10, category: str | None = None,
+               freshness: str = "auto") -> list[dict[str, Any]]:
+        """Sorguyu çalıştırır; varsayılan kip eski indeks metnini sonuç olarak döndürmez."""
+        if freshness not in {"auto", "off"}:
+            raise ValueError("INVALID_FRESHNESS")
+        read_only = getattr(self, "_read_only", False)
+        if freshness == "auto" and not read_only:
+            try:
+                if self.index_state()["state"] == "stale":
+                    self._refresh()
+            except sqlite3.DatabaseError:
+                pass  # hasarlı indeks sorgu sırasında yeniden kurulur
+        results = self._query(query, limit, category)
+        if freshness == "off":
+            return results
+
+        stale = self._stale_paths([row["path"] for row in results])
+        if stale and not read_only:
+            self._refresh()
+            results = self._query(query, limit, category)
+            stale = self._stale_paths([row["path"] for row in results])
+        return [row for row in results if row["path"] not in stale]
+
+    def _refresh(self) -> None:
+        """Kısa süre bekler; başka bir yazıcı sürüyorsa sonuç doğrulaması devralır."""
+        try:
+            with writer_lease(self.ctx, timeout=1):
+                self.index_vault()
+        except BusyError:
+            pass
+
+    def _query(self, query: str, limit: int, category: str | None) -> list[dict[str, Any]]:
         try:
             return self._search(query, limit, category)
         except sqlite3.DatabaseError:
@@ -305,6 +337,30 @@ class SearchEngine:
                 raise IndexUnavailable("INDEX_INVALID") from None
             self.index_vault(True)  # rebuilds a damaged cache
             return self._search(query, limit, category)
+
+    def _stale_paths(self, paths: list[str]) -> set[str]:
+        """İndeksteki sha256 diskteki içerikle eşleşmiyorsa yolu eski sayar."""
+        names = list(dict.fromkeys(paths))
+        if not names:
+            return set()
+        try:
+            indexed = self.indexed_fingerprints(names)
+        except sqlite3.Error:
+            return set(names)
+        stale: set[str] = set()
+        for name in names:
+            record = indexed.get(name)
+            if not self._visible_path(name):
+                stale.add(name)
+                continue
+            try:
+                payload = (self.vault_root / name).read_bytes()
+            except OSError:
+                stale.add(name)
+                continue
+            if record is None or hashlib.sha256(payload).hexdigest() != record[1]:
+                stale.add(name)
+        return stale
 
     def _search(self, query: str, limit: int, category: str | None) -> list[dict[str, Any]]:
         """Sorguyla eşleşen notları BM25 ağırlıklandırmasıyla getirir."""

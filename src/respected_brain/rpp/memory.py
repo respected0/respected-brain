@@ -144,7 +144,8 @@ def _find(ctx, engine, data_root, query, limit, category, mode, snippet_chars):
             if mode == "semantic":
                 raise MemoryOpError(error.code, error.message, error.hint) from None
             info = {"mode": "fts", "semantic": "unavailable", "reason": error.code}
-    fts = engine.search(query, limit=limit, category=category) if info["mode"] != "semantic" else []
+    # RPP doğrulamayı kendi hash denetimiyle yapar; sayaçlar için ham indeks satırları gerekir.
+    fts = engine.search(query, limit=limit, category=category, freshness="off") if info["mode"] != "semantic" else []
     if not ranked:
         return fts, info
     by_path = {hit["path"]: hit for hit in fts}

@@ -155,7 +155,7 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
 
 ## M3 — Hızlı ve doğru hafıza geri çağırma
 
-### [ ] BR-010 · Index Freshness (P0, M)
+### [x] BR-010 · Index Freshness (P0, M)
 
 - Editörde değişen dosyanın indeks güncelliği.
 - Mevcut artımlı indeksleme altyapısının kullanılması.
@@ -604,5 +604,41 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - `tests/memory/test_br009_review.py` → `66ADF91452E721875B9666DFCDEDCD8F726A257CDE0F8BEB8F766B829D4D1A17`
   - `br009-full.log` → `8BDA60D1FD5A173397736F545128AA26B308ECEFB09B52D13818CB58EF227171` (commit edilmez, `.gitignore`)
 - Bilinen sınırlar / risk: Kuyruk yalnızca `🔮 850-Companion/Inbox` altını tarar; `📥 000-Inbox/Dump` ve eski `unreviewed` notlar otomatik kuyruğa girmez. Ret kontrolü başlık+gövde parmak izine dayanır; anlamca aynı ama yeniden yazılmış önerileri yakalamaz. Öğrenim adaylığı başlık tekrarına dayalı basit bir sezgidir; semantik kümeleme yapmaz. Yükseltme dosya adı tarih+slug+parmak izinin ilk 8 karakteridir; aynı gün aynı başlık/gövde ikinci kez onaylanırsa mevcut içerikle eşleşiyorsa yeniden kullanılır, farklıysa `PROMOTION_CONFLICT` verir. Defter sınırsız büyüyebilir (okuma son 5000 satırla sınırlı); arşivleme/rotasyon yok. Gerçek kullanıcı kasası okunmadı/yazılmadı; ham döküm, secret ve özel not gövdesi kanıta konmadı.
+- Sonuç: **uygulandı; odak, komşu regresyon ve tam paket testleriyle doğrulandı**.
+
+### BR-010 · Index Freshness — TAMAMLANDI
+- Tarih/saat: 2026-11-03 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1`, `0a5ed0b` (BR-009 sonrası)
+- Değişen dosyalar:
+  - `src/respected_brain/search/engine.py`
+  - `src/respected_brain/rpp/memory.py`
+  - `tests/search/test_br010_freshness.py` (yeni)
+  - `tests/vault/test_feature_boundaries.py`
+  - `docs/ROADMAP-EXECUTION.md`
+- Uygulama:
+  - `SearchEngine.search(..., freshness="auto")` yeni varsayılanı sorgu öncesinde `index_state()` ile yalnızca mtime taraması yapar; indeks eskiyse mevcut artımlı `index_vault()` çalışır. `freshness="off"` hızlı yol ister.
+  - Dönen her isabetin diskteki SHA-256 değeri `files_meta` kaydıyla karşılaştırılır. Uyuşmazlıkta artımlı tazeleme bir kez denenir ve sorgu yeniden koşulur; hâlâ eski olan isabetler sonuçtan çıkarılır. Böylece değişen/silinen notun eski metni güvenilir sonuç olarak dönmez.
+  - Tazeleme `writer_lease` ile 1 saniye bekler; başka yazıcı sürüyorsa `BusyError` yutulur ve isabet doğrulaması devralır. `SearchEngine` kurulumu eşzamanlı açılışlarda 10 saniyeye kadar bekler.
+  - Salt-okuma motoru yazmadığı için isabet doğrulamasını yapar ve eski isabetleri sonuçtan çıkarır. RPP recall kendi hash denetimi ve `dropped`/`dropped_stale` sayaçlarını korumak için `freshness="off"` ile ham indeks satırlarını alır.
+  - Silinen satırlar mevcut `_index_vault` temizliğiyle düşer; indeks dosyası silinip yeniden oluşturulduğunda içerik yalnızca notlardan kurulur.
+- Testler ve komut:
+  - `python -m unittest tests.search.test_br010_freshness -v` → 8 test OK
+  - `python -m unittest discover -s tests/search -t .` → 26 test OK
+  - `python -m unittest tests.vault.test_feature_boundaries tests.rpp.test_memory tests.rpp.test_memory_index tests.rpp.test_memory_workspace tests.rpp.test_memory_semantic` → 54 test OK, 1 skip
+  - `python -m unittest tests.integrations.test_mcp_and_features` → dahil, OK
+  - `python -m unittest discover -s tests -t .` → 992 test OK, 15 skip (`br010-full.log`, yerel/ignore)
+- Kabul eşlemesi:
+  - Dışarıdan değişen not kısa sürede yeni sürümüyle bulunuyor: sorgu öncesi tazelik ve isabet hash doğrulaması; dış düzenleme testte el ile yeniden indeksleme olmadan yeni terimle bulunuyor.
+  - Eski sürüm güvenilir sonuç gibi dönmüyor: değişen içerik, aynı mtime korunsa bile hash uyuşmazlığıyla ayıklanıyor; silinen not hiç dönmüyor; salt-okuma yolunda da eski isabet filtreleniyor.
+  - Mevcut artımlı altyapı kullanılıyor: yeni tarama/indeksleme kodu yok; `index_state` + `_index_vault` + `files_meta.sha256` yeniden kullanıldı.
+  - Çoklu yazıcı ve dosya kilidi: eşzamanlı `index_vault`/`search` iş parçacıkları ve kilit tutulurken arama testleri geçiyor; kilit sırasında eski metin dönmüyor.
+  - Yeniden kurulabilirlik: `search_index.db` silindikten sonra yeni motor sorguyla indeksi notlardan kuruyor.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/search/engine.py` → `CBE00ED9C330EA4BD47C23F9BB48091ECD5DEA1C996E1BD39A3D9BA9F5E01BEC`
+  - `src/respected_brain/rpp/memory.py` → `2E7B5F06494CD731CF2091129842AE6165ABDEE8B6E896AF7664C68CBFFC8D8D`
+  - `tests/search/test_br010_freshness.py` → `EF6C96B28B4DDE6910444615D9110DEE20426A41DCBC64A60C73F8879A733D4E`
+  - `tests/vault/test_feature_boundaries.py` → `A70C21CBBB20461FFFDA74BE373526B38BF2A4B7BC076C4611D60B4B96B28680`
+  - `br010-full.log` → `9DBAA58D8A402FCFCF8E620C6EC5DFD9AA669283F4C42318EA5CE4BBCC945754` (commit edilmez, `.gitignore`)
+- Bilinen sınırlar / risk: Tazelik taraması mtime tabanlıdır ve `max_files=5000` ile sınırlıdır; üstünde durum `unknown` olur ve ön tarama yapılmaz (isabet doğrulaması yine korur). Mtime'ı korunmuş bir dosyada tamamen yeni bir terim eklenirse ve sorgu eski içerikle eşleşmiyorsa terim bir sonraki tam/artımlı indekslemeye kadar görünmeyebilir. Hash doğrulaması yalnızca dönen isabetler içindir, tüm kasa taranmaz. Dosya sistemi bildirimi/watcher yoktur; tazelik sorgu anında kontrollü taramayla sağlanır. Eşzamanlılık testi aynı süreçte iş parçacıkları ve dosya kilidiyle yapıldı; ayrı süreçlerde yarış testi yok. Gerçek kullanıcı kasası üzerinde ölçüm yapılmadı; ham döküm veya özel not gövdesi kanıta konmadı.
 - Sonuç: **uygulandı; odak, komşu regresyon ve tam paket testleriyle doğrulandı**.
 <!-- EVIDENCE:END -->
