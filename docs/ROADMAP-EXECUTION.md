@@ -129,7 +129,7 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
 
 **Kabul:** Her yeni kritik kaydın kaynağı/doğrulama durumu ayırt edilebiliyor; eski notlar bozulmuyor.
 
-### [ ] BR-008 · Decision Lifecycle (P0, L)
+### [x] BR-008 · Decision Lifecycle (P0, L)
 
 - `active`, `superseded`, `disputed` durumları.
 - Bir kararın başka kararın yerini aldığının gösterilmesi.
@@ -526,5 +526,44 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - `docs/ARCHITECTURE.md` → `EFECCDC5BAF1D94120FF21BBE24587B8A8F01F53182BB23BDD6271AD9B6519D7`
   - `tests/evals/results/br007-full-suite.log` → `70A8A4BF489D7113FFE6842531395B708DFAB8ED18D020CECED7341A311E9832`
 - Bilinen sınırlar / risk: Mevcut kasadaki notlar otomatik taşınmıyor; taşıma bilinçli olarak isteğe bağlıdır ve kullanıcı verisini kendiliğinden değiştirmez. Günlük özetin `source_sha256` değeri özet metninin bütünlüğünü kanıtlar, ham dökümün içeriğini değil: ham döküm varsayılan olarak saklanmaz. Frontmatter okuyucusu küçük, satır tabanlı bir YAML alt kümesidir; iç içe YAML yapılarını çözmez. Tam paket logunda bir CLI reddi testinden gelen `--wsl-worker` stderr satırı vardır; sonuç `OK (skipped=15)` ve çıkış 0. Gerçek kullanıcı kasası okunmadı/yazılmadı; ham döküm, secret ve özel not gövdesi kanıta konmadı.
+- Sonuç: **uygulandı; odak, komşu regresyon ve tam paket testleriyle doğrulandı**.
+
+### BR-008 · Decision Lifecycle — TAMAMLANDI
+- Tarih/saat: 2026-11-03 (Europe/Istanbul)
+- Sürüm/temel commit: `ac9a3ee` (BR-007 sonrası)
+- Değişen dosyalar:
+  - `src/respected_brain/memory/decisions.py` (yeni)
+  - `src/respected_brain/memory/events.py`
+  - `src/respected_brain/integrations/mcp/server.py`
+  - `src/respected_brain/integrations/mcp/tools.py`
+  - `tests/memory/test_br008_decision_lifecycle.py` (yeni)
+  - `docs/ROADMAP-EXECUTION.md`
+- Uygulama:
+  - Yaşam döngüsü mevcut append-only olay günlüğünden türetilir; ayrı bir kalıcı karar deposu eklenmez. `Decisions.md` yalnızca projeksiyondur ve olay kayıtlarını değiştirmez.
+  - Karar satırındaki isteğe bağlı işaretler: `[key: ...]`, `[supersedes: ...]`, `[valid_from: YYYY-MM-DD]`, `[valid_until: YYYY-MM-DD]`; `konu`/`subject` ve `yerine`/`supersedes` eş anlamlıları kabul edilir. İşaretsiz eski kararlar okunmaya devam eder.
+  - `active`, `superseded`, `disputed` durumları; açık yerine geçme eski kaydı `superseded/explicit` yapar, `superseded_by` bağlantısı korunur. Geçerlilik süresi dolan kayıt `superseded/validity-expired` olur; kayıt tarihi ile geçerlilik tarihi ayrı alanlardır.
+  - Aynı `key` altında çelişen aktif kararlar sessizce birleştirilmez: tümü `disputed` olur ve `conflicting-decisions` nedeniyle insan incelemesine düşer. Çözülemeyen `supersedes` referansı `unresolved-supersedes` olarak incelemeye gider.
+  - Her kayıt kaynak agent, oturum, kayıt zamanı, `user_authored`/`model_inference` kökeni ve `pending` inceleme durumunu taşır; BR-007 provenance alanlarıyla çelişmez.
+  - `events.project_companion` güncel/geçmiş/inceleme bölümleriyle `🔮 850-Companion/Decisions.md` yazar. MCP `respected_get_decisions` güncel kararları ve inceleme listesini her zaman, geçmişi yalnızca `include_history: true` ile döndürür; `respected_get_companion_context` `Decisions` bölümünü içerir.
+- Testler ve komut:
+  - `python -m unittest tests.memory.test_br008_decision_lifecycle` → 7 test OK
+  - `python -m unittest discover -s tests/memory -t .` → 195 test OK, 2 skip
+  - `python -m unittest tests.integrations.test_mcp_and_features` → 34 test OK
+  - `python -m unittest discover -s tests -t .` → 978 test OK, 15 skip (`br008-full.log`, yerel/ignore)
+  - Not: MCP argüman doğrulaması `boolean` tipini tanımıyordu; `include_history` reddediliyordu. Doğrulama boolean için genişletildi, odak ve tam paket yeniden koşuldu.
+- Kabul eşlemesi:
+  - Express → Fastify: ikinci oturumda `[key: web-framework] [supersedes: web-framework]` güncel karar Fastify; geçmiş sorgusu Express'i `superseded/explicit` ve `superseded_by` bağlantısıyla buluyor.
+  - Yeni oturum güncel kararı getiriyor: MCP varsayılan yanıtı yalnızca aktif Fastify kararını içeriyor.
+  - Eski karar silinmiyor: olay günlüğü ve geçmiş projeksiyonu korunuyor; `include_history` ile erişilebiliyor.
+  - Çelişki sessiz birleşmiyor: aynı anahtarda Postgres/SQLite testi iki kaydı da `disputed` ve inceleme nedeniyle işaretliyor.
+  - Geçerlilik tarihi ile kayıt tarihi ayrı; süre dolumu testi tarihi koruyarak `validity-expired` veriyor.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/memory/decisions.py` → `A206186013DF872D7C0E116244B3724F131008003D2D226CADCD18333BCCB5C1`
+  - `src/respected_brain/memory/events.py` → `38CD9122EE5948EAA654AED3621522328B8E719F329A4EA443710823FC4A4FB8`
+  - `src/respected_brain/integrations/mcp/server.py` → `2E67BE30714B4B1C6D304D74C5CFBD7F0EB200A1984EC25CFD4A2E188795E787`
+  - `src/respected_brain/integrations/mcp/tools.py` → `91B1B68BA1FAAA2DF5E15BF8CE04191AE31AF14A83AF23AAF21C475ADBDD2C2F`
+  - `tests/memory/test_br008_decision_lifecycle.py` → `64C286657E78F43FA24CDE13F02A26CCB5F60E01EAE39411286C57EB559A2616`
+  - `br008-full.log` → `DC2FFBD9F9DEDBE3DB9F450E7DB466D2C391594C0A115A0A8D1A2BD4E6C46FD6` (commit edilmez, `.gitignore`)
+- Bilinen sınırlar / risk: Yaşam döngüsü yalnızca `decisions` alanındaki metin işaretlerinden türetilir; serbest metinli kararlar otomatik olarak anahtarlanmaz ve çelişki tespiti `key` yoksa yapılmaz. `supersedes` eşleşmesi kimlik, anahtar veya normalize metin üzerinden yapılır; çok kısa (4 karakterden az) referanslar metin eşleşmesine girmez. İnceleme durumu `pending` olarak başlar; BR-009 onay/ret akışını ekleyene kadar otomatik `approved` yapılmaz. Projeksiyon her çağrıda tüm olaylardan yeniden hesaplanır; çok büyük günlüklerde maliyet artabilir. Gerçek kullanıcı kasası okunmadı/yazılmadı; ham döküm, secret ve özel not gövdesi kanıta konmadı.
 - Sonuç: **uygulandı; odak, komşu regresyon ve tam paket testleriyle doğrulandı**.
 <!-- EVIDENCE:END -->

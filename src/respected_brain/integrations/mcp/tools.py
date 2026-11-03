@@ -41,6 +41,7 @@ def tool_definitions(os_name: str, companion_name: str) -> list[dict[str, Any]]:
                 "type": "object",
                 "properties": {
                     "project": {"type": "string", "description": "İsteğe bağlı: Belirli bir projenin adı (örn: 'brain')"},
+                    "include_history": {"type": "boolean", "description": "Yerine geçilmiş ve çelişkili eski kararları da listele"},
                 },
                 "required": [],
             },

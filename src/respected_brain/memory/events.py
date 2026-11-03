@@ -13,6 +13,7 @@ from typing import Any
 import uuid
 
 from ..core import platform as runtime_platform
+from . import decisions as decision_lifecycle
 
 
 def _safe_memory_path(path: Path, vault_root: Path) -> Path:
@@ -381,6 +382,14 @@ tags: [companion, last-session]
 """
     _atomic_write_file(companion / "Last-Session.md", last_session_content, vault_root=vault_root)
 
+    decision_records = decision_lifecycle.collect(list_events(vault_root, include_archive=True))
+    if decision_records:
+        _atomic_write_file(
+            companion / "Decisions.md",
+            decision_lifecycle.render_markdown(decision_records, updated=ls_ts),
+            vault_root=vault_root,
+        )
+
     # 2. Project Threads.md with Read-Merge & Protection Gate
     threads_path = companion / "Threads.md"
     existing_content = ""
@@ -469,4 +478,3 @@ tags: [companion, threads]
 {chr(10).join(completed_threads) if completed_threads else 'Henüz tamamlanan konu arşivlenmedi.'}
 """
     _atomic_write_file(companion / "Threads.md", threads_doc, vault_root=vault_root)
-

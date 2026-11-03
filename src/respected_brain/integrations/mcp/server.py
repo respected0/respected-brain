@@ -10,6 +10,8 @@ from respected_brain import __version__
 from respected_brain.core.platform import path_within_vault
 from respected_brain.core.coordination import guarded_writer
 from respected_brain.search.engine import SearchEngine
+from respected_brain.memory import decisions as decision_lifecycle
+from respected_brain.memory import events as memory_events
 from ..notes import MAX_NOTE_BYTES, note_path, read_note
 from .tools import WRITE_TOOLS, tool_definitions
 
@@ -63,6 +65,7 @@ class RespectedMcpServer:
             kind = specification['type']
             valid = ((kind == 'string' and isinstance(value, str)) or
                      (kind == 'integer' and type(value) is int) or
+                     (kind == 'boolean' and type(value) is bool) or
                      (kind == 'array' and isinstance(value, list) and all(isinstance(v, str) for v in value)))
             if not valid or ('enum' in specification and value not in specification['enum']):
                 raise ValueError('invalid argument: ' + key)
@@ -156,6 +159,7 @@ class RespectedMcpServer:
 
         elif name == "respected_get_decisions":
             project = arguments.get("project")
+            include_history = arguments.get("include_history", False)
             # 1. 500-Knowledge, Projects ve Companion altındaki karar ve kuralları ara
             search_query = f"{project} karar" if project else "karar mimari kural ADR"
             results = self.search_engine.search(search_query, limit=8)
@@ -168,6 +172,35 @@ class RespectedMcpServer:
             for r in results:
                 lines.append(f"- **{r['title']}** (`{r['path']}`): {r['snippet']}")
             lines.append(kurallar_text)
+            records = decision_lifecycle.collect(
+                memory_events.list_events(self.vault_root, include_archive=True)
+            )
+            current_records = decision_lifecycle.current(records)
+            lines.append("\n### Karar Yaşam Döngüsü — Güncel\n")
+            if current_records:
+                for record in current_records:
+                    lines.append(
+                        f"- **{record['subject'] or 'Genel'}:** {record['text']} "
+                        f"(`{record['id']}`, geçerlilik: {record['valid_from'] or '-'} → {record['valid_until'] or 'açık'})"
+                    )
+            else:
+                lines.append("- Aktif karar yok.")
+            review = decision_lifecycle.review_items(records)
+            if review:
+                lines.append("\n### İnceleme Gerekli (Çelişki)\n")
+                for record in review:
+                    lines.append(f"- **{record['text']}** (`{record['id']}`, {record['review_reason']})")
+            if include_history:
+                superseded = [item for item in decision_lifecycle.history(records) if item["status"] != "active"]
+                lines.append("\n### Karar Geçmişi\n")
+                if superseded:
+                    for record in superseded:
+                        lines.append(
+                            f"- **{record['subject'] or 'Genel'}:** {record['text']} "
+                            f"(`{record['id']}`, {record['status']}, {record['recorded_at'] or '-'})"
+                        )
+                else:
+                    lines.append("- Geçmiş karar yok.")
             return "\n".join(lines)
 
         elif name == "respected_get_companion_context":
@@ -176,6 +209,7 @@ class RespectedMcpServer:
                 ("Core", companion_dir / "Core.md"),
                 ("Last-Session", companion_dir / "Last-Session.md"),
                 ("Kurallar", companion_dir / "Kurallar.md"),
+                ("Decisions", companion_dir / "Decisions.md"),
                 ("Threads", companion_dir / "Threads.md"),
             ]
             parts = [f"## {self.os_name} — {self.companion_name} Derin Hafıza Özeti\n"]
