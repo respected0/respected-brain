@@ -45,6 +45,8 @@ oluşturulmaz, süreç başlatılmaz. `vault` program kurmaz; `providers` kasa t
 
 1. Oturum başlarken hook ilişkili notları, haritaları ve sınırlı bir bağlamı AI aracına verir.
 2. Tur, sıkıştırma ve kapanış olaylarında döküm ortak biçime çevrilir; arka planda `flush` modelden özet alır.
+   Uzun dökümlerde pencerenin başı ve sonu korunur; aradaki turlar "atlandı" işaretiyle çıkarılır, böylece
+   oturumun ilk kararları da özete girer.
 3. Geçerli özet, oturum ve araç kimliğiyle `daily` dosyasındaki yönetilen bloğa kilit altında yazılır. Aynı oturumun
    tekrar yazılmasını kasa UUID'sine bağlı durum dosyaları önler.
 4. Derleyici günlüklerden `knowledge` notları üretir: model çıktısı geçici bir alanda hazırlanır, yalnızca izinli yollar,

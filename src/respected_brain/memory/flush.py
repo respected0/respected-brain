@@ -20,7 +20,7 @@ import tempfile
 import threading
 import time
 from typing import Any, Sequence
-from uuid import UUID
+from uuid import UUID, uuid4
 
 
 from .redact import redact as redact_text
@@ -29,10 +29,14 @@ from ..core.context import AppContext, ModelService
 from ..core.config import ConfigStore, atomic_write_bytes, atomic_write_json as _atomic_write_json
 from ..core.errors import OwnershipConflict
 from . import events
+from .diagnostics import record_health, reason_for, safe_reason
 
 
 MAX_TURNS = 30
 MAX_TRANSCRIPT_CHARS = 15_000
+HEAD_TURNS = 6              # the opening turns carry the session's framing and first decisions
+HEAD_SHARE = 2              # of the character budget, the share kept from the transcript start
+TRIM_MARKER = "[... orta kısım atlandı ...]"
 STALE_HOOK_INPUT_SECONDS = 3_600
 FLUSH_REASONS = frozenset({"sessionend", "turn", "precompact", "postcompact", "catch-up"})
 
@@ -80,38 +84,28 @@ def _atomic_write_text(path: Path, content: str, *, expected_before: bytes | Non
         temporary.unlink(missing_ok=True)
 
 
-def write_health(state_dir: Path, error: str, warning: bool = False) -> None:
+def write_health(
+    state_dir: Path,
+    error: str | BaseException,
+    warning: bool = False,
+    *,
+    stage: str = "summarize",
+    operation_id: str | None = None,
+    session_id: str | None = None,
+    provider: str | None = None,
+) -> None:
     """Record the latest flush problem without letting reporting crash."""
-    try:
-        payload: dict[str, Any] = {}
-        health_path = state_dir / "health.json"
-        if not runtime_platform.path_within_vault(health_path, state_dir):
-            return
-        if health_path.exists():
-            try:
-                loaded = json.loads(health_path.read_text(encoding="utf-8"))
-                json.dumps(loaded, allow_nan=False)
-                if isinstance(loaded, dict):
-                    payload.update(loaded)
-            except (OSError, ValueError, json.JSONDecodeError):
-                pass
-        payload.update(
-            {
-                "ts": int(time.time()),
-                "component": "flush",
-                "error": error,
-            }
-        )
-        if warning:
-            warnings = payload.get("warnings", [])
-            if not isinstance(warnings, list):
-                warnings = []
-            if error not in warnings:
-                warnings.append(error)
-            payload["warnings"] = warnings[-20:]
-        _atomic_write_json(health_path, payload)
-    except (OSError, ValueError):
-        pass
+    reason = reason_for(error) if isinstance(error, BaseException) else safe_reason(error)
+    record_health(
+        state_dir,
+        stage=stage,
+        reason=reason,
+        component="flush",
+        warning=warning,
+        operation_id=operation_id,
+        session_id=session_id,
+        provider=provider,
+    )
 
 
 def _repair_invalid_json_escapes(raw: str) -> str:
@@ -280,24 +274,54 @@ def format_turns(
     max_turns: int = MAX_TURNS,
     max_chars: int = MAX_TRANSCRIPT_CHARS,
 ) -> tuple[str, int]:
-    """Keep the newest complete turns and snap a character cut to a turn."""
-    selected = list(turns[-max_turns:])
-    rendered = "\n".join(
-        f"**{'User' if role == 'user' else 'Assistant'}:** {text}"
-        for role, text in selected
-    )
+    """Keep the session opening and the newest turns, trimming the middle.
+
+    Newest-only windows lose the decisions a session opens with, and a single oversized
+    turn used to lose both of its ends. The head/tail window keeps early and late decisions
+    inside the same character budget; the omitted middle is marked so the model knows the
+    transcript is partial.
+    """
+    selected, omitted = _turn_window(list(turns), max_turns)
+    lines = [f"**{'User' if role == 'user' else 'Assistant'}:** {text}" for role, text in selected]
+    if omitted:
+        lines.insert(_head_turns(max_turns), f"[... {omitted} tur atlandı ...]")
+    rendered = "\n".join(lines)
     if len(rendered) <= max_chars:
         return rendered, len(selected)
+    return _trim_middle(rendered, max_chars), len(selected)
 
-    tentative_start = len(rendered) - max_chars
-    boundary = rendered.find("\n**", tentative_start)
-    if boundary != -1:
-        rendered = rendered[boundary + 1 :]
-    else:
-        role, text = selected[-1]
-        prefix = f"**{'User' if role == 'user' else 'Assistant'}:** "
-        rendered = prefix + text[-max(0, max_chars - len(prefix)) :]
-    return rendered, len(selected)
+
+def _head_turns(max_turns: int) -> int:
+    if max_turns <= 1:
+        return 0
+    return max(1, min(HEAD_TURNS, max_turns - 1))
+
+
+def _turn_window(turns: list[tuple[str, str]], max_turns: int) -> tuple[list[tuple[str, str]], int]:
+    if len(turns) <= max_turns:
+        return turns, 0
+    if max_turns <= 1:
+        return turns[-1:], len(turns) - 1
+    head = _head_turns(max_turns)
+    return turns[:head] + turns[-(max_turns - head):], len(turns) - max_turns
+
+
+def _trim_middle(rendered: str, max_chars: int) -> str:
+    """Keep both ends of an over-budget transcript instead of only its tail."""
+    marker = f"\n{TRIM_MARKER}\n"
+    if max_chars <= len(marker):
+        return rendered[-max_chars:]
+    budget = max_chars - len(marker)
+    head_size = budget * HEAD_SHARE // 5
+    tail_size = budget - head_size
+    head, tail = rendered[:head_size], rendered[len(rendered) - tail_size:]
+    cut = max(head.rfind("\n"), head.rfind(" "))
+    if cut > len(head) * 3 // 4:
+        head = head[:cut]
+    cut = tail.find("\n")
+    if 0 <= cut < len(tail) // 4:
+        tail = tail[cut + 1:]
+    return head.rstrip() + marker + tail.lstrip()
 
 
 def build_flush_prompt(transcript: str) -> str:
@@ -495,20 +519,25 @@ def _record_flush_failure(
     error: str,
     transcript_path: str | None = None,
     provider: str | None = None,
+    *,
+    stage: str = "summarize",
+    operation_id: str | None = None,
 ) -> None:
     try:
         if not isinstance(session_id, str) or not session_id:
-            write_health(state_dir, error)
+            write_health(state_dir, error, stage=stage, operation_id=operation_id, provider=provider)
             return
         state_path = _session_state_path(state_dir, session_id)
         if not runtime_platform.path_within_vault(state_path, state_dir):
             raise ValueError("unsafe-session-state")
         existing = _load_json_object(state_path, {}) if state_path.is_file() else {}
         if transcript_path is None or (existing and _transcript_ownership(existing.get("transcript_path"), Path(transcript_path)) != "match"):
-            write_health(state_dir, error)
+            write_health(state_dir, error, stage=stage, operation_id=operation_id,
+                         session_id=session_id, provider=provider)
             return
         if existing.get("status") == "pending":
-            write_health(state_dir, error)
+            write_health(state_dir, error, stage=stage, operation_id=operation_id,
+                         session_id=session_id, provider=provider)
             return
         attempts = int(existing.get("attempts", 0)) + 1
         preserved_path = transcript_path
@@ -527,7 +556,8 @@ def _record_flush_failure(
         )
     except (OSError, ValueError, TypeError):
         pass
-    write_health(state_dir, error)
+    write_health(state_dir, error, stage=stage, operation_id=operation_id,
+                 session_id=session_id, provider=provider)
 
 
 def _owned_session_state(vault_root: Path, state_dir: Path, session_id: str, transcript: Path, provider: str) -> dict[str, Any]:
@@ -733,11 +763,12 @@ def _workspace_values(container: object) -> list[str]:
 
 
 
-def _provider_workspace_paths(path: Path | TranscriptSnapshot, *, expected_provider: str | None = None) -> tuple[list[str], bool, bool, set[str]]:
+def _provider_workspace_paths(path: Path | TranscriptSnapshot, *, expected_provider: str | None = None) -> tuple[list[str], bool, bool, set[str], bool]:
     values: set[str] = set()
     session_ids: set[str] = set()
     metadata_seen = False
     malformed = False
+    json_invalid = False
     with _transcript_source(path) as transcript:
         for raw_line in transcript:
             if not raw_line.strip():
@@ -745,7 +776,7 @@ def _provider_workspace_paths(path: Path | TranscriptSnapshot, *, expected_provi
             try:
                 record = json.loads(raw_line)
             except json.JSONDecodeError:
-                malformed = True
+                json_invalid = True
                 continue
             if not isinstance(record, dict):
                 continue
@@ -769,7 +800,7 @@ def _provider_workspace_paths(path: Path | TranscriptSnapshot, *, expected_provi
                     values.update(_workspace_path_key(value) for value in _workspace_values(source))
                 except ValueError:
                     malformed = True
-    return sorted(values), metadata_seen, malformed, session_ids
+    return sorted(values), metadata_seen, malformed, session_ids, json_invalid
 
 
 def _candidate_session_id(provider: str, transcript_path: Path) -> str | None:
@@ -933,7 +964,7 @@ def _classify_catch_up_candidate(
     *, snapshot: TranscriptSnapshot | None = None, allow_context: bool = False,
     hook_payload: dict[str, Any] | None = None,
 ) -> tuple[str, str]:
-    metadata, metadata_seen, malformed, metadata_session_ids = _provider_workspace_paths(snapshot or transcript_path, expected_provider=provider)
+    metadata, metadata_seen, malformed, metadata_session_ids, _json_invalid = _provider_workspace_paths(snapshot or transcript_path, expected_provider=provider)
     if provider not in _PROVIDERS:
         return "ambiguous", "provider-identity-invalid"
     native_provider = _transcript_provider(transcript_path)
@@ -1237,6 +1268,7 @@ def _flush_session_transcript(
     *, ctx: AppContext, revision_epoch: float | None = None,
     snapshot: TranscriptSnapshot | None = None, provider: str | None = None,
     hook_payload: dict[str, Any] | None = None, archive_path: Path | None = None, archive_store: bool = True,
+    operation_id: str | None = None,
 ) -> bool | None:
     if (vault_root != ctx.paths.vault_root or state_dir != ctx.paths.state_dir
             or cache_dir != ctx.paths.cache_dir):
@@ -1246,6 +1278,7 @@ def _flush_session_transcript(
     if event_time.tzinfo is None:
         event_time = event_time.astimezone()
     now_epoch = event_time.timestamp() if revision_epoch is None else revision_epoch
+    operation_id = operation_id or uuid4().hex
     session_id = _canonical_session_id(session_id)
     state_dir.mkdir(parents=True, exist_ok=True)
     lock_path = _session_lock_path(state_dir, session_id)
@@ -1257,7 +1290,8 @@ def _flush_session_transcript(
     with _provenance_lease(state_dir, session_id), lock_path.open("a+", encoding="utf-8") as lock_file:
         with runtime_platform.exclusive_lock(lock_file, blocking=True) as held:
             if not held:
-                write_health(state_dir, "session-lock-busy")
+                write_health(state_dir, "session-lock-busy", operation_id=operation_id,
+                             session_id=session_id, provider=provider)
                 return None
 
             snapshot = snapshot or _transcript_snapshot(transcript_path)
@@ -1292,7 +1326,20 @@ def _flush_session_transcript(
             if _is_stale_successful_event(state_dir, session_id, now_epoch):
                 return False
 
-            turns = read_transcript(snapshot)
+            try:
+                turns = read_transcript(snapshot)
+            except (ValueError, UnicodeError):
+                _record_flush_failure(
+                    state_dir,
+                    session_id,
+                    now_epoch,
+                    "transcript-jsonl-invalid",
+                    transcript_path=transcript_identity,
+                    provider=provider,
+                    stage="capture",
+                    operation_id=operation_id,
+                )
+                return None
             transcript, turn_count = format_turns(turns)
             transcript_hash = hashlib.sha256(transcript.encode("utf-8")).hexdigest()
             if _is_recent_duplicate(
@@ -1337,6 +1384,7 @@ def _flush_session_transcript(
                     error,
                     transcript_path=transcript_identity,
                     provider=provider,
+                    operation_id=operation_id,
                 )
                 return None
             if not summary:
@@ -1347,6 +1395,7 @@ def _flush_session_transcript(
                     "summary-empty",
                     transcript_path=transcript_identity,
                     provider=provider,
+                    operation_id=operation_id,
                 )
                 return None
 
@@ -1362,6 +1411,7 @@ def _flush_session_transcript(
                     "summary-schema-invalid",
                     transcript_path=transcript_identity,
                     provider=provider,
+                    operation_id=operation_id,
                 )
                 return None
 
@@ -1396,7 +1446,8 @@ def _flush_session_transcript(
                     _write_flush_state(state_dir, session_id, now_epoch, "pending", "companion-sync-failed",
                         turn_count=turn_count, transcript_hash=transcript_hash, pending_companion=checkpoint,
                         transcript_path=transcript_identity, provider=provider)
-                    write_health(state_dir, f"companion-sync-failed:{error.__class__.__name__}")
+                    write_health(state_dir, reason_for(error), stage="event_project",
+                                 operation_id=operation_id, session_id=session_id, provider=provider)
                     return None
                 _write_flush_state(
                     state_dir,
@@ -1418,6 +1469,8 @@ def _flush_session_transcript(
                     "daily-append-failed",
                     transcript_path=transcript_identity,
                     provider=provider,
+                    stage="daily_write",
+                    operation_id=operation_id,
                 )
                 return None
 
@@ -1468,13 +1521,13 @@ def flush_transcript(ctx: AppContext, *, session_id: str, transcript: Path, mode
             session_id, reason, now, model, ctx.paths.cache_dir, ctx=ctx, hook_payload=hook_payload)
         return 1 if result is None else 0
     except OwnershipConflict as error:
-        write_health(ctx.paths.state_dir, str(error))
+        write_health(ctx.paths.state_dir, reason_for(error))
         return 1
     except (OSError, ValueError, json.JSONDecodeError) as error:
-        write_health(ctx.paths.state_dir, f"input:{error}")
+        write_health(ctx.paths.state_dir, reason_for(error))
         return 1
     except Exception as error:
-        write_health(ctx.paths.state_dir, f"unexpected:{error.__class__.__name__}")
+        write_health(ctx.paths.state_dir, reason_for(error))
         return 1
 
 
@@ -1484,7 +1537,7 @@ def catch_up_unflushed_sessions(ctx: AppContext, *, model: ModelService, now: dt
     try:
         _validate_flush_paths(ctx, now)
     except ValueError as error:
-        write_health(ctx.paths.state_dir, str(error))
+        write_health(ctx.paths.state_dir, reason_for(error))
         return 0
     current = now
     vault_root = ctx.paths.vault_root
@@ -1648,12 +1701,12 @@ def catch_up_unflushed_sessions(ctx: AppContext, *, model: ModelService, now: dt
             if flushed:
                 flushed_count += 1
         except OwnershipConflict as error:
-            entry["result"] = f"failed:{error}"
-            write_health(state_dir, str(error))
+            entry["result"] = f"failed:{safe_reason(error)}"
+            write_health(state_dir, reason_for(error))
             continue
         except Exception as error:
             entry["result"] = f"failed:{error.__class__.__name__}"
-            write_health(state_dir, f"catch-up:{error.__class__.__name__}")
+            write_health(state_dir, reason_for(error), stage="capture")
             continue
 
     try:
@@ -1681,5 +1734,5 @@ def compile_catch_up(ctx: AppContext, *, model: ModelService, now: dt.datetime) 
             return 0
         return compile_pending(ctx, model=model, now=now, trigger_claim=claim, before_date=now.date())
     except (OSError, ValueError) as error:
-        write_health(state_dir, f"compile-catchup:{error}")
+        write_health(state_dir, f"compile-catchup:{safe_reason(error)}", stage="compile")
         return 1

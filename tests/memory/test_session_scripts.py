@@ -540,8 +540,13 @@ raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
         extracted = FLUSH.read_transcript(transcript)
         rendered, count = FLUSH.format_turns(extracted)
         self.assertEqual(count, 30)
-        self.assertNotIn("turn 4", rendered)
+        # The opening turns are kept; the middle of a long session is what gets omitted.
+        self.assertIn("turn 0", rendered)
         self.assertIn("turn 5", rendered)
+        self.assertNotIn("turn 7", rendered)
+        self.assertIn("turn 11", rendered)
+        self.assertIn("turn 34", rendered)
+        self.assertIn("5 tur atlandı", rendered)
         self.assertNotIn("gizli", rendered)
 
         long_turns = [
@@ -556,6 +561,28 @@ raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
         self.assertLessEqual(len(capped), 15_000)
         self.assertTrue(capped.startswith("**"))
         self.assertRegex(capped, r"^\*\*(User|Assistant):\*\* id\d+:")
+        self.assertIn("id0:", capped)
+        self.assertIn("id29:", capped)
+        self.assertIn(FLUSH.TRIM_MARKER, capped)
+
+    def test_one_oversized_turn_keeps_its_head_and_tail(self) -> None:
+        text = "Baş karar: Kafka. Kod adı baş-karar-4411. " + ("dolgu " * 4_000) + \
+               "Son karar: partition 12. Kod adı son-karar-5522."
+        rendered, count = FLUSH.format_turns([("user", text), ("assistant", "Kısa özet.")])
+        self.assertEqual(count, 2)
+        self.assertLessEqual(len(rendered), FLUSH.MAX_TRANSCRIPT_CHARS)
+        self.assertIn("baş-karar-4411", rendered)
+        self.assertIn("son-karar-5522", rendered)
+        self.assertIn(FLUSH.TRIM_MARKER, rendered)
+
+    def test_turn_window_survives_degenerate_limits(self) -> None:
+        turns = [(("user" if number % 2 == 0 else "assistant"), f"turn {number}") for number in range(10)]
+        rendered, count = FLUSH.format_turns(turns, max_turns=1)
+        self.assertEqual(count, 1)
+        self.assertEqual(rendered, "[... 9 tur atlandı ...]\n**Assistant:** turn 9")
+        rendered, count = FLUSH.format_turns(turns, max_turns=2, max_chars=40)
+        self.assertEqual(count, 2)
+        self.assertLessEqual(len(rendered), 40)
 
     def test_antigravity_transcript_format_is_extracted(self) -> None:
         transcript = self.root / "antigravity.jsonl"
@@ -1173,7 +1200,7 @@ raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
             [(session, "invalid-hook-provenance")],
         )
 
-    def test_catch_up_does_not_bypass_malformed_provider_metadata_with_hook_provenance(self) -> None:
+    def test_catch_up_bounds_malformed_transcript_with_hook_provenance(self) -> None:
         fake_home = self.root / "malformed-provider-home"
         sessions_dir = fake_home / ".codex" / "sessions" / "2026" / "09" / "13"
         sessions_dir.mkdir(parents=True)
@@ -1201,8 +1228,19 @@ raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
         self.assertFalse((self.daily / "2026-09-13.md").exists())
         report = json.loads((self.state / "catch-up-report.json").read_text(encoding="utf-8"))
         self.assertEqual(
-            [(item["session_id"], item["reason"]) for item in report["ambiguous"]],
-            [(session, "provider-metadata-invalid")],
+            [(item["session_id"], item["result"]) for item in report["accepted"]],
+            [(session, "failed")],
+        )
+        self.assertEqual(report["ambiguous"], [])
+        state = json.loads(
+            FLUSH._session_state_path(self.state, session).read_text(encoding="utf-8")
+        )
+        self.assertEqual(state["status"], "fail")
+        self.assertEqual(state["detail"], "transcript-jsonl-invalid")
+        self.assertEqual(state["attempts"], 1)
+        self.assertIn(
+            "transcript-jsonl-invalid",
+            (self.state / "health.json").read_text(encoding="utf-8"),
         )
 
     def test_direct_flush_rejects_different_transcript_for_existing_session(self) -> None:
