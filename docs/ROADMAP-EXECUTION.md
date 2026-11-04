@@ -240,7 +240,7 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
 - Kullanıcı seçimi olmadan ücretli sağlayıcıya geçmeme.
 - Sağlayıcı bazlı izin, maliyet, fallback; aynı eval setiyle kalite karşılaştırması.
 
-### [ ] BR-018 · Geçmiş oturumları içe aktarma (P2, M/L)
+### [x] BR-018 · Geçmiş oturumları içe aktarma (P2, M/L)
 - Seçili eski oturumları önizlemeli içe alma; kaynak/tarih korunması.
 - Maskeleme ve arşiv izinleri; tekrar içe alma ve eski bilgiyi güncel saymama testleri.
 
@@ -954,5 +954,42 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - OpenRouter yalnızca `text` modunda desteklenir; workspace modu bilinçli olarak reddedilir.
   - Canlı HTTP yolu yerel mock ile doğrulandı; gerçek uç nokta el sıkışması anahtar gerektirir.
 - Sonuç: **uygulandı ve test edildi**; gerçek ücretli API çağrısıyla doğrulanmadı.
+
+### BR-018 · Geçmiş oturumları içe aktarma — TAMAMLANDI
+- Tarih/saat: 2026-11-04 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `febb5f3` (BR-017 sonrası)
+- Değişen dosyalar:
+  - `src/respected_brain/maintenance/ingestion/mine_agent_history.py`: seçimli önizleme, maskelenmiş transcript, kaynak/tarih koruması, idempotent içe alma ve opt-in arşiv.
+  - `tests/maintenance/test_br018_history_import.py` (yeni): önizleme salt-okunurluğu, maskeleme, açık seçim, tarih/mtime, tekrar içe alma ve arşiv sınırları.
+  - `tests/evals/results/br018-evidence.json`: bu kanıt bloğunun makine-okunur özeti.
+- Uygulama:
+  - Varsayılan çalışma yalnızca önizlemedir; vault'a yazmaz. `--apply` yalnızca en az bir `--session-id` ile çalışır, aksi hâlde çıkış kodu `2` döner.
+  - Önizleme; sağlayıcı, oturum kimliği, kaynak dosya, gerçek olay tarihi, tur sayısı ve `already_imported` bilgisini gösterir; kullanıcı metinleri, başlık ve özetler `redact` ile maskelenir.
+  - İçe alınan not `created`/`valid_at` alanlarında kaynak olay tarihini, `recorded_at` alanında içe alma zamanını taşır. Dosyanın `mtime` değeri de kaynak tarihe çekilir; böylece eski bilgi yeni değişmiş gibi görünmez.
+  - Not `status: imported`, `review_status: pending`, `freshness: dated`, `source_file` ve `session_id` ile işaretlenir; güncel bilgi olarak damgalanmaz.
+  - Aynı oturumun tekrar içe alınması idempotenttir. Kullanıcı notu değiştirdiyse içe alma `ValueError` ile durur ve düzenleme korunur.
+  - Arşiv varsayılan kapalıdır. `--archive` seçilirse kasa dışındaki `data_root/archives/agent-history` altına redakte edilmiş transcript yazılır; kasa içi arşiv hedefi reddedilir, kaynak dosya değiştirilmez.
+- Komutlar ve sonuçlar:
+  - `py -m unittest tests.maintenance.test_br018_history_import tests.integrations.test_mcp_and_features.AgentHistoryMinerTest tests.security.test_input_boundaries.ZeroTrustSecurityTests tests.maintenance.test_maintenance_boundaries.FoundationMaintenanceToolsTest tests.core.test_entry_boundaries.EntryReviewTest -v` → 38 test OK (EXIT=0)
+  - `py -m unittest discover -s tests -t .` → 1055 test OK, 16 skip (EXIT=0)
+- Kabul eşlemesi:
+  - Seçili eski oturumları önizlemeli içe alma: varsayılan önizleme ve `--apply --session-id` kapısı testli.
+  - Kaynak/tarih korunması: `created`, `valid_at`, `source_file` ve dosya `mtime` gerçek olay tarihini taşıyor; `recorded_at` ayrı tutuluyor.
+  - Maskeleme: API anahtarı içeren sentetik transcript önizleme, not ve arşivde maskeleniyor.
+  - Arşiv izinleri: arşiv opt-in, kasa dışı ve redakte; kasa içi hedef reddediliyor.
+  - Tekrar içe alma: aynı içerik idempotent; kullanıcı düzenlemesi ezilmiyor.
+  - Eski bilgiyi güncel saymama: eski `valid_at`/`created`/`mtime`, `freshness: dated` ve `review_status: pending` birlikte doğrulanıyor; içe alma zamanı yalnızca `recorded_at` alanında.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/maintenance/ingestion/mine_agent_history.py` → `0D2A0050AD3D0FFE2A3F69E5B176753AB132099740B5CB38993008150ACE25F4`
+  - `tests/maintenance/test_br018_history_import.py` → `AAB3A48DB77DA29FCA96633273692734E3BA2F077886E31940AC2778E21FFC23`
+  - `tests/evals/results/br018-focused.log` → `6A500A471F40FDF9C440EB6727DAF77538766242E7E3108882F843F6EB510FF5` (yerel/ignore, commit edilmedi)
+  - `tests/evals/results/br018-full-suite.log` → `F656093A292D123881D45D462EA6CAD1FA0BD0E3C7B1019F83395184E6242FC0` (yerel/ignore, commit edilmedi)
+  - `tests/evals/results/br018-evidence.json` → `E65565B59C237BB9B02416477D4E35E992F3FC933DD1AFD37FDB266D01495D10`
+- Bilinen sınırlar / risk:
+  - Gerçek kişisel oturum içe alınmadı; sentetik JSONL ile doğrulandı.
+  - Windows'ta `os.chmod(0o600)` gerçek bir ACL kısıtı değildir; POSIX izin testi bu ortamda skip edilir.
+  - Arşiv yalnızca açık `--archive` seçimiyle yazılır; varsayılan gizlilik korunur.
+  - Arama motoruna zamansal sıralama eklenmedi; eski-dönem işareti frontmatter ve dosya `mtime` ile korunur.
+- Sonuç: **uygulandı ve test edildi**; gerçek kişisel geçmiş içe alınmadı.
 
 <!-- EVIDENCE:END -->

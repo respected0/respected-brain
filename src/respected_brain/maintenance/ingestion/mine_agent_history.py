@@ -8,8 +8,10 @@ Yerel diskteki Claude Code, Google Antigravity ve OpenAI Codex oturum kayıtlar�
 from __future__ import annotations
 
 from respected_brain.core.context import AppContext
+from respected_brain.core.platform import path_within_vault
 from respected_brain.maintenance import selected_vault, mutable_target, safe_walk
 from respected_brain.maintenance._atomic import write_text_staged as _atomic_write_text
+from respected_brain.memory.redact import redact
 
 import argparse
 import datetime as dt
@@ -27,10 +29,23 @@ from typing import Any
 class AgentHistoryMiner:
     """Yerel yapay zeka ajanlarının oturum geçmişlerini tarayan ve çıkaran motor."""
 
-    def __init__(self, vault_root: Path, *, state_file: Path, temp_dir: Path | None = None) -> None:
+    def __init__(
+        self,
+        vault_root: Path,
+        *,
+        state_file: Path,
+        temp_dir: Path | None = None,
+        archive_dir: Path | None = None,
+    ) -> None:
         self.vault_root = vault_root.resolve()
         self.state_file = mutable_target(None, state_file)
         self.temp_dir = temp_dir
+        self.archive_dir = None
+        if archive_dir is not None:
+            archive = mutable_target(None, Path(archive_dir))
+            if path_within_vault(archive, self.vault_root):
+                raise ValueError("History archive must be outside the selected vault")
+            self.archive_dir = archive
         self.imported_ids = self._load_state()
 
     def _load_state(self) -> set[str]:
@@ -138,6 +153,7 @@ class AgentHistoryMiner:
         agent = session_info["agent"]
         user_inputs: list[str] = []
         model_thoughts_or_summaries: list[str] = []
+        event_time: dt.datetime | None = None
 
         try:
             with file_path.open("r", encoding="utf-8", errors="replace") as f:
@@ -151,6 +167,13 @@ class AgentHistoryMiner:
                         continue
                     if not isinstance(record, dict):
                         continue
+                    if event_time is None:
+                        raw_time = record.get("created_at") or record.get("timestamp")
+                        if isinstance(raw_time, str) and raw_time:
+                            try:
+                                event_time = dt.datetime.fromisoformat(raw_time.replace("Z", "+00:00"))
+                            except ValueError:
+                                pass
 
                     # Antigravity formatı
                     if agent == "antigravity":
@@ -190,7 +213,9 @@ class AgentHistoryMiner:
         if not user_inputs:
             return None
 
-        title = user_inputs[0][:100].replace("\n", " ").strip()
+        user_inputs = [redact(text) for text in user_inputs]
+        summaries = [redact(text) for text in model_thoughts_or_summaries[:5]]
+        title = redact(user_inputs[0][:100].replace("\n", " ").strip())
         # XML taglerini ve özel karakterleri temizle
         title = re.sub(r"<[^>]+>", "", title)
         title = re.sub(r"[#*`_\[\]]", "", title).strip() or "İsimsiz Oturum"
@@ -201,16 +226,52 @@ class AgentHistoryMiner:
             "agent": agent,
             "title": title,
             "mtime": session_info["mtime"],
+            "timestamp": event_time or session_info["mtime"],
+            "source": str(file_path),
             "user_inputs": user_inputs,
-            "summaries": model_thoughts_or_summaries[:5],
+            "summaries": summaries,
         }
+
+    def preview_session(self, session_info: dict[str, Any]) -> dict[str, Any] | None:
+        """Bir oturumun yazmadan önceki, maskelenmiş önizlemesini döndürür."""
+        parsed = self.parse_session(session_info)
+        if parsed is None:
+            return None
+        timestamp = parsed["timestamp"]
+        return {
+            "agent": parsed["agent"],
+            "id": parsed["id"],
+            "source": parsed["source"],
+            "date": timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            "turns": len(parsed["user_inputs"]),
+            "summary": parsed["title"],
+            "already_imported": parsed["id"] in self.imported_ids,
+        }
+
+    def archive_session(self, parsed: dict[str, Any]) -> Path | None:
+        """Açıkça etkinleştirildiyse redakte edilmiş transcript arşivini 0600 ile yazar."""
+        if self.archive_dir is None or not parsed.get("source"):
+            return None
+        source = mutable_target(None, Path(parsed["source"]))
+        identity_hash = hashlib.sha256(str(parsed["id"]).encode("utf-8")).hexdigest()[:16]
+        target = self.archive_dir / f"{parsed['agent']}_{identity_hash}.jsonl"
+        if not path_within_vault(target, self.archive_dir):
+            raise ValueError("History archive path escapes its directory")
+        _atomic_write_text(target, redact(source.read_text(encoding="utf-8", errors="replace")), temp_dir=self.temp_dir)
+        os.chmod(target, 0o600)
+        return target
 
     def import_session(self, parsed: dict[str, Any], target_folder: str = "daily") -> Path:
         """Ayrıştırılan oturumu vault içine markdown dosyası olarak yazar."""
-        date_str = parsed["mtime"].strftime("%Y-%m-%d")
-        time_str = parsed["mtime"].strftime("%H:%M:%S")
+        timestamp = parsed.get("timestamp") or parsed["mtime"]
+        date_str = timestamp.strftime("%Y-%m-%d")
+        time_str = timestamp.strftime("%H:%M:%S")
 
-        safe_slug = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in parsed["title"])[:35]
+        title = redact(str(parsed["title"]))
+        user_inputs = [redact(str(text)) for text in parsed["user_inputs"]]
+        summaries = [redact(str(text)) for text in parsed["summaries"]]
+
+        safe_slug = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in title)[:35]
         safe_slug = safe_slug.strip("._-") or "session"
         safe_agent_slug = "".join(c if c.isalnum() or c in ("-", "_") else "_" for c in parsed["agent"])[:30].strip("._-") or "agent"
         identity_hash = hashlib.sha256(str(parsed['id']).encode('utf-8')).hexdigest()[:16]
@@ -221,18 +282,18 @@ class AgentHistoryMiner:
         else:
             out_dir = self.vault_root / "daily"
 
-        from respected_brain.core.platform import path_within_vault
         if not path_within_vault(out_dir, self.vault_root):
             raise ValueError('History output escapes selected vault')
         out_dir.mkdir(parents=True, exist_ok=True)
         out_file = out_dir / filename
 
-        inputs_rendered = "\n".join(f"- {u[:200]}" for u in parsed["user_inputs"][:10])
-        summaries_rendered = "\n\n".join(f"> {s}..." for s in parsed["summaries"])
+        inputs_rendered = "\n".join(f"- {u[:200]}" for u in user_inputs[:10])
+        summaries_rendered = "\n\n".join(f"> {s}..." for s in summaries)
 
-        safe_title = json.dumps(parsed["title"], ensure_ascii=False)
+        safe_title = json.dumps(title, ensure_ascii=False)
         safe_agent = json.dumps(parsed["agent"], ensure_ascii=False)
         safe_id = json.dumps(parsed["id"], ensure_ascii=False)
+        safe_source = json.dumps(str(parsed.get("source", "")), ensure_ascii=False)
 
         content = (
             f"---\n"
@@ -244,10 +305,12 @@ class AgentHistoryMiner:
             f"status: imported\n"
             f"agent: {safe_agent}\n"
             f"session_id: {safe_id}\n"
+            f"source_file: {safe_source}\n"
+            f"review_status: pending\n"
             f"freshness: dated\n"
             f'tags: ["gecmis-import", {safe_agent}]\n'
             f"---\n\n"
-            f"# {parsed['title']}\n\n"
+            f"# {title}\n\n"
             f"**Kaynak Ajan:** `{parsed['agent']}`  \n"
             f"**Tarih:** `{date_str} {time_str}`  \n"
             f"**Oturum Kimliği:** `{parsed['id']}`\n\n"
@@ -268,6 +331,8 @@ class AgentHistoryMiner:
                 handle.write(content)
                 handle.flush()
                 os.fsync(handle.fileno())
+        os.utime(out_file, (timestamp.timestamp(), timestamp.timestamp()))
+        self.archive_session(parsed)
         was_imported = parsed['id'] in self.imported_ids
         self.imported_ids.add(parsed["id"])
         try:
@@ -285,14 +350,23 @@ def main(argv=None, *, ctx: AppContext | None = None) -> int:
     parser.add_argument("--vault", type=Path, default=None, help="Vault kök dizini")
     parser.add_argument("--limit", type=int, default=10, help="Maksimum işlenecek oturum")
     parser.add_argument("--target", choices=["daily", "inbox"], default="daily", help="Hedef klasör")
-    parser.add_argument("--dry-run", action="store_true", help="Yazmadan listele")
-    parser.add_argument("--force", action="store_true", help="Daha önce aktarılmış olanları tekrar aktar")
+    parser.add_argument("--session-id", action="append", default=[], help="Açıkça seçilen oturum; tekrarlanabilir")
+    parser.add_argument("--apply", action="store_true", help="Seçilen oturumları yaz")
+    parser.add_argument("--archive", action="store_true", help="Redakte edilmiş transcript arşivini de yaz")
+    parser.add_argument("--dry-run", action="store_true", help="Geriye uyumlu: önizleme varsayılandır")
+    parser.add_argument("--force", action="store_true", help="Önizlemede daha önce aktarılmış olanları da göster")
 
     args = parser.parse_args(argv)
     vault = selected_vault(ctx, args.vault)
     if ctx is None:
         raise ValueError("Agent history requires an explicit data context")
-    miner = AgentHistoryMiner(vault, state_file=ctx.paths.state_dir / "imported_sessions.json", temp_dir=ctx.paths.cache_dir)
+    archive_dir = ctx.paths.data_root / "archives" / "agent-history" if args.archive else None
+    miner = AgentHistoryMiner(
+        vault,
+        state_file=ctx.paths.state_dir / "imported_sessions.json",
+        temp_dir=ctx.paths.cache_dir,
+        archive_dir=archive_dir,
+    )
 
     candidates: list[dict[str, Any]] = []
     if args.source in ("all", "antigravity"):
@@ -307,32 +381,50 @@ def main(argv=None, *, ctx: AppContext | None = None) -> int:
 
     print(f"Toplam {len(candidates)} ajan oturum dosyası bulundu.")
 
-    imported_count = 0
-    skipped_count = 0
-
-    for c in candidates:
-        if imported_count >= args.limit:
-            break
-
-        if not args.force and c["id"] in miner.imported_ids:
-            skipped_count += 1
-            continue
-
-        parsed = miner.parse_session(c)
-        if not parsed:
-            continue
-
-        if args.dry_run:
-            print(f"[Önizleme] {parsed['agent'].upper()} | {parsed['mtime'].strftime('%Y-%m-%d')} | {parsed['title']}")
-            imported_count += 1
-        else:
+    selected = set(args.session_id)
+    if args.apply and not selected:
+        print("Yazma reddedildi: --apply için en az bir --session-id seçin.")
+        return 2
+    if args.apply:
+        by_id = {candidate["id"]: candidate for candidate in candidates}
+        missing = [session_id for session_id in args.session_id if session_id not in by_id]
+        if missing:
+            print("Oturum bulunamadı: " + ", ".join(missing))
+            return 2
+        imported_count = 0
+        for session_id in dict.fromkeys(args.session_id):
+            parsed = miner.parse_session(by_id[session_id])
+            if parsed is None:
+                print(f"[Atlandı] {session_id}: okunabilir kullanıcı mesajı yok")
+                continue
             written_file = miner.import_session(parsed, target_folder=args.target)
             print(f"[Aktarıldı] {written_file.name} ({parsed['agent']})")
             imported_count += 1
+        print(f"\nİşlem tamamlandı: {imported_count} seçili oturum vault'a aktarıldı.")
+        return 0
 
-    if args.dry_run:
-        print(f"\nÖnizleme bitti: {imported_count} oturum aktarılmaya uygun, {skipped_count} zaten aktarılmış.")
-    else:
-        print(f"\nİşlem tamamlandı: {imported_count} oturum vault'a aktarıldı, {skipped_count} atlandı.")
-
+    previewed = 0
+    skipped_count = 0
+    for candidate in candidates:
+        if selected and candidate["id"] not in selected:
+            continue
+        if not selected and previewed >= max(args.limit, 0):
+            break
+        if not selected and not args.force and candidate["id"] in miner.imported_ids:
+            skipped_count += 1
+            continue
+        preview = miner.preview_session(candidate)
+        if preview is None:
+            continue
+        marker = " [zaten aktarılmış]" if preview["already_imported"] else ""
+        print(
+            f"[Önizleme] {preview['agent'].upper()} | {preview['date']} | {preview['id']} | "
+            f"{preview['turns']} tur | {preview['summary']}{marker}\n"
+            f"  kaynak: {preview['source']}"
+        )
+        previewed += 1
+    print(
+        f"\nÖnizleme bitti: {previewed} oturum gösterildi, {skipped_count} zaten aktarılmış. "
+        "Yazmak için --apply --session-id <kimlik> kullanın."
+    )
     return 0

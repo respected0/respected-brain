@@ -1,0 +1,40 @@
+{
+    "task":  "BR-018",
+    "date":  "2026-11-04",
+    "base_commit":  "febb5f3",
+    "commands":  {
+                     "focused":  {
+                                     "command":  "py -m unittest tests.maintenance.test_br018_history_import tests.integrations.test_mcp_and_features.AgentHistoryMinerTest tests.security.test_input_boundaries.ZeroTrustSecurityTests tests.maintenance.test_maintenance_boundaries.FoundationMaintenanceToolsTest tests.core.test_entry_boundaries.EntryReviewTest -v",
+                                     "tests":  38,
+                                     "result":  "OK",
+                                     "exit":  0
+                                 },
+                     "full":  {
+                                  "command":  "py -m unittest discover -s tests -t .",
+                                  "tests":  1055,
+                                  "skipped":  16,
+                                  "result":  "OK",
+                                  "exit":  0
+                              }
+                 },
+    "artifacts":  {
+                      "src/respected_brain/maintenance/ingestion/mine_agent_history.py":  "0D2A0050AD3D0FFE2A3F69E5B176753AB132099740B5CB38993008150ACE25F4",
+                      "tests/maintenance/test_br018_history_import.py":  "AAB3A48DB77DA29FCA96633273692734E3BA2F077886E31940AC2778E21FFC23",
+                      "tests/evals/results/br018-focused.log":  "6A500A471F40FDF9C440EB6727DAF77538766242E7E3108882F843F6EB510FF5",
+                      "tests/evals/results/br018-full-suite.log":  "F656093A292D123881D45D462EA6CAD1FA0BD0E3C7B1019F83395184E6242FC0"
+                  },
+    "verified":  [
+                     "Varsayilan calisma yalnizca onizleme; vault yazilmiyor ve sirlar maskeleniyor.",
+                     "--apply acik --session-id olmadan reddediliyor (cikis 2).",
+                     "Ice alinan not kaynak olay tarihini created/valid_at ve dosya mtime olarak koruyor; recorded_at ice alma zamanini tasiyor.",
+                     "Ice alinan not status: imported, review_status: pending, freshness: dated ile isaretleniyor; guncel bilgi gibi damgalanmiyor.",
+                     "Ayni oturum tekrar ice alindiginda idempotent; kullanici duzenlemesi ezilmiyor.",
+                     "Arsiv varsayilan kapali; opt-in arsiv kasa disina maskelenmis olarak yaziliyor ve kaynak dosya degismiyor."
+                 ],
+    "limits":  [
+                   "Gercek kisisel oturum ice alinmadi; sentetik JSONL kullanildi.",
+                   "Windows uzerinde os.chmod(0600) gercek bir ACL kisiti degildir; POSIX testi skip edilir.",
+                   "Arsiv yalnizca acik --archive secimiyle yazilir.",
+                   "Arama motorunda zamansal siralama eklenmedi; eski-donem isareti frontmatter ve dosya mtime ile korunur."
+               ]
+}
