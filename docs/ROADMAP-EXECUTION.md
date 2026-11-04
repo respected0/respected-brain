@@ -1162,4 +1162,35 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - Dış ürünlerin plan/özellik koşulları değişebilir; erişim tarihi kayda geçirildi.
 - Sonuç: **uygulandı; kaynaklar HTTP 200 ile doğrulandı.**
 
+### BR-024 · Roadmap ve mimari gerçeklik güncellemesi — TAMAMLANDI
+- Tarih/saat: 2026-11-04 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `44f777f` (BR-023 sonrası)
+- Değişen dosyalar:
+  - `docs/ROADMAP.md`: OpenCode gerçek oturum, Cursor BR-021, Gemini CLI kurulu değil, OpenRouter bloke, ChatGPT kişisel hesap yolu yok, token tasarrufu BR-022, dizin tazeliği ve anlamsal arama sınırları güncellendi.
+  - `docs/ARCHITECTURE.md` §9: platform, istemci doğrulaması, dizin tazeliği, anlamsal arama ve OpenRouter satırları gerçek duruma çekildi.
+  - `docs/RELEASE-GATE.md`: Windows x64 dondurulmuş paket ile WSL2/Linux kaynak doğrulaması ayrıldı; macOS ve Linux frozen/CI açık kaldı.
+- Uygulama:
+  - Belgelerde "doğrulanmadı" kalan OpenCode/Cursor ifadeleri gerçek kanıtlarla değiştirildi.
+  - Gemini CLI'nin hem Windows hem WSL'de kurulu olmadığı doğrulandı; gerçek oturum iddiası kaldırılmadı.
+  - OpenRouter adaptörünün hazır olduğu, ancak gerçek ücretli çağrının API anahtarı yokluğu nedeniyle doğrulanmadığı açıkça yazıldı.
+  - Dizin tazeliği "sorgu öncesi stale kontrolü + refresh, salt-okunur MCP'de eski sonuç filtresi" olarak kodla eşleşecek biçimde düzeltildi.
+  - Anlamsal arama için `MIN_SCORE=0.25`, Windows x64 `llama.zip` ve diğer platformlarda `ollama` sınırı belgelendi.
+- Komutlar ve sonuçlar:
+  - `global_config.py` → `SUPPORTED` içinde `opencode` var: True.
+  - `search/semantic.py` → `MIN_SCORE = 0.25`: True.
+  - `search/engine.py` → sorgu öncesi `index_state()["state"] == "stale"` kontrolü: True.
+  - `providers/openrouter.py` → adaptör dosyası mevcut: True.
+  - `Get-Command gemini` → Windows: not-installed; `wsl bash -lc 'command -v gemini'` → not-installed.
+  - `git diff --check` → OK (EXIT=0).
+- Kabul eşlemesi:
+  - Roadmap maddeleri kod/kanıtla çelişmeyecek şekilde güncellendi; tamamlananlar işaretli, bloke olanlar gerekçeli açık bırakıldı.
+- Artefaktlar (yol → sha256):
+  - `docs/ROADMAP.md` → `554A6B7160CE165B4331BE6E11809DC984765AD0C1E841EB9BDFDF5A60F91364`
+  - `docs/ARCHITECTURE.md` → `096FC4F04736922F03A33E5BD2F363F553E7B8986B0299768CFF11E20A00F698`
+  - `docs/RELEASE-GATE.md` → `BFCAA0CA540D951311C98B1AF24D07F94B6D9B04F8390F7698F736B5D1CDD856`
+- Bilinen sınırlar / risk:
+  - Yalnızca belge değişikliği; davranış değişmedi ve yeni test eklenmedi. Bu görevde tam test paketi çalıştırılmadı; sonraki kod görevlerinde çalıştırılacak.
+  - Linux frozen paket ve macOS gerçek donanım hâlâ yok; CI matrisi BR-026'da ele alınacak.
+- Sonuç: **uygulandı; belgeler kod gerçekleri ve mevcut kanıtlarla hizalandı.**
+
 <!-- EVIDENCE:END -->

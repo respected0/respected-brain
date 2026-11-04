@@ -220,10 +220,11 @@ Yayın kapısı, test sonuçları ve doğrulanmamış platform sınırları `doc
 | Konu | Durum |
 |---|---|
 | Kod imzası (Authenticode) | yok; SmartScreen uyarır |
-| macOS, Linux, WSL | kod ve betikler var; derlenmez, CI'da test edilmez |
-| Gemini CLI, Cursor | yalnızca test verileriyle; Claude Code, Codex ve Antigravity gerçek oturumla sınandı (Windows). Codex eklenti hook'ları kişinin onayından (`/hooks`) sonra çalışır ve içerik değişince onay düşer |
+| macOS, Linux, WSL | Windows x64 dondurulmuş paket doğrulandı; WSL2/Linux kaynak testleri gerçek. macOS gerçek donanımda, Linux dondurulmuş pakette ve CI'da doğrulanmadı |
+| Gemini CLI, Cursor | Cursor BR-021 ile gerçek oturumda doğrulandı; Gemini CLI bu makinede kurulu değil. Claude Code, Codex, Antigravity ve OpenCode gerçek oturumla sınandı (Windows). Codex eklenti hook'ları kişinin onayından (`/hooks`) sonra çalışır ve içerik değişince onay düşer |
 | Boşluklu program yolu | Codex ve Antigravity hook komutları tırnaksız olmalı: boşluklu yol Windows'un 8.3 kısa adıyla yazılır. Kısa ad yoksa Codex `& "yol"` biçimine döner, Antigravity (tırnakları yeniden kaçırır) ve WSL profili çalışmaz |
-| Dizin anlık değil | oturum dışı düzenlemeler sonraki oturumda ya da günlük görevde dizine girer |
+| Dizin anlık değil | dosya izleyici yok; normal aramada sorgu öncesi stale kontrolü ve refresh var, salt-okunur MCP eski sonucu filtreler; oturum dışı düzenleme sonraki sorguda, oturumda ya da günlük görevde dizine girer |
 | Hafıza izni | `settings.apply` yapabilen herkes izin oluşturabilir (aynı kullanıcı hesabı) |
-| Anlamsal arama | her sorguda sunucu başlar; yalnızca Windows x64 çalışma ortamı; yerel model etkin değilken semantik/hibrit ölçülemez, FTS5 kullanılır |
+| Anlamsal arama | `MIN_SCORE=0.25`; her sorguda sunucu başlar; yalnızca Windows x64 `llama.zip` çalışma ortamı, diğer platformlar `ollama` sağlayıcısı; yerel model etkin değilken semantik/hibrit ölçülemez, FTS5 kullanılır |
+| OpenRouter / ücretli API | adaptör ve testler hazır; gerçek ücretli çağrı API anahtarı yokluğu nedeniyle doğrulanmadı; `auto` modunda ücretli sağlayıcıya geçilmez |
 | Aşamalı bağlam | token tahmini karakter/4 (gerçek tokenizer değil); bütçe kesin üst sınır değil, kırpma kelime sınırında yapılır |
