@@ -62,8 +62,12 @@ class PackageContractTest(unittest.TestCase):
             home = Path(temporary)
             wheels = home / 'wheels'
             build_env = dict(os.environ, PYTHONUTF8='1', PYTHONIOENCODING='utf-8')
-            build = run_package_step('build-wheel', [sys.executable, '-m', 'build', '--wheel', '--no-isolation', '--outdir', str(wheels)],
-                                   cwd=ROOT, env=build_env, capture_output=True, text=True, encoding='utf-8', errors='replace')
+            probe = run_package_step('build-wheel', [sys.executable, '-m', 'build', '--version'],
+                                   cwd=home, env=build_env, capture_output=True, text=True, encoding='utf-8', errors='replace')
+            if probe.returncode:
+                self.skipTest("the 'build' package is not installed in this environment: " + probe.stderr.strip()[-200:])
+            build = run_package_step('build-wheel', [sys.executable, '-m', 'build', '--wheel', '--no-isolation', '--outdir', str(wheels), str(ROOT)],
+                                   cwd=home, env=build_env, capture_output=True, text=True, encoding='utf-8', errors='replace')
             self.assertEqual(build.returncode, 0, build.stdout + build.stderr)
             wheel = next(wheels.glob('*.whl'))
             with zipfile.ZipFile(wheel) as archive:

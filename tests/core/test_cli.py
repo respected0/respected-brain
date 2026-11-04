@@ -5,8 +5,8 @@ import io
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
-import sysconfig
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -15,13 +15,17 @@ from tests.support.files import make_context, run_cli, snapshot
 from respected_brain.cli import main
 
 
+SOURCE_ROOT = Path(__file__).resolve().parents[2] / "src"
+
+
 class FoundationCliTest(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
         self.ctx = make_context(self.root)
-        self.env = {**os.environ, "RESPECTED_APP_DIR": str(self.root / "app"), "RESPECTED_DATA_DIR": str(self.root / "data"), "PYTHONUTF8": "1"}
+        self.env = {**os.environ, "RESPECTED_APP_DIR": str(self.root / "app"), "RESPECTED_DATA_DIR": str(self.root / "data"), "PYTHONUTF8": "1",
+                    "PYTHONPATH": os.pathsep.join(filter(None, (str(SOURCE_ROOT), os.environ.get("PYTHONPATH"))))}
 
     def call(self, args):
         out, err = io.StringIO(), io.StringIO()
@@ -32,8 +36,10 @@ class FoundationCliTest(unittest.TestCase):
     def test_module_and_entrypoint_dispatch_identically(self):
         args = ["vault", "list"]
         module = run_cli(args, env=self.env, cwd=self.root)
-        executable = Path(sysconfig.get_path("scripts")) / ("respected-brain.exe" if os.name == "nt" else "respected-brain")
-        entry = subprocess.run([str(executable), *args], cwd=self.root, env=self.env, capture_output=True, text=True, encoding="utf-8", timeout=30)
+        executable = shutil.which("respected-brain")
+        if not executable:
+            self.skipTest("the respected-brain console script is not installed in this Python environment")
+        entry = subprocess.run([executable, *args], cwd=self.root, env=self.env, capture_output=True, text=True, encoding="utf-8", timeout=30)
         self.assertEqual(module.returncode, 0, module.stderr)
         self.assertEqual((module.returncode, module.stdout), (entry.returncode, entry.stdout))
         self.assertIn(self.ctx.paths.vault_id, module.stdout)

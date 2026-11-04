@@ -167,6 +167,7 @@ raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
         environment["RESPECTED_FAKE_HOUR"] = "0"
         environment["PYTHONUTF8"] = "1"
         environment["PYTHONIOENCODING"] = "utf-8"
+        environment["PYTHONPATH"] = os.pathsep.join(filter(None, (str(REPO_ROOT / "src"), environment.get("PYTHONPATH"))))
         environment.update(overrides)
         return environment
 

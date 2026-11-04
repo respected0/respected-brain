@@ -136,11 +136,17 @@ class PromptTest(unittest.TestCase):
             (profile / "AppData" / "Local").mkdir(parents=True)
             overrides = {
                 "RESPECTED_TEST_SANDBOX": str(profile / "sandbox"),
-                "HOMEDRIVE": profile.drive,
-                "HOMEPATH": str(profile)[len(profile.drive):],
                 "USERPROFILE": str(profile / "sandbox"),
                 "HOME": str(profile / "sandbox"),
             }
+            if os.name == "nt":
+                overrides.update(HOMEDRIVE=profile.drive, HOMEPATH=str(profile)[len(profile.drive):])
+            else:
+                import pwd
+                from types import SimpleNamespace
+                passwd = mock.patch.object(pwd, "getpwuid", return_value=SimpleNamespace(pw_dir=str(profile)))
+                passwd.start()
+                self.addCleanup(passwd.stop)
             with mock.patch.dict("os.environ", overrides, clear=False):
                 with summarization._model_profile():
                     self.assertEqual(Path(os.environ["USERPROFILE"]), profile)

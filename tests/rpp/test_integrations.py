@@ -77,6 +77,7 @@ class IntegrationPlanTest(unittest.TestCase):
         path.write_text(json.dumps({"counter": 7, **json.loads(after)}), encoding="utf-8")
         self.assertTrue(self.plan({})["ok"])
 
+    @unittest.skipUnless(os.name == "nt", "the native Obsidian shortcut is a Windows-only integration")
     def test_the_obsidian_shortcut_warns_while_obsidian_does_not_know_the_vault(self):
         obsidian = self.home / "AppData/Roaming/obsidian"
         warned = lambda: self.plan({"shortcut": True}, vault_path=str(self.vault))["result"]["warnings"]
@@ -87,6 +88,13 @@ class IntegrationPlanTest(unittest.TestCase):
         (obsidian / "obsidian.json").write_text(json.dumps({"vaults": {"abc": {"path": str(self.vault), "ts": 1}}}), encoding="utf-8")
         self.assertEqual(warned(), [])
         self.assertEqual(self.plan({"mcp": True})["result"]["warnings"], [], "no warning when the shortcut is not asked for")
+
+    @unittest.skipIf(os.name == "nt", "off Windows the native shortcut must fail as a typed error")
+    def test_native_shortcut_is_unavailable_off_windows(self):
+        response = self.plan({"shortcut": True})
+        self.assertFalse(response["ok"])
+        self.assertEqual(response["error"]["code"], "BAD_REQUEST")
+        self.assertIn("shortcut", response["error"]["message"].lower())
 
     def test_clients_limit_the_plan_to_the_selected_ai_tools(self):
         everything = self.plan({"global": True, "mcp": True})["result"]

@@ -1,0 +1,72 @@
+{
+  "task": "BR-019",
+  "date": "2026-11-04",
+  "base_commit": "273e75f",
+  "environment": {
+    "windows": "native Windows, Python 3.x via py launcher",
+    "wsl": {
+      "kernel": "6.18.33.2-microsoft-standard-WSL2",
+      "python": "3.14.4",
+      "host": "Linux RESPECTED x86_64"
+    },
+    "macos": "not available; simulation only"
+  },
+  "commands": {
+    "wsl_focused": {
+      "command": "wsl bash -lc 'PYTHONUTF8=1 PYTHONPATH=src python3 -m unittest tests.core.test_cli tests.packaging.test_posix_distribution tests.packaging.test_fresh_install_linux tests.packaging.test_package_contract tests.rpp.test_integrations tests.evals.test_summarization_eval tests.integrations.test_multiai tests.memory.test_compile_flush tests.memory.test_session_scripts tests.packaging.test_br019_posix_platform'",
+      "tests": 184,
+      "result": "OK",
+      "skipped": 6,
+      "exit": 0
+    },
+    "wsl_full": {
+      "command": "wsl bash -lc 'PYTHONUTF8=1 PYTHONPATH=src python3 -m unittest discover -s tests -t .'",
+      "tests": 1061,
+      "result": "OK",
+      "skipped": 33,
+      "exit": 0
+    },
+    "windows_full": {
+      "command": "py -m unittest discover -s tests -t .",
+      "tests": 1061,
+      "result": "OK",
+      "skipped": 21,
+      "exit": 0
+    }
+  },
+  "verified": [
+    "Real WSL POSIX detached child runs in its own session and is terminated cleanly.",
+    "Real POSIX claim file is owner-only (0600) and has a single winner.",
+    "Real POSIX symlink escape is rejected by path_within_vault; contained paths still pass.",
+    "WSL /mnt/<drive>/Users/<user> conversion and windows_user_root/external temp mapping.",
+    "Real source CLI hook returns each provider contract on WSL: claude/gemini hookSpecificOutput, cursor additional_context, antigravity injectSteps, opencode additionalContext.",
+    "Source lifecycle: registration and all text-summary providers (claude/codex/antigravity/gemini) write one daily entry on WSL.",
+    "POSIX installation repair/uninstall contracts run for real under WSL (tests.packaging.test_posix_install).",
+    "Windows native full suite remains green after the POSIX test-contract changes.",
+    "Native Obsidian shortcut is Windows-only; off Windows it is a typed BAD_REQUEST instead of a crash.",
+    "Subprocess tests use an absolute source PYTHONPATH independent of the child cwd."
+  ],
+  "limitations": [
+    "macOS was not verified on hardware; only the existing platform simulations cover it.",
+    "No Linux frozen build was produced. dist/ currently contains a Windows artifact; the Linux wheel contract test skipped because the 'build' package is absent in WSL.",
+    "cursor-agent is deliberately fail-closed in text mode and is not a session summarizer; this is an existing security contract, not a platform failure.",
+    "Obsidian .url shortcut registration remains Windows-native only."
+  ],
+  "artifacts": {
+    "tests/core/test_cli.py": "47EBA1EEBC006A4548C364458AEB1C51B1A3E49C57FC1AF63EB03C334FAF5049",
+    "tests/evals/test_summarization_eval.py": "A4118085F164AE824A3EB23D640EFE6DEC967665D151C16B5F6587B7E2F1DF12",
+    "tests/integrations/test_multiai.py": "1849605970E425C77AF3AE5F965BA8DBCD7C5D01A98F8DB7E486CDDA71520C83",
+    "tests/memory/test_compile_flush.py": "6D642C68587C600043F2C3BC8A46311D4738D69747D047D2D28A00B83F84BC3D",
+    "tests/memory/test_session_scripts.py": "DC85D3853B0F5668EA300FB85CA5BA5C2F10C445E158264A0BC85AEE583D10C1",
+    "tests/packaging/test_distribution.py": "5A367D8727402CC2362C7663E1EFA0D4B6F8713ECBB26C781300110400EC6B0D",
+    "tests/packaging/test_fresh_install_linux.py": "3FE171A224578E4B6E629AA2CFECB438DC515E563D906B2830433D46E39749A0",
+    "tests/packaging/test_package_contract.py": "B977AD58D174A99A6160E560FA4BAEA8C73357E062AC665EB51FB2F7D935F278",
+    "tests/packaging/test_posix_distribution.py": "2E2E11A78A18AA104311EE59BAAB6676E1041994E545CADE8641C20770170405",
+    "tests/rpp/test_integrations.py": "DB355FA5AD7FFB013554C83169652ACAA4E364D1A28D25C8764670111DB54E77",
+    "tests/packaging/test_br019_posix_platform.py": "E6AC1A015F135B8E5E7DE91D57C5C56C03F4764005A00A9434E2B16C3EAD05FF",
+    "tests/evals/results/br019-windows-full.log": "18E3EC9632DADBADEF57135EAF635B1DA1715217FE04D10656137264C42B0242",
+    "tests/evals/results/br019-wsl-full.log": "B51B9688796752210F81125F4D82CC2BFA35D498BC98C41F48F57F637EBDE6A6",
+    "tests/evals/results/br019-focused3.log": "FFF15FA4B6EC8C7823652C9E8C3816BFA023ED8B6ACDD05A2E597ADDC90095CE"
+  },
+  "logs_note": "*.log files are gitignored; hashes identify the local verification runs."
+}

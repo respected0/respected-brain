@@ -3,6 +3,7 @@ from datetime import datetime
 from pathlib import Path
 import importlib
 import json
+import os
 import subprocess
 import tempfile
 import unittest
@@ -212,6 +213,7 @@ with mock.patch.object(pathlib.Path, 'read_text', side_effect=AssertionError('us
 """
         environment = dict(__import__("os").environ)
         environment["PYTHONDONTWRITEBYTECODE"] = "1"
+        environment["PYTHONPATH"] = os.pathsep.join(filter(None, (str(Path(__file__).resolve().parents[2] / "src"), environment.get("PYTHONPATH"))))
         result = subprocess.run([__import__("sys").executable, "-c", code], cwd=self.root,
                                 env=environment, capture_output=True, text=True, timeout=20)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)

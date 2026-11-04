@@ -53,7 +53,8 @@ sys.exit(0)
         vault = target_dir / "TestVault"
         with ResourceCatalog().materialize("vault-template") as template:
             shutil.copytree(template,vault)
-        env = {**os.environ, "HOME": str(target_dir / "home"), "USERPROFILE": str(target_dir / "home"), "RESPECTED_APP_DIR": str(target_dir / "app"), "RESPECTED_DATA_DIR": str(target_dir / "data")}
+        env = {**os.environ, "HOME": str(target_dir / "home"), "USERPROFILE": str(target_dir / "home"), "RESPECTED_APP_DIR": str(target_dir / "app"), "RESPECTED_DATA_DIR": str(target_dir / "data"),
+               "PYTHONPATH": os.pathsep.join(filter(None, (str(ROOT / "src"), os.environ.get("PYTHONPATH"))))}
         registered = subprocess.run([sys.executable, "-m", "respected_brain", "vault", "register", str(vault)], cwd=target_dir, env=env, capture_output=True, text=True)
         self.assertEqual(registered.returncode, 0, registered.stderr)
         from respected_brain.vault.registry import build_context
@@ -63,9 +64,13 @@ sys.exit(0)
         self.ctx = build_context(Roots(target_dir / "app", target_dir / "data", vault), store, vault=vault, vault_id=None, env={})
         return vault
 
-    def test_standalone_source_lifecycle_for_all_providers(self):
-        """Verify every provider can run flush and generate a daily entry."""
-        providers = ("claude", "codex", "antigravity", "gemini", "cursor")
+    def test_standalone_source_lifecycle_for_text_providers(self):
+        """Verify every text-summary provider can run flush and generate a daily entry.
+
+        cursor-agent deliberately fails closed in text mode (tests.integrations.test_provider_permissions),
+        so it is not a session summarizer and must not be asserted here.
+        """
+        providers = ("claude", "codex", "antigravity", "gemini")
 
         for provider in providers:
             with self.subTest(provider=provider):
@@ -102,6 +107,7 @@ sys.exit(0)
                     env["PATH"] = f"{bin_dir}{os.pathsep}{env.get('PATH', '')}"
                     env["RESPECTED_APP_DIR"] = str(self.ctx.paths.app_root)
                     env["RESPECTED_DATA_DIR"] = str(self.ctx.paths.data_root)
+                    env["PYTHONPATH"] = os.pathsep.join(filter(None, (str(ROOT / "src"), env.get("PYTHONPATH"))))
 
                     result = subprocess.run(
                         [sys.executable,"-m","respected_brain","flush","--vault-id",self.ctx.paths.vault_id,"--hook-input",str(hook_input),"--reason","sessionend"],

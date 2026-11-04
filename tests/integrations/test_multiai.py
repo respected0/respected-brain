@@ -26,6 +26,7 @@ from tests.support.fakes import IntegrationFixture, with_ai_tools
 from tests.support.files import snapshot
 from respected_brain.integrations.backend import IntegrationProfile
 from respected_brain.integrations import rendering as RENDER
+from respected_brain.integrations.planning import bare_command_text, bridge_argv, codex_command_text, command_text
 from tests.support.render import render_project_integrations
 from respected_brain.integrations.hooks import bridge as BRIDGE
 from respected_brain.providers import runner as MODEL_RUNNER
@@ -60,10 +61,23 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
 
     def test_all_provider_configs_point_to_bridge(self):
         artifacts = render_project_integrations(self.ctx, self.profile)
+        expected = {
+            ".claude/settings.json": command_text(self.profile, bridge_argv(self.ctx, self.profile, "claude", "start")),
+            ".codex/hooks.json": codex_command_text(self.profile, bridge_argv(self.ctx, self.profile, "codex", "start")),
+            ".cursor/hooks.json": command_text(self.profile, bridge_argv(self.ctx, self.profile, "cursor", "start")),
+            ".agents/hooks.json": bare_command_text(self.profile, bridge_argv(self.ctx, self.profile, "antigravity", "start")),
+            ".gemini/settings.json": command_text(self.profile, bridge_argv(self.ctx, self.profile, "gemini", "start")),
+        }
+        def commands(value):
+            if isinstance(value, dict):
+                found = [item for key, item in value.items() if key == "command" and isinstance(item, str)]
+                return found + [item for child in value.values() for item in commands(child)]
+            if isinstance(value, list):
+                return [item for child in value for item in commands(child)]
+            return []
+
         for name, content in artifacts.items():
-            quoted = 'respected-brain.exe\\" hook'  # quoted program path: Git Bash eats bare backslashes
-            bare = "respected-brain.exe hook"  # Antigravity re-escapes quotes and Codex runs PowerShell, so their commands carry none
-            self.assertIn(bare if name in (".agents/hooks.json", ".codex/hooks.json") else quoted, content.decode(), name)
+            self.assertIn(expected[name], commands(json.loads(content)), name)
             self.assertIn(self.ctx.paths.vault_id, content.decode())
             self.assertNotIn("bridge.py", content.decode())
 

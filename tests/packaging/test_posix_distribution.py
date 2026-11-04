@@ -91,7 +91,7 @@ class FoundationPosixDistributionTest(unittest.TestCase):
                 self.assertEqual(target.read_bytes(), b"before")
                 self.assertEqual(self.mode(target) & 0o222, 0)
             finally:
-                target.chmod(0o666)
+                target.chmod(tx.document["files"][0]["after_mode"])
                 tx.commit()
     @unittest.skipIf(os.name == "nt", "Actual POSIX executable and recovery check requires POSIX")
     def test_launcher_executes_and_recovery_restores_original_mode(self):

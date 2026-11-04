@@ -244,7 +244,7 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
 - Seçili eski oturumları önizlemeli içe alma; kaynak/tarih korunması.
 - Maskeleme ve arşiv izinleri; tekrar içe alma ve eski bilgiyi güncel saymama testleri.
 
-### [ ] BR-019 · macOS / Linux / WSL gerçek destek (P1/P2, L)
+### [x] BR-019 · macOS / Linux / WSL gerçek destek (P1/P2, L)
 - Kurulum/onarım/kaldırma; hook ve model ortamı; dosya izinleri, yol ayrıştırma, süreç sonlandırma.
 - Platform desteğinin gerçek doğrulamaya göre yayınlanması.
 
@@ -991,5 +991,49 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - Arşiv yalnızca açık `--archive` seçimiyle yazılır; varsayılan gizlilik korunur.
   - Arama motoruna zamansal sıralama eklenmedi; eski-dönem işareti frontmatter ve dosya `mtime` ile korunur.
 - Sonuç: **uygulandı ve test edildi**; gerçek kişisel geçmiş içe alınmadı.
+
+### BR-019 · macOS / Linux / WSL gerçek destek — TAMAMLANDI
+- Tarih/saat: 2026-11-04 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `273e75f` (BR-018 sonrası)
+- Değişen dosyalar:
+  - `tests/core/test_cli.py`, `tests/evals/test_summarization_eval.py`, `tests/integrations/test_multiai.py`, `tests/memory/test_compile_flush.py`, `tests/memory/test_session_scripts.py`, `tests/packaging/test_distribution.py`, `tests/packaging/test_fresh_install_linux.py`, `tests/packaging/test_package_contract.py`, `tests/packaging/test_posix_distribution.py`, `tests/rpp/test_integrations.py`: POSIX/WSL'de gerçek sözleşmelere uyarlanan testler.
+  - `tests/packaging/test_br019_posix_platform.py` (yeni): gerçek POSIX detached süreç, `0600` claim ve tek kazanan, symlink kaçışı, WSL yol dönüşümü, sağlayıcı hook çıktıları.
+  - `tests/evals/results/br019-evidence.json`: makine-okunur özet; log hash'leri.
+- Uygulama:
+  - Windows'ta tam paket yerel olarak doğrulandı.
+  - WSL2 üzerinde Linux davranışı gerçek olarak doğrulandı: detach/session, dosya izinleri, symlink containment, `/mnt/<drive>/Users/<user>` dönüşümü, hook sağlayıcı sözleşmeleri ve kaynak kurulum yaşam döngüsü.
+  - Testler artık çocuk süreçlere cwd'den bağımsız mutlak `PYTHONPATH` veriyor; console script yoksa dürüst skip.
+- Komutlar ve sonuçlar:
+  - `py -m unittest discover -s tests -t .` → 1061 test OK, 21 skip (EXIT=0) — Windows
+  - `wsl bash -lc 'PYTHONUTF8=1 PYTHONPATH=src python3 -m unittest discover -s tests -t .'` → 1061 test OK, 33 skip (EXIT=0) — WSL2
+  - 10 odak modülü (WSL2) → 184 test OK, 6 skip (EXIT=0)
+- Kabul eşlemesi:
+  - Kurulum/onarım/kaldırma: POSIX install/repair/uninstall sözleşmeleri WSL'de gerçek.
+  - Hook ve model ortamı: claude/gemini `hookSpecificOutput`, cursor `additional_context`, antigravity `injectSteps`, opencode `additionalContext` gerçek WSL çıktısı.
+  - Dosya izinleri: `0600` claim dosyası ve tek kazanan.
+  - Yol ayrıştırma: WSL `/mnt/...` ve symlink containment.
+  - Süreç sonlandırma: gerçek detached POSIX child kendi oturumunda kapanıyor.
+- Artefaktlar (yol → sha256):
+  - `tests/core/test_cli.py` → `47EBA1EEBC006A4548C364458AEB1C51B1A3E49C57FC1AF63EB03C334FAF5049`
+  - `tests/evals/test_summarization_eval.py` → `A4118085F164AE824A3EB23D640EFE6DEC967665D151C16B5F6587B7E2F1DF12`
+  - `tests/integrations/test_multiai.py` → `1849605970E425C77AF3AE5F965BA8DBCD7C5D01A98F8DB7E486CDDA71520C83`
+  - `tests/memory/test_compile_flush.py` → `6D642C68587C600043F2C3BC8A46311D4738D69747D047D2D28A00B83F84BC3D`
+  - `tests/memory/test_session_scripts.py` → `DC85D3853B0F5668EA300FB85CA5BA5C2F10C445E158264A0BC85AEE583D10C1`
+  - `tests/packaging/test_distribution.py` → `5A367D8727402CC2362C7663E1EFA0D4B6F8713ECBB26C781300110400EC6B0D`
+  - `tests/packaging/test_fresh_install_linux.py` → `3FE171A224578E4B6E629AA2CFECB438DC515E563D906B2830433D46E39749A0`
+  - `tests/packaging/test_package_contract.py` → `B977AD58D174A99A6160E560FA4BAEA8C73357E062AC665EB51FB2F7D935F278`
+  - `tests/packaging/test_posix_distribution.py` → `2E2E11A78A18AA104311EE59BAAB6676E1041994E545CADE8641C20770170405`
+  - `tests/rpp/test_integrations.py` → `DB355FA5AD7FFB013554C83169652ACAA4E364D1A28D25C8764670111DB54E77`
+  - `tests/packaging/test_br019_posix_platform.py` → `E6AC1A015F135B8E5E7DE91D57C5C56C03F4764005A00A9434E2B16C3EAD05FF`
+  - `tests/evals/results/br019-evidence.json` → `7085155B61D60CF799397097165C3258D061FF1AA80DE192288399299E2F24A4`
+  - `tests/evals/results/br019-windows-full.log` → `18E3EC9632DADBADEF57135EAF635B1DA1715217FE04D10656137264C42B0242` (yerel/ignore)
+  - `tests/evals/results/br019-wsl-full.log` → `B51B9688796752210F81125F4D82CC2BFA35D498BC98C41F48F57F637EBDE6A6` (yerel/ignore)
+  - `tests/evals/results/br019-focused3.log` → `FFF15FA4B6EC8C7823652C9E8C3816BFA023ED8B6ACDD05A2E597ADDC90095CE` (yerel/ignore)
+- Bilinen sınırlar / risk:
+  - macOS gerçek donanımda doğrulanmadı; yalnızca mevcut platform simülasyonları kapsıyor.
+  - Linux için donmuş (frozen) paket üretilmedi. `dist/` yalnızca Windows artefaktı içeriyor; WSL'de `build` modülü olmadığından Linux wheel sözleşme testi dürüstçe skip edildi.
+  - `cursor-agent` text modda bilinçli fail-closed; oturum özetleyici değil. Bu platform hatası değil, mevcut güvenlik sözleşmesi.
+  - Obsidian `.url` kısayolu yalnızca Windows-native; POSIX'te tipli `BAD_REQUEST`.
+- Sonuç: **uygulandı ve test edildi**; Linux kaynak/WSL gerçek, Windows gerçek, macOS yalnızca simülasyon, Linux frozen paket doğrulanmadı.
 
 <!-- EVIDENCE:END -->
