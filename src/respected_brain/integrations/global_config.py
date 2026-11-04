@@ -8,7 +8,7 @@ BEGIN = "<!-- RESPECTED-GLOBAL:BEGIN -->"
 END = "<!-- RESPECTED-GLOBAL:END -->"
 HOOK_NAME = "respected-brain"
 CURSOR_RULE = HOOK_NAME + ".mdc"
-SUPPORTED = ("antigravity", "gemini", "codex", "cursor", "claude")
+SUPPORTED = ("antigravity", "gemini", "codex", "cursor", "claude", "opencode")
 def classify_managed_block(existing: str) -> str:
     begin, end = existing.count(BEGIN), existing.count(END)
     if begin != end or begin > 1:

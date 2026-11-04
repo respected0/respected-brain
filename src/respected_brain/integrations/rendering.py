@@ -234,6 +234,17 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED, codex_mcp=None) -
         writes += retire_skills([config / "skills"])
         touched += [settings_path, rule_path]
 
+    if "opencode" in providers:
+        config = home / ".config/opencode"
+        plugin_path = config / "plugins/respected-brain.js"
+        transcript_dir = ctx.paths.data_root / "vaults" / ctx.paths.vault_id / "integrations/opencode/transcripts"
+        # OpenCode loads local plugins from its plugins folder; the file starts our bridge for every event it sees.
+        source = ctx.resources.read_text("integrations/opencode-plugin.js")
+        source = source.replace("__COMMAND__", json.dumps(launch_argv(ctx, profile, "hook", "--provider", "opencode", "--global-hook"))).replace("__TRANSCRIPT_DIRECTORY__", json.dumps(str(transcript_dir)))
+        _assert_owned_replacement(ctx, planner, plugin_path, source.encode("utf-8"))
+        writes += [(plugin_path, source)]
+        touched += [plugin_path]
+
     return writes, touched
 
 
@@ -246,7 +257,7 @@ def mcp_destinations(profile):
         appdata = home / "Library/Application Support"
     else:
         appdata = home / ".config"
-    paths = [home / ".claude.json", home / ".cursor/mcp.json", home / ".codeium/windsurf/mcp_config.json", appdata / "Claude/claude_desktop_config.json"]
+    paths = [home / ".claude.json", home / ".cursor/mcp.json", home / ".codeium/windsurf/mcp_config.json", appdata / "Claude/claude_desktop_config.json", home / ".config/opencode/opencode.json"]
     if (home / ".gemini").is_dir():
         paths.append(home / ".gemini/config/mcp_config.json")
     storage = appdata / "Code/User/globalStorage"
@@ -257,7 +268,7 @@ def mcp_destinations(profile):
 
 # AI client id -> hook/rule provider (None: MCP registration only). `desired["clients"]` (a list of ids) limits `global`
 # and `mcp` to those clients; without it every client is included (the pre-selection behaviour).
-CLIENTS = {"claude": "claude", "codex": "codex", "gemini": "gemini", "antigravity": "antigravity", "cursor": "cursor",
+CLIENTS = {"claude": "claude", "codex": "codex", "gemini": "gemini", "antigravity": "antigravity", "cursor": "cursor", "opencode": "opencode",
            "windsurf": None, "claude-desktop": None, "vscode-agents": None}
 
 
@@ -279,6 +290,8 @@ def mcp_client_of(path):
         return "claude-desktop"
     if "/.gemini/" in text:
         return "antigravity"
+    if "/.config/opencode/" in text:
+        return "opencode"
     return "vscode-agents"
 
 
@@ -289,7 +302,7 @@ def detect_clients(profile):
     appdata = home / ("AppData/Roaming" if profile.platform.startswith("windows") else ".config")
     gemini = home / ".gemini"
     antigravity = gemini.is_dir() and any(path.is_dir() for path in gemini.glob("antigravity*"))
-    return {"claude": (home / ".claude").is_dir() or (home / ".claude.json").is_file(), "codex": (home / ".codex").is_dir(),
+    return {"claude": (home / ".claude").is_dir() or (home / ".claude.json").is_file(), "codex": (home / ".codex").is_dir(), "opencode": (home / ".config/opencode").is_dir(),
             "gemini": gemini.is_dir(), "antigravity": antigravity, "cursor": (home / ".cursor").is_dir(),
             "windsurf": (home / ".codeium").is_dir(), "claude-desktop": (appdata / "Claude").is_dir(), "vscode-agents": storage_hit}
 
@@ -347,21 +360,33 @@ def plan_integrations(ctx, profile, desired, backend, planned_keys=None):
         argv = launch_argv(ctx, profile, "mcp")
         entry = {"command": argv[0], "args": argv[1:]}
         for path in mcp_destinations(profile):
-            if mcp_client_of(path) not in chosen("mcp_clients"):
+            client = mcp_client_of(path)
+            if client not in chosen("mcp_clients"):
                 continue
             document = planner.object(path, "mcp")
-            servers = document.setdefault("mcpServers", {})
+            if client == "opencode":
+                servers = document.setdefault("mcp", {})
+                opencode_entry = {"type": "local", "command": argv, "enabled": True}
+                target = opencode_entry["command"]
+            else:
+                servers = document.setdefault("mcpServers", {})
+                target = entry["command"], entry["args"]
             if not isinstance(servers, dict):
-                raise ValueError(f"Invalid mcpServers: {path}")
+                raise ValueError(f"Invalid MCP servers: {path}")
             previous = servers.get(MCP_SERVER)
             if previous is not None:
-                same_target = isinstance(previous, dict) and previous.get("command") == entry["command"] and previous.get("args") == entry["args"]
+                same_target = isinstance(previous, dict) and (
+                    previous.get("command") == target if client == "opencode"
+                    else (previous.get("command"), previous.get("args")) == target)
                 if not same_target:
                     raise OwnershipConflict(f"Unknown {MCP_SERVER} MCP registration: {path}")
                 entry_for_path = dict(previous, **entry) if isinstance(previous, dict) else entry
             else:
                 entry_for_path = entry
-            servers[MCP_SERVER] = entry_for_path
+            if client == "opencode":
+                servers[MCP_SERVER] = dict(previous, **opencode_entry) if isinstance(previous, dict) else opencode_entry
+            else:
+                servers[MCP_SERVER] = entry_for_path
             planner.put("mcp", path, json.dumps(document, ensure_ascii=False, indent=2) + "\n")
     if desired.get("mcp") and "antigravity" in chosen("mcp_clients"):
         settings = identity_settings(ctx)
@@ -392,4 +417,3 @@ def plan_integrations(ctx, profile, desired, backend, planned_keys=None):
     if planned_keys is not None:
         planned_keys.update(planner.after)
     return planner.changes()
-

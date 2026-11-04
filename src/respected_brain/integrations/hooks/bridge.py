@@ -147,6 +147,8 @@ def output(provider: str, event: str, context: str) -> None:
             )
         else:
             print("{}")
+    elif provider == "opencode":
+        print(json.dumps({"additionalContext": context}, ensure_ascii=False) if context else "{}")
     elif context:
         event_name = {
             "start": "SessionStart",
@@ -189,7 +191,7 @@ def _dispatch_event(ctx, *, provider, event, argv, stdin):
     if event == "notify" and provider == "codex":
         from .codex_notify import dispatch as notify
         return notify(ctx, argv=argv, stdin=stdin)
-    if event not in EVENTS or provider not in {"claude", "codex", "cursor", "antigravity", "gemini"}:
+    if event not in EVENTS or provider not in {"claude", "codex", "cursor", "antigravity", "gemini", "opencode"}:
         raise ValueError("Unsupported hook provider/event")
     if LIFECYCLE._is_reentrant():
         return ""

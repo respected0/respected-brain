@@ -613,7 +613,7 @@ def _owned_session_state(vault_root: Path, state_dir: Path, session_id: str, tra
                 raise OwnershipConflict("session-pending-invalid") from error
     else:
         identities = [hashlib.sha256(f"{provider}\0{session_id}".encode("utf-8")).hexdigest()
-                      for provider in ("auto", "claude", "codex", "cursor", "antigravity", "gemini")]
+                      for provider in ("auto", "claude", "codex", "cursor", "antigravity", "gemini", "opencode")]
         for daily in (vault_root / "daily").glob("*.md"):
             if not runtime_platform.path_within_vault(daily, vault_root):
                 raise OwnershipConflict("unsafe-daily-target")
@@ -673,7 +673,7 @@ _WORKSPACE_CONTAINERS = {"workspace", "workspacecontext"}
 _METADATA_CONTAINERS = {"metadata", "meta", "sessionmetadata"}
 _PROVIDER_KEYS = {"provider", "respectedprovider"}
 _PROVIDER_METADATA_TYPES = {"sessionmeta", "sessionmetadata"}
-_PROVIDERS = {"auto", "claude", "codex", "cursor", "antigravity", "gemini"}
+_PROVIDERS = {"auto", "claude", "codex", "cursor", "antigravity", "gemini", "opencode"}
 
 
 def _workspace_path_key(value: object) -> str:
@@ -818,6 +818,8 @@ def _candidate_session_id(provider: str, transcript_path: Path) -> str | None:
 
 def _transcript_provider(path: Path) -> str | None:
     parts = {part.casefold() for part in path.parts}
+    if "opencode" in parts:
+        return "opencode"
     if ".codex" in parts or path.name.startswith("rollout-"):
         return "codex"
     if ".gemini" in parts:

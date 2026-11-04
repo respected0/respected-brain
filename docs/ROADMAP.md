@@ -4,8 +4,9 @@
 
 ## Tüm AI'lar tek hafıza
 
-- [ ] **OpenCode** desteği: hook ve MCP kaydı (`integrations/`), özetleyici olarak `providers/runner.py`. Geliştirme
-  makinesinde OpenCode kurulu değil; gerçek oturumla doğrulanamadığı için yazılmadı.
+- [x] **OpenCode** desteği: hook ve MCP kaydı (`integrations/`). Yerel plugin, JSONL döküm ve
+  `additionalContext` köprüsü eklendi; gerçek OpenCode oturumu kurulu olmadığı için doğrulanmadı
+  (`docs/ROADMAP-EXECUTION.md` BR-016).
 - [ ] **OpenRouter / API tabanlı modeller**: bugün özetleme yalnızca kurulu AI aracının komut satırıyla yapılıyor; API
   anahtarıyla doğrudan model çağırma yok. Anahtarın nerede saklanacağı (ayar şeması `secret` alanı mı, Windows kimlik
   kasası mı) ve fiyat/sağlayıcı seçimi karar bekliyor. Çin modelleri (DeepSeek, Qwen, GLM, Kimi) de bu yoldan gelir.

@@ -231,7 +231,7 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
 
 ## M5 — Kontrollü genişleme
 
-### [ ] BR-016 · OpenCode entegrasyonu (P1, M)
+### [x] BR-016 · OpenCode entegrasyonu (P1, M) — TAMAMLANDI
 - Güncel hook/MCP yeteneklerinin doğrulanması; mevcut adaptör kuralları.
 - Yakalama, özetleme, geri çağırma testleri; gerçek oturum olmadan tam destek ilan etmeme.
 
@@ -854,5 +854,43 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - `br015-full.log` → yerel/ignore, commit edilmedi
 - Bilinen sınırlar / risk: Fiziksel smoke sentetik döküm ve geçici kökler kullanır; gerçek kullanıcı kasası, gerçek AI aracı oturumu veya sağlayıcı davranışı kanıtlanmadı. macOS, Linux ve WSL doğrulanmadı. Authenticode sertifikası yok; SmartScreen uyarısı beklenir. Hub ortak conformance'ı çalıştı; ayrı Orchestrator dağıtım smoke'u ve gerçek kurucu ile üç ürün uçtan uca testi bu görevde tekrarlanmadı. `dist/` çıktısı kaynak deposuna commit edilmez.
 - Sonuç: **uygulandı; Windows x64 odak testleri, migration, dondurulmuş dağıtım, fiziksel smoke ve tam paket ile doğrulandı; diğer platformlar ve kod imzası doğrulanmadı**.
+
+### BR-016 · OpenCode entegrasyonu — TAMAMLANDI
+- Tarih/saat: 2026-11-04 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `b9d4650` (BR-015 sonrası)
+- Değişen dosyalar:
+  - `src/respected_brain/resources/integrations/opencode-plugin.js` (yeni): v2 `session.hook("context"/"prompt")` + `event.subscribe`, v1 `server` fallback; JSONL döküm; köprü çağrıları.
+  - `src/respected_brain/integrations/rendering.py`: OpenCode algılama, `opencode.json` MCP kaydı, plugin hedefi ve placeholder doldurma, sahiplik kontrolü.
+  - `src/respected_brain/integrations/global_config.py`: `opencode` desteklenen istemcilere eklendi.
+  - `src/respected_brain/integrations/hooks/bridge.py`: `additionalContext` çıktısı ve opencode olay dağıtımı.
+  - `src/respected_brain/memory/flush.py`: opencode döküm yolu ve sağlayıcı tanıma.
+  - `src/respected_brain/cli.py`: hook `--provider opencode`.
+  - `tests/integrations/test_opencode.py` (yeni): algılama, MCP biçimi, sahiplik, plugin, transcript ve bridge testleri.
+- Uygulama:
+  - OpenCode algılama `~/.config/opencode` klasöründen yapılır; kurulu olmayan makineye dosya veya klasör yazılmaz.
+  - MCP kaydı OpenCode şemasıyla `mcp.respected-brain = {type:"local", command:[...], enabled:true}` olarak yazılır; diğer anahtarlar korunur, farklı mevcut kayıt `OwnershipConflict` üretir.
+  - Plugin `~/.config/opencode/plugins/respected-brain.js` hedefine komut ve döküm yolu JSON olarak güvenli biçimde doldurulur; ikinci plan boş döner.
+  - v2 hook'ları yoksa v1 `server` API'sine düşer; döküm `{message:{role,content}}` JSONL biçiminde yazılır ve `flush.read_transcript` ile okunur.
+  - Bellek bağlamı OpenCode'ye `{"additionalContext": ...}` olarak verilir.
+- Komutlar ve sonuçlar:
+  - `python -m unittest tests.integrations.test_opencode -v` → 9 test OK
+  - `python -m unittest discover -s tests/integrations -t .` → 228 test OK
+  - `node --check` (plugin render çıktısı, test içinde) → geçerli JavaScript
+  - `python -m unittest discover -s tests -t .` → 1037 test OK, 15 skip
+- Kabul eşlemesi:
+  - Güncel hook/MCP yeteneklerinin doğrulanması: v2 + v1 fallback, `opencode.json` `mcp` şeması ve `plugins/` yükleme yolu.
+  - Yakalama/özetleme/geri çağırma: plugin JSONL döküm yazıyor; `flush` tanıyıp okuyor; bridge bağlam döndürüyor.
+  - Gerçek oturum olmadan tam destek ilan etmeme: yalnızca otomatik testler ve `node --check` doğrulandı; gerçek OpenCode oturumu çalıştırılmadı.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/resources/integrations/opencode-plugin.js` → `4177BF8C982F29811F97F752DBA50E1793DF7799CC81E0BD7CC693FA7E5E8895`
+  - `src/respected_brain/integrations/rendering.py` → `24D50E07FB8D099A900AE9ACAE8DB400E04D16F24A51FC853D1C0E2170D781BE`
+  - `src/respected_brain/integrations/global_config.py` → `003D1E4EEB9FE30F2D48243829ACEED6E3DC95F6776390D789270BC0930B8B05`
+  - `src/respected_brain/integrations/hooks/bridge.py` → `17B7ED9391A752CD0728591E60CAC1ABE1E614CB832EB7F41C45C73C5F83C684`
+  - `src/respected_brain/memory/flush.py` → `44868ACEF9971D4CE77DC119B1D9A7B5C414E2EB51DACFA92DB0133DF28306BB`
+  - `src/respected_brain/cli.py` → `31D39DCE1D5595528328B01C565C8DE69FD128BE3566ECC81CB08E3C76666F8C`
+  - `tests/integrations/test_opencode.py` → `DC076241A434003C28D753198CEA818F9BC964FECF8889153174382742749C2E`
+  - `br016-full.log` → yerel/ignore, commit edilmedi
+- Bilinen sınırlar / risk: Geliştirme makinesinde OpenCode kurulu değil; gerçek oturum, gerçek plugin yüklemesi ve MCP el sıkışması doğrulanmadı. `node --check` yalnızca sözdizimini kanıtlar. OpenCode v1/v2 olay adları belgelenen biçime göre eşlendi; sürüm farkı alan adlarını değiştirirse plugin sessizce bağlam üretmeyebilir.
+- Sonuç: **uygulandı; odak, komşu regresyon ve tam paket testleriyle doğrulandı; gerçek OpenCode oturumu doğrulanmadı**.
 
 <!-- EVIDENCE:END -->
