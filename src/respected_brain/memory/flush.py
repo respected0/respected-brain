@@ -129,7 +129,7 @@ def load_hook_input(path: Path) -> dict[str, Any]:
 def _message_parts(record: dict[str, Any]) -> tuple[str | None, Any]:
     message = record.get("message")
     if isinstance(message, dict):
-        role = message.get("role") or record.get("type")
+        role = message.get("role") or record.get("role") or record.get("type")
         return role, message.get("content")
     source = record.get("source")
     record_type = record.get("type")
@@ -212,6 +212,9 @@ def _clean_turn_text(role: str, text: str) -> str:
     if role != "user":
         return text
     match = re.search(r"<USER_REQUEST>\s*(.*?)\s*</USER_REQUEST>", text, re.DOTALL)
+    if match:
+        return match.group(1)
+    match = re.search(r"<user_query>\s*(.*?)\s*</user_query>", text, re.DOTALL)
     return match.group(1) if match else text
 
 

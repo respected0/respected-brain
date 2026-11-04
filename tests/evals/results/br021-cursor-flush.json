@@ -1,0 +1,31 @@
+{
+  "task": "BR-021 Cursor transcript flush fix",
+  "date": "2026-11-04",
+  "root_cause": "_message_parts ignored Cursor's top-level role when message had no role; every Cursor turn was dropped, so flush recorded below-minimum-turns with an empty-text hash.",
+  "fix": "fallback role = message.role or record.role or record.type; strip <user_query> wrapper.",
+  "real_session": {
+    "agent": "cursor-agent 2026.10.22-27dcf5f",
+    "isolated_workspace": "C:\\Users\\Furkan\\AppData\\Local\\Temp\\br021-cursor-6d13386d\\ws",
+    "vault_id": "e6b2d258-5d6f-41f8-959d-bf38f938ba06",
+    "transcript": "C:\\Users\\Furkan\\.cursor\\projects\\C-Users-Furkan-AppData-Local-Temp-br021-cursor-6d13386d-ws\\agent-transcripts\\76e33856-582d-45a1-935b-8266e5140423\\76e33856-582d-45a1-935b-8266e5140423.jsonl",
+    "transcript_lines": 3,
+    "transcript_sha256": "4b26cc20fec4efbc3e01d0d46a1e552fcc3c7c932eab8c9cd4df7ff6592f256a",
+    "flush_state": "C:\\Users\\Furkan\\AppData\\Local\\Temp\\br021-cursor-6d13386d\\data\\vaults\\e6b2d258-5d6f-41f8-959d-bf38f938ba06\\state\\flush-a8d9f81a23cabd2ad3cef3f9c049d66c2d7d5cfad69ce78448beeb0f4f56fd48.json",
+    "flush_state_sha256": "75e9870b244570b1415a5d91247aa1c3bea0f957478339218a606114b34d4f7a",
+    "model_answer": "ZQ7X-CANARY.md\nFLUSH-CHECK"
+  },
+  "flush_result": {
+    "session_id": "76e33856-582d-45a1-935b-8266e5140423",
+    "ts": 1793808395.917023,
+    "status": "ok",
+    "detail": "flush-bos",
+    "turns": 2,
+    "transcript_hash": "b6009441cfc517a085fc5975d47612352eb5942645fc55c9429d4543db194bd3",
+    "transcript_path": "C:\\Users\\Furkan\\.cursor\\projects\\C-Users-Furkan-AppData-Local-Temp-br021-cursor-6d13386d-ws\\agent-transcripts\\76e33856-582d-45a1-935b-8266e5140423\\76e33856-582d-45a1-935b-8266e5140423.jsonl",
+    "provider": "cursor"
+  },
+  "test": {
+    "command": "py -m unittest tests.memory.test_session_scripts.ScriptsTest.test_cursor_transcript_format_is_extracted -v",
+    "result": "1 test OK"
+  }
+}

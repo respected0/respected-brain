@@ -613,6 +613,35 @@ raise SystemExit(int(os.environ.get("RESPECTED_TEST_EXIT", "0")))
             [("user", "Gerçek kullanıcı isteği"), ("assistant", "Gerçek model yanıtı")],
         )
 
+    def test_cursor_transcript_format_is_extracted(self) -> None:
+        transcript = self.root / "cursor.jsonl"
+        records = [
+            {
+                "role": "user",
+                "message": {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "<timestamp>Wednesday</timestamp>\n<user_query>\nGerçek Cursor isteği\n</user_query>",
+                        }
+                    ]
+                },
+            },
+            {
+                "role": "assistant",
+                "message": {"content": [{"type": "text", "text": "Gerçek Cursor yanıtı"}]},
+            },
+            {"type": "turn_ended", "status": "success"},
+        ]
+        transcript.write_text(
+            "\n".join(json.dumps(record) for record in records) + "\n",
+            encoding="utf-8",
+        )
+        self.assertEqual(
+            FLUSH.read_transcript(transcript),
+            [("user", "Gerçek Cursor isteği"), ("assistant", "Gerçek Cursor yanıtı")],
+        )
+
     def test_modern_codex_item_completed_transcript_is_extracted_without_hidden_context(self) -> None:
         transcript = self.root / "codex-modern.jsonl"
         records = [

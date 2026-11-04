@@ -1078,4 +1078,32 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - Semantic kalite değerlendirmesi yok; öneriler token eşleşmesine dayanır.
 - Sonuç: **uygulandı ve test edildi**; Windows ve WSL2 tam paket yeşil.
 
+
+### BR-021 · Cursor transcript yakalama düzeltmesi — TAMAMLANDI
+- Tarih/saat: 2026-11-04 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `7ae4898` (BR-020 sonrası)
+- Kök neden: `_message_parts` yalnızca `message.role` veya `record.type` okuyordu. Cursor `{"role":"user","message":{"content":[...]}}` biçiminde rolü üst düzeyde yazdığı için oturumdaki tüm turlar düşüyor; flush `below-minimum-turns` + boş metin hash'i (`e3b0c44...`) kaydediyordu.
+- Değişen dosyalar:
+  - `src/respected_brain/memory/flush.py`: rol geri düşüşüne `record.role` eklendi; Cursor `<user_query>` sarmalayıcısı temizleniyor.
+  - `tests/memory/test_session_scripts.py`: gerçek Cursor JSONL biçimi için odak testi.
+  - `tests/evals/results/br021-cursor-flush.json`: gerçek oturum, transcript ve flush-state kanıtı.
+- Uygulama:
+  - Cursor oturumları artık `role` + `message.content[]` biçiminden okunuyor; `turn_ended` gibi sistem kayıtları yok sayılıyor.
+  - Kullanıcı istemi `<timestamp>` ve `<user_query>` sarmalayıcısından arındırılarak özet modeline gidiyor.
+- Komutlar ve sonuçlar:
+  - `py -m unittest tests.memory.test_session_scripts.ScriptsTest.test_cursor_transcript_format_is_extracted -v` → 1 test OK (EXIT=0) — Windows
+  - Gerçek `cursor-agent -p --trust --mode ask` oturumu (izole workspace): flush state `turns: 2`, `status: ok`, boş olmayan `transcript_hash: b6009441...`.
+  - Önce aynı gerçek transcript: `read_transcript` → `[]`; düzeltmeden sonra → kullanıcı + asistan turları.
+- Kabul eşlemesi:
+  - Cursor hook → gerçek transcript → flush zinciri gerçek oturumda doğrulandı.
+  - Boş/geç yazılan transcript artık "0 tur" olarak değil, gerçek tur sayısı ve içerik hash'i ile kaydediliyor.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/memory/flush.py` → `85425D673CA973F7DBA84BA3B8C051F2FE67E795BB4F7E36CACC940FF0395360`
+  - `tests/memory/test_session_scripts.py` → `F01838F6523876DCAB6DE87EA26832E21EBA915FA5E5043C0B4E3B57E4808970`
+  - `tests/evals/results/br021-cursor-flush.json` → `E2EBF2C093703A25F5E16804D7B7CF7AFE591D9F9BA598E8F910EB01556594C4`
+- Bilinen sınırlar / risk:
+  - Gerçek oturum izole `RESPECTED_DATA_DIR` altında çalıştırıldı; kullanıcının `~/.cursor/hooks.json` ve `~/.cursor/mcp.json` dosyalarına dokunulmadı.
+  - Bu oturumda özet modeli `FLUSH_BOS` döndürdü (kalıcı bilgi yok); bu yüzden günlük nota yazılmadı, ancak tur yakalama ve hash kanıtı gerçek.
+- Sonuç: **uygulandı ve gerçek Cursor oturumunda doğrulandı**.
+
 <!-- EVIDENCE:END -->
