@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from respected_brain.memory import lifecycle
+from respected_brain.memory.savings import savings_report
 
 
 class ContextUsageTest(unittest.TestCase):
@@ -34,6 +35,27 @@ class ContextUsageTest(unittest.TestCase):
         lines = (self.state / lifecycle.USAGE_FILE).read_text(encoding="utf-8").splitlines()
         self.assertLessEqual(len(lines), lifecycle.USAGE_KEEP + 1)
         self.assertEqual(json.loads(lines[-1])["chars"], 2 * lifecycle.USAGE_KEEP + 1)
+
+    def test_savings_report_keeps_usage_and_benchmark_separate(self):
+        usage = lifecycle.usage_report(self.state, self.now)
+        report = savings_report(usage)
+        self.assertEqual(report["usage"], usage)
+        benchmark = report["benchmark"]
+        self.assertEqual((benchmark["full_tokens"], benchmark["compact_tokens"]), (1103.458, 47.452))
+        self.assertTrue(benchmark["same_accuracy"])
+        self.assertEqual(benchmark["reduction_percent"], 95.7)
+        self.assertEqual(benchmark["low_budget_pass_rate"], 0.8)
+
+    def test_benchmark_matches_the_checked_in_br012_report(self):
+        import json
+        from pathlib import Path
+        report = json.loads((Path(__file__).resolve().parents[1] / "evals/results/br012-progressive.json").read_text(encoding="utf-8"))
+        views = report["views"]
+        from respected_brain.memory.savings import BENCHMARK
+        self.assertEqual(views["full"]["tokens"], BENCHMARK["full_tokens"])
+        self.assertEqual(views["compact-600"]["tokens"], BENCHMARK["compact_tokens"])
+        self.assertEqual(views["compact-600"]["pass_rate"], BENCHMARK["compact_pass_rate"])
+        self.assertEqual(views["compact-60"]["pass_rate"], BENCHMARK["low_budget_pass_rate"])
 
     def test_start_context_records_what_it_sent(self):
         vault = self.state / "vault"

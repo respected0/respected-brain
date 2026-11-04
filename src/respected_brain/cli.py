@@ -52,6 +52,9 @@ def _parser():
     stats = commands.add_parser("stats", help="Oturum başlarında AI araçlarına gönderilen hafıza bağlamının boyutu")
     _selector(stats)
     stats.add_argument("--days", type=int, default=30)
+    savings = commands.add_parser("savings", help="Gerçek oturum kullanımı ve BR-012 ölçülmüş tasarruf karşılaştırması")
+    _selector(savings)
+    savings.add_argument("--days", type=int, default=30)
     compile_parser = commands.add_parser("compile")
     _selector(compile_parser)
     compile_parser.add_argument("--trigger-claim", type=Path)
@@ -219,6 +222,12 @@ def _dispatch(args) -> int:
     if args.command == "stats":
         from .memory.lifecycle import usage_report
         _print(usage_report(ctx.paths.state_dir, datetime.now().astimezone(), max(1, args.days)))
+        return 0
+    if args.command == "savings":
+        from .memory.lifecycle import usage_report
+        from .memory.savings import savings_report
+        usage = usage_report(ctx.paths.state_dir, datetime.now().astimezone(), max(1, args.days))
+        _print(savings_report(usage))
         return 0
     if args.command == "maps":
         from .vault.maps import rebuild_maps

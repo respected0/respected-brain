@@ -1106,4 +1106,32 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - Bu oturumda özet modeli `FLUSH_BOS` döndürdü (kalıcı bilgi yok); bu yüzden günlük nota yazılmadı, ancak tur yakalama ve hash kanıtı gerçek.
 - Sonuç: **uygulandı ve gerçek Cursor oturumunda doğrulandı**.
 
+
+### BR-022 · Token tasarrufu karşılaştırması — TAMAMLANDI
+- Tarih/saat: 2026-11-04 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `2381494` (BR-021 sonrası)
+- Değişen dosyalar:
+  - `src/respected_brain/memory/savings.py` (yeni): BR-012 ölçüm sabitleri ve gerçek kullanım raporuyla ayrı tutulan karşılaştırma.
+  - `src/respected_brain/cli.py`: `savings` komutu (`--days`).
+  - `tests/memory/test_context_usage.py`: 2 yeni test; biri sabitlerin checked-in BR-012 raporuyla eşleştiğini doğrular.
+- Uygulama:
+  - `savings`, `stats` ile aynı gerçek oturum verisini (`context-usage.jsonl`) `usage` altında verir.
+  - `benchmark` altında BR-012 fixture ölçümü ayrı etiketlenir: full 1103.458 token, compact-600 47.452 token, aynı pass oranı %98 → %95.7 azalma.
+  - Düşük bütçe (compact-60) 29.186 token ama pass %80; doğruluk kaybı gizlenmez.
+  - Kullanıcı oturumundan tasarruf uydurulmaz; `note` bunu açıkça söyler.
+- Komutlar ve sonuçlar:
+  - `py -m unittest tests.memory.test_context_usage -v` → 6 test OK (EXIT=0) — Windows
+  - İzole gerçek veriyle `py -m respected_brain savings --vault-id e6b2d258... --days 30` → 2 oturum, 835 tahmini token; benchmark `reduction_percent: 95.7`, `same_accuracy: true`.
+- Kabul eşlemesi:
+  - Anlamlı temel: aynı senaryolarda full-note okuma vs compact-600; aynı pass oranı korunuyor.
+  - Tasarruf yüzdesi hesaplanıyor, sabit değer olarak yazılmıyor; BR-012 JSON'u ile testte çapraz doğrulanıyor.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/memory/savings.py` → `F1ECA9E426B3E9B1E74A304E37B82F38284094FB09510B616685D19B9C8A5D66`
+  - `src/respected_brain/cli.py` → `C34311631B3B5E7D265EC8C665F23E6EFB3359148D03670BFC719D2B31C8EC77`
+  - `tests/memory/test_context_usage.py` → `2BDDA3833B061918907ADEC89BE6C3C4E82212214F4036C53E55274BE6F23F5F`
+- Bilinen sınırlar / risk:
+  - Benchmark kullanıcı kasasının kendi içeriği değil, BR-012 fixture'ıdır; gerçek oturum tasarrufu için kullanıcıya ait "bağlamsız" bir koşu tanımlanmadı.
+  - Token sayımı karakter/4 tahminidir (mevcut ürün sözleşmesi).
+- Sonuç: **uygulandı ve test edildi**; tasarruf iddiası ölçülen BR-012 verisiyle sınırlı.
+
 <!-- EVIDENCE:END -->
