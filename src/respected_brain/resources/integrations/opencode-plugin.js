@@ -99,7 +99,7 @@ async function server() {
     "experimental.chat.system.transform": async (input) => {
       if (v2) return;
       const context = start(sessionId(input));
-      if (context && Array.isArray(input?.system)) input.system.push(context);
+      if (context && Array.isArray(input?.system)) input.system.push({ type: "text", text: context });
     },
   };
 }
@@ -113,7 +113,7 @@ async function setup(ctx) {
   const registrations = [];
   registrations.push(await ctx.session.hook("context", (input) => {
     const context = start(sessionId(input));
-    if (context && Array.isArray(input?.system)) input.system.push(context);
+    if (context && Array.isArray(input?.system)) input.system.push({ type: "text", text: context });
   }));
   registrations.push(await ctx.session.hook("prompt", (properties) => {
     prompt(sessionId(properties), properties?.prompt?.text, properties?.messageID);

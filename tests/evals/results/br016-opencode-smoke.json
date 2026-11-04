@@ -1,0 +1,73 @@
+{
+  "task": "BR-016",
+  "opencode": "opencode v2.2.3",
+  "model": "opencode/beam-free",
+  "checks": [
+    {
+      "name": "install",
+      "passed": true,
+      "seconds": 2.48,
+      "detail": "setup ok"
+    },
+    {
+      "name": "configuration",
+      "passed": true
+    },
+    {
+      "name": "bridge",
+      "passed": true,
+      "detail": {
+        "keys": [
+          "additionalContext"
+        ],
+        "has_context": true
+      }
+    },
+    {
+      "name": "session",
+      "passed": true,
+      "seconds": 7.61,
+      "detail": "exit 0"
+    },
+    {
+      "name": "plugin_loaded",
+      "passed": true,
+      "detail": "timestamp=2026-11-04T01:48:14.981Z level=INFO run=1c5ba668 msg=\"loading plugin\" id=\"C:\\\\Users\\\\Furkan\\\\AppData\\\\Local\\\\Temp\\\\br016-opencode-y3dm4jai\\\\home\\\\.config\\\\opencode\\\\plugins\\\\respected-brain.js\" entrypoint=file:///C:/Users/Furkan/AppData/Local/Temp/br016-opencode-y3dm4jai/home/.config/openc"
+    },
+    {
+      "name": "mcp_handshake",
+      "passed": true,
+      "detail": "timestamp=2026-11-04T01:48:17.037Z level=INFO run=1c5ba668 message=\"mcp connected\" server=respected-brain tools=6 http.span=2131 role=server server=respected-brain directory=\"C:\\\\Users\\\\Furkan\\\\AppData\\\\Local\\\\Temp\\\\br016-opencode-y3dm4jai\\\\cwd\" connectionID=7f783d6a-9c7b-466e-9087-4b09b98eb440"
+    },
+    {
+      "name": "plugin_schema",
+      "passed": true,
+      "detail": []
+    },
+    {
+      "name": "transcript",
+      "passed": true,
+      "detail": [
+        "assistant",
+        "user"
+      ]
+    }
+  ],
+  "artifacts": {
+    "log_sha256": "9c49df92ad7c20fd6a6d20a31745bbe5c542f9c256f96e10e0d11cb197293ed0",
+    "transcripts": [
+      "ses_e5bc1e8fdffeVi3ZavRPldTWWw.jsonl"
+    ],
+    "transcript_roles": [
+      "user",
+      "assistant"
+    ],
+    "opencode_config_sha256": "d0f94fcbe4ee204c655e2413643a36a8c9997415be253f0c66a7081bf11b79af",
+    "plugin_sha256": "ccbb3f21a3e4c7e0adedbab654bc487ddfa5ab985259c3a4b39e4a62b357d03a"
+  },
+  "overall": "VERIFIED",
+  "planned": [
+    "file",
+    "mcp"
+  ]
+}

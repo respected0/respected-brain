@@ -84,6 +84,36 @@ class PluginTest(OpenCodeFixture, TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
 
 
+class V2HookTest(OpenCodeFixture, TestCase):
+
+    def test_the_v2_context_hook_appends_a_system_text_part(self):
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node is not installed")
+        helper = self.root / "context-helper.js"
+        helper.write_text('process.stdout.write(JSON.stringify({additionalContext: "memory"}))\n', encoding="utf-8")
+        source = self.ctx.resources.read_text("integrations/opencode-plugin.js")
+        source = source.replace("__COMMAND__", json.dumps([node, str(helper)])).replace(
+            "__TRANSCRIPT_DIRECTORY__", json.dumps(str(self.root / "transcripts")))
+        plugin = self.root / "plugin.mjs"
+        plugin.write_text(source, encoding="utf-8")
+        harness = self.root / "harness.mjs"
+        harness.write_text(
+            "import * as plugin from " + json.dumps(plugin.as_uri()) + ";\n"
+            "const hooks = {};\n"
+            "const ctx = {session: {hook(name, fn) { hooks[name] = fn; return {dispose() {}}; }},\n"
+            "  event: {subscribe({signal}) { return (async function* () { while (!signal.aborted) await new Promise(r => setTimeout(r, 5)); })(); }}};\n"
+            "const dispose = await plugin.default.setup(ctx);\n"
+            "const input = {sessionID: 'ses-1', system: []};\n"
+            "await hooks.context(input);\n"
+            "process.stdout.write(JSON.stringify(input.system));\n"
+            "await dispose();\n",
+            encoding="utf-8")
+        result = subprocess.run([node, str(harness)], capture_output=True, text=True, timeout=60)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout), [{"type": "text", "text": "memory"}])
+
+
 class BridgeAndTranscriptTest(OpenCodeFixture, TestCase):
 
     def test_opencode_output_is_additional_context(self):
