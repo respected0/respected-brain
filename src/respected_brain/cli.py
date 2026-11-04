@@ -73,6 +73,14 @@ def _parser():
     search.add_argument("--category")
     search.add_argument("--limit", type=int, default=10)
     search.add_argument("--json", action="store_true")
+    insights = commands.add_parser("insights", help="Salt-okunur hafiza icgoruleri: skill onerileri, devir baglami, kasa sagligi")
+    _selector(insights)
+    insights.add_argument("view", nargs="?", default="all", choices=("all", "skills", "sessions", "handoff", "health"))
+    insights.add_argument("--query", default="")
+    insights.add_argument("--provider")
+    insights.add_argument("--budget-tokens", type=int, default=600)
+    insights.add_argument("--limit", type=int, default=10)
+    insights.add_argument("--sessions", action="store_true", help="Istege bagli redakte ajan arsivinde de ara")
     maintenance = commands.add_parser("maintenance")
     _selector(maintenance)
     maintenance.add_argument("name")
@@ -233,6 +241,22 @@ def _dispatch(args) -> int:
             print(json.dumps(results, ensure_ascii=False, indent=2) if args.json else "\n".join(f"{r['title']} ({r['path']})\n{r['snippet']}" for r in results))
         else:
             print(json.dumps(stats, ensure_ascii=False))
+        return 0
+    if args.command == "insights":
+        from .memory import insights
+        result = {}
+        if args.view in ("all", "skills"):
+            result["skills"] = insights.skill_suggestions(ctx.paths.data_root, ctx.paths.vault_root, limit=args.limit)
+        if args.view in ("all", "handoff"):
+            result["handoff"] = insights.handoff_context(ctx.paths.vault_root, provider=args.provider,
+                                                         budget_tokens=args.budget_tokens)
+        if args.view in ("all", "health"):
+            result["health"] = insights.health_report(ctx.paths.vault_root, limit=args.limit)
+        if args.view == "sessions" or (args.view == "all" and args.sessions):
+            if not args.query.strip():
+                raise SelectionError("sessions gorunumu --query gerektirir")
+            result["sessions"] = insights.session_search(ctx.paths.data_root, args.query, limit=args.limit)
+        _print(result)
         return 0
     from .maintenance import run_tool
     return run_tool(ctx, name=args.name, argv=args.argv)

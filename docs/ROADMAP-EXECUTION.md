@@ -248,7 +248,7 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
 - Kurulum/onarım/kaldırma; hook ve model ortamı; dosya izinleri, yol ayrıştırma, süreç sonlandırma.
 - Platform desteğinin gerçek doğrulamaya göre yayınlanması.
 
-### [ ] BR-020 · Daha ileri hafıza özellikleri (P2, ayrı değerlendirme)
+### [x] BR-020 · Daha ileri hafıza özellikleri (P2, ayrı değerlendirme)
 - Öğrenim adaylarından skill önerileri; isteğe bağlı gelişmiş oturum araması.
 - Çoklu-agent iş devri bağlamı; kasa sağlığı/tekrar/çelişki raporları.
 - M0–M4 güvenilirliğini zayıflatmama şartı.
@@ -1035,5 +1035,47 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - `cursor-agent` text modda bilinçli fail-closed; oturum özetleyici değil. Bu platform hatası değil, mevcut güvenlik sözleşmesi.
   - Obsidian `.url` kısayolu yalnızca Windows-native; POSIX'te tipli `BAD_REQUEST`.
 - Sonuç: **uygulandı ve test edildi**; Linux kaynak/WSL gerçek, Windows gerçek, macOS yalnızca simülasyon, Linux frozen paket doğrulanmadı.
+
+### BR-020 · Daha ileri hafıza özellikleri — TAMAMLANDI
+- Tarih/saat: 2026-11-04 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `3983a52` (BR-019 sonrası)
+- Değişen dosyalar:
+  - `src/respected_brain/memory/insights.py` (yeni): salt-okunur skill önerileri, opt-in oturum araması, devir bağlamı ve kasa sağlık raporu.
+  - `src/respected_brain/cli.py`: `insights` komutu; `all|skills|sessions|handoff|health`, `--query`, `--provider`, `--budget-tokens`, `--limit`, `--sessions`.
+  - `src/respected_brain/integrations/mcp/server.py`, `src/respected_brain/integrations/mcp/tools.py`: salt-okunur `respected_insights` MCP aracı.
+  - `tests/memory/test_br020_insights.py` (yeni): 8 odak testi.
+  - `tests/evals/results/br020-evidence.json`: makine-okunur özet; log hash'leri.
+- Uygulama:
+  - Öğrenim adayları (`learning_candidate` ledger kaydı ve `learnings` olayı) mevcut `resources/skills/*/SKILL.md` dosyalarıyla token eşleşmesine göre önerilir; eşleşme varsa `use-existing-skill`, yoksa `consider-new-skill`.
+  - Oturum araması varsayılan kapalıdır; yalnızca `--sessions`/`view=sessions` ile `archives/agent-history/*.jsonl` okunur. Symlink atlanır, sırlar redakte edilir, içerik inertleştirilir, query 2–200 karakter, limit 0–20.
+  - Devir bağlamı sağlayıcı bazlı son oturumu, aktif/çelişkili kararları, açık thread'leri ve son todo'ları `build_context` token bütçesiyle toplar.
+  - Sağlık raporu `check_tiling` + `lint_vault` + karar çelişkilerini tek sınırlı raporda birleştirir; sır redaksiyonu uygular.
+  - Tüm yeni yüzeyler salt-okunur; M0–M4 mevcut yolları değişmedi.
+- Komutlar ve sonuçlar:
+  - `py -m unittest tests.memory.test_br020_insights -v` → 8 test OK (EXIT=0) — Windows
+  - `py -m unittest discover -s tests -t .` → 1069 test OK, 21 skip (EXIT=0) — Windows
+  - `wsl bash -lc 'PYTHONUTF8=1 PYTHONPATH=src python3 -m unittest tests.memory.test_br020_insights -v'` → 8 test OK (EXIT=0) — WSL2
+  - `wsl bash -lc 'PYTHONUTF8=1 PYTHONPATH=src python3 -m unittest discover -s tests -t .'` → 1069 test OK, 33 skip (EXIT=0) — WSL2
+- Kabul eşlemesi:
+  - Skill önerileri: ledger/event kaynağı + mevcut SKILL.md eşleşmesi, limit ve salt-okunurluk test edildi.
+  - Gelişmiş oturum araması: opt-in arşiv, redaksiyon, inertleştirme, dışlama ve query doğrulaması test edildi.
+  - Çoklu-agent devri: provider filtresi ve token bütçesi test edildi.
+  - Kasa sağlığı: tek bounded rapor, tekrar/çelişki ve sır redaksiyonu test edildi.
+  - M0–M4: öncesi/sonrası vault+data snapshot aynı; mevcut paket yeşil.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/memory/insights.py` → `3C1BAF5CAA2C1B7A1EBBDE99496C693876F85E12F107E63C807E2D6600EEC53B`
+  - `tests/memory/test_br020_insights.py` → `0DAA48B202B511AEBC151F02C9ADFD63F85D5A1756076A54F13914CB19C98C63`
+  - `src/respected_brain/cli.py` → `ADD0D317DA22DC71B5D6B926B892FB2B17464D83AA61B96EE726AB94BF5FD652`
+  - `src/respected_brain/integrations/mcp/server.py` → `AEC10D79A9C051B0CD1FC64AC6D4C9C68150DC3E22892850B6D06EA0DA141CBA`
+  - `src/respected_brain/integrations/mcp/tools.py` → `75A5C4BEA6683AA4F0EAE620D93ABFAA5E0975B7D18F9568155346651A24A5E9`
+  - `tests/evals/results/br020-evidence.json` → `1CAB4153B56A453A126CAD89CAA7110BD5B6B854EF5302344E3AD530EF42A407`
+  - `tests/evals/results/br020-windows-full.log` → `71727135B538B0D7964B2154F4F24BB3BD6DC5A9768B21EAB4AE06B964FCBDAF` (yerel/ignore)
+  - `tests/evals/results/br020-wsl-focus.log` → `5FCC872656936944D098BE3B116155CAE85F74244923BD3CA05ACB7DEA9EC3BA` (yerel/ignore)
+  - `tests/evals/results/br020-wsl-full.log` → `DD15F7C8B0146A6D806E7C8515B07EEA72A8F3E88ED354EDB222472CC2913BB0` (yerel/ignore)
+- Bilinen sınırlar / risk:
+  - Arşiv yoksa oturum araması boş döner; gerçek kişisel arşivle arama yapılmadı.
+  - Skill önerisi yalnızca öneri üretir; otomatik skill oluşturmaz veya değiştirmez.
+  - Semantic kalite değerlendirmesi yok; öneriler token eşleşmesine dayanır.
+- Sonuç: **uygulandı ve test edildi**; Windows ve WSL2 tam paket yeşil.
 
 <!-- EVIDENCE:END -->

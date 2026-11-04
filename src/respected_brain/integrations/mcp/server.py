@@ -250,6 +250,33 @@ class RespectedMcpServer:
                     parts.append(f"### {label}\n(Mevcut değil)\n")
             return "\n".join(parts)
 
+        elif name == "respected_insights":
+            from respected_brain.memory import insights
+            view = str(arguments.get("view") or "all")
+            limit = max(1, min(50, int(arguments.get("limit", 10))))
+            result: dict[str, Any] = {}
+            if view in ("all", "skills"):
+                result["skills"] = insights.skill_suggestions(
+                    self.ctx.paths.data_root, self.vault_root, limit=limit
+                )
+            if view in ("all", "handoff"):
+                result["handoff"] = insights.handoff_context(
+                    self.vault_root,
+                    provider=arguments.get("provider") or None,
+                    budget_tokens=arguments.get("budget_tokens", 600),
+                )
+            if view in ("all", "health"):
+                result["health"] = insights.health_report(self.vault_root, limit=limit)
+            if view == "sessions":
+                query = str(arguments.get("query") or "").strip()
+                if not query:
+                    return "Hata: view=sessions icin query zorunludur."
+                try:
+                    result["sessions"] = insights.session_search(self.ctx.paths.data_root, query, limit=limit)
+                except ValueError as error:
+                    return f"Hata: {error}"
+            return json.dumps(result, ensure_ascii=False, indent=2)
+
         elif name in ("respected_quick_capture", "respected_remember"):
             if not self._write_enabled():
                 return WRITE_OFF

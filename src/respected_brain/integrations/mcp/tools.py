@@ -74,6 +74,29 @@ def tool_definitions(os_name: str, companion_name: str) -> list[dict[str, Any]]:
             },
         },
         {
+            "name": "respected_insights",
+            "description": (
+                "Salt-okunur hafiza icgoruleri: ogrenim adaylarindan skill onerileri, coklu-agent devir baglami, "
+                "kasa saglik/tekrar/celiski raporu ve istege bagli redakte ajan arsivi aramasi. Hicbir sey yazmaz."
+            ),
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "view": {
+                        "type": "string",
+                        "enum": ["all", "skills", "sessions", "handoff", "health"],
+                        "description": "Sorgulanacak gorunum (varsayilan: all)",
+                        "default": "all",
+                    },
+                    "query": {"type": "string", "description": "view=sessions icin aranacak metin"},
+                    "provider": {"type": "string", "description": "handoff gorunumunde yalnizca bu saglayiciyi kullan"},
+                    "budget_tokens": {"type": "integer", "description": "Devir baglami token butcesi (en fazla 4000)", "default": 600},
+                    "limit": {"type": "integer", "description": "Liste siniri (varsayilan: 10)", "default": 10},
+                },
+                "required": [],
+            },
+        },
+        {
             "name": "respected_quick_capture",
             "description": "(Yalnızca kullanıcı izin verdiyse) Dış bir projede çalışırken ikinci beyin vault'unun MCP gelen kutusuna yeni bir not bırakır; kullanıcı incelemeden kalıcı bilgiye geçmez.",
             "inputSchema": {
