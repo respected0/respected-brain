@@ -1,0 +1,36 @@
+{
+  "checked_at": "2026-11-04",
+  "timezone": "Europe/Istanbul",
+  "sources": [
+    {
+      "name": "Mem0 Open Source Overview",
+      "url": "https://docs.mem0.ai/open-source/overview",
+      "status": 200
+    },
+    {
+      "name": "Letta Documentation",
+      "url": "https://docs.letta.com/",
+      "status": 200
+    },
+    {
+      "name": "Zep Documentation",
+      "url": "https://help.getzep.com/",
+      "status": 200
+    },
+    {
+      "name": "Obsidian Community Plugins",
+      "url": "https://obsidian.md/plugins",
+      "status": 200
+    },
+    {
+      "name": "Smart Connections FAQ",
+      "url": "https://smartconnections.app/smart-connections/faq/",
+      "status": 200
+    },
+    {
+      "name": "ChatGPT custom MCP help",
+      "url": "https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt",
+      "status": 200
+    }
+  ]
+}

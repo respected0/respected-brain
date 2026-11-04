@@ -1134,4 +1134,32 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - Token sayımı karakter/4 tahminidir (mevcut ürün sözleşmesi).
 - Sonuç: **uygulandı ve test edildi**; tasarruf iddiası ölçülen BR-012 verisiyle sınırlı.
 
+### BR-023 · Rakip analizi ve araştırma belgesi — TAMAMLANDI
+- Tarih/saat: 2026-11-04 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `26ee83b` (BR-022 sonrası)
+- Değişen dosyalar:
+  - `docs/RESEARCH.md` (yeni): Mem0, Letta, Zep, Obsidian/Smart Connections ve ChatGPT MCP karşılaştırması; her dış iddia için kaynak URL ve erişim tarihi.
+  - `docs/ROADMAP.md`: rakip analizi maddesi tamamlandı olarak işaretlendi.
+  - `tests/evals/results/br023-sources.json` (yeni): kaynak URL ve HTTP durum kaydı.
+- Uygulama:
+  - Ürün konumlandırması netleştirildi: Respected Brain yerel Obsidian kasası, çoklu AI hook'u, deterministik JSONL/Markdown, redaksiyon/inertleştirme, sır taraması ve kanıtlı bağlam bütçesiyle ayrışıyor.
+  - Vektör veritabanı, agent framework'ü ve temporal grafik bilinçli olarak kapsam dışında bırakıldı; gerekçeleri belgede.
+  - ChatGPT custom MCP'nin yalnızca Business/Enterprise/Edu web'de olduğu; kişisel/masaüstü için yol olmadığı kaynakla kaydedildi.
+  - Doğrulanmamış iddialar (ör. Zep gecikme rakamı) belgede ayrı risk olarak işaretlendi.
+- Komutlar ve sonuçlar:
+  - Altı kaynak URL'si `urllib`/`curl` ile istendi → HTTP 200 (2026-11-04). Ayrıntı: `tests/evals/results/br023-sources.json`.
+  - Obsidian eklenti sayfası: "Browse 9,932 plugins and 978 themes"; AI kategorisi 1,182 eklenti.
+  - ChatGPT yardım sayfası: "Custom MCP server connections and full MCP support are available for ChatGPT Business and Enterprise/Edu customers on ChatGPT web"; mobilde yok.
+  - Belge testi: kod değişikliği yok; kaynak/URL kaydı JSON olarak doğrulandı.
+- Kabul eşlemesi:
+  - Karşılaştırma belgesi yazıldı ve kaynaklandı; kararların dayandığı ölçümler (BR-012/BR-022) açıkça ayrıldı.
+- Artefaktlar (yol → sha256):
+  - `docs/RESEARCH.md` → `9F7967E0A0DF55FE2A81D1E34CAF19C00CAE3CD4F0B3147476D5D782D3BC2850`
+  - `docs/ROADMAP.md` → `02CAE37AF94BB1BA6BF2C47EB4232AB36EC3791FEB89DA292F0DDD786DC77CB9`
+  - `tests/evals/results/br023-sources.json` → `74DE32FB9D1B673F68F1731287B72DD00052A65E6A5B24F62FD51EACE1FDCDBB`
+- Bilinen sınırlar / risk:
+  - Bağımsız hız/doğruluk benchmark'ı çalıştırılmadı; ürün iddiaları kendi belgelerine dayanıyor.
+  - Dış ürünlerin plan/özellik koşulları değişebilir; erişim tarihi kayda geçirildi.
+- Sonuç: **uygulandı; kaynaklar HTTP 200 ile doğrulandı.**
+
 <!-- EVIDENCE:END -->

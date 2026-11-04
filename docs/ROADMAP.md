@@ -26,8 +26,8 @@
 
 ## Araştırmaya dayalı tasarım
 
-- [ ] Rakip analizi ve araştırma belgesi: Mem0, Letta, Zep, Obsidian eklentileri gibi hafıza ürünleriyle karşılaştırma ve
-  kararların dayandığı makaleler/ölçümler yazılı değil.
+- [x] Rakip analizi ve araştırma belgesi: `docs/RESEARCH.md` Mem0, Letta, Zep ve Obsidian/Smart Connections ile
+  karşılaştırmayı kaynak URL'leri ve erişim tarihiyle belgeliyor; doğrulanmamış iddialar ayrıca işaretlendi.
 
 ## Ürün ve yayın
 
