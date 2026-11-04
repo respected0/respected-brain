@@ -28,6 +28,7 @@ def status(data_root: Path) -> dict[str, Any]:
         raise MemoryOpError("NO_VAULT", "No vault is registered.", "Register a vault in the Brain product first.")
     cfg = semantic.load_config(data_root)
     provider = semantic.provider_state(data_root, cfg)
+    supported = cfg["provider"] != "llama" or semantic.llama_supported()
     _, ctx = _context(data_root, {})
     try:
         with SearchEngine.open_read_only(ctx)._get_connection() as con:
@@ -37,6 +38,8 @@ def status(data_root: Path) -> dict[str, Any]:
     vectors = semantic.vector_count(ctx, cfg["model"])
     if not cfg["enabled"]:
         state = "off"
+    elif not supported:
+        state = "unsupported"
     elif provider["provider"] != "up" and cfg["provider"] == "ollama":
         state = "provider_missing"
     elif provider["provider"] != "up" or not provider["model_installed"]:
@@ -44,7 +47,7 @@ def status(data_root: Path) -> dict[str, Any]:
     else:
         state = "ready" if notes and vectors >= notes else "building"
     return {"state": state, "enabled": cfg["enabled"], "model": cfg["model"], "provider": cfg["provider"], "service": provider["provider"],
-            "download_mb": semantic.DOWNLOAD_MB if cfg["provider"] == "llama" else None,
+            "platform_supported": supported, "download_mb": semantic.DOWNLOAD_MB if cfg["provider"] == "llama" and supported else None,
             "model_installed": provider["model_installed"] and provider["provider"] == "up", "notes": notes, "vectors": vectors, "local_only": True}
 
 

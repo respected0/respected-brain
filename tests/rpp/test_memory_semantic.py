@@ -152,8 +152,25 @@ class SemanticTest(unittest.TestCase):
         self.assertFalse(self.call("memory.semantic.configure", {"confirm": True, "enabled": True, "model": "../x y"})["ok"])
         done = self.call("memory.semantic.configure", {"confirm": True, "enabled": True})
         self.assertTrue(done["ok"], done)
-        self.assertEqual((done["result"]["provider"], done["result"]["state"], done["result"]["download_mb"]), ("llama", "model_missing", semantic.DOWNLOAD_MB))
+        supported = semantic.llama_supported()
+        self.assertEqual((done["result"]["provider"], done["result"]["state"], done["result"]["download_mb"]),
+                         ("llama", "model_missing" if supported else "unsupported", semantic.DOWNLOAD_MB if supported else None))
+        self.assertEqual(done["result"]["platform_supported"], supported)
         self.assertFalse(self.call("memory.semantic.configure", {"confirm": True, "enabled": True, "model": "unknown"})["ok"])
+
+    def test_llama_provider_refuses_to_download_on_non_windows(self):
+        cfg = {**semantic.DEFAULT, "enabled": True}
+        with patch.object(semantic.sys, "platform", "linux"), patch.object(semantic, "_download") as download:
+            self.assertEqual(semantic.provider_state(self.data, cfg), {"provider": "unsupported", "model_installed": False})
+            with self.assertRaises(semantic.SemanticError) as error:
+                semantic.pull_model(self.data, cfg)
+            self.assertEqual(error.exception.code, "PLATFORM_UNSUPPORTED")
+            self.assertIn("ollama", error.exception.hint)
+            download.assert_not_called()
+            with self.assertRaises(semantic.SemanticError) as error:
+                with semantic.embedder(self.data, cfg):
+                    pass
+            self.assertEqual(error.exception.code, "PLATFORM_UNSUPPORTED")
 
     def test_pinned_download_is_verified_and_archives_cannot_escape(self):
         import hashlib, zipfile

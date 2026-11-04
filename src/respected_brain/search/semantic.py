@@ -16,10 +16,12 @@ import hashlib
 import json
 import math
 import os
+import platform as host_platform
 import shutil
 import socket
 import sqlite3
 import subprocess
+import sys
 import time
 import zipfile
 from contextlib import closing, contextmanager
@@ -90,6 +92,17 @@ def _paths(data_root: Path, cfg: dict[str, Any]) -> tuple[Path, Path]:
     return base / "llama" / RUNTIME["exe"], base / "models" / f"{cfg['model']}.gguf"
 
 
+def llama_supported() -> bool:
+    """The pinned runtime is a Windows x64 .exe; other platforms must use ollama."""
+    return sys.platform == "win32" and host_platform.machine().lower() in ("amd64", "x86_64")
+
+
+def _require_llama() -> None:
+    if not llama_supported():
+        raise SemanticError("PLATFORM_UNSUPPORTED", "The managed llama runtime is Windows x64 only.",
+                            hint("Bu platformda ollama sağlayıcısını kullanın", "respected-brain semantic enable --provider ollama"))
+
+
 def _model_ok(path: Path, cfg: dict[str, Any]) -> bool:
     try:
         return path.is_file() and path.stat().st_size == MODELS[cfg["model"]]["size"]
@@ -111,6 +124,8 @@ def _call(endpoint: str, path: str, body: dict[str, Any] | None = None, timeout:
 
 def provider_state(data_root: Path, cfg: dict[str, Any]) -> dict[str, Any]:
     if cfg["provider"] == "llama":
+        if not llama_supported():
+            return {"provider": "unsupported", "model_installed": False}
         exe, model = _paths(data_root, cfg)
         return {"provider": "up" if exe.is_file() else "down", "model_installed": _model_ok(model, cfg)}
     try:
@@ -159,6 +174,7 @@ def pull_model(data_root: Path, cfg: dict[str, Any]) -> None:
         if not isinstance(reply, dict) or reply.get("status") != "success":
             raise SemanticError("PULL_FAILED", "The model could not be downloaded.", "Check the model name and the connection.")
         return
+    _require_llama()
     exe, model = _paths(data_root, cfg)
     if not exe.is_file():
         archive = exe.parent.parent / "runtime.zip"
@@ -187,6 +203,7 @@ def embedder(data_root: Path, cfg: dict[str, Any]):
     if cfg["provider"] == "ollama":
         yield cfg
         return
+    _require_llama()
     exe, model = _paths(data_root, cfg)
     if not exe.is_file() or not _model_ok(model, cfg):
         raise SemanticError("PROVIDER_UNAVAILABLE", "The local embedding model is not installed.", hint("Hub'dan anlamsal aramayı yeniden açın (modeli indirir)", "respected-brain semantic pull"))

@@ -1252,4 +1252,38 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - macOS ve Linux frozen paket hâlâ doğrulanmadı.
 - Sonuç: **uygulandı; Linux kaynak test job'ı eklendi ve WSL2'de tam paket OK.**
 
+### BR-027 · Anlamsal arama platform sınırı — TAMAMLANDI
+- Tarih/saat: 2026-11-04 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `c5b3488` (BR-026 sonrası)
+- Değişen dosyalar:
+  - `src/respected_brain/search/semantic.py`: `llama_supported()` kapısı; Windows x64 dışında `pull_model` ve `embedder` `PLATFORM_UNSUPPORTED` verir, `.exe` indirmez/başlatmaz.
+  - `src/respected_brain/rpp/memory_semantic.py`: `platform_supported` alanı; desteklenmeyen platformda durum `unsupported`, `download_mb` null.
+  - `tests/rpp/test_memory_semantic.py`: Linux platform kapısı ve ollama yönlendirmesi testi; configure beklentisi platforma duyarlı.
+  - `docs/ROADMAP.md`, `docs/ARCHITECTURE.md` §9: sınır gerçek davranışla eşleştirildi.
+  - `tests/evals/results/br027-semantic.json` (yeni): test ve ortam kaydı.
+- Uygulama:
+  - Yönetilen `llama-server` çalışma zamanı yalnızca Windows x64 olarak kabul edilir; diğer platformlarda erken hata verilir ve `ollama` sağlayıcısı önerilir.
+  - Sağlayıcı durumu artık desteklenmeyen platformu `unsupported` olarak raporlar; yanıltıcı indirme boyutu gösterilmez.
+  - Sunucunun her sorgu için başlatılıp kapatılması bilinçli tasarım olarak korundu; yeni daemon eklenmedi.
+- Komutlar ve sonuçlar:
+  - Windows odak: `py -m unittest tests.rpp.test_memory_semantic -v` → **8 test OK** (8.765 sn).
+  - Windows tam paket: `py -m unittest discover -s tests -t .` → **1073 test OK, 21 skip** (374.854 sn, EXIT=0).
+  - WSL2 Ubuntu 26.04 / Python 3.14.4 odak: **8 test OK** (4.139 sn); tam paket: **1073 test OK, 33 skip** (292.775 sn, EXIT=0).
+  - Testte `.exe` indirme çağrısının hiç yapılmadığı `mock.assert_not_called()` ile kanıtlandı.
+- Kabul eşlemesi:
+  - Windows dışında `llama` artık sessizce yanlış platform ikilisi indirmiyor; kullanıcı açık hata ve doğru sağlayıcı önerisi alıyor.
+  - Windows x64 yolu ve ollama yolu mevcut testlerle korunuyor.
+- Artefaktlar (yol → sha256):
+  - `docs/ARCHITECTURE.md` → `9ACD97CE15FD14C8839810C02591C7B08E8BAFA169E80EF07AECDA67D6624062`
+  - `docs/ROADMAP.md` → `596C517CF927476756658B557DBEE530C978BB3E546BAB0F769277215E5FC91C`
+  - `src/respected_brain/rpp/memory_semantic.py` → `F756CD4EA6AB7A7C69069F11682C3AFAB4E1DE973B4748C44888A769C00C4D40`
+  - `src/respected_brain/search/semantic.py` → `51B0BC3FA7FB00D31F8CF70BA27B9F73493339AAF755C6A1C63AD668F2F83CCB`
+  - `tests/rpp/test_memory_semantic.py` → `516BC8ED6C1ADD9B2DAE8D6BD5390866F4C68E0D55214A5554444526B5A0960C`
+  - `tests/evals/results/br027-semantic.json` → `B3CD79F404EAD0FACA58D67DC4D70FF0F12DB423AB94AB445E06C1257FED7C43`
+- Bilinen sınırlar / risk:
+  - macOS/Linux için yönetilen llama çalışma zamanı hâlâ yok; bu platformlarda anlamsal arama yalnızca kullanıcının çalıştırdığı Ollama ile mümkün.
+  - Her sorguda sunucu başlatma maliyeti korunuyor; bu görevde performans değiştirilmedi.
+  - Gerçek Windows ARM64 üzerinde x64 emülasyonu doğrulanmadı; kapı yalnızca bildirilen x64 mimarisini kabul eder.
+- Sonuç: **uygulandı ve iki platformda test edildi; platform sınırı artık kodla zorlanıyor.**
+
 <!-- EVIDENCE:END -->

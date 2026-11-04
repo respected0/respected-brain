@@ -120,7 +120,8 @@ içe aktarmaz.
 - **Anlamsal arama (isteğe bağlı).** `memory.semantic.pull {confirm}` sabitlenmiş bir llama.cpp `llama-server` (Windows x64)
   ve bge-m3 modelini (Q4_K_M, MIT lisanslı, Türkçe dahil çok dilli) veri kökündeki `semantic-runtime/` klasörüne indirir;
   boyut ve SHA-256 doğrulanır, arşivden yol kaçışı reddedilir. Sunucu yalnızca bir işlem için boş bir yerel porta
-  başlatılır ve sonra kapatılır; sürekli çalışan süreç yoktur. Yerel olmayan bir uç nokta reddedilir; tek ağ kullanımı bu
+  başlatılır ve sonra kapatılır; sürekli çalışan süreç yoktur. Windows x64 dışında `llama` sağlayıcısı
+  `PLATFORM_UNSUPPORTED` ile reddedilir ve `ollama` önerilir; `.exe` indirilmez. Yerel olmayan bir uç nokta reddedilir; tek ağ kullanımı bu
   indirmedir. Vektörler FTS dizininin yanındaki `semantic_index.db`'dedir (not başına bir vektör: başlık + ilk 2000
   karakter). `memory.recall` `mode` alanı `auto` (hazırsa karma, değilse FTS), `fts`, `semantic`, `hybrid` olabilir;
   sağlayıcı sorunu FTS'ye düşer. Her sorgu sunucuyu başlatır (ölçülen: 2,6–4,2 sn).

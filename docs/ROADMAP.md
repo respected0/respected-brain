@@ -25,8 +25,9 @@
 
 - [ ] Dizin anlık değil: dosya izleyici yok; normal aramada sorgu öncesi stale kontrolü ve refresh var, salt-okunur MCP
   eski sonucu filtreler. Oturum dışı düzenleme bir sonraki sorguda, oturumda ya da günlük görevde dizine girer.
-- [ ] Anlamsal arama: `MIN_SCORE=0.25` uygulanıyor; her sorguda sunucu başlıyor ve çalışma ortamı yalnızca Windows x64
-  `llama.zip`; diğer platformlar `ollama` sağlayıcısına düşer. Yerel model etkin değilken FTS5 kullanılır.
+- [x] Anlamsal arama (isteğe bağlı): `MIN_SCORE=0.25` uygulanıyor; yönetilen `llama.zip` yalnızca Windows x64.
+  Diğer platformlarda `llama` sağlayıcısı `PLATFORM_UNSUPPORTED` ile erkenden reddedilir ve `ollama` önerilir; Windows
+  dışında `.exe` indirilmez. Her sorguda sunucu başlatma bilinçli sınırdır; yerel model etkin değilken FTS5 kullanılır.
 
 ## Araştırmaya dayalı tasarım
 
