@@ -1,0 +1,35 @@
+{
+  "checked_at": "2026-11-04",
+  "timezone": "Europe/Istanbul",
+  "task": "BR-028 migration contract and release fixture invariant",
+  "state": {
+    "CURRENT": {
+      "config.json": 3,
+      "install-manifest.json": 3,
+      "memory-grants.json": 1
+    },
+    "SHIPPED": {
+      "config.json": 3,
+      "install-manifest.json": 3,
+      "memory-grants.json": 1
+    },
+    "STEPS": {},
+    "meaning": "no format change has shipped yet; the exact-gap invariant keeps the table empty until a real migration exists"
+  },
+  "tests": {
+    "windows": "Ran 6 tests in 0.064s; OK",
+    "wsl": "Ran 6 tests in 0.050s; OK",
+    "invariant": "set(STEPS) must equal every SHIPPED->CURRENT gap, so missing and speculative steps both fail",
+    "fixture": "every JSON file in tests/fixtures/releases/<version>/ must be a known CURRENT data file"
+  },
+  "limitations": [
+    "No real migration step exists today because no shipped schema_version is older than CURRENT.",
+    "The contract is enforced by tests; a future schema change still needs its actual migration function."
+  ],
+  "artifacts_sha256": {
+    "docs/PRODUCT_CONTRACT.md": "9AB4B81B5A24CBBA36FB68FD1A7F5BBBB9D91C686E854BCA6C0E3CBA51371DDE",
+    "docs/ROADMAP.md": "7841E27C82956DB8498189B1B24823A0DE2D5EC6D080FC07A7028752A0576C59",
+    "docs/RELEASE-GATE.md": "FD80556288B8765CCBFEDADB4A151B72F01E5E6A846C46BD2EDB943C825FBAA0",
+    "tests/installation/test_migrate.py": "1D4B62FD37469B0C222F765EDC33481E825B237E876064C8F1AC18BBB946AB9D"
+  }
+}

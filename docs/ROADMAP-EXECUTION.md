@@ -1286,4 +1286,35 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - Gerçek Windows ARM64 üzerinde x64 emülasyonu doğrulanmadı; kapı yalnızca bildirilen x64 mimarisini kabul eder.
 - Sonuç: **uygulandı ve iki platformda test edildi; platform sınırı artık kodla zorlanıyor.**
 
+### BR-028 · Migration sözleşmesi ve yayın fixture'ı — TAMAMLANDI
+- Tarih/saat: 2026-11-04 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `7772859` (BR-027 sonrası)
+- Değişen dosyalar:
+  - `tests/installation/test_migrate.py`: `STEPS` için tam-boşluk invariantı; yayın fixture'ında tanınmayan JSON dosyası reddedilir.
+  - `docs/PRODUCT_CONTRACT.md`: adımların yalnızca `SHIPPED`–`CURRENT` gerçek boşluklarını taşıdığı ve spekülatif adım yasaklandığı yazıldı.
+  - `docs/ROADMAP.md`: migration maddesi kanıtla kapatıldı; gelecekteki biçim değişikliği kuralı korundu.
+  - `docs/RELEASE-GATE.md`: migration kanıtı invariantla güncellendi.
+  - `tests/evals/results/br028-migration.json` (yeni): durum ve test kaydı.
+- Uygulama:
+  - Bugün `SHIPPED == CURRENT` olduğu için `STEPS` boş bırakıldı; gereksiz/no-op migration kodu eklenmedi.
+  - Test artık eksik adımı da fazladan spekülatif adımı da reddediyor; ilk gerçek biçim değişikliğinde adım eklenmesi zorunlu.
+  - Yayın fixture'ı yalnızca tanınan veri dosyalarını kabul ediyor; ikinci migration çalıştırmasının hiçbir şeyi değiştirmediği korunuyor.
+- Komutlar ve sonuçlar:
+  - Windows: `py -m unittest tests.installation.test_migrate -v` → **6 test OK** (0.064 sn).
+  - WSL2 Ubuntu 26.04 / Python 3.14.4: **6 test OK** (0.050 sn, EXIT=0).
+  - `tests/fixtures/releases/0.1.0-beta.1/` altında `config.json` (3), `install-manifest.json` (3), `memory-grants.json` (1) doğrulandı.
+- Kabul eşlemesi:
+  - "Biçimi değiştiren ilk sürümde adım eklenir" kuralı testle zorlanıyor.
+  - "Her yayında gerçek veri dosyaları fixture'a kopyalanır" sözleşmesi ve tanınmayan dosya reddi doğrulandı.
+- Artefaktlar (yol → sha256):
+  - `docs/PRODUCT_CONTRACT.md` → `9AB4B81B5A24CBBA36FB68FD1A7F5BBBB9D91C686E854BCA6C0E3CBA51371DDE`
+  - `docs/ROADMAP.md` → `7841E27C82956DB8498189B1B24823A0DE2D5EC6D080FC07A7028752A0576C59`
+  - `docs/RELEASE-GATE.md` → `FD80556288B8765CCBFEDADB4A151B72F01E5E6A846C46BD2EDB943C825FBAA0`
+  - `tests/installation/test_migrate.py` → `1D4B62FD37469B0C222F765EDC33481E825B237E876064C8F1AC18BBB946AB9D`
+  - `tests/evals/results/br028-migration.json` → `AD44297BD033B4D2AA59EEDB51E726509B1412297849B8D61B79626F066BDB01`
+- Bilinen sınırlar / risk:
+  - Gerçek bir eski biçim henüz yayınlanmadığı için gerçek dönüşüm fonksiyonu yok; bu görev gelecekteki dönüşümü uydurmadı.
+  - Gelecekteki şema değişikliğinde `SHIPPED` ve fixture sürümü birlikte güncellenmezse test doğru şekilde kırılacaktır.
+- Sonuç: **sözleşme ve invariant uygulandı; odak testleri iki platformda geçti.**
+
 <!-- EVIDENCE:END -->

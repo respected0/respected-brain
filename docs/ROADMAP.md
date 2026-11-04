@@ -43,6 +43,7 @@
 
 ## Güncelleme
 
-- [ ] Biçimi değiştiren ilk sürümde `installation/migrate.py` içindeki `STEPS` tablosuna eski sürüm için taşıma adımı
-  eklenmeli (mekanizma ve test hazır; bugün gönderilmiş tüm biçimler güncel olduğu için adım yok).
-  Her yayında o sürümün gerçek veri dosyaları `tests/fixtures/releases/<sürüm>/` altına da kopyalanır (sözleşme §4).
+- [x] Migration sözleşmesi: biçimi değiştiren ilk sürümde `STEPS` tablosuna eski sürüm için adım eklenecek; tablo yalnızca
+  `SHIPPED`–`CURRENT` arasındaki gerçek boşlukları taşır ve spekülatif adım içermez. Bugün tüm biçimler güncel olduğu için
+  tablo boş; invariant testi bunu zorlar. Her yayında gerçek veri dosyaları `tests/fixtures/releases/<sürüm>/` altına
+  kopyalanır ve tanınmayan dosya kabul edilmez (sözleşme §4).

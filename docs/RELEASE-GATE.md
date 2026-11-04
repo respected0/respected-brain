@@ -8,7 +8,7 @@ Bu belge `0.1.0-beta.1` (`0.1.0b1`) yayın paketinin hangi kapılardan geçtiği
 | Kapı | Durum | Kanıt |
 |---|---|---|
 | Tam birim ve entegrasyon testleri | GEÇTİ | `python -m unittest discover -s tests -t .` → 1028 test OK, 15 skip |
-| Şema migration ve eski sürüm fixture'ları | GEÇTİ | `python -m unittest tests.installation.test_migrate -v` → 6 test OK; `tests/fixtures/releases/0.1.0-beta.1/` |
+| Şema migration ve eski sürüm fixture'ları | GEÇTİ | `python -m unittest tests.installation.test_migrate -v` → 6 test OK; `STEPS` yalnızca gerçek boşlukları içerir; `tests/fixtures/releases/0.1.0-beta.1/` |
 | Dondurulmuş Windows paketi | GEÇTİ | `python packaging/build_dist.py --platform windows --output dist` → `0.1.0b1` |
 | Dağıtım bütünlüğü | GEÇTİ | `python -m unittest tests.packaging.test_distribution -v` → 3 test OK |
 | Fiziksel kurulum smoke'u | GEÇTİ | `tests/evals/results/br015-native-smoke.json` → 25/25 VERIFIED, `overall=VERIFIED` |

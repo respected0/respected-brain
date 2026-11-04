@@ -46,10 +46,10 @@ class MigrateTest(unittest.TestCase):
                 self.assertEqual((self.data / "config.json").read_bytes(), before)
                 self.assertFalse(list(self.data.glob("*.bak")))
 
-    def test_registry_has_a_step_for_every_older_version(self):
-        for name, target in CURRENT.items():
-            for version in range(SHIPPED[name], target):
-                self.assertIn((name, version), STEPS, f"{name}: no step {version} -> {version + 1}")
+    def test_registry_has_exactly_the_steps_for_shipped_gaps(self):
+        expected = {(name, version) for name, target in CURRENT.items() for version in range(SHIPPED[name], target)}
+        self.assertEqual(set(STEPS), expected,
+                         "STEPS must hold one step per shipped-to-current gap and no speculative steps")
 
     def test_every_published_release_moves_to_the_current_format_and_then_stays_put(self):
         releases = sorted(path for path in RELEASES.iterdir() if path.is_dir())
@@ -59,6 +59,7 @@ class MigrateTest(unittest.TestCase):
                 data = self.data / release.name
                 shutil.copytree(release, data)
                 names = [path.name for path in data.glob("*.json")]
+                self.assertLessEqual(set(names), set(CURRENT), f"{release.name}: unknown data file")
                 migrate_data(data)
                 for name in names:
                     self.assertEqual(json.loads((data / name).read_text("utf-8"))["schema_version"], CURRENT[name], name)
