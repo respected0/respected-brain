@@ -156,6 +156,12 @@ içe aktarmaz.
 (`--dangerously-skip-permissions`, `--yolo` gibi) üretilmez. Süreç Windows Job Object / POSIX süreç grubuyla, kopmuş alt
 süreçler dahil sonlandırılır. Bu, aracın kendi izinlerinin yerine geçen bir işletim sistemi kum havuzu değildir.
 
+**Doğrudan API (OpenRouter, BR-017):** `providers/openrouter.py` yalnızca `text` modunda, `urllib` ile tek POST
+yapar. Anahtar `data_root/credentials/openrouter.bin` içinde Windows'ta DPAPI, POSIX'te `0600` dosya olarak
+saklanır; `OPENROUTER_API_KEY` ortam değişkeni de okunur. `auto` modunda ücretli sağlayıcıya geçilmez; açık
+`summary_provider=openrouter` seçimi veya `provider_allow_paid=true` gerekir. Kullanım/maliyet
+`state_dir/provider-usage.jsonl` dosyasına yazılır; anahtar, istem ve yanıt gövdesi hata ya da loglara girmez.
+
 | Araç | Metin modu | Çalışma alanı modu |
 |---|---|---|
 | Claude | `--safe-mode --tools ""` | `--safe-mode`, `Read,Write,Edit,Glob,Grep`, `acceptEdits` |

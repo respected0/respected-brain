@@ -39,6 +39,9 @@ def _parser():
     config = commands.add_parser("config", help="Ayarları göster veya değiştir (config, config get <anahtar>, config set <anahtar>=<değer>...)")
     config.add_argument("action", nargs="?", choices=("get", "set"))
     config.add_argument("items", nargs="*")
+    credential = commands.add_parser("credential", help="OpenRouter API anahtarını işletim sistemi kasasında sakla (anahtar argv'ye yazılmaz)")
+    credential.add_argument("action", choices=("status", "set", "clear"))
+    credential.add_argument("provider", nargs="?", default="openrouter", choices=("openrouter",))
     commands.add_parser("health", help="Sağlık kontrolü")
     semantic = commands.add_parser("semantic", help="Yerel anlamsal aramayı göster, aç/kapat ya da modeli indir (Hub'sız)")
     semantic.add_argument("action", choices=("status", "enable", "disable", "pull"))
@@ -99,8 +102,8 @@ def _dispatch(args) -> int:
     if args.command == "rpp":
         from .rpp.server import main as rpp_main
         return rpp_main()
-    if args.command in ("config", "health"):
-        return _config(args) if args.command == "config" else _health()
+    if args.command in ("config", "health", "credential"):
+        return _credential(args) if args.command == "credential" else _config(args) if args.command == "config" else _health()
     if args.command == "semantic":
         return _semantic(args)
     if args.command in ("compile", "flush"):
@@ -237,6 +240,24 @@ def _dispatch(args) -> int:
 
 def _print(document) -> None:
     print(json.dumps(document, ensure_ascii=False, indent=2))
+
+
+def _credential(args) -> int:
+    from .providers import openrouter
+    data_root = application_roots().data_root
+    if args.action == "clear":
+        openrouter.clear_key(data_root)
+        _print(openrouter.status(data_root))
+        return 0
+    if args.action == "set":
+        if sys.stdin.isatty():
+            import getpass
+            key = getpass.getpass("OpenRouter API anahtarı: ")
+        else:
+            key = sys.stdin.readline()
+        openrouter.store_key(data_root, key)
+    _print(openrouter.status(data_root))
+    return 0
 
 
 def _config(args) -> int:

@@ -1,0 +1,64 @@
+{
+  "dataset_sha256": "058566edb9b8c45fa639583dcf3e62a4f22acf1c514bb21cb5338b7735409ef8",
+  "base": {
+    "provider": "claude",
+    "label": "claude/haiku"
+  },
+  "new": {
+    "provider": "claude",
+    "label": "claude/haiku"
+  },
+  "deltas": {
+    "pass_rate": 0.0,
+    "schema_valid_rate": 0.0,
+    "fact_coverage": 0.0,
+    "prompt_coverage": 0.0,
+    "section_accuracy": 0.0694,
+    "truncated_facts": 0,
+    "hallucination_scenarios": 0,
+    "secret_leak_scenarios": 0,
+    "injection_leak_scenarios": 0,
+    "raw_transcript_stored": 0,
+    "flush_failures": 0
+  },
+  "categories": {
+    "decision": {
+      "pass_rate": 0.0,
+      "fact_coverage": 0.0
+    },
+    "resolved_bug": {
+      "pass_rate": 0.0,
+      "fact_coverage": 0.0
+    },
+    "open_work": {
+      "pass_rate": 0.0,
+      "fact_coverage": 0.0
+    },
+    "change": {
+      "pass_rate": 0.0,
+      "fact_coverage": 0.0
+    },
+    "long_context": {
+      "pass_rate": 0.0,
+      "fact_coverage": 0.0
+    },
+    "security": {
+      "pass_rate": 0.0,
+      "fact_coverage": 0.0
+    },
+    "empty": {
+      "pass_rate": 0.0,
+      "fact_coverage": 0.0
+    },
+    "precision": {
+      "pass_rate": 0.0,
+      "fact_coverage": 0.0
+    },
+    "turkish": {
+      "pass_rate": 0.0,
+      "fact_coverage": 0.0
+    }
+  },
+  "regressions": [],
+  "ok": true
+}

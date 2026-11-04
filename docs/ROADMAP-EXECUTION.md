@@ -235,7 +235,7 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
 - Güncel hook/MCP yeteneklerinin doğrulanması; mevcut adaptör kuralları.
 - Yakalama, özetleme, geri çağırma testleri; gerçek oturum olmadan tam destek ilan etmeme.
 
-### [ ] BR-017 · OpenRouter / Direct API (P1, L)
+### [x] BR-017 · OpenRouter / Direct API (P1, L) — TAMAMLANDI
 - İzinli sağlayıcı adaptörü; güvenli anahtar saklama.
 - Kullanıcı seçimi olmadan ücretli sağlayıcıya geçmeme.
 - Sağlayıcı bazlı izin, maliyet, fallback; aynı eval setiyle kalite karşılaştırması.
@@ -899,5 +899,60 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
 - Gerçek oturum ayrıntıları (`br016-opencode-smoke.json`): oturum çıkış kodu 0; logda `loading plugin ... respected-brain.js`; logda `mcp connected server=respected-brain tools=6`; bridge `additionalContext` döndürdü; transcript'te `user` ve `assistant` satırları var; plugin şema hatası yok.
 - Bilinen sınırlar / risk: v1 `server` fallback'i gerçek OpenCode v1 ile denenmedi. Gerçek modelin Respected MCP araçlarını fiilen çağırması ayrıca doğrulanmadı; bu smoke bağlantıyı ve araç sayısını kanıtlar, araç yürütmesini değil.
 - Sonuç: **gerçek ortamda doğrulandı** (OpenCode v2.2.3; kurulum, plugin yüklemesi, MCP el sıkışması, transcript) ve tam paket testleriyle korunuyor.
+
+### BR-017 · OpenRouter / Direct API — TAMAMLANDI
+- Tarih/saat: 2026-11-04 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `d89ac87` (BR-016 sonrası)
+- Değişen dosyalar:
+  - `src/respected_brain/providers/openrouter.py` (yeni): OpenRouter adaptörü, DPAPI/0600 anahtar saklama, sınırlı hata kodları, kullanım/maliyet defteri.
+  - `src/respected_brain/providers/runner.py`: `LOCAL_PROVIDERS`/`PROVIDERS` ayrımı, `provider_allow_paid` kapısı, yalnızca text modunda OpenRouter çağrısı.
+  - `src/respected_brain/settings.py` ve `resources/defaults.json`: `openrouter` sağlayıcısı, `provider_allow_paid=false`, `openrouter_model`.
+  - `src/respected_brain/cli.py`: `credential status|set|clear openrouter`; anahtar argv/stdout'a yazılmaz.
+  - `tests/integrations/test_openrouter.py` (yeni): izin kapısı, kimlik bilgisi, DPAPI/0600, HTTP şekli, hata sızıntısı, maliyet defteri ve CLI testleri.
+  - `tests/evals/provider_compare.py` + `tests/evals/test_provider_compare.py` (yeni): aynı dataset SHA'sını zorunlu kılan kalite karşılaştırma aracı.
+  - `tests/evals/summarization.py`: `openrouter` model etiketi.
+  - `docs/ARCHITECTURE.md`: doğrudan API, anahtar saklama ve ücretli kapı notu.
+- Uygulama:
+  - OpenRouter yalnızca `text` modunda stdlib `urllib` ile tek POST yapar; workspace isteği `openrouter-workspace-unsupported` döndürür.
+  - Anahtar Windows'ta DPAPI ile `data_root/credentials/openrouter.bin` içinde, POSIX'te `0600` dosya olarak saklanır; `OPENROUTER_API_KEY` ortam değişkeni de okunur.
+  - `auto` modunda ücretli sağlayıcıya geçilmez; açık `summary_provider=openrouter` seçimi veya `provider_allow_paid=true` gerekir.
+  - Hata kodları sabittir (`openrouter-key-missing`, `openrouter-http-401:auth`, `openrouter-http-500:network`, ...); anahtar, istem ve yanıt gövdesi hata/loglara girmez.
+  - Kullanım ve `cost` alanları `state_dir/provider-usage.jsonl` dosyasına yazılır; anahtar bu dosyaya yazılmaz.
+- Komutlar ve sonuçlar:
+  - `python -m unittest tests.integrations.test_openrouter -v` → 10 test (9 OK, 1 skip: POSIX-only; Windows ortamı)
+  - `python -m unittest tests.evals.test_provider_compare tests.integrations.test_openrouter -v` → 13 test (12 OK, 1 skip)
+  - `python -m unittest tests.core.test_cli tests.integrations.test_multiai tests.integrations.test_provider_permissions -v` → 64 OK
+  - `python -m unittest discover -s tests -t .` → 1051 test OK, 16 skip (EXIT=0)
+  - `python -m tests.evals.summarization --provider openrouter --repeats 1 ...` → 12 senaryo, dataset SHA `058566edb9b8...`; anahtar yokken 12/12 `flush_failures`, ağ çağrısı yok.
+  - `python -m tests.evals.provider_compare br006-after.json br017-openrouter-nokey.json ...` → aynı dataset üzerinde karşılaştırma çalıştı; çıktı anahtar yokluğu kapısını gösterir, model kalitesi sonucu değildir.
+  - `python -m tests.evals.provider_compare br006-after.json br006-repeat2.json ...` → aynı dataset, 0 regresyon (araç determinizm kanıtı).
+- Kabul eşlemesi:
+  - İzinli sağlayıcı adaptörü ve güvenli anahtar saklama: adaptör, DPAPI/0600, ortam değişkeni ve sır sızdırmayan hatalar testli.
+  - Kullanıcı seçimi olmadan ücretli sağlayıcıya geçmeme: `auto` ve `provider_allow_paid=false` testlerinde OpenRouter çağrılmıyor.
+  - Sağlayıcı bazlı izin, maliyet, fallback: açık seçim/opt-in kapısı, fallback sırası, `provider-usage.jsonl` maliyet kaydı ve hata kodları testli.
+  - Aynı eval setiyle kalite karşılaştırması: karşılaştırma aracı aynı dataset SHA'sında çalıştırıldı; gerçek OpenRouter model kalitesi anahtar yokluğu nedeniyle **ölçülmedi**.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/providers/openrouter.py` → `8EE40D5675D682D48744D30BAEF7A32EDE880534F20848EB73FB96C4EA636F07`
+  - `src/respected_brain/providers/runner.py` → `41D00BB6910DD8FC510BF0A9AB717AA39BB1EBE6341986920EE24D5A8A8A67E3`
+  - `src/respected_brain/settings.py` → `CC61E15805E0884F7881AB3D1C77C9691BAED2777FAC42EC3DC92C1E8CE449B5`
+  - `src/respected_brain/resources/defaults.json` → `65CEB9C913071FAD5A7302450C874B98A04AE198EEA430C74B3D1BBF5E3EED3F`
+  - `src/respected_brain/cli.py` → `416130B3C3419FA8FAFF7F08BCA5AD4C8E754930357DEF59476D9437B9DA22BD`
+  - `tests/integrations/test_openrouter.py` → `A09A571EC4586CD4AD634B0192B532662470CDD7475DD35DD035CCA0992438A1`
+  - `tests/evals/provider_compare.py` → `8EF80405F196AC014DE3FFE31C4DE90301257368061833CB9CB81A64D66228D7`
+  - `tests/evals/test_provider_compare.py` → `AC7EAF9C7B60BC681F2DFE908AEE33E81C6858E88600F2640FBB0936A7282749`
+  - `tests/evals/summarization.py` → `B0F8F11CC447C1B258A70670E16D186949366625E50EF692B4C8D3BE0BDA9F0A`
+  - `tests/evals/results/br017-full-suite.log` → `FF9BFE92B6CBCB6B79C9355709B14F57079BD8D4A7569F466415F5D9E9F1D776` (yerel/ignore, commit edilmedi)
+  - `tests/evals/results/br017-openrouter-nokey.json` → `C8A70AFF6FAEA95B2DA8CC0A135F9F08C5E03145E9DA7B048C459D489D6E033A`
+  - `tests/evals/results/br017-openrouter-nokey.md` → `BB8ECA0B6105E82EFD48C649E0397A4B9BF0046DD605CAAB1AA857F8C1FE57B0`
+  - `tests/evals/results/br017-openrouter-compare.json` → `1074153654734081AEDE2346856567C1F44F67E84950F7CF722BF66360FADE69`
+  - `tests/evals/results/br017-openrouter-compare.md` → `801FBE68D6A88F8D9365415CF21EB81701D88F1476FD96E7E04A97DA6D8B0B94`
+  - `tests/evals/results/br017-provider-compare.json` → `9267E6DFA904D462B47E234977B14051AE1A4B8E120B38A74D5F8B7E4106AAA1`
+  - `tests/evals/results/br017-provider-compare.md` → `0E92B45F51CCAF657C5C984D65E95BE05B37B4548F7EBF97254C815653B020D3`
+- Bilinen sınırlar / risk:
+  - Gerçek ücretli OpenRouter çağrısı yapılmadı: `OPENROUTER_API_KEY` veya kayıtlı anahtar yoktu. Bu nedenle gerçek model kalitesi ve gerçek maliyet ölçülmedi; no-key koşusu yalnızca fail-closed kapıyı kanıtlar.
+  - POSIX'te anahtar OS keyring değil `0600` dosyadır; ev dizini izinlerine bağlıdır. Windows'ta DPAPI kullanılır.
+  - OpenRouter yalnızca `text` modunda desteklenir; workspace modu bilinçli olarak reddedilir.
+  - Canlı HTTP yolu yerel mock ile doğrulandı; gerçek uç nokta el sıkışması anahtar gerektirir.
+- Sonuç: **uygulandı ve test edildi**; gerçek ücretli API çağrısıyla doğrulanmadı.
 
 <!-- EVIDENCE:END -->

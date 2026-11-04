@@ -35,6 +35,7 @@ from respected_brain.core.config import ConfigStore
 from respected_brain.core.context import AppContext, ModelResult
 from respected_brain.memory import flush
 from respected_brain.providers.runner import ModelRunner
+from respected_brain.providers import openrouter
 from tests.support.files import make_context
 
 HERE = Path(__file__).resolve().parent
@@ -46,7 +47,7 @@ CATEGORIES = (
 )
 FACT_TYPES = ("decision", "rationale", "resolved_bug", "open_work", "change")
 SCHEMA_VERSION = "1"
-MODEL_LABELS = {"claude": "claude/haiku", "codex": "codex/default"}
+MODEL_LABELS = {"claude": "claude/haiku", "codex": "codex/default", "openrouter": f"openrouter/{openrouter.DEFAULT_MODEL}"}
 
 
 def _version() -> str:

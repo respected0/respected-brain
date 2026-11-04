@@ -13,7 +13,7 @@ from pathlib import Path
 from .core.config import ConfigStore, validate_config
 from .core.errors import SelectionError
 
-PROVIDERS = ["auto", "codex", "claude", "antigravity", "gemini", "cursor"]
+PROVIDERS = ["auto", "codex", "claude", "antigravity", "gemini", "cursor", "openrouter"]
 
 FIELDS = (
     {"key": "user_name", "type": "string", "label": "Adın", "default": "", "max_length": 40,
@@ -26,6 +26,10 @@ FIELDS = (
      "help": "Oturumları kasa notlarına özetleyen yerel AI aracı; auto kurulu olanı seçer."},
     {"key": "provider_fallback", "type": "boolean", "label": "Yedek özetleyici", "default": True,
      "help": "Seçilen AI aracı başarısız olursa diğer kurulu araçlar denenir."},
+    {"key": "provider_allow_paid", "type": "boolean", "label": "Ücretli API yedeğine izin ver", "default": False,
+     "help": "Kapalıyken OpenRouter yalnızca açıkça seçildiğinde kullanılır; auto modunda ücretli çağrı yapılmaz."},
+    {"key": "openrouter_model", "type": "string", "label": "OpenRouter modeli", "default": "openai/gpt-4o-mini", "max_length": 120,
+     "help": "OpenRouter doğrudan API'sinde kullanılacak model kimliği."},
     {"key": "capture_mode", "type": "enum", "label": "Hafıza yakalama", "default": "auto", "enum": ["auto", "manual"],
      "help": "auto: oturumlar bitince kendiliğinden özetlenir. manual: yalnızca siz istediğinizde işlenir."},
     {"key": "briefing_time", "type": "string", "label": "Sabah özeti saati", "default": "08:00", "max_length": 5,

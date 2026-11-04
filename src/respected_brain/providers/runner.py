@@ -16,10 +16,12 @@ from typing import Literal
 
 from ..core import platform as runtime_platform
 from ..core.context import AppContext, ModelResult
+from . import openrouter
 
 
 Mode = Literal["text", "workspace"]
-PROVIDERS = ("claude", "codex", "antigravity", "gemini", "cursor")
+LOCAL_PROVIDERS = ("claude", "codex", "antigravity", "gemini", "cursor")
+PROVIDERS = (*LOCAL_PROVIDERS, "openrouter")
 
 
 @dataclass(frozen=True)
@@ -51,14 +53,19 @@ def _windows_vault_binary(name: str, vault_root: Path | None = None) -> str | No
 def _configured_priority(preferences: dict) -> list[str]:
     custom_list = preferences.get("provider_priority")
     if isinstance(custom_list, list) and custom_list:
-        valid = [p.lower() for p in custom_list if isinstance(p, str) and p.lower() in PROVIDERS]
+        allowed = PROVIDERS if _paid_allowed(preferences) else LOCAL_PROVIDERS
+        valid = [p.lower() for p in custom_list if isinstance(p, str) and p.lower() in allowed]
         if valid:
-            return list(dict.fromkeys(valid + list(PROVIDERS)))
-    return list(PROVIDERS)
+            return list(dict.fromkeys(valid + list(LOCAL_PROVIDERS)))
+    return list(LOCAL_PROVIDERS)
 
 
 def _fallback_enabled(preferences: dict) -> bool:
     return preferences.get("provider_fallback") is not False
+
+
+def _paid_allowed(preferences: dict) -> bool:
+    return preferences.get("provider_allow_paid") is True
 
 
 def _available(preferred: str | None, preferences: dict) -> list[str]:
@@ -71,6 +78,8 @@ def _available(preferred: str | None, preferences: dict) -> list[str]:
     if preferred:
         names.append(preferred)
     names.extend(_configured_priority(preferences))
+    if _paid_allowed(preferences):
+        names.append("openrouter")
     return list(dict.fromkeys(names))
 
 
@@ -501,6 +510,25 @@ def run_model(
     is_auto = (preferred is None or preferred == "auto") and (_configured_provider(preferences) == "auto")
     last_error: tuple[str, str] | None = None
     for provider in candidates:
+        if provider == "openrouter":
+            if mode != "text":
+                if is_auto:
+                    last_error = ("openrouter-workspace-unsupported", provider)
+                    continue
+                return None, "openrouter-workspace-unsupported", provider
+            text, error = openrouter.complete(
+                prompt,
+                data_root=ctx.paths.data_root,
+                model=str(preferences.get("openrouter_model") or openrouter.DEFAULT_MODEL),
+                timeout=timeout,
+                state_dir=ctx.paths.state_dir,
+            )
+            if error is None:
+                return text, None, provider
+            if is_auto or _retryable_failure(error, ""):
+                last_error = (error, provider)
+                continue
+            return None, error, provider
         process_environment = environment.copy()
         process_environment["PYTHONIOENCODING"] = "utf-8"
         process_environment["PYTHONUTF8"] = "1"
@@ -605,4 +633,3 @@ def _find_executable(cmd: str) -> str | None:
                 return str(agy_bin)
 
     return None
-
