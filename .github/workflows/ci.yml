@@ -74,3 +74,19 @@ jobs:
         run: python -m unittest discover -s tests -t .
       - name: Verify diff whitespace
         run: git diff --check
+
+  source-linux:
+    name: source (ubuntu, Python 3.13)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: "3.13"
+      - name: Install editable package
+        run: python -m pip install -e ".[dev]"
+      - name: Run Python unit and integration tests
+        run: python -m unittest discover -s tests -t .
+      - name: Verify diff whitespace
+        run: git diff --check

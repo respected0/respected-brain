@@ -1222,4 +1222,34 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - Kurumsal MCP entegrasyonu bu görevde uygulanmadı ve doğrulanmadı.
 - Sonuç: **araştırma tamamlandı; kişisel ChatGPT masaüstü/web için bloke.**
 
+### BR-026 · Linux CI matrisi — TAMAMLANDI (uzak CI çalıştırılmadı)
+- Tarih/saat: 2026-11-04 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `2bbd234` (BR-025 sonrası)
+- Değişen dosyalar:
+  - `.github/workflows/ci.yml`: `source-linux` job'ı (`ubuntu-latest`, Python 3.13) eklendi; mevcut `source` Windows job'ındaki test ve whitespace komutları kullanıldı.
+  - `docs/ROADMAP.md`, `docs/ARCHITECTURE.md`, `docs/RELEASE-GATE.md`: CI job'ının eklendiği, uzak CI'ın çalıştırılmadığı ve Linux frozen/macOS açıklarının devam ettiği yazıldı.
+  - `tests/evals/results/br026-linux-ci.json` (yeni): workflow job listesi ve yerel Linux test sonucu.
+- Uygulama:
+  - `source-linux` job'ı `actions/checkout` ve `actions/setup-python` adımlarını mevcut job'larla aynı sabitlenmiş SHA'larla kullanır.
+  - Editable kurulum, `python -m unittest discover -s tests -t .` ve `git diff --check` çalıştırır; native Windows artefaktına ihtiyaç duymaz.
+  - Uzak GitHub Actions çalıştırılmadı; "CI geçti" iddiası yok.
+- Komutlar ve sonuçlar:
+  - `yaml.safe_load(.github/workflows/ci.yml)` → OK; job'lar: `native`, `source`, `source-linux`.
+  - WSL2 Ubuntu 26.04 LTS, Python 3.14: `python3 -m unittest discover -s tests -t .` → **1072 test OK, 33 skip** (254.386 sn, EXIT=0).
+  - Yerel Linux sonucu GitHub Actions'ın kanıtı değildir; yalnızca eklenen komutun Linux'ta çalıştığını gösterir.
+- Kabul eşlemesi:
+  - Linux kaynak testi artık CI matrisinde tanımlı; WSL2'de tam paket yeşil.
+  - macOS gerçek donanım ve Linux dondurulmuş paket kapsam dışı kaldı; yanlışlıkla tam platform desteği ilan edilmedi.
+- Artefaktlar (yol → sha256):
+  - `.github/workflows/ci.yml` → `0E1D3D27C90DF6DD980F906F7601D2E9BEEA3594FE6198C4E21AA0C611807AB6`
+  - `docs/ROADMAP.md` → `0C631CA85B69AC6FF33FA6E153C18F94A37EC198C69CB878E957DA4177B4D7E1`
+  - `docs/ARCHITECTURE.md` → `63117AD151B9C8F831EAD39C54CFE205785DA7D969BB59CCA5C92E328215B48C`
+  - `docs/RELEASE-GATE.md` → `5F5450E095D8B2CC9A569F181E5DC18B7C80F9B4AEBB19CDDCCBEA90D75BB43F`
+  - `tests/evals/results/br026-linux-ci.json` → `45E7B07A36ACA1F5077184935D2718CF946F39AE6C2F02D16AFEA676A8F9F0FF`
+- Bilinen sınırlar / risk:
+  - GitHub Actions üzerinde uzak çalıştırma yapılmadı; job'ın gerçek CI süresinde geçeceği doğrulanmadı.
+  - WSL Python 3.14, CI ise Python 3.13 kullanıyor; sürüm farkı küçük ama birebir aynı değil.
+  - macOS ve Linux frozen paket hâlâ doğrulanmadı.
+- Sonuç: **uygulandı; Linux kaynak test job'ı eklendi ve WSL2'de tam paket OK.**
+
 <!-- EVIDENCE:END -->

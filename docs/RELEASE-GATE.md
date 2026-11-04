@@ -14,7 +14,7 @@ Bu belge `0.1.0-beta.1` (`0.1.0b1`) yayın paketinin hangi kapılardan geçtiği
 | Fiziksel kurulum smoke'u | GEÇTİ | `tests/evals/results/br015-native-smoke.json` → 25/25 VERIFIED, `overall=VERIFIED` |
 | Hub ortak sözleşme conformance'ı | GEÇTİ | Hub deposunda `python -m unittest discover -s common/conformance -v` → 9 test OK; üç ürünün sözleşme kopyasını denetler |
 | Authenticode | UYGULANMADI | Sertifika yok; imzasız paket başarılı imza sayılmaz |
-| macOS / Linux / WSL | KISMEN | Windows x64 dondurulmuş paket doğrulandı; WSL2/Linux kaynak testleri gerçek (BR-019/BR-020); macOS gerçek donanım, Linux dondurulmuş paket ve CI doğrulanmadı |
+| macOS / Linux / WSL | KISMEN | Windows x64 dondurulmuş paket ve WSL2/Linux kaynak testleri gerçek (BR-019/BR-020); Ubuntu kaynak test job'ı CI matrisinde (BR-026), uzak CI çalıştırılmadı; macOS donanım ve Linux frozen doğrulanmadı |
 
 ## Fiziksel smoke kanıtı
 
