@@ -10,8 +10,9 @@
 - [ ] **OpenRouter / API tabanlı modeller — bloke**: `providers/openrouter.py` adaptörü, `credential set openrouter`
   kasası ve testler hazır. Gerçek ücretli çağrı, API anahtarı olmadığı için doğrulanmadı; `auto` modunda ücretli
   sağlayıcıya geçilmez, açık `summary_provider=openrouter` veya `provider_allow_paid=true` gerekir. Çin modelleri bu yoldan gelir.
-- [ ] **ChatGPT (masaüstü/web) — kişisel hesap için yol yok**: custom MCP/full MCP yalnızca Business, Enterprise ve Edu
-  müşterileri için ChatGPT web'de; mobilde yok, masaüstü hook'u yok (`docs/RESEARCH.md`).
+- [x] **ChatGPT (masaüstü/web) — kişisel hesap için bloke**: hook yok; custom MCP/full MCP yalnızca Business,
+  Enterprise ve Edu müşterileri için ChatGPT web'de. Kişisel hesap/masaüstü için belgelenmiş bir yol yok; ayrıntı
+  `docs/RESEARCH.md` ChatGPT MCP bölümünde.
 - [x] **Cursor gerçek oturum**: BR-021 ile transcript ve flush gerçek `cursor-agent` oturumunda doğrulandı.
 - [ ] **Gemini CLI gerçek oturum**: CLI bu makinede (Windows ve WSL) kurulu değil; hook ve test verisi hazır, gerçek oturum yok.
 

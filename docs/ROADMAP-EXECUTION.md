@@ -1193,4 +1193,33 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - Linux frozen paket ve macOS gerçek donanım hâlâ yok; CI matrisi BR-026'da ele alınacak.
 - Sonuç: **uygulandı; belgeler kod gerçekleri ve mevcut kanıtlarla hizalandı.**
 
+### BR-025 · ChatGPT hook/MCP araştırması — TAMAMLANDI (kişisel hesap için bloke)
+- Tarih/saat: 2026-11-04 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `47216f7` (BR-024 sonrası)
+- Değişen dosyalar:
+  - `docs/RESEARCH.md`: ChatGPT MCP ayrıntısı; hook yokluğu, plan kısıtı, kişisel hesap yolu ve MCP'nin otomatik bağlam olmadığı.
+  - `docs/ROADMAP.md`: ChatGPT maddesi kişisel hesap için bloke olarak kapatıldı.
+  - `tests/evals/results/br025-chatgpt-mcp.json` (yeni): kaynak durumu ve bulguların makine okunur kaydı.
+- Uygulama:
+  - OpenAI yardım sayfasının ilk fetch'i HTTP 200 döndü; 2026-11-04 yeniden kontrolünde bot koruması nedeniyle 403 alındı. 200 yanıtı yerel kayıtta saklandı ve metin oradan doğrulandı.
+  - Sayfadaki koşul doğrulandı: custom MCP/full MCP yalnızca Business, Enterprise ve Edu müşterileri için ChatGPT web'de; mobilde custom MCP yok.
+  - Masaüstü/web için oturum hook'u veya transcript yakalama yolu belgelenmediği için kişisel hesaplarda otomatik hafıza uygulanamaz.
+  - MCP araç çağrısının oturum başında deterministik bağlam enjeksiyonu anlamına gelmediği belgeye yazıldı.
+- Komutlar ve sonuçlar:
+  - İlk `curl -sL` → HTTP 200, 105.614 bayt HTML; yeniden kontrol → HTTP 403.
+  - Kayıtlı HTML'de iki kilit cümle bulundu: plan kısıtı ve "mobile? No - web only".
+  - `docs/RESEARCH.md` ChatGPT MCP bölümü ve `docs/ROADMAP.md` maddesi güncellendi.
+  - Kod değişikliği yok; davranış etkilenmedi.
+- Kabul eşlemesi:
+  - "Araştırma yazılacak" maddesi tamamlandı; kişisel ChatGPT için uygulanabilir yol olmadığı kanıtla kapatıldı.
+  - Kurumsal Business/Enterprise/Edu senaryosu ayrı ürün kararı olarak açık bırakıldı; yanlışlıkla desteklenmiş sayılmadı.
+- Artefaktlar (yol → sha256):
+  - `docs/RESEARCH.md` → `BE8A15C29554BE1C22491055D8FEE7166CA1F25F971BD981433C4D7E8BBD0F37`
+  - `docs/ROADMAP.md` → `2413FAAC01E22560B6920D0DE550767A6E1531CF84E839238A6875B368C80A84`
+  - `tests/evals/results/br025-chatgpt-mcp.json` → `63876FBB116D74331EAC6AE937816F0B85254E404329D9AD531F82D523CC59EF`
+- Bilinen sınırlar / risk:
+  - OpenAI plan/özellik koşulları değişebilir; erişim tarihi kaydedildi. Kaynak artık 403 verdiği için yeniden üretim aynı gün içinde her zaman mümkün olmayabilir.
+  - Kurumsal MCP entegrasyonu bu görevde uygulanmadı ve doğrulanmadı.
+- Sonuç: **araştırma tamamlandı; kişisel ChatGPT masaüstü/web için bloke.**
+
 <!-- EVIDENCE:END -->

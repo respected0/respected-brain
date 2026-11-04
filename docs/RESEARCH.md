@@ -36,6 +36,18 @@ Bu belge, Respected Brain'in haf?za ve ba?lam yakla??m?n? benzer ?r?nlerle kar??
 5. **Kan?tl? ba?lam b?t?esi:** BR-012 fixture'?nda full not 1103.458 token, compact-600 47.452 token ve ayn? pass oran? (%98); tasarruf %95.7 olarak ?l??ld?. D???k b?t?e (compact-60) %80 pass ile do?ruluk kayb?n? gizlemez.
 6. **MCP + hook birlikte:** MCP ara? y?zeyi ve oturum hook'lar? ayn? haf?zay? payla??r; yaln?zca sohbet i?i MCP'ye ba??ml? de?ildir.
 
+## ChatGPT MCP ayrıntısı
+
+ChatGPT için iki ayrı soru var: (1) oturum başında otomatik bağlam enjekte eden bir hook var mı, (2) MCP sunucusu bağlanabilir mi?
+
+- **Hook yok.** İncelenen OpenAI yardım sayfası yalnızca custom MCP sunucusu bağlama ve araç çağırma akışını anlatır; masaüstü veya web için oturum başlangıcı/transcript hook'u tanımlamaz.
+- **Custom MCP yalnızca Business, Enterprise ve Edu müşterileri için ChatGPT web'de.** Sayfa aynen şunu söyler: "Custom MCP server connections and full MCP support are available for ChatGPT Business and Enterprise/Edu customers on ChatGPT web." Mobilde custom MCP yoktur.
+- **Kişisel hesaplarda custom MCP bağlantısı belgelenmemiştir.** Business dışındaki kişisel planlar için bir yol gösterilmez; bu nedenle Respected Brain'in kişisel ChatGPT masaüstü/web oturumuna otomatik hafıza vermesi bugün uygulanabilir değildir.
+- **MCP araç çağrısı otomatik hafıza değildir.** Modelin aracı ne zaman çağıracağına karar vermesi gerekir; oturum başında deterministik bağlam enjeksiyonu ve transcript yakalama garanti edilmez.
+- **Uygun kurumsal çalışma alanı için yapılabilecek:** Respected Brain MCP sunucusunu (`respected-brain mcp`) yönetici tarafından eklenebilir hale getirmek. Bu, kişisel hesaplar için bir çözüm değildir ve bu depoda uygulanmış sayılmaz.
+
+**Karar:** kişisel ChatGPT masaüstü/web için hook veya desteklenen MCP yolu yok; madde bloke olarak kapatılır. Kurumsal Business/Enterprise/Edu web senaryosu ayrı bir ürün kararı gerektirir.
+
 ## Kararlar
 
 - **Vekt?r veritaban? ve harici embedding zorunlu hale getirilmeyecek.** Mem0/Zep'in g??l? oldu?u bu alan, yerel-?ncelikli ve anahtars?z ?al??ma hedefiyle ?eli?ir. ?ste?e ba?l? sa?lay?c? adapt?r? ileride ayr? bir madde olarak de?erlendirilebilir.
