@@ -220,7 +220,7 @@ Yayın kapısı, test sonuçları ve doğrulanmamış platform sınırları `doc
 
 | Konu | Durum |
 |---|---|
-| Kod imzası (Authenticode) | yok; SmartScreen uyarır |
+| Kod imzası (Authenticode) | üretim sertifikası yok; yalnızca self-signed test sertifikası var, SmartScreen uyarır |
 | macOS, Linux, WSL | Windows x64 dondurulmuş paket ve WSL2/Linux kaynak testleri doğrulandı; Ubuntu kaynak test job'ı CI matrisinde var, uzak CI çalıştırılmadı. macOS gerçek donanım ve Linux dondurulmuş paket doğrulanmadı |
 | Gemini CLI, Cursor | Cursor BR-021 ile gerçek oturumda doğrulandı; Gemini CLI bu makinede kurulu değil. Claude Code, Codex, Antigravity ve OpenCode gerçek oturumla sınandı (Windows). Codex eklenti hook'ları kişinin onayından (`/hooks`) sonra çalışır ve içerik değişince onay düşer |
 | Boşluklu program yolu | Codex ve Antigravity hook komutları tırnaksız olmalı: boşluklu yol Windows'un 8.3 kısa adıyla yazılır. Kısa ad yoksa Codex `& "yol"` biçimine döner, Antigravity (tırnakları yeniden kaçırır) ve WSL profili çalışmaz |

@@ -36,7 +36,8 @@
 
 ## Ürün ve yayın
 
-- [ ] Kurucuyu Authenticode ile imzalamak (SmartScreen uyarısı). Kod imzalama sertifikası gerekir; yok.
+- [ ] Kurucuyu Authenticode ile imzalamak (SmartScreen uyarısı). Üretim kod imzalama sertifikası yok; yalnızca
+  self-signed `CN=Respected Test Signer` test sertifikası var ve bu SmartScreen güveni sağlamaz.
 - [ ] macOS / Linux / WSL: Windows x64 dondurulmuş paket ve WSL2/Linux kaynak testleri gerçek (BR-019/BR-020);
   Ubuntu kaynak test job'ı CI matrisine eklendi (BR-026), ancak uzak CI çalıştırılmadı. macOS gerçek donanım,
   Linux dondurulmuş paket ve uzak CI doğrulaması açık.

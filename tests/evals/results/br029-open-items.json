@@ -1,0 +1,93 @@
+{
+  "checked_at": "2026-11-04",
+  "timezone": "Europe/Istanbul",
+  "task": "BR-029 open item and release-gate audit",
+  "full_suite": {
+    "platform": "Windows 11 x64",
+    "command": "py -m unittest discover -s tests -t .",
+    "result": "Ran 1073 tests in 426.566s",
+    "outcome": "OK (skipped=21)",
+    "exit_code": 0
+  },
+  "code_facts": {
+    "opencode_supported": true,
+    "semantic_min_score": 0.25,
+    "semantic_platform_guard": "PLATFORM_UNSUPPORTED before download/start; ollama suggested",
+    "index_refresh": "query-time stale check and refresh; no file watcher",
+    "openrouter_adapter": "src/respected_brain/providers/openrouter.py present",
+    "opencode_smoke": "tests/evals/results/br016-opencode-smoke.json overall=VERIFIED"
+  },
+  "environment": {
+    "openrouter_credential": {
+      "configured": false,
+      "source": null
+    },
+    "gemini_windows": "not-installed",
+    "gemini_wsl": "not-installed",
+    "wsl": "Ubuntu 26.04 LTS, Python 3.14.4",
+    "signtool": "not-installed",
+    "test_certificate": {
+      "subject": "CN=Respected Test Signer",
+      "issuer": "CN=Respected Test Signer",
+      "has_private_key": true,
+      "not_after": "2026-12-03",
+      "thumbprint": "C888E6DEEDD43B89C5B211953AEEB316005DAD42",
+      "production_trust": false,
+      "reason": "self-signed test certificate; not a public code-signing certificate"
+    },
+    "remote_ci": "workflow present; not run on GitHub Actions",
+    "macos": "no real hardware available",
+    "linux_frozen": "no frozen Linux artifact produced"
+  },
+  "open_items": [
+    {
+      "item": "OpenRouter real paid call",
+      "status": "blocked-external",
+      "reason": "no API key or stored credential"
+    },
+    {
+      "item": "Gemini CLI real session",
+      "status": "blocked-environment",
+      "reason": "gemini executable absent on Windows and WSL2"
+    },
+    {
+      "item": "Authenticode production signature",
+      "status": "blocked-external",
+      "reason": "no production code-signing certificate; self-signed test certificate does not establish SmartScreen trust"
+    },
+    {
+      "item": "macOS verification",
+      "status": "blocked-hardware",
+      "reason": "no macOS hardware"
+    },
+    {
+      "item": "Linux frozen package",
+      "status": "open",
+      "reason": "only Windows frozen artifact and Linux source tests exist"
+    },
+    {
+      "item": "Remote CI execution",
+      "status": "open",
+      "reason": "local WSL2 results are not GitHub Actions evidence"
+    },
+    {
+      "item": "Instant directory freshness",
+      "status": "known-design-limit",
+      "reason": "no file watcher; freshness is enforced on the next query by stale-check plus refresh"
+    }
+  ],
+  "closed_this_audit": [
+    "RELEASE-GATE full test evidence corrected from 1028/15 to 1073/21",
+    "Authenticode wording now distinguishes the self-signed test certificate from a production certificate"
+  ],
+  "limitations": [
+    "This audit changes documentation and evidence only; it does not create a production certificate, API key, macOS host, Linux frozen artifact, or remote CI run.",
+    "A self-signed certificate must never be reported as a passed Authenticode release gate.",
+    "The directory remains query-time fresh, not watch-time fresh."
+  ],
+  "artifacts_sha256": {
+    "docs/ARCHITECTURE.md": "50D2A9B4A5D1FE998E88DBC823ED91EDF5AD0AB568F60B0BAAACC3504E861128",
+    "docs/RELEASE-GATE.md": "74CD4A2A2865B74EEB1A441022081CDE12536CFFFF8961DC0AC0C49D4E53E0A9",
+    "docs/ROADMAP.md": "7EA9903361107F85D51924025C5D0A8A805A44DCA9A7F7DAF3DB24DF3DA55634"
+  }
+}

@@ -7,7 +7,7 @@ Bu belge `0.1.0-beta.1` (`0.1.0b1`) yayın paketinin hangi kapılardan geçtiği
 
 | Kapı | Durum | Kanıt |
 |---|---|---|
-| Tam birim ve entegrasyon testleri | GEÇTİ | `python -m unittest discover -s tests -t .` → 1028 test OK, 15 skip |
+| Tam birim ve entegrasyon testleri | GEÇTİ | `python -m unittest discover -s tests -t .` → 1073 test OK, 21 skip (Windows 11 x64, 2026-11-04, 426.566 sn, EXIT=0) |
 | Şema migration ve eski sürüm fixture'ları | GEÇTİ | `python -m unittest tests.installation.test_migrate -v` → 6 test OK; `STEPS` yalnızca gerçek boşlukları içerir; `tests/fixtures/releases/0.1.0-beta.1/` |
 | Dondurulmuş Windows paketi | GEÇTİ | `python packaging/build_dist.py --platform windows --output dist` → `0.1.0b1` |
 | Dağıtım bütünlüğü | GEÇTİ | `python -m unittest tests.packaging.test_distribution -v` → 3 test OK |
@@ -34,7 +34,20 @@ Bu smoke sentetik döküm ve geçici kökler kullanır. Gerçek kullanıcı kasa
 
 - Windows x64 paketi için test ve veri bütünlüğü kapıları geçti.
 - Çok platformlu yayın kapısı geçmedi; doğrulanmamış platformlar desteklenmiş sayılmaz.
-- Kod imzası olmadığı için SmartScreen uyarısı beklenir; Authenticode kapısı açık kalır.
+- Üretim kod imzalama sertifikası olmadığı için SmartScreen uyarısı beklenir; Authenticode kapısı açık kalır.
+
+## Açık dış bağımlılıklar
+
+BR-029 denetiminde kalan maddeler yeniden kontrol edildi; bunlar kod hatası değil, dış kaynak, donanım veya gerçek üretim kimliği gerektiriyor:
+
+| Madde | Gerçek durum | Neden açık |
+|---|---|---|
+| Authenticode | `signtool` kurulu değil; kullanıcı deposunda yalnızca `CN=Respected Test Signer` self-signed test sertifikası var | Üretim kod imzalama sertifikası yok; test sertifikası SmartScreen güveni sağlamaz |
+| OpenRouter gerçek çağrı | `credential status` → `configured=false`, `source=null` | API anahtarı yok; ücretli çağrı yapılmadı |
+| Gemini CLI gerçek oturum | Windows ve WSL2'de `gemini` kurulu değil | Kurulum ve gerçek oturum yapılmadı |
+| macOS | Gerçek macOS donanımı yok | Yalnızca platform simülasyonları çalışıyor |
+| Linux dondurulmuş paket | Linux frozen artefaktı üretilmedi | WSL2/Linux kaynak testleri gerçek, frozen paket değil |
+| Uzak CI | `.github/workflows/ci.yml` içinde job tanımlı | GitHub Actions üzerinde çalıştırılmadı; yerel Linux sonucu CI kanıtı değildir |
 
 ## Yeniden üretim
 

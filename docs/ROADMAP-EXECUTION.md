@@ -1317,4 +1317,36 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - Gelecekteki şema değişikliğinde `SHIPPED` ve fixture sürümü birlikte güncellenmezse test doğru şekilde kırılacaktır.
 - Sonuç: **sözleşme ve invariant uygulandı; odak testleri iki platformda geçti.**
 
+### BR-029 · Açık madde ve yayın kapısı denetimi — TAMAMLANDI
+- Tarih/saat: 2026-11-04 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `258f237` (BR-028 sonrası)
+- Değişen dosyalar:
+  - `docs/RELEASE-GATE.md`: tam paket kanıtı `1073 test OK, 21 skip` olarak düzeltildi; dış bağımlılık tablosu eklendi.
+  - `docs/ROADMAP.md`: Authenticode maddesi üretim sertifikası ile self-signed test sertifikasını ayırt ediyor.
+  - `docs/ARCHITECTURE.md` §9: imza satırı gerçek sertifika durumuna çekildi.
+  - `tests/evals/results/br029-open-items.json` (yeni): kod, ortam ve açık madde denetiminin makine okunur kaydı.
+- Uygulama:
+  - Belgelerdeki kod iddiaları yeniden doğrulandı: `opencode` destekli, `MIN_SCORE=0.25`, platform kapısı `PLATFORM_UNSUPPORTED`, sorgu öncesi stale kontrolü ve OpenRouter adaptörü mevcut.
+  - Açık maddeler tek tek sınıflandırıldı: dış anahtar, kurulu olmayan araç, gerçek donanım, üretim sertifikası, Linux frozen artefaktı ve uzak CI.
+  - Authenticode için yalnızca self-signed `CN=Respected Test Signer` test sertifikası bulundu; üretim kapısı geçti sayılmadı.
+- Komutlar ve sonuçlar:
+  - `py -m unittest discover -s tests -t .` → **1073 test OK, 21 skip** (426.566 sn, EXIT=0).
+  - `py -m respected_brain credential status` → `{configured: false, source: null}`.
+  - Windows `Get-Command gemini` → kurulu değil; WSL2 Ubuntu 26.04 / Python 3.14.4 `command -v gemini` → kurulu değil.
+  - `Get-Command signtool` → kurulu değil; sertifika konusu ve issuer `CN=Respected Test Signer`, `HasPrivateKey=True`.
+  - `git diff --check` → OK (EXIT=0); `br029-open-items.json` JSON parse → OK.
+- Kabul eşlemesi:
+  - Eski `1028 test OK, 15 skip` kanıtı gerçek tam paket sonucuyla değiştirildi.
+  - Kodla çelişen bir açık madde kalmadı; dış bağımlılıklar gerekçesiyle açık tutuldu ve tamamlanmış gibi gösterilmedi.
+- Artefaktlar (yol → sha256):
+  - `docs/ARCHITECTURE.md` → `50D2A9B4A5D1FE998E88DBC823ED91EDF5AD0AB568F60B0BAAACC3504E861128`
+  - `docs/RELEASE-GATE.md` → `74CD4A2A2865B74EEB1A441022081CDE12536CFFFF8961DC0AC0C49D4E53E0A9`
+  - `docs/ROADMAP.md` → `7EA9903361107F85D51924025C5D0A8A805A44DCA9A7F7DAF3DB24DF3DA55634`
+  - `tests/evals/results/br029-open-items.json` → `883C0FD8658CF432CEB13C465551006A8FE720B30EEC81119B4A97CF90309AC3`
+- Bilinen sınırlar / risk:
+  - Gerçek OpenRouter çağrısı, Gemini oturumu, macOS, Linux frozen paket ve uzak CI bu denetimde de yapılmadı; bunlar dış kaynak veya donanım gerektiriyor.
+  - Self-signed test sertifikası üretim imzası yerine geçmez; SmartScreen uyarısı sürer.
+  - Dizin tazeliği hâlâ sorgu anında; dosya izleyici eklenmedi.
+- Sonuç: **denetim tamamlandı; belgeler gerçek durumla hizalandı, dış bağımlılıklar açıkça bloke kaldı.**
+
 <!-- EVIDENCE:END -->
