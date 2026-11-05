@@ -10,6 +10,7 @@ from respected_brain import __version__
 from respected_brain.core.platform import path_within_vault
 from respected_brain.core.coordination import guarded_writer
 from respected_brain.search.engine import SearchEngine
+from respected_brain.search.watch import SearchIndexWatcher
 from respected_brain.memory import decisions as decision_lifecycle
 from respected_brain.memory import context as memory_context
 from respected_brain.memory import events as memory_events
@@ -37,6 +38,7 @@ class RespectedMcpServer:
         self.vault_root = ctx.paths.vault_root
         self.os_name, self.companion_name = _detect_vault_identity(ctx)
         self.search_engine = SearchEngine(ctx)
+        self.index_watcher = SearchIndexWatcher(self.search_engine)
 
     MAX_NOTE_BYTES = MAX_NOTE_BYTES
 
@@ -359,6 +361,13 @@ class RespectedMcpServer:
 
     def run_stdio(self) -> None:
         """Handle one JSON-RPC request per line and survive malformed clients."""
+        self.index_watcher.start()
+        try:
+            self._serve_requests()
+        finally:
+            self.index_watcher.stop()
+
+    def _serve_requests(self) -> None:
         for line in sys.stdin:
             if not line.strip():
                 continue

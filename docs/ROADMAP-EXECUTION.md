@@ -1419,4 +1419,49 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - `ubuntu-latest` imajı, PyInstaller/glibc uyumu ve smoke'un temiz CI ortamındaki davranışı ilk uzak koşuda görülecek.
   - macOS, Authenticode, OpenRouter, Gemini CLI ve bare-metal Linux hâlâ dış kaynak/donanım gerektiriyor.
 - Sonuç: **Linux frozen build/smoke job'ı CI matrisine eklendi; uzak CI doğrulanmadı.**
+
+### BR-032 · MCP süreci içinde dizin izleyicisi — TAMAMLANDI
+- Tarih/saat: 2026-11-05 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `3401d80` (BR-031 sonrası)
+- Değişen dosyalar:
+  - `src/respected_brain/search/watch.py` (yeni): standart kütüphane yoklama izleyicisi; debounce, büyük kasa seyreltmesi ve yalnızca FTS tazeleme.
+  - `src/respected_brain/integrations/mcp/server.py`: izleyici uzun ömürlü `run_stdio()` ile başlar, `finally` ile durur.
+  - `tests/search/test_watch.py` (yeni): düzenleme, debounce, yinelenen indeksleme, meşgul yazıcı, büyük kasa, iş parçacığı kapatma ve MCP yaşam döngüsü testleri.
+  - `docs/ARCHITECTURE.md`, `docs/COMMANDS.md`, `docs/FOOTPRINT.md`, `docs/RELEASE-GATE.md`, `docs/ROADMAP.md`, `docs/USAGE.md`: kapsam, sınır ve tazeleme davranışı güncellendi.
+  - `tests/evals/results/br032-index-watcher.json` (yeni): makine okunur kapsam ve test kaydı.
+- Uygulama:
+  - Ayrı süreç, servis veya daemon eklenmedi; izleyici MCP stdio sürecinin içinde daemon iş parçacığı olarak çalışır ve süreç kapanınca durur.
+  - Varsayılan 1 sn yoklama ve 0.25 sn debounce ile değişiklik algılanır; `SearchEngine.index_vault` artımlı FTS dizinini yazar.
+  - İzleyici `refresh_semantic` çağırmaz; anlamsal vektörler yalnızca normal tazeleme ve semantic komutlarıyla güncellenir.
+  - Aynı anda ikinci indeks çalışmaz; `BusyError`, `OSError` ve `sqlite3.Error` durumunda tazeleme sonraki yoklamaya bırakılır.
+  - mtime tabanlı tarama 5000 dosyada kesilir; üstünde durum `unknown` olur ve yoklama 30 sn'ye seyreltilir.
+  - MCP kapalıyken sorgu öncesi stale kontrolü, oturum ve günlük görev tazelemesi geçerlidir. mtime'ı korunan düzenlemeler sorgu anındaki SHA-256 doğrulamasına kalır.
+- Komutlar ve sonuçlar:
+  - `py -m unittest tests.search.test_watch -v` → **5 test OK** (EXIT=0).
+  - `py -m unittest tests.search.test_watch tests.search.test_br010_freshness tests.search.test_freshness tests.integrations.test_mcp_and_features -v` → **55 test OK**.
+  - `py -m unittest discover -s tests -t .` → **1078 test OK, 21 skip** (386.526 sn); `git diff --check` → OK; `br032-index-watcher.json` JSON parse → OK.
+  - Dış denetim: `credential status` → `configured=false, source=null`; `gemini` ve `signtool` kurulu değil; yalnızca `CN=Respected Test Signer` self-signed sertifikası var.
+- Kabul eşlemesi:
+  - Açık "Dizin anlık değil" maddesinin MCP açıkken beklenen kapsamı uygulandı ve test edildi.
+  - MCP kapalıyken anlık olma iddiası yok; mevcut sorgu/oturum/günlük görev yolu korunuyor.
+  - Semantic kurulum, ayrı süreç ve gerçek kullanıcı kasası iddiası eklenmedi.
+- Artefaktlar (yol → sha256):
+  - `src/respected_brain/search/watch.py` → `F2DC7C373725A408C1F0410FCF6DEC16CE630F4C2E0273238D039368BE1A9A76`
+  - `src/respected_brain/integrations/mcp/server.py` → `D7402CAF6B6C9BA4DB502E855AEFC47C9B89D05E87B5FB9EF2F5BB75B5094FCF`
+  - `tests/search/test_watch.py` → `20E9ECB9604DDCB7939BE3AD5707DE147CF9C05E0011FE021FB43722F729DCDB`
+  - `tests/evals/results/br032-index-watcher.json` → `83AF1376C1222168270D20BEEFAE001A11D4CDE5A928BD3469D19957FF8EF18B`
+  - `docs/ARCHITECTURE.md` → `F25BECD1B6733D1EA1DBE349F53C39EA5E4C129DF578A32D8B3FBC0A09751587`
+  - `docs/COMMANDS.md` → `331844BE32EDD07647F9FA6ACAA7876132980AA08259DCA81DB913AAA3A5B7BE`
+  - `docs/FOOTPRINT.md` → `1ED1451665AD65454EBC3AE3047855878166B513789C722DE84E180EB63B2AA5`
+  - `docs/RELEASE-GATE.md` → `7DC2BBA2E745388187EF66A1BA47078A7866C1F585921E7311A68AB88AA818C0`
+  - `docs/ROADMAP.md` → `945D571FE5CA53596021A8B0F5DC12F2BBD58B15281DC878D0C0D4458654F92B`
+  - `docs/USAGE.md` → `E5DA59C17B31A32BD886BA2E022736543BFBC982BF5ADD91434C21156BA9A9D8`
+  - `docs/ROADMAP-EXECUTION.md`: kendi kanıt bloğunu taşıdığı için kendi hash'i listelenmiyor.
+- Bilinen sınırlar / risk:
+  - İzleyici mtime'a dayanır; mtime'ı korunan düzenleme sorgu anındaki SHA-256 doğrulamasına kalır.
+  - Anlık tazeleme yalnızca uzun ömürlü MCP süreci açıkken geçerlidir; MCP kapalıyken sorgu/oturum/günlük görev yolu kullanılır.
+  - Anlamsal vektörler izleyici tarafından kurulmaz; semantic kurulum ayrı kalır.
+  - 5000'den büyük kasada yoklama 30 sn'ye seyreltilir; gerçek kullanıcı kasası üzerinde ölçüm yapılmadı.
+  - OpenRouter gerçek çağrısı, Gemini CLI oturumu, Authenticode, macOS, bare-metal Linux ve uzak CI dış kaynak/donanım gerektirdiği için açık kaldı.
+- Sonuç: **uygulandı ve test edildi; MCP açıkken dizin değişiklikleri kendiliğinden FTS dizinine girer, MCP kapalıyken önceki tazeleme yolu geçerlidir.**
 <!-- EVIDENCE:END -->
