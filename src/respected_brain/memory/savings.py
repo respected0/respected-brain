@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 BENCHMARK = {
-    "source": "tests/evals/results/br012-progressive.json",
+    "source": "docs/evidence/br012-progressive.json",
     "baseline_view": "full",
     "compact_view": "compact-600",
     "full_tokens": 1103.458,

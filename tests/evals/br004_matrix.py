@@ -1,7 +1,7 @@
 """BR-004 read-only AI-client integration matrix.
 
 A client is declared ``full`` only when a real session result is recorded in the
-evidence file (default: ``tests/evals/results/br004-evidence.json``). Everything
+evidence file (default: ``docs/evidence/br004-evidence.json``). Everything
 else stays explicitly ``limited``; configuration presence is never promoted to a
 real-session pass.
 """
@@ -27,7 +27,7 @@ EXECUTABLES = {
     "antigravity": ("agy", "antigravity"),
     "cursor": ("cursor-agent", "cursor"),
 }
-DEFAULT_EVIDENCE = ROOT / "tests/evals/results/br004-evidence.json"
+DEFAULT_EVIDENCE = ROOT / "docs/evidence/br004-evidence.json"
 
 
 def _read(path: Path) -> str:

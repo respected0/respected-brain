@@ -7,16 +7,16 @@ Sonraki her hafıza değişikliği aynı veri seti ve aynı komutla ölçülür.
 - Ölçüm tarihi: 2026-10-30 (Europe/Istanbul)
 - Veri seti: `tests/evals/scenarios.json`, 50 senaryo
 - Veri seti sha256: `C0CDB91C5E9960DA32E09DBDEFDD1A574790C2E06D6CFD419BB85B402C60E662`
-- Makine okunur rapor: `tests/evals/results/baseline-0.1.0-beta.1.json`
-- İnsan okunur rapor: `tests/evals/results/baseline-0.1.0-beta.1.md`
+- Makine okunur rapor: `docs/evidence/baseline-0.1.0-beta.1.json`
+- İnsan okunur rapor: `docs/evidence/baseline-0.1.0-beta.1.md`
 
 ## Yeniden üretim
 
 ```powershell
 # respected-brain/ içinde
 python -m tests.evals.harness --modes none,fts,hybrid --repeats 3 `
-  --json-out tests/evals/results/baseline-0.1.0-beta.1.json `
-  --md-out tests/evals/results/baseline-0.1.0-beta.1.md
+  --json-out docs/evidence/baseline-0.1.0-beta.1.json `
+  --md-out docs/evidence/baseline-0.1.0-beta.1.md
 ```
 
 Aynı fixture, sürüm ve ayarla iki çalıştırma birebir aynı senaryo skorlarını verdi
@@ -58,7 +58,7 @@ Yeni bir rapor üretildikten sonra:
 
 ```powershell
 python -m tests.evals.compare `
-  tests/evals/results/baseline-0.1.0-beta.1.json `
+  docs/evidence/baseline-0.1.0-beta.1.json `
   tests/evals/results/yeni-rapor.json --json-out tests/evals/results/karsilastirma.json
 ```
 

@@ -101,7 +101,7 @@ logs/
 
 # Local evaluation runs and scratch probes (real session output stays outside Git)
 tests/evals/runs/
-tests/evals/results/_*
+tests/evals/results/
 
 # CI smoke outputs
 native-smoke.json

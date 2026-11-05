@@ -49,7 +49,7 @@ class ContextUsageTest(unittest.TestCase):
     def test_benchmark_matches_the_checked_in_br012_report(self):
         import json
         from pathlib import Path
-        report = json.loads((Path(__file__).resolve().parents[1] / "evals/results/br012-progressive.json").read_text(encoding="utf-8"))
+        report = json.loads((Path(__file__).resolve().parents[2] / "docs/evidence/br012-progressive.json").read_text(encoding="utf-8"))
         views = report["views"]
         from respected_brain.memory.savings import BENCHMARK
         self.assertEqual(views["full"]["tokens"], BENCHMARK["full_tokens"])

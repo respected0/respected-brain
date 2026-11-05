@@ -76,7 +76,7 @@ def transcript_rows(data: Path, vault_id: str):
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--package", type=Path, default=ROOT / "dist/RespectedBrain")
-    parser.add_argument("--output", type=Path, default=ROOT / "tests/evals/results/br016-opencode-smoke.json")
+    parser.add_argument("--output", type=Path, default=ROOT / "docs/evidence/br016-opencode-smoke.json")
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--prompt", default="Reply with exactly OK")
     parser.add_argument("--timeout", type=int, default=300)
