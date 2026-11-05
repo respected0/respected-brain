@@ -8,7 +8,7 @@
   ],
   "provider_fallback": true,
   "provider_allow_paid": false,
-  "openrouter_model": "openai/gpt-4o-mini",
+  "openrouter_model": "openrouter/free",
   "integrations": {
     "global": false,
     "mcp": false,

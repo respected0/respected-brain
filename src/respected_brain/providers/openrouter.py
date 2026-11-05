@@ -18,7 +18,7 @@ from ..core.config import atomic_write_bytes
 
 
 ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
-DEFAULT_MODEL = "openai/gpt-4o-mini"
+DEFAULT_MODEL = "openrouter/free"
 PROTECTED = b"RBOR1D\0"
 PLAIN = b"RBOR1P\0"
 MAX_RESPONSE = 2 * 1024 * 1024

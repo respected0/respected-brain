@@ -136,8 +136,10 @@ respected-brain config set user_name=Ayşe briefing_time=07:30
 | `user_name` | Adınız; asistan ve sabah özeti size bu adla hitap eder | boş |
 | `user_bio` | Kasa şablonunda sizi tanıtan satır | boş |
 | `assistant_name` | Asistanın adı; kasadaki kimlik ve AI araçlarına verilen araç adları bunu kullanır | boş |
-| `summary_provider` | Özetleyici AI: `auto`, `codex`, `claude`, `antigravity`, `cursor` | `auto` |
+| `summary_provider` | Özetleyici AI: `auto`, `codex`, `claude`, `antigravity`, `cursor`, `openrouter` | `auto` |
 | `provider_fallback` | Seçilen araç başarısız olursa diğer kurulu araçları dene | `true` |
+| `provider_allow_paid` | `auto` modunda sıra sonunda OpenRouter denensin; kapalıyken yalnızca `summary_provider=openrouter` ile açıkça seçilince kullanılır | `false` |
+| `openrouter_model` | OpenRouter model kimliği. Varsayılan `openrouter/free` ücretsiz modellerden birini seçer. Ücretsiz bir model için `:free` ile biten bir kimlik de yazılabilir; `:free` olmayan bir model yazarsanız çağrı OpenRouter hesabınızdan düşer. Anahtar: `python -m respected_brain credential set openrouter` | `openrouter/free` |
 | `capture_mode` | `auto`: oturumlar bitince özetlenir; `manual`: yalnızca siz isteyince | `auto` |
 | `briefing_time` | Sabah özeti görevinin saati (SS:DD) | `08:00` |
 | `mcp_write` | AI araçları MCP ile gelen kutusuna geri alınabilir not yazabilsin | `false` |
