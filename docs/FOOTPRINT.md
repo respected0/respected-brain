@@ -2,7 +2,7 @@
 
 Bu belge, Brain'i kurduğunuzda, ayarlarını değiştirdiğinizde, kullandığınızda ve kaldırdığınızda **bilgisayarınızda hangi
 dosyanın nerede, hangi şartla ve neden oluştuğunu** anlatır. Kod okunarak ve boş bir kullanıcı klasöründe gerçek kurucu
-çalıştırılarak doğrulandı (`0.1.0-beta.1`). Genel kullanım için [USAGE.md](USAGE.md), iç yapı için
+çalıştırılarak doğrulandı (`0.1.0-beta.2`). Genel kullanım için [USAGE.md](USAGE.md), iç yapı için
 [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## 1. Tek bakışta
