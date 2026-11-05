@@ -52,7 +52,7 @@ BR-029 denetiminde kalan maddeler yeniden kontrol edildi; bunlar kod hatası de�
 | Madde | Gerçek durum | Neden açık |
 |---|---|---|
 | Authenticode | `signtool` kurulu değil; kullanıcı deposunda yalnızca `CN=Respected Test Signer` self-signed test sertifikası var | Üretim kod imzalama sertifikası yok; test sertifikası SmartScreen güveni sağlamaz |
-| OpenRouter gerçek çağrı | `credential status` → `configured=false`, `source=null` | API anahtarı yok; ücretli çağrı yapılmadı |
+| OpenRouter gerçek çağrı | `credential status` → `configured=true`, `protection=dpapi`; ücretsiz modelle gerçek çağrı başarılı | Ücretli çağrı ve maliyet kapısı gerçek bakiyeyle doğrulanmadı |
 | macOS | Gerçek macOS donanımı yok | Yalnızca platform simülasyonları çalışıyor |
 | Bare-metal Linux / diğer dağıtımlar | Yalnızca WSL2 Ubuntu üzerinde Linux x64 dondurulmuş paket doğrulandı | Fiziksel Linux makinesi ve diğer dağıtımlar denenmedi |
 | Uzak CI | `.github/workflows/ci.yml` içinde Windows native/source, Ubuntu source ve Linux frozen build/smoke job'ları tanımlı | GitHub Actions üzerinde çalıştırılmadı; yerel Linux sonucu CI kanıtı değildir |

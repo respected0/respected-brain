@@ -7,9 +7,10 @@
 - [x] **OpenCode** desteği: hook ve MCP kaydı (`integrations/`). Yerel plugin, JSONL döküm ve
   `additionalContext` köprüsü eklendi; OpenCode v2.2.3 ile gerçek oturumda plugin yüklemesi, MCP el sıkışması ve
   transcript doğrulandı (`docs/ROADMAP-EXECUTION.md` BR-016). v1 `server` fallback'i ve araç yürütmesi smoke kapsamı dışında.
-- [ ] **OpenRouter / API tabanlı modeller — bloke**: `providers/openrouter.py` adaptörü, `credential set openrouter`
-  kasası ve testler hazır. Gerçek ücretli çağrı, API anahtarı olmadığı için doğrulanmadı; `auto` modunda ücretli
-  sağlayıcıya geçilmez, açık `summary_provider=openrouter` veya `provider_allow_paid=true` gerekir. Çin modelleri bu yoldan gelir.
+- [ ] **OpenRouter / API tabanlı modeller — kısmen doğrulandı**: `providers/openrouter.py` adaptörü, `credential set openrouter`
+  kasası (DPAPI) ve testler hazır. Gerçek anahtarla ücretsiz bir modelde (`:free`) çağrı başarılı oldu. Ücretli çağrı ve gerçek
+  `cost` kaydı doğrulanmadı (bakiye yok); `auto` modunda ücretli sağlayıcıya geçilmez, açık `summary_provider=openrouter`
+  veya `provider_allow_paid=true` gerekir. Çin modelleri bu yoldan gelir.
 - [x] **ChatGPT (masaüstü/web) — kişisel hesap için bloke**: hook yok; custom MCP/full MCP yalnızca Business,
   Enterprise ve Edu müşterileri için ChatGPT web'de. Kişisel hesap/masaüstü için belgelenmiş bir yol yok; ayrıntı
   `docs/RESEARCH.md` ChatGPT MCP bölümünde.
