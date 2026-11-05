@@ -9,8 +9,8 @@ Bu belge `0.1.0-beta.2` (`0.1.0b2`) yayın paketinin hangi kapılardan geçtiği
 |---|---|---|
 | Tam birim ve entegrasyon testleri | GEÇTİ | Windows 11 x64: 1078 test OK, 21 skip (2026-11-05, 386.526 sn); WSL2 Ubuntu 26.04 / Python 3.14.4: 1073 test OK, 32 skip (2026-11-05, 275.888 sn, BR-032 öncesi); EXIT=0 |
 | Şema migration ve eski sürüm fixture'ları | GEÇTİ | `python -m unittest tests.installation.test_migrate -v` → 6 test OK; `STEPS` yalnızca gerçek boşlukları içerir; `tests/fixtures/releases/0.1.0-beta.1/` |
-| Dondurulmuş Windows paketi | GEÇTİ | `python packaging/build_dist.py --platform windows --output dist` → `0.1.0b1` |
-| Dondurulmuş Linux paketi | GEÇTİ | WSL2 Ubuntu'da `python3 packaging/build_dist.py --platform linux --output dist-linux` → `0.1.0b1`; `docs/evidence/br030-linux-smoke.json` → 25/25 VERIFIED, `overall=VERIFIED` |
+| Dondurulmuş Windows paketi | GEÇTİ | `python packaging/build_dist.py --platform windows --output dist` → `0.1.0b2` (`distribution.json` sürümü) |
+| Dondurulmuş Linux paketi | GEÇTİ | WSL2 Ubuntu'da `python3 packaging/build_dist.py --platform linux --output dist-linux` → `0.1.0b1` (kanıt beta.1 paketinden; beta.2 Linux paketi CI işinde üretilir, yerelde yeniden doğrulanmadı); `docs/evidence/br030-linux-smoke.json` → 25/25 VERIFIED, `overall=VERIFIED` |
 | Dağıtım bütünlüğü | GEÇTİ | `python -m unittest tests.packaging.test_distribution -v` → 3 test OK |
 | Fiziksel kurulum smoke'u | GEÇTİ | `docs/evidence/br015-native-smoke.json` → 25/25 VERIFIED, `overall=VERIFIED` |
 | MCP dizin izleyicisi | GEÇTİ | `py -m unittest tests.search.test_watch -v` → 5 test OK; uzun ömürlü MCP süreci ~1 sn yoklamayla FTS dizinini tazeler, ayrı süreç/servis yoktur |
