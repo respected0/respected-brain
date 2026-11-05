@@ -102,10 +102,14 @@ içe aktarmaz.
   Bir sonuç yalnızca notun şimdiki SHA-256'sı dizinlendiği andakine eşitse döner (silinen ya da değişen notun eski metni
   sızmaz; bunlar `dropped` ve `dropped_stale` sayılarında görünür). Sınırlar: sorgu 1–200 karakter ve en fazla 12 terim,
   en fazla 20 sonuç, parça 40–400 karakter; not gövdesinin tamamı dönmez.
-- **Dizin güncelliği.** Dizini ürünün kendi süreçleri artımlı olarak tazeler: `index-refresh`, her AI oturumu başında
-  başlayan arka plan `flush --maybe-compile`, her `flush` sonu, sabah görevi ve her `memory.write` sonrası. Dosya izleyici
-  yoktur: oturum dışında düzenlenen bir not bir sonraki oturumda ya da günlük görevde dizine girer. Dizin notların
-  önbelleğidir: bozulmuş bir dosya (kesik ya da hasarlı sayfalar) silinip notlardan yeniden kurulur, kullanıcıya hata göstermez.
+- **Dizin güncelliği.** Uzun ömürlü MCP stdio süreci kasayı varsayılan 1 sn aralıkla yoklar ve değişiklikte artımlı FTS
+  dizinini kendi içinde tazeler; ayrı süreç, servis ya da daemon yoktur, anlamsal vektörler bu izleyicide kurulmaz.
+  Ürünün diğer süreçleri de tazeler: `index-refresh`, her AI oturumu başında başlayan arka plan `flush --maybe-compile`,
+  her `flush` sonu, sabah görevi ve her `memory.write` sonrası. MCP kapalıyken oturum dışı düzenleme sorgu öncesi stale
+  kontrolü, sonraki oturum ya da günlük görevle dizine girer. İzleyici mtime'a dayanır; mtime'ı korunan düzenleme sorgu
+  sırasındaki SHA-256 doğrulamasıyla yakalanır. 5000 dosyadan büyük kasada durum `unknown` olur ve yoklama 30 sn'ye
+  seyreltilir. Dizin notların önbelleğidir: bozulmuş bir dosya (kesik ya da hasarlı sayfalar) silinip notlardan yeniden
+  kurulur, kullanıcıya hata göstermez.
   `memory.index.refresh` yalnızca `{confirm: true}` ve işlem kimliğiyle çalışır; Hub kullanır, Orchestrator'ın izni yetmez.
 - **`memory.write` (yazma izniyle).** Not her zaman **yeni** bir dosya olarak `🔮 850-Companion/Inbox/Orchestrator/` altına
   yazılır (var olan dosyaya ya da istenen yola asla); ön bilgide kaynak, izin ve işlem kimliği vardır; en fazla 500 not;
@@ -169,7 +173,6 @@ saklanır; `OPENROUTER_API_KEY` ortam değişkeni de okunur. `auto` modunda ücr
 | Codex | `--sandbox read-only` | `--sandbox workspace-write` |
 | Antigravity | `--sandbox` | `--sandbox --add-dir . --mode accept-edits` |
 | Cursor | desteklenmez, reddedilir | `--output-format text` |
-| Gemini | `--sandbox --approval-mode plan` | `--sandbox --approval-mode auto_edit` |
 
 `RESPECTED_LLM_COMMAND` ile verilen özel komut, doğrulanmış bir yalıtım olmadığı için başlatılmadan reddedilir
 (`custom-isolation-required`). Model metni beş zorunlu Türkçe bölüm ve yapısal denetimlerle sınırlanır; bu, istem
@@ -222,9 +225,9 @@ Yayın kapısı, test sonuçları ve doğrulanmamış platform sınırları `doc
 |---|---|
 | Kod imzası (Authenticode) | üretim sertifikası yok; yalnızca self-signed test sertifikası var, SmartScreen uyarır |
 | macOS, Linux, WSL | Windows x64 ve WSL2 üzerinde Linux x64 dondurulmuş paketleri doğrulandı (BR-030); Ubuntu kaynak ve Linux frozen job'ları CI matrisinde var, uzak CI çalıştırılmadı. macOS gerçek donanım ve bare-metal Linux doğrulanmadı |
-| Gemini CLI, Cursor | Cursor BR-021 ile gerçek oturumda doğrulandı; Gemini CLI bu makinede kurulu değil. Claude Code, Codex, Antigravity ve OpenCode gerçek oturumla sınandı (Windows). Codex eklenti hook'ları kişinin onayından (`/hooks`) sonra çalışır ve içerik değişince onay düşer |
+| Cursor | Cursor BR-021 ile gerçek oturumda doğrulandı. Claude Code, Codex, Antigravity ve OpenCode gerçek oturumla sınandı (Windows). Codex eklenti hook'ları kişinin onayından (`/hooks`) sonra çalışır ve içerik değişince onay düşer |
 | Boşluklu program yolu | Codex ve Antigravity hook komutları tırnaksız olmalı: boşluklu yol Windows'un 8.3 kısa adıyla yazılır. Kısa ad yoksa Codex `& "yol"` biçimine döner, Antigravity (tırnakları yeniden kaçırır) ve WSL profili çalışmaz |
-| Dizin anlık değil | dosya izleyici yok; normal aramada sorgu öncesi stale kontrolü ve refresh var, salt-okunur MCP eski sonucu filtreler; oturum dışı düzenleme sonraki sorguda, oturumda ya da günlük görevde dizine girer |
+| Dizin anlık değil | uzun ömürlü MCP süreci ~1 sn yoklamayla FTS dizinini tazeler; MCP kapalıyken sorgu öncesi stale kontrolü ve refresh, salt-okunur MCP'de eski sonuç filtresi geçerlidir; mtime'ı korunan düzenleme sorgu anındaki SHA-256 doğrulamasına kalır |
 | Hafıza izni | `settings.apply` yapabilen herkes izin oluşturabilir (aynı kullanıcı hesabı) |
 | Anlamsal arama | `MIN_SCORE=0.25`; her sorguda sunucu başlar; yalnızca Windows x64 `llama.zip` çalışma ortamı, diğer platformlar `ollama` sağlayıcısı; yerel model etkin değilken semantik/hibrit ölçülemez, FTS5 kullanılır |
 | OpenRouter / ücretli API | adaptör ve testler hazır; gerçek ücretli çağrı API anahtarı yokluğu nedeniyle doğrulanmadı; `auto` modunda ücretli sağlayıcıya geçilmez |

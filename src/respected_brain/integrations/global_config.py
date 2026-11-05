@@ -8,7 +8,7 @@ BEGIN = "<!-- RESPECTED-GLOBAL:BEGIN -->"
 END = "<!-- RESPECTED-GLOBAL:END -->"
 HOOK_NAME = "respected-brain"
 CURSOR_RULE = HOOK_NAME + ".mdc"
-SUPPORTED = ("antigravity", "gemini", "codex", "cursor", "claude", "opencode")
+SUPPORTED = ("antigravity", "codex", "cursor", "claude", "opencode")
 def classify_managed_block(existing: str) -> str:
     begin, end = existing.count(BEGIN), existing.count(END)
     if begin != end or begin > 1:
@@ -172,49 +172,6 @@ def strip_grouped_hooks(document: dict, provider: str) -> dict:
             del hooks[event]
     if not hooks:
         del document["hooks"]
-    return document
-
-
-def merge_gemini_hooks(document: dict, commands: dict[str, tuple[str, int]]) -> dict:
-    """Merge Gemini CLI hooks using only fields in its public hook schema."""
-    hooks = document.setdefault("hooks", {})
-    if not isinstance(hooks, dict):
-        raise ValueError("hooks alanı bir JSON nesnesi değil")
-    for event, (command, timeout) in commands.items():
-        groups = hooks.get(event, [])
-        if not isinstance(groups, list):
-            raise ValueError(f"hooks.{event} bir liste değil")
-        cleaned = []
-        for group in groups:
-            if not isinstance(group, dict) or not isinstance(group.get("hooks"), list):
-                cleaned.append(group)
-                continue
-            handlers = [
-                handler
-                for handler in group["hooks"]
-                if not managed_command(
-                    handler.get("command") if isinstance(handler, dict) else None,
-                    "gemini",
-                )
-            ]
-            if handlers or not group["hooks"]:
-                updated = dict(group)
-                updated["hooks"] = handlers
-                cleaned.append(updated)
-        cleaned.append(
-            {
-                "hooks": [
-                    {
-                        "name": f"respected-brain-{event.lower()}",
-                        "type": "command",
-                        "command": command,
-                        "timeout": timeout,
-                        "description": "Sync Respected Brain memory",
-                    }
-                ]
-            }
-        )
-        hooks[event] = cleaned
     return document
 
 

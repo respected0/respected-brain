@@ -5,7 +5,7 @@ Bu ilk beta sürümde her şey yenidir:
 - Oturum özetleri: AI oturumlarınız özetlenip kasanızdaki günlüğe yazılır.
 - Bilgi derleme: Günlüklerden bağlantılı bilgi notları (dizin, kavramlar, bağlantılar) derlenir.
 - Yeni oturumda bağlam: Oturum açılırken kararlarınız, kurallarınız ve ilgili notlar aracınıza verilir.
-- Çoklu araç: Claude Code, Codex ve Antigravity gerçek oturumlarla doğrulandı; Gemini CLI ve Cursor deneyseldir. Aynı kasayı birden çok araç kullanabilir.
+- Çoklu araç: Claude Code, Codex ve Antigravity gerçek oturumlarla doğrulandı; Cursor deneyseldir. Aynı kasayı birden çok araç kullanabilir.
 - Düz Markdown, Obsidian uyumlu kasa: Hazır klasör düzeni ve not şablonlarıyla gelir; masaüstü kısayolu kasayı doğrudan Obsidian'da açar, kasa Obsidian'da hiç açılmadıysa uyarı verilir.
 - Arama: SQLite FTS5 tam metin arama. İsteğe bağlı yerel anlamsal arama Hub'dan açılır (yaklaşık 460 MB model indirilir, sorgular bilgisayarınızda çalışır, notlarınız dışarı çıkmaz).
 - MCP: AI aracınız kasada arar ve not okur. Yazma izni verirseniz yalnızca gelen kutusuna, geri alınabilir not yazar.

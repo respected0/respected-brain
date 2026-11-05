@@ -11,19 +11,19 @@ class TranscriptProviderTest(unittest.TestCase):
             "codex": home / ".codex/sessions/rollout-1.jsonl",
             "claude": home / ".claude/projects/p/s.jsonl",
             "cursor": home / ".cursor/projects/p/s.jsonl",
-            "gemini": home / ".gemini/tmp/h/chats/s.json",
             "antigravity": home / ".gemini/antigravity-ide/brain/c/.system_generated/logs/transcript.jsonl",
         }
         for provider, path in cases.items():
             with self.subTest(provider=provider):
                 self.assertEqual(_transcript_provider(path), provider)
 
-    def test_the_agy_cli_is_antigravity_not_gemini(self):
+    def test_the_agy_cli_is_antigravity(self):
         path = Path("C:/Users/x/.gemini/antigravity-cli/brain/c/.system_generated/logs/transcript_full.jsonl")
         self.assertEqual(_transcript_provider(path), "antigravity")
 
     def test_unknown_locations_name_no_provider(self):
         self.assertIsNone(_transcript_provider(Path("C:/work/s.jsonl")))
+        self.assertIsNone(_transcript_provider(Path("C:/Users/x/.gemini/tmp/h/chats/s.json")))
 
 
 if __name__ == "__main__":

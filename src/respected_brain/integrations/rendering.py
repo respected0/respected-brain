@@ -141,31 +141,13 @@ def _global_writes(ctx, profile, planner, providers=SUPPORTED, codex_mcp=None) -
         writes += copy_skills(vault, [config / "skills"])
         touched += [hooks_path, rule_path]
 
-    if "gemini" in providers:
-        config = home / ".gemini"
-        settings_path = config / "settings.json"
-        settings = load_object(settings_path)
-        commands = {
-            "SessionStart": (bridge_command(vault, "gemini", "start", platform), 15000),
-            "BeforeAgent": (bridge_command(vault, "gemini", "prompt", platform), 5000),
-            "AfterAgent": (bridge_command(vault, "gemini", "turn", platform), 10000),
-            "SessionEnd": (bridge_command(vault, "gemini", "end", platform), 10000),
-            "PreCompress": (bridge_command(vault, "gemini", "precompact", platform), 10000),
-        }
-        merge_gemini_hooks(settings, commands)
-        rule_path = config / "GEMINI.md"
-        writes += [
-            (settings_path, json.dumps(settings, ensure_ascii=False, indent=2) + "\n"),
-            (
-                rule_path,
-                merge_managed(
-                    planner.text(rule_path),
-                    rule,
-                ),
-            ),
-        ]
-        writes += copy_skills(vault, [config / "skills"])
-        touched += [settings_path, rule_path]
+    legacy_gemini = home / ".gemini/settings.json"  # beta.1 wrote Gemini CLI hooks here; take only our own back out
+    if planner.read(legacy_gemini) is not None:
+        before = planner.object(legacy_gemini)
+        after = strip_grouped_hooks(json.loads(json.dumps(before)), "gemini")
+        if after != before:
+            writes += [(legacy_gemini, json.dumps(after, ensure_ascii=False, indent=2) + "\n")]
+            touched += [legacy_gemini]
 
     if "codex" in providers:
         config = home / ".codex"
@@ -268,7 +250,7 @@ def mcp_destinations(profile):
 
 # AI client id -> hook/rule provider (None: MCP registration only). `desired["clients"]` (a list of ids) limits `global`
 # and `mcp` to those clients; without it every client is included (the pre-selection behaviour).
-CLIENTS = {"claude": "claude", "codex": "codex", "gemini": "gemini", "antigravity": "antigravity", "cursor": "cursor", "opencode": "opencode",
+CLIENTS = {"claude": "claude", "codex": "codex", "antigravity": "antigravity", "cursor": "cursor", "opencode": "opencode",
            "windsurf": None, "claude-desktop": None, "vscode-agents": None}
 
 
@@ -303,7 +285,7 @@ def detect_clients(profile):
     gemini = home / ".gemini"
     antigravity = gemini.is_dir() and any(path.is_dir() for path in gemini.glob("antigravity*"))
     return {"claude": (home / ".claude").is_dir() or (home / ".claude.json").is_file(), "codex": (home / ".codex").is_dir(), "opencode": (home / ".config/opencode").is_dir(),
-            "gemini": gemini.is_dir(), "antigravity": antigravity, "cursor": (home / ".cursor").is_dir(),
+            "antigravity": antigravity, "cursor": (home / ".cursor").is_dir(),
             "windsurf": (home / ".codeium").is_dir(), "claude-desktop": (appdata / "Claude").is_dir(), "vscode-agents": storage_hit}
 
 

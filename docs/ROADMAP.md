@@ -14,7 +14,6 @@
   Enterprise ve Edu müşterileri için ChatGPT web'de. Kişisel hesap/masaüstü için belgelenmiş bir yol yok; ayrıntı
   `docs/RESEARCH.md` ChatGPT MCP bölümünde.
 - [x] **Cursor gerçek oturum**: BR-021 ile transcript ve flush gerçek `cursor-agent` oturumunda doğrulandı.
-- [ ] **Gemini CLI gerçek oturum**: CLI bu makinede (Windows ve WSL) kurulu değil; hook ve test verisi hazır, gerçek oturum yok.
 
 ## Token tasarrufu
 
@@ -23,8 +22,10 @@
 
 ## Dosyayı kolay bulma
 
-- [ ] Dizin anlık değil: dosya izleyici yok; normal aramada sorgu öncesi stale kontrolü ve refresh var, salt-okunur MCP
-  eski sonucu filtreler. Oturum dışı düzenleme bir sonraki sorguda, oturumda ya da günlük görevde dizine girer.
+- [x] Dizin güncelliği: uzun ömürlü MCP stdio süreci kasayı ~1 sn aralıkla yoklar ve değişiklikte FTS dizinini kendi
+  içinde tazeler; ayrı süreç, servis ya da daemon yoktur. Anlamsal vektörler izleyicide kurulmaz. MCP kapalıyken normal
+  aramada sorgu öncesi stale kontrolü ve refresh, salt-okunur MCP'de eski sonuç filtresi geçerlidir. mtime'ı korunan
+  düzenlemeler sorgu anındaki SHA-256 doğrulamasına kalır; 5000'den büyük kasalarda yoklama 30 sn'ye seyreltilir.
 - [x] Anlamsal arama (isteğe bağlı): `MIN_SCORE=0.25` uygulanıyor; yönetilen `llama.zip` yalnızca Windows x64.
   Diğer platformlarda `llama` sağlayıcısı `PLATFORM_UNSUPPORTED` ile erkenden reddedilir ve `ollama` önerilir; Windows
   dışında `.exe` indirilmez. Her sorguda sunucu başlatma bilinçli sınırdır; yerel model etkin değilken FTS5 kullanılır.

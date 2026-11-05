@@ -60,12 +60,11 @@ ayarları yeniden kaydedin ya da "Onar" deyin; o zaman yazılır.
 |---|---|---|---|---|
 | **Claude Code** | Yerel **eklenti** (`respected-brain`): `SessionStart`, `UserPromptSubmit`, `Stop`, `SessionEnd`, `PreCompact` hook'ları eklentinin içindedir | `~\.claude\CLAUDE.md` içinde işaretli blok | Eklentinin içinde | Claude'da eklentiye izin vermeniz gerekir |
 | **Codex** | Yerel **eklenti** + `notify` köprüsü. Mevcut `notify` ayarınız varsa **silinmez**, Brain'in köprüsü onu zincirler | `~\.codex\AGENTS.md` içinde işaretli blok | Eklentinin içinde | Codex'te `/hooks` ile hook'ları onaylamanız gerekir; içerik değişince onay yeniden istenir |
-| **Gemini CLI** | `~\.gemini\settings.json` içine hook'lar: `SessionStart`, `BeforeAgent`, `AfterAgent`, `SessionEnd`, `PreCompress` | `~\.gemini\GEMINI.md` içinde işaretli blok | `~\.gemini\skills\<ad>\SKILL.md` | Yok |
-| **Antigravity** | `~\.gemini\config\hooks.json` içinde `respected-brain` anahtarı: `PreInvocation`, `Stop` | `~\.gemini\GEMINI.md` (Gemini CLI ile **aynı dosya**, tek blok) | `~\.gemini\config\skills\<ad>\SKILL.md` | Yok |
+| **Antigravity** | `~\.gemini\config\hooks.json` içinde `respected-brain` anahtarı: `PreInvocation`, `Stop` | `~\.gemini\GEMINI.md` (Antigravity'nin kural dosyası, tek blok) | `~\.gemini\config\skills\<ad>\SKILL.md` | Yok |
 | **Cursor** | `~\.cursor\hooks.json` içine `sessionStart`, `beforeSubmitPrompt`, `sessionEnd`, `preCompact`, `afterAgentResponse` | `~\.cursor\rules\respected-brain.mdc` | `~\.cursor\skills\<ad>\SKILL.md` | Yok |
 
 Neden farklı? **Araçların kendi sistemi öyle.** Claude ve Codex eklenti sistemi sunar: hook'lar ve beceriler tek pakette
-Brain'in veri klasöründe durur, araca yalnızca "bu eklentiyi kullan" kaydı yazılır. Gemini CLI, Antigravity ve Cursor'da
+Brain'in veri klasöründe durur, araca yalnızca "bu eklentiyi kullan" kaydı yazılır. Antigravity ve Cursor'da
 eklenti sistemi yoktur; hook'ları ve becerileri doğrudan kendi klasörlerine yazmak zorundayız. Hepsi **global**
 (kullanıcı klasöründe) yazılır; kasanın içinde hiçbir araç klasörü oluşmaz.
 
@@ -81,7 +80,6 @@ yine `0`'dır ve neden stderr'e yazılır; AI araçları `2` kodunu "istemi enge
 |---|---|
 | Claude Code | `~\.claude` klasörü ya da `~\.claude.json` dosyası var |
 | Codex | `~\.codex` klasörü var |
-| Gemini CLI | `~\.gemini` klasörü var |
 | Antigravity | `~\.gemini` altında `antigravity*` klasörü var (`antigravity-ide`, `antigravity-cli`) |
 | Cursor | `~\.cursor` klasörü var |
 | Windsurf | `~\.codeium` klasörü var |
@@ -102,8 +100,9 @@ Brain bu klasörleri **kendisi oluşturmaz**; araç ilk çalıştığında kendi
 
 Açıksa seçtiğiniz araçlara, kasada aramak ve not okumak için **MCP kaydı** eklenir. Kayıt, aracın ayar dosyasında
 `respected-brain` adlı bir sunucudur ve `respected-brain.exe mcp --vault-id <UUID>` komutunu çalıştırır. Sunucuyu araç
-gerektiğinde kendi başlatır (stdio); arka planda sürekli çalışan bir şey yoktur. Aynı şart: araç bilgisayarınızda kurulu
-olmalı.
+gerektiğinde kendi başlatır (stdio); ayrı bir arka plan süreci ya da servisi yoktur. Sunucu açık kaldığı sürece aynı
+süreç kasayı yaklaşık saniyede bir yoklar ve değişen notları FTS dizinine ekler; sunucu kapanınca izleme de durur. Aynı
+şart: araç bilgisayarınızda kurulu olmalı.
 
 | Araç | MCP kaydı nerede | Notlar |
 |---|---|---|
@@ -114,7 +113,6 @@ olmalı.
 | Windsurf | `~\.codeium\windsurf\mcp_config.json` | Yalnızca MCP, hook yok |
 | Cline / Roo | VS Code `globalStorage` altındaki `cline_mcp_settings.json` / `roo_mcp_settings.json` | Eklenti klasörü varsa |
 | Codex | Brain'in yerel eklenti paketinde `.mcp.json` (`DataRoot\vaults\<UUID>\plugin\plugin\.mcp.json`) | `config.toml`'a MCP yazılmaz; MCP eklentiyle gelir, bu yüzden Codex'in Kaynaklar'da da açık olması gerekir |
-| Gemini CLI | **yazılmaz** | Brain Gemini CLI'ya MCP kaydı eklemez; hook yolunu kullanır |
 
 `mcp_write` ayarı kapalıyken (varsayılan) araçlar kasadan yalnızca **okur**. Açarsanız yalnızca
 `🔮 850-Companion\Inbox\MCP` içine geri alınabilir not yazabilirler.

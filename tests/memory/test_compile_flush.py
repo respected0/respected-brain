@@ -39,7 +39,7 @@ class FoundationMemoryTest(unittest.TestCase):
         (vault / "knowledge/index.md").write_text("# İndeks\n", encoding="utf-8")
         (vault / "🔮 850-Companion").mkdir()
         return AppContext(AppPaths(self.app, self.data, vault, uuid),
-            {"preferences": {"summary_provider": "codex", "provider_priority": ["codex", "gemini"], "provider_fallback": False}}, ResourceCatalog())
+            {"preferences": {"summary_provider": "codex", "provider_priority": ["codex", "antigravity"], "provider_fallback": False}}, ResourceCatalog())
     def transcript(self, ctx):
         path = self.root / (ctx.paths.vault_id + ".jsonl")
         path.write_text(json.dumps({"role":"user", "content":"Kalıcı bir mimari karar alındı."}) + "\n", encoding="utf-8")

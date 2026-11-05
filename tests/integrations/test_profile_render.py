@@ -36,7 +36,7 @@ class ProfileRenderTest(IntegrationFixture, TestCase):
                 profile = IntegrationProfile(platform, launcher, self.home)
                 rows = RENDER.plan_integrations(self.ctx, profile, {"global": True}, self.backend())
                 text = " ".join(row.after.decode() for row in rows if row.after and __import__("pathlib").Path(row.key).name in {"hooks.json", "settings.json", "config.toml", "claude.json", "codex.json"})
-                for provider in ("antigravity", "gemini", "codex", "claude", "cursor"):
+                for provider in ("antigravity", "codex", "claude", "cursor"):
                     self.assertIn("--provider " + provider, text)
                 self.assertNotIn("bridge.py", text)
                 if platform == "windows-wsl":
@@ -73,7 +73,7 @@ class ProfileRenderTest(IntegrationFixture, TestCase):
     def test_fresh_project_configs_use_the_same_uuid_launcher_without_global_hook(self):
         before = snapshot(self.root)
         artifacts = render_project_integrations(self.ctx, self.profile)
-        self.assertTrue({".claude/settings.json", ".codex/hooks.json", ".cursor/hooks.json", ".agents/hooks.json", ".gemini/settings.json"} <= set(artifacts))
+        self.assertTrue({".claude/settings.json", ".codex/hooks.json", ".cursor/hooks.json", ".agents/hooks.json"} <= set(artifacts))
         for key, content in artifacts.items():
             with self.subTest(key=key):
                 json.loads(content)

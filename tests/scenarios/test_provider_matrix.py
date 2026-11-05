@@ -42,18 +42,10 @@ class ScenarioMatrixTest(IntegrationFixture, unittest.TestCase):
         for target in self.TARGET_PROFILES:
             with self.subTest(target=target):
                 vault, _ = self.render_target(target)
-                for relative in (".claude/settings.json", ".codex/hooks.json", ".cursor/hooks.json", ".agents/hooks.json", ".gemini/settings.json"):
+                for relative in (".claude/settings.json", ".codex/hooks.json", ".cursor/hooks.json", ".agents/hooks.json"):
                     payload = json.loads((vault / relative).read_text(encoding="utf-8"))
                     self.assertIsInstance(payload, dict)
                     self.assertIn(self.ctx.paths.vault_id, json.dumps(payload))
-
-    def test_gemini_project_adapter_uses_after_agent_and_strict_json_schema(self):
-        vault, temporary = self.render_target("linux")
-        settings = json.loads((vault / ".gemini/settings.json").read_text(encoding="utf-8"))
-        handler = settings["hooks"]["AfterAgent"][0]["hooks"][0]
-        self.assertIn("--provider gemini", handler["command"])
-        self.assertIn("--event turn", handler["command"])
-        self.assertEqual(set(handler), {"name", "type", "command", "timeout", "description"})
 
     def test_claude_uses_stop_for_per_turn_logging(self):
         vault, temporary = self.render_target("linux")
@@ -87,13 +79,6 @@ class ScenarioMatrixTest(IntegrationFixture, unittest.TestCase):
         notify = RENDERER.bridge_argv(self.ctx, self.profile, "codex", "notify")
         self.assertEqual(notify, [*self.profile.launcher, "hook", "--vault-id", self.ctx.paths.vault_id, "--provider", "codex", "--event", "notify"])
         self.assertFalse(any(value.endswith(".py") for value in notify))
-
-    def test_gemini_global_install_uses_after_agent_for_per_turn_logging(self):
-        settings = self.global_output(".gemini/settings.json")
-        handler = settings["hooks"]["AfterAgent"][0]["hooks"][0]
-        self.assertIn("--provider gemini", handler["command"])
-        self.assertIn("--event turn", handler["command"])
-        self.assertEqual(set(handler), {"name", "type", "command", "timeout", "description"})
 
     def test_claude_global_stop_hook_is_async(self):
         changes = RENDERER.plan_integrations(self.ctx, self.profile, {"global": True}, self.backend())

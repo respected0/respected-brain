@@ -18,7 +18,7 @@ class IntegrationPlanTest(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.base = Path(temporary.name).resolve()
         self.home, self.data, self.vault = self.base / "home", self.base / "data", self.base / "vault"
-        (self.home / ".gemini").mkdir(parents=True)
+        (self.home / ".gemini" / "antigravity-ide").mkdir(parents=True)
         self.foreign = json.dumps({"mcpServers": {"someone-elses": {"command": "x", "args": []}}, "theme": "dark"})
         (self.home / ".claude.json").write_text(self.foreign, encoding="utf-8")
         patcher = patch.dict(os.environ, {"USERPROFILE": str(self.home), "HOME": str(self.home),
@@ -105,7 +105,7 @@ class IntegrationPlanTest(unittest.TestCase):
         self.assertGreater(len(everything["changes"]), len(only["changes"]))
         self.assertEqual(only["desired"]["clients"], ["claude"])
         detected = {c["id"]: c["detected"] for c in only["clients"]}
-        self.assertTrue(detected["claude"] and detected["gemini"] and not detected["codex"])
+        self.assertTrue(detected["claude"] and detected["antigravity"] and not detected["codex"])
         self.assertEqual(self.plan({"mcp": True, "clients": ["nope"]})["error"]["code"], "BAD_REQUEST")
         self.assertEqual(self.plan({"global": True, "clients": []})["result"]["changes"], [])
 

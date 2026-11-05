@@ -7,12 +7,13 @@ Bu belge `0.1.0-beta.1` (`0.1.0b1`) yayın paketinin hangi kapılardan geçtiği
 
 | Kapı | Durum | Kanıt |
 |---|---|---|
-| Tam birim ve entegrasyon testleri | GEÇTİ | Windows 11 x64: 1073 test OK, 21 skip (2026-11-04, 426.566 sn); WSL2 Ubuntu 26.04 / Python 3.14.4: 1073 test OK, 32 skip (2026-11-05, 275.888 sn); EXIT=0 |
+| Tam birim ve entegrasyon testleri | GEÇTİ | Windows 11 x64: 1078 test OK, 21 skip (2026-11-05, 386.526 sn); WSL2 Ubuntu 26.04 / Python 3.14.4: 1073 test OK, 32 skip (2026-11-05, 275.888 sn, BR-032 öncesi); EXIT=0 |
 | Şema migration ve eski sürüm fixture'ları | GEÇTİ | `python -m unittest tests.installation.test_migrate -v` → 6 test OK; `STEPS` yalnızca gerçek boşlukları içerir; `tests/fixtures/releases/0.1.0-beta.1/` |
 | Dondurulmuş Windows paketi | GEÇTİ | `python packaging/build_dist.py --platform windows --output dist` → `0.1.0b1` |
 | Dondurulmuş Linux paketi | GEÇTİ | WSL2 Ubuntu'da `python3 packaging/build_dist.py --platform linux --output dist-linux` → `0.1.0b1`; `tests/evals/results/br030-linux-smoke.json` → 25/25 VERIFIED, `overall=VERIFIED` |
 | Dağıtım bütünlüğü | GEÇTİ | `python -m unittest tests.packaging.test_distribution -v` → 3 test OK |
 | Fiziksel kurulum smoke'u | GEÇTİ | `tests/evals/results/br015-native-smoke.json` → 25/25 VERIFIED, `overall=VERIFIED` |
+| MCP dizin izleyicisi | GEÇTİ | `py -m unittest tests.search.test_watch -v` → 5 test OK; uzun ömürlü MCP süreci ~1 sn yoklamayla FTS dizinini tazeler, ayrı süreç/servis yoktur |
 | Hub ortak sözleşme conformance'ı | GEÇTİ | Hub deposunda `python -m unittest discover -s common/conformance -v` → 9 test OK; üç ürünün sözleşme kopyasını denetler |
 | Authenticode | UYGULANMADI | Sertifika yok; imzasız paket başarılı imza sayılmaz |
 | macOS / Linux / WSL | KISMEN | Windows x64 ve WSL2 üzerinde Linux x64 dondurulmuş paketleri doğrulandı (BR-030); Ubuntu kaynak testi ve Linux frozen build/smoke job'ları CI matrisinde (BR-026/BR-031). macOS gerçek donanım, bare-metal Linux ve uzak CI doğrulanmadı |
@@ -40,6 +41,7 @@ Smoke, yaşam döngüsü sürücüsü `respected_brain` paketini içe aktarabils
 ## Yayın kararı
 
 - Windows x64 ve WSL2 üzerinde Linux x64 dondurulmuş paketleri için test ve veri bütünlüğü kapıları geçti.
+- MCP süreci açıkken dizin değişiklikleri ~1-2 sn içinde FTS dizinine girer; MCP kapalıyken sorgu öncesi, oturum ve günlük görev tazelemesi geçerlidir.
 - Çok platformlu yayın kapısı geçmedi; macOS, bare-metal Linux ve uzak CI doğrulanmamış sayılır.
 - Üretim kod imzalama sertifikası olmadığı için SmartScreen uyarısı beklenir; Authenticode kapısı açık kalır.
 
@@ -51,7 +53,6 @@ BR-029 denetiminde kalan maddeler yeniden kontrol edildi; bunlar kod hatası de�
 |---|---|---|
 | Authenticode | `signtool` kurulu değil; kullanıcı deposunda yalnızca `CN=Respected Test Signer` self-signed test sertifikası var | Üretim kod imzalama sertifikası yok; test sertifikası SmartScreen güveni sağlamaz |
 | OpenRouter gerçek çağrı | `credential status` → `configured=false`, `source=null` | API anahtarı yok; ücretli çağrı yapılmadı |
-| Gemini CLI gerçek oturum | Windows ve WSL2'de `gemini` kurulu değil | Kurulum ve gerçek oturum yapılmadı |
 | macOS | Gerçek macOS donanımı yok | Yalnızca platform simülasyonları çalışıyor |
 | Bare-metal Linux / diğer dağıtımlar | Yalnızca WSL2 Ubuntu üzerinde Linux x64 dondurulmuş paket doğrulandı | Fiziksel Linux makinesi ve diğer dağıtımlar denenmedi |
 | Uzak CI | `.github/workflows/ci.yml` içinde Windows native/source, Ubuntu source ve Linux frozen build/smoke job'ları tanımlı | GitHub Actions üzerinde çalıştırılmadı; yerel Linux sonucu CI kanıtı değildir |

@@ -44,11 +44,11 @@ Ortak kurallar (üç ürün aynı, bkz. [PRODUCT_CONTRACT.md](PRODUCT_CONTRACT.m
 | Komut | Ne yapar |
 |---|---|
 | `search [SORGU] [--limit N] [--category KLASÖR] [--json] [--reindex]` | FTS5 tam metin araması. Sorgusuz: dizin istatistikleri. Dizini yazabilir. |
-| `index-refresh` | Arama dizinini (ve açıksa anlamsal vektörleri) artımlı günceller; kasaya yazmaz. Oturum başı/sonu ve günlük görev bunu kendiliğinden yapar. |
+| `index-refresh` | Arama dizinini (ve açıksa anlamsal vektörleri) artımlı günceller; kasaya yazmaz. Oturum başı/sonu, günlük görev ve açık MCP sürecindeki izleyici bunu kendiliğinden yapar; izleyici yalnızca FTS dizinini tazeler. |
 | `compile [--before-date YYYY-AA-GG] [--max-calls N] [--dry-run]` | Günlüklerden `knowledge` notlarını model ile derler. `--dry-run` önizlemedir ama kilit ve durum dosyası yazabilir. |
 | `briefing` | Zamanı gelmişse günlük derleme ve sabah özetini üretir. |
 | `flush` | Bir oturum dökümünü özetleyip `daily`'ye yazar. Hook'ların kullandığı iç komuttur. |
-| `hook --provider P --event E` | AI aracının hook giriş noktası (`claude`, `codex`, `cursor`, `antigravity`, `gemini`; olay `start`, `prompt`, `precompact`, `postcompact`, `turn`, `end`, `notify`). Elle çalıştırılmaz. |
+| `hook --provider P --event E` | AI aracının hook giriş noktası (`claude`, `codex`, `cursor`, `antigravity`, `opencode`; olay `start`, `prompt`, `precompact`, `postcompact`, `turn`, `end`, `notify`). Elle çalıştırılmaz. |
 | `semantic status\|enable\|disable\|pull [--provider llama\|ollama] [--model M]` | Yerel anlamsal aramayı Hub'sız yönetir: durum, aç/kapat, modeli indir (`pull`, tek ağ kullanan işlem). Hub'ın `memory.semantic.*` işlemleriyle aynı kod. |
 | `stats [--days N]` | Oturum başlarında AI araçlarına gönderilen hafıza bağlamının boyutu: oturum sayısı, toplam/ortalama/en çok karakter, tahmini token (yaklaşık 4 karakter). Kayıt `state/context-usage.jsonl`. Tasarruf karşılaştırması yapmaz: bağlamsız bir temel yoktur. |
 | `maintenance ARAÇ [argümanlar]` | Bakım aracı (aşağıda). |

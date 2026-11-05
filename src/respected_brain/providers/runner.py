@@ -20,7 +20,7 @@ from . import openrouter
 
 
 Mode = Literal["text", "workspace"]
-LOCAL_PROVIDERS = ("claude", "codex", "antigravity", "gemini", "cursor")
+LOCAL_PROVIDERS = ("claude", "codex", "antigravity", "cursor")
 PROVIDERS = (*LOCAL_PROVIDERS, "openrouter")
 
 
@@ -157,17 +157,6 @@ def _command(provider: str, prompt: str, mode: Mode, vault_root: Path | None = N
         argv = [executable, "-p", "--output-format", "text", prompt]
         return Invocation(argv, None, _windows_executable(executable))
 
-
-    if provider == "gemini":
-        executable = _find_executable("gemini")
-        if executable is None:
-            return None
-        argv = [executable, "--sandbox", "--output-format", "json", "-p", ""]
-        if mode == "workspace":
-            argv[2:2] = ["--approval-mode", "auto_edit"]
-        else:
-            argv[2:2] = ["--approval-mode", "plan"]
-        return Invocation(argv, prompt, _windows_executable(executable))
     return None
 
 
@@ -286,23 +275,6 @@ def _extract_response(stdout: str, provider: str) -> tuple[str, str | None]:
                 continue
         if structured:
             return "", "invalid-response"
-    if provider == "gemini":
-        try:
-            data = json.loads(stdout)
-        except json.JSONDecodeError:
-            if stdout.lstrip().startswith(('{','[')):
-                return "", "invalid-response"
-            return stdout.strip(), None
-        if isinstance(data, dict):
-            error = data.get("error")
-            if error:
-                if isinstance(error, dict):
-                    message = error.get("message") or error.get("type")
-                    return "", str(message or "gemini-json-error")
-                return "", str(error)
-            response = data.get("response")
-            return (response.strip(), None) if isinstance(response, str) else ("", "invalid-response")
-        return "", "invalid-response"
     return stdout.strip(), None
 
 

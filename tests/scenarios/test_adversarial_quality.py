@@ -73,16 +73,16 @@ class AdversarialQualityTest(unittest.TestCase):
     def test_structured_provider_errors_are_bounded_and_redacted(self):
         import json
         secret='private-secret-'+('x'*1000)
-        invocation=self.runner.Invocation(['gemini'],'prompt')
-        result=SimpleNamespace(returncode=0,stdout=json.dumps({'error':{'message':'unauthorized '+secret}}),stderr='')
-        with mock.patch.object(self.runner,'_available',return_value=['gemini']),mock.patch.object(self.runner,'_command',return_value=invocation),mock.patch.object(self.runner, '_run_process_tree', return_value=result):
-            output,error,provider=self.runner.run_model('prompt',REPO_ROOT,'text',10,preferred='gemini',ctx=self.ctx)
+        invocation=self.runner.Invocation(['agy'],'prompt')
+        result=SimpleNamespace(returncode=0,stdout=json.dumps({'event':'result','result':{'status':'ERROR','error':'unauthorized '+secret}}),stderr='')
+        with mock.patch.object(self.runner,'_available',return_value=['antigravity']),mock.patch.object(self.runner,'_command',return_value=invocation),mock.patch.object(self.runner, '_run_process_tree', return_value=result):
+            output,error,provider=self.runner.run_model('prompt',REPO_ROOT,'text',10,preferred='antigravity',ctx=self.ctx)
         self.assertIsNone(output)
-        self.assertEqual(error,'gemini-response-error:auth')
+        self.assertEqual(error,'antigravity-response-error:auth')
         self.assertNotIn(secret,error)
 
     def test_malformed_structured_output_is_not_successful_text(self):
-        for provider,payload in [('gemini','[]'),('gemini','{"response":42}'),('antigravity','{"event":"result","result":null}'),('antigravity','{"event":"progress"}')]:
+        for provider,payload in [('antigravity','{"event":"result","result":null}'),('antigravity','{"event":"progress"}')]:
             with self.subTest(provider=provider,payload=payload):
                 text,error=self.runner._extract_response(payload,provider)
                 self.assertEqual(text,'')
@@ -173,14 +173,14 @@ class AdversarialQualityTest(unittest.TestCase):
 
     def test_auto_fallback_rejects_empty_success_and_advances(self) -> None:
         commands = {
-            "gemini": self.runner.Invocation(["gemini"], "prompt"),
+            "antigravity": self.runner.Invocation(["agy"], "prompt"),
             "codex": self.runner.Invocation(["codex"], "prompt"),
         }
         with mock.patch.object(self.runner, "_configured_provider", return_value="auto"), \
-             mock.patch.object(self.runner, "_available", return_value=["gemini", "codex"]), \
+             mock.patch.object(self.runner, "_available", return_value=["antigravity", "codex"]), \
              mock.patch.object(self.runner, "_command", side_effect=lambda p, pr, m, vault: commands[p]), \
              mock.patch.object(self.runner, "_run_process_tree", side_effect=[
-                 SimpleNamespace(returncode=0, stdout='{\"response\":\"\",\"error\":null}', stderr=""),
+                 SimpleNamespace(returncode=0, stdout='{\"event\":\"result\",\"result\":{\"status\":\"OK\",\"response\":\"\"}}', stderr=""),
                  SimpleNamespace(returncode=0, stdout="codex-recovered", stderr=""),
              ]) as run_mock:
             result = self.runner.run_model("prompt", REPO_ROOT, "text", 10, ctx=self.ctx)

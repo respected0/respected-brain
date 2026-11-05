@@ -15,7 +15,7 @@ import tempfile
 import time
 
 ROOT=Path(__file__).resolve().parents[3]
-PROVIDERS=("antigravity","gemini","codex","cursor","claude")
+PROVIDERS=("antigravity","codex","cursor","claude")
 SUMMARY="""## Bağlam
 Smoke bağlam
 
@@ -125,9 +125,9 @@ def main(argv=None):
         profile=IntegrationProfile(profile_name,(str(launcher),),home)
         prior=read_manifest(data / "install-manifest.json")
         # Only temp-home file/MCP registrations are applied, never live scheduler/registry/shortcuts.
-        for folder in (".claude",".codex",".gemini",".cursor"): (home / folder).mkdir(exist_ok=True)  # a tool that is not on the computer is skipped: give the five their settings folders
+        for folder in (".claude",".codex",".gemini/antigravity-ide",".cursor"): (home / folder).mkdir(parents=True,exist_ok=True)  # a tool that is not on the computer is skipped: give the four their settings folders
         changes=plan_integrations(ctx,profile,{"global":True,"mcp":True},backend)
-        record("all-five-providers-rendered-without-legacy-engine",all(any(provider in change.key for change in changes) for provider in (".agents", ".gemini", ".codex", ".cursor", ".claude")))
+        record("all-four-providers-rendered-without-legacy-engine",all(any(provider in change.key for change in changes) for provider in (".gemini", ".codex", ".cursor", ".claude")))
         record("registration-boundary-is-temporary-files",all(row.kind in ("file","mcp") and (Path(row.key).is_relative_to(home) or Path(row.key).is_relative_to(data)) for row in changes))
         with Transaction(data,backend) as tx:
             for row in changes: tx.apply_external(row)
@@ -161,7 +161,7 @@ def main(argv=None):
         record("transactional-owned-only-uninstall",code==0,output,elapsed)
         record("uninstall-preserves-notes-state-and-user-file",_sha256(daily)==daily_hash and ctx.paths.state_dir.exists() and sentinel.read_bytes()==b"keep")
         record("uninstall-restores-original-temp-home-registration",all(backend.read(row.kind,row.key)==row.before for row in changes))
-        local_hooks=(".agents/hooks.json",".claude/settings.json",".codex/hooks.json",".cursor/hooks.json",".gemini/settings.json")
+        local_hooks=(".agents/hooks.json",".claude/settings.json",".codex/hooks.json",".cursor/hooks.json")
         record("uninstall-removes-owned-project-hooks",all(not (vault / name).exists() for name in local_hooks))
         marker_hash=_sha256(vault / ".respected.json")
         lay_down()

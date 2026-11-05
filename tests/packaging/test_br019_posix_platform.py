@@ -71,7 +71,7 @@ class Br019PosixPlatformTest(unittest.TestCase):
             registered = subprocess.run([sys.executable, "-m", "respected_brain", "vault", "register", str(vault)],
                                         env=env, capture_output=True, text=True, timeout=60)
             self.assertEqual(registered.returncode, 0, registered.stderr)
-            for provider, key in (("claude", "hookSpecificOutput"), ("gemini", "hookSpecificOutput"),
+            for provider, key in (("claude", "hookSpecificOutput"),
                                   ("cursor", "additional_context"), ("antigravity", "injectSteps"),
                                   ("opencode", "additionalContext")):
                 with self.subTest(provider=provider):

@@ -39,7 +39,7 @@ class FoundationDistributionTest(unittest.TestCase):
 
     def test_frozen_serves_vault_maps_search_hook_and_mcp(self):
         distribution, document = self.frozen()
-        with tempfile.TemporaryDirectory(prefix="Respected Türkçe 🧠 ") as temporary:
+        with tempfile.TemporaryDirectory(prefix="Respected Türkçe 🧠 ", ignore_cleanup_errors=True) as temporary:  # a just-exited Windows child may still hold the folder (CI BR-018)
             run = lambda *args, stdin=None: self.launcher(distribution, document, temporary, *args, stdin=stdin)
             vault = Path(temporary) / "Kasa 🧠"
             vault.mkdir()

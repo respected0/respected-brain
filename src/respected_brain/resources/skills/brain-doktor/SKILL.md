@@ -68,7 +68,7 @@ native repair üzerinden düzelt.
 ### 4. Native motor ve model CLI
 
 Configure çıktısındaki preferences.summary_provider, provider_priority ve provider_fallback
-alanlarını oku. İşletim sisteminin salt okunur executable keşfiyle claude, codex, agy, gemini
+alanlarını oku. İşletim sisteminin salt okunur executable keşfiyle claude, codex, agy
 ve cursor-agent erişimini kontrol et. Native motor var ama seçili provider ve izinli fallback'ler
 yoksa kırmızı. auto kaynak provider'ı önce dener, geçici kota/timeout/5xx hatalarında izinli
 fallback'e geçebilir; RESPECTED_LLM_COMMAND özel komutu olabilir. Onaylanan tercih değişikliği:

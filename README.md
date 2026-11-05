@@ -16,7 +16,7 @@ Yerel bir Markdown not kasasını AI araçlarınıza bağlayan açık kaynak haf
 ![Python gerekmez](https://img.shields.io/badge/Python-gerekmez-3776AB?style=flat-square&logo=python&logoColor=white)
 [![Obsidian](https://img.shields.io/badge/Obsidian-uyumlu-7C3AED?style=flat-square&logo=obsidian&logoColor=white)](https://obsidian.md)
 
-**Claude Code** · **Codex** · **Cursor** · **Antigravity** · **Gemini CLI**
+**Claude Code** · **Codex** · **Cursor** · **Antigravity**
 
 [Sorun](#sorun-ve-çözüm) · [Nasıl çalışır](#nasıl-çalışır) · [Özellikler](#özellikler) · [Kurulum](#kurulum) · [Sık sorulanlar](#sık-sorulanlar) · [Geliştirme](#geliştirme)
 
@@ -60,7 +60,7 @@ eksiksiz yakalandığı ya da özetlerin hatasız olduğu garanti edilmez.
 | **Oturum özetleri** | AI oturumları özetlenir ve günlüğe yazılır |
 | **Bilgi derleme** | Günlüklerden bağlantılı `knowledge` notları derlenir |
 | **Arama** | Varsayılan SQLite FTS5 tam metin arama; isteğe bağlı yerel anlamsal arama (Hub'dan açılır) |
-| **Çoklu araç** | Hook ve MCP ile Claude Code, Codex, Cursor, Antigravity, Gemini CLI |
+| **Çoklu araç** | Hook ve MCP ile Claude Code, Codex, Cursor, Antigravity |
 | **Obsidian uyumlu** | Kasa düz Markdown; Obsidian ile okuyup düzenleyebilirsiniz |
 | **Ortak kasa** | İki ajan aynı kasayı kullanabilir; yazıcılar ortak bir kilit kullanır |
 | **Notlarınız güvende** | Kasa hiçbir işlemle (kaldırma, onarım dahil) silinmez |

@@ -92,7 +92,7 @@ var
   ClientPage: TWizardPage;
   ClientList: TNewCheckListBox;
   ClientsReady: Boolean;
-  ClientRow: array[0..10] of Integer;
+  ClientRow: array[0..9] of Integer;
   VaultPage: TInputDirWizardPage;
   DownloadPage: TDownloadWizardPage;
   Maintenance, SettingsMode, Leaving, PurgeData: Boolean;
@@ -421,17 +421,16 @@ end;
 
 { ---- which AI tools (the Hub's "Kaynaklar" and "İzinler" lists) ---- }
 
-// rows 0..4: tools whose sessions are captured; rows 5..10: tools that may use the memory over MCP
+// rows 0..3: tools whose sessions are captured; rows 4..9: tools that may use the memory over MCP
 function ClientId(K: Integer): String;
 begin
   case K of
-    0, 5: Result := 'claude';
+    0, 4: Result := 'claude';
     1: Result := 'codex';
-    2: Result := 'gemini';
-    3, 6: Result := 'antigravity';
-    4, 7: Result := 'cursor';
-    8: Result := 'windsurf';
-    9: Result := 'claude-desktop';
+    2, 5: Result := 'antigravity';
+    3, 6: Result := 'cursor';
+    7: Result := 'windsurf';
+    8: Result := 'claude-desktop';
   else
     Result := 'vscode-agents';
   end;
@@ -441,7 +440,6 @@ function ClientName(Id: String): String;
 begin
   if Id = 'claude' then Result := 'Claude Code'
   else if Id = 'codex' then Result := 'Codex'
-  else if Id = 'gemini' then Result := 'Gemini CLI'
   else if Id = 'antigravity' then Result := 'Antigravity'
   else if Id = 'cursor' then Result := 'Cursor'
   else if Id = 'windsurf' then Result := 'Windsurf'
@@ -458,7 +456,7 @@ begin
   Storage := ExpandConstant('{userappdata}\Code\User\globalStorage\');
   if Id = 'claude' then Result := DirExists(Home + '\.claude') or FileExists(Home + '\.claude.json')
   else if Id = 'codex' then Result := DirExists(Home + '\.codex')
-  else if (Id = 'gemini') or (Id = 'antigravity') then Result := DirExists(Home + '\.gemini')
+  else if Id = 'antigravity' then Result := DirExists(Home + '\.gemini')
   else if Id = 'cursor' then Result := DirExists(Home + '\.cursor')
   else if Id = 'windsurf' then Result := DirExists(Home + '\.codeium')
   else if Id = 'claude-desktop' then Result := DirExists(ExpandConstant('{userappdata}\Claude'))
@@ -498,15 +496,15 @@ procedure EnableClientRows;
 var
   K: Integer;
 begin
-  for K := 0 to 4 do ClientList.ItemEnabled[ClientRow[K]] := CardChecked(2, 0);
-  for K := 5 to 10 do ClientList.ItemEnabled[ClientRow[K]] := CardChecked(2, 1);
+  for K := 0 to 3 do ClientList.ItemEnabled[ClientRow[K]] := CardChecked(2, 0);
+  for K := 4 to 9 do ClientList.ItemEnabled[ClientRow[K]] := CardChecked(2, 1);
 end;
 
 procedure ProductPageChanged(CurPageID: Integer);
 begin
   if CurPageID <> ClientPage.ID then Exit;
   if not ClientsReady then begin
-    SelectClients(0, 10, '');
+    SelectClients(0, 9, '');
     ClientsReady := True;
   end;
   EnableClientRows;
@@ -544,9 +542,9 @@ begin
   ClientList.Parent := ClientPage.Surface;
   ClientList.SetBounds(0, 0, ClientPage.SurfaceWidth, ClientPage.SurfaceHeight);
   ClientList.AddGroup('Oturumları hafızaya yakalanacak araçlar', '', 0, nil);
-  for K := 0 to 4 do ClientRow[K] := ClientList.AddCheckBox(ClientName(ClientId(K)), '', 1, False, True, False, True, nil);
+  for K := 0 to 3 do ClientRow[K] := ClientList.AddCheckBox(ClientName(ClientId(K)), '', 1, False, True, False, True, nil);
   ClientList.AddGroup('Hafızayı MCP ile kullanabilecek araçlar', '', 0, nil);
-  for K := 5 to 10 do ClientRow[K] := ClientList.AddCheckBox(ClientName(ClientId(K)), '', 1, False, True, False, True, nil);
+  for K := 4 to 9 do ClientRow[K] := ClientList.AddCheckBox(ClientName(ClientId(K)), '', 1, False, True, False, True, nil);
 end;
 
 // the answers of the identity and integrations pages as the product's own --set arguments
@@ -559,8 +557,8 @@ begin
   for I := 0 to 3 do
     if CardChecked(2, I) then Result := Result + SetArg(IntegrationKey(I) + '=true')
     else Result := Result + SetArg(IntegrationKey(I) + '=false');
-  if CardChecked(2, 0) then Result := Result + SetArg('integrations.clients=' + CollectClients(0, 4));
-  if CardChecked(2, 1) then Result := Result + SetArg('integrations.mcp_clients=' + CollectClients(5, 10));
+  if CardChecked(2, 0) then Result := Result + SetArg('integrations.clients=' + CollectClients(0, 3));
+  if CardChecked(2, 1) then Result := Result + SetArg('integrations.mcp_clients=' + CollectClients(4, 9));
 end;
 
 procedure LoadCurrentSettings;
@@ -576,8 +574,8 @@ begin
   Hooks := CurrentSetting('integrations.clients');
   Mcp := CurrentSetting('integrations.mcp_clients');
   if Mcp = '' then Mcp := Hooks;
-  SelectClients(0, 4, Hooks);
-  SelectClients(5, 10, Mcp);
+  SelectClients(0, 3, Hooks);
+  SelectClients(4, 9, Mcp);
   ClientsReady := True;
 end;
 
@@ -618,7 +616,7 @@ begin
     Exit;
   end;
   // a connection that is on needs at least one tool
-  if (CurPageID = ClientPage.ID) and ((CardChecked(2, 0) and (CollectClients(0, 4) = '')) or (CardChecked(2, 1) and (CollectClients(5, 10) = ''))) then begin
+  if (CurPageID = ClientPage.ID) and ((CardChecked(2, 0) and (CollectClients(0, 3) = '')) or (CardChecked(2, 1) and (CollectClients(4, 9) = ''))) then begin
     MsgBox('Açık bıraktığınız bağlantı için en az bir araç seçin ya da önceki sayfada o bağlantının işaretini kaldırın.', mbInformation, MB_OK);
     Result := False;
     Exit;

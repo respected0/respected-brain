@@ -34,7 +34,7 @@ RespectedBrain-Windows-Setup.exe /VERYSILENT /VAULT="D:\Notlar\RespectedOS" /SET
 Sessiz kurulum başarısız olursa kurucu sıfırdan farklı bir çıkış koduyla biter (7: kasa klasörü kullanılamıyor, 8: kurulum
 tamamlanamadı) ve geriye hiçbir şey bırakmaz; yarıda kesilirse kurucuyu yeniden çalıştırmak yeterlidir.
 
-AI özetleri için kullanmak istediğiniz aracın (Claude Code, Codex, Gemini CLI…) komut satırında oturum açık olmalıdır.
+AI özetleri için kullanmak istediğiniz aracın (Claude Code, Codex, Antigravity…) komut satırında oturum açık olmalıdır.
 Dosya ve arama işlemleri için gerekmez.
 
 ### macOS ve Linux
@@ -136,7 +136,7 @@ respected-brain config set user_name=Ayşe briefing_time=07:30
 | `user_name` | Adınız; asistan ve sabah özeti size bu adla hitap eder | boş |
 | `user_bio` | Kasa şablonunda sizi tanıtan satır | boş |
 | `assistant_name` | Asistanın adı; kasadaki kimlik ve AI araçlarına verilen araç adları bunu kullanır | boş |
-| `summary_provider` | Özetleyici AI: `auto`, `codex`, `claude`, `antigravity`, `gemini`, `cursor` | `auto` |
+| `summary_provider` | Özetleyici AI: `auto`, `codex`, `claude`, `antigravity`, `cursor` | `auto` |
 | `provider_fallback` | Seçilen araç başarısız olursa diğer kurulu araçları dene | `true` |
 | `capture_mode` | `auto`: oturumlar bitince özetlenir; `manual`: yalnızca siz isteyince | `auto` |
 | `briefing_time` | Sabah özeti görevinin saati (SS:DD) | `08:00` |
@@ -173,8 +173,7 @@ yedekleri).
 | Claude Code | yerel `respected-brain` eklentisi (hook'lar, `Stop`, beceriler); ayarlarda doğrudan hook kalmaz |
 | Codex | yerel `respected-brain` eklentisi (hook'lar, beceriler) ve notify köprüsü (mevcut notify zinciriniz korunur) |
 | Cursor | hook'lar, `afterAgentResponse` |
-| Antigravity | Antigravity/Gemini uyarlayıcısı, `Stop` |
-| Gemini CLI | hook'lar, `AfterAgent` |
+| Antigravity | hook'lar (`~\.gemini\config\hooks.json`), `Stop` |
 
 Eklenti paketi veri klasöründe durur ve kaldırınca silinir. Kurulum ve onarım sonunda `claude plugin marketplace add`/`install` ve
 `codex plugin add` komutlarını da çalıştırır (araç yoksa atlanır, başarısızlık kurulumu bozmaz). Claude'da eklentiye eklentiler bölümünden izin verilir; Codex eklenti hook'larını kurulumda ve
@@ -182,12 +181,12 @@ içerikleri değiştiğinde ayrıca onaylatır (`/hooks`). Onaylanmadan çalış
 
 Bilgisayarda kurulu olmayan (ayar klasörü bulunmayan) bir araca hiçbir şey yazılmaz ve klasörü oluşturulmaz; araç sonradan kurulunca bağlantı onarım ya da ayarları yeniden kaydetmekle yazılır. Codex uygulaması `notify` ayarını kendi sarmalayıcısıyla değiştirip Brain'inkini `--previous-notify` olarak çağırıyorsa Brain bu ayara dokunmaz (oturum yakalama sürer, çift çağrı döngüsü olmaz); araç Brain'in kayıtlarını kendi yeniden yazdığında onarım, kullanıcı değişikliği saymadan o dosyayı olduğu hâliyle baz alır ve eksik kayıtları geri ekler.
 
-Claude Code, Codex ve Antigravity gerçek oturumlarla doğrulandı (Windows; Codex'te hook'lar onaylandıktan sonra); Gemini CLI ve Cursor test verileriyle sınandı: deneysel sayın. Bağlantı açıkken
+Claude Code, Codex ve Antigravity gerçek oturumlarla doğrulandı (Windows; Codex'te hook'lar onaylandıktan sonra); Cursor test verisiyle sınandı: deneysel sayın. Bağlantı açıkken
 ürün o aracın ayar dosyasına yalnızca kendi girdilerini ekler; sizin ve başka araçların girdileri korunur, kapatınca
 yalnızca kendi girdileri geri alınır.
 
 **Özetleyici seçimi:** `summary_provider` sabit bir araçsa ve `provider_fallback` kapalıysa yalnızca o denenir. Yedekleme
-açıksa önce seçilen, sonra varsayılan sıra (Claude, Codex, Antigravity, Gemini, Cursor) denenir. Kurulu olmayan araç
+açıksa önce seçilen, sonra varsayılan sıra (Claude, Codex, Antigravity, Cursor) denenir. Kurulu olmayan araç
 atlanır; zaman aşımı, süreç hatası ya da geçici kota/ağ hatası sonraki adaya geçirir. `auto` modunda kimlik doğrulama
 hatası ve boş yanıt da sonraki adaya geçirir. Kota, yanıt veren aracın hesabından düşer.
 
@@ -248,7 +247,7 @@ Kaldır; sessiz `unins000.exe /VERYSILENT [/PURGE=1]`. Kaldırıcı "Ayarlar ve 
 | `health` "degraded", `last_capture` başarısız | Son oturum özetlenemedi. `detail` güvenli nedeni (`provider-timeout`, `summary-empty`…) söyler; sağlayıcı oturumunu ve `logs/` klasörünü kontrol edip `respected-brain recover` deneyin. Döküm ve not gövdesi health'e girmez |
 | `daily` yazılmıyor | Aracın bağlantısı açık mı (`config`), hook etkin ve güvenilir mi, özetleyici aracın oturumu açık mı, `capture_mode` manual mı, veri klasöründeki `logs/` |
 | Sabah özeti yok | `integrations.schedule`, `briefing_time`, işletim sisteminin görev zamanlayıcısı, aracın kotası |
-| Arama eski sonuç veriyor | `respected-brain index-refresh` ya da `search --reindex` |
+| Arama eski sonuç veriyor | Uzun ömürlü MCP açıksa izleyici genellikle 1-2 sn içinde tazeler; MCP kapalıysa ya da indeks bozuksa `respected-brain index-refresh` ya da `search --reindex` |
 | MCP bozuk yanıt veriyor | AI aracının ayarındaki komut kurulu programı mı gösteriyor, `respected-brain health` |
 | "Onarım gerekli" | Kurucuyu çalıştırıp **Onar / Güncelle** seçin |
 | Yarım kalan işlem / geri alma çakışması | `respected-brain recover`; değişmiş dosyalar korunur, `backups/` ve `logs/` saklanır |

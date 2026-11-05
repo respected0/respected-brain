@@ -124,29 +124,6 @@ def output(provider: str, event: str, context: str) -> None:
             print(json.dumps({"injectSteps": steps}, ensure_ascii=False))
         else:
             print(json.dumps({"decision": "stop"}, ensure_ascii=False))
-    elif provider == "gemini":
-        if context:
-            event_name = {
-                "start": "SessionStart",
-                "prompt": "BeforeAgent",
-                "turn": "AfterAgent",
-                "end": "SessionEnd",
-                "precompact": "PreCompress",
-                "postcompact": "PostCompact",
-            }[event]
-            print(
-                json.dumps(
-                    {
-                        "hookSpecificOutput": {
-                            "hookEventName": event_name,
-                            "additionalContext": context,
-                        }
-                    },
-                    ensure_ascii=False,
-                )
-            )
-        else:
-            print("{}")
     elif provider == "opencode":
         print(json.dumps({"additionalContext": context}, ensure_ascii=False) if context else "{}")
     elif context:
@@ -191,7 +168,7 @@ def _dispatch_event(ctx, *, provider, event, argv, stdin):
     if event == "notify" and provider == "codex":
         from .codex_notify import dispatch as notify
         return notify(ctx, argv=argv, stdin=stdin)
-    if event not in EVENTS or provider not in {"claude", "codex", "cursor", "antigravity", "gemini", "opencode"}:
+    if event not in EVENTS or provider not in {"claude", "codex", "cursor", "antigravity", "opencode"}:
         raise ValueError("Unsupported hook provider/event")
     if LIFECYCLE._is_reentrant():
         return ""

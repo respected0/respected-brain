@@ -17,10 +17,9 @@ class MatrixTest(unittest.TestCase):
         self.home = Path(temporary.name).resolve()
         self.evidence = self.home / "evidence.json"
 
-    def test_gemini_presence_does_not_enable_antigravity(self):
+    def test_bare_gemini_folder_does_not_enable_antigravity(self):
         (self.home / ".gemini").mkdir()
         row = {item["id"]: item for item in br004_matrix.probe(self.home, self.evidence)["clients"]}
-        self.assertTrue(row["gemini"]["detected"])
         self.assertFalse(row["antigravity"]["detected"])
         (self.home / ".gemini" / "antigravity-ide").mkdir()
         row = {item["id"]: item for item in br004_matrix.probe(self.home, self.evidence)["clients"]}

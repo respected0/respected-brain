@@ -7,7 +7,7 @@ from respected_brain.integrations.rendering import _Planner, _global_writes, val
 # Claude and Codex hooks ship in the plugin bundle; a vault's project files carry the same definitions locally.
 _PLUGIN_HOOKS = {"plugin/hooks/claude.json": ".claude/settings.json", "plugin/hooks/codex.json": ".codex/hooks.json"}
 _FILES = {".cursor/hooks.json": ".cursor/hooks.json",
-          ".gemini/config/hooks.json": ".agents/hooks.json", ".gemini/settings.json": ".gemini/settings.json"}
+          ".gemini/config/hooks.json": ".agents/hooks.json"}
 
 
 class _EmptyBackend:

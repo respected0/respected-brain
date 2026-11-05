@@ -48,7 +48,7 @@ assert sys.path == before
         before = snapshot(self.root)
         output = render_project_integrations(self.ctx, self.profile)
         self.assertEqual(snapshot(self.root), before)
-        self.assertEqual(len(output), 5)
+        self.assertEqual(len(output), 4)
         for value in output.values():
             self.assertIn(self.ctx.paths.vault_id.encode(), value)
             self.assertNotIn(b".py", value)

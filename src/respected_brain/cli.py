@@ -100,7 +100,7 @@ def _parser():
     commands.add_parser("rpp", help="Respected Product Protocol sunucusu (stdin/stdout)")
     hook = commands.add_parser("hook")
     _selector(hook)
-    hook.add_argument("--provider", required=True, choices=("claude", "codex", "cursor", "antigravity", "gemini", "opencode"))
+    hook.add_argument("--provider", required=True, choices=("claude", "codex", "cursor", "antigravity", "opencode"))
     hook.add_argument("--event", required=True, choices=("start", "prompt", "precompact", "postcompact", "turn", "end", "notify"))
     hook.add_argument("--global-hook", action="store_true")
     hook.add_argument("--chain-file", type=Path)

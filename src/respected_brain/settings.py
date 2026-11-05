@@ -13,7 +13,7 @@ from pathlib import Path
 from .core.config import ConfigStore, validate_config
 from .core.errors import SelectionError
 
-PROVIDERS = ["auto", "codex", "claude", "antigravity", "gemini", "cursor", "openrouter"]
+PROVIDERS = ["auto", "codex", "claude", "antigravity", "cursor", "openrouter"]
 
 FIELDS = (
     {"key": "user_name", "type": "string", "label": "Adın", "default": "", "max_length": 40,

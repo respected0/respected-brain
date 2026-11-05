@@ -219,7 +219,7 @@ class FoundationSetupTest(unittest.TestCase):
         from respected_brain.installation.repair import repair
         from respected_brain.installation.uninstall import uninstall
         from respected_brain.vault.registry import build_context
-        names = ('.agents/hooks.json', '.claude/settings.json', '.codex/hooks.json', '.cursor/hooks.json', '.gemini/settings.json')
+        names = ('.agents/hooks.json', '.claude/settings.json', '.codex/hooks.json', '.cursor/hooks.json')
         for purge in (True, False):
             with self.subTest(purge=purge):
                 root = self.root / str(purge)

@@ -616,7 +616,7 @@ def _owned_session_state(vault_root: Path, state_dir: Path, session_id: str, tra
                 raise OwnershipConflict("session-pending-invalid") from error
     else:
         identities = [hashlib.sha256(f"{provider}\0{session_id}".encode("utf-8")).hexdigest()
-                      for provider in ("auto", "claude", "codex", "cursor", "antigravity", "gemini", "opencode")]
+                      for provider in ("auto", "claude", "codex", "cursor", "antigravity", "opencode")]
         for daily in (vault_root / "daily").glob("*.md"):
             if not runtime_platform.path_within_vault(daily, vault_root):
                 raise OwnershipConflict("unsafe-daily-target")
@@ -676,7 +676,7 @@ _WORKSPACE_CONTAINERS = {"workspace", "workspacecontext"}
 _METADATA_CONTAINERS = {"metadata", "meta", "sessionmetadata"}
 _PROVIDER_KEYS = {"provider", "respectedprovider"}
 _PROVIDER_METADATA_TYPES = {"sessionmeta", "sessionmetadata"}
-_PROVIDERS = {"auto", "claude", "codex", "cursor", "antigravity", "gemini", "opencode"}
+_PROVIDERS = {"auto", "claude", "codex", "cursor", "antigravity", "opencode"}
 
 
 def _workspace_path_key(value: object) -> str:
@@ -825,9 +825,8 @@ def _transcript_provider(path: Path) -> str | None:
         return "opencode"
     if ".codex" in parts or path.name.startswith("rollout-"):
         return "codex"
-    if ".gemini" in parts:
-        # the Antigravity IDE and its `agy` CLI both keep transcripts under ~/.gemini/antigravity-*; the Gemini CLI does not
-        return "antigravity" if any(part.startswith("antigravity-") for part in parts) else "gemini"
+    if ".gemini" in parts and any(part.startswith("antigravity-") for part in parts):
+        return "antigravity"  # the Antigravity IDE and its `agy` CLI keep transcripts under ~/.gemini/antigravity-*
     if ".claude" in parts:
         return "claude"
     if ".cursor" in parts:

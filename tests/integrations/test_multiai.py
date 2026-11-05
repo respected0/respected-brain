@@ -66,7 +66,6 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
             ".codex/hooks.json": codex_command_text(self.profile, bridge_argv(self.ctx, self.profile, "codex", "start")),
             ".cursor/hooks.json": command_text(self.profile, bridge_argv(self.ctx, self.profile, "cursor", "start")),
             ".agents/hooks.json": bare_command_text(self.profile, bridge_argv(self.ctx, self.profile, "antigravity", "start")),
-            ".gemini/settings.json": command_text(self.profile, bridge_argv(self.ctx, self.profile, "gemini", "start")),
         }
         def commands(value):
             if isinstance(value, dict):
@@ -110,7 +109,7 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
             home=self.home,
         )
         self.assertEqual(missing["cwd"], "")
-        for provider, event, expected in (("antigravity", "end", {"decision": "stop"}), ("gemini", "turn", {}), ("cursor", "turn", {})):
+        for provider, event, expected in (("antigravity", "end", {"decision": "stop"}), ("cursor", "turn", {})):
             output = io.StringIO()
             with redirect_stdout(output):
                 BRIDGE.output(provider, event, "")
@@ -180,20 +179,6 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
             ["/bin/cursor-agent", "-p", "--output-format", "text", "özetle"],
         )
         self.assertIsNone(invocation.stdin)
-
-    def test_runner_supports_gemini_headless_without_putting_prompt_in_argv(self):
-        runner = MODEL_RUNNER
-        prompt = "ö" * 100_000
-        with mock.patch.object(
-            runner.shutil,
-            "which",
-            side_effect=lambda name: "/bin/gemini" if name == "gemini" else None,
-        ):
-            invocation = runner._command("gemini", prompt, "text")
-
-        self.assertNotIn(prompt, invocation.argv)
-        self.assertEqual(invocation.stdin, prompt)
-        self.assertEqual(invocation.argv, ["/bin/gemini", "--sandbox", "--approval-mode", "plan", "--output-format", "json", "-p", ""])
 
     def test_runner_keeps_codex_and_antigravity_prompts_on_stdin(self):
         runner = MODEL_RUNNER
@@ -270,31 +255,18 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
         self.assertEqual(resp, "düz metin çıktısı")
         self.assertIsNone(err)
 
-        resp, err = runner._extract_response(
-            '{"response":"Gemini özeti","stats":{},"error":null}',
-            "gemini",
-        )
-        self.assertEqual(resp, "Gemini özeti")
-        self.assertIsNone(err)
-
-        resp, err = runner._extract_response(
-            '{"response":null,"error":{"message":"quota exceeded"}}',
-            "gemini",
-        )
-        self.assertEqual(resp, "")
-        self.assertEqual(err, "quota exceeded")
 
     def test_runner_candidate_order_contract_is_unchanged(self):
         runner = MODEL_RUNNER
         with mock.patch.object(runner, "_configured_provider", return_value="auto"):
             self.assertEqual(
                 runner._available("antigravity", {}),
-                ["antigravity", "claude", "codex", "gemini", "cursor"],
+                ["antigravity", "claude", "codex", "cursor"],
             )
         with mock.patch.object(runner, "_configured_provider", return_value="cursor"):
             self.assertEqual(
                 runner._available("antigravity", {}),
-                ["cursor", "antigravity", "claude", "codex", "gemini"],
+                ["cursor", "antigravity", "claude", "codex"],
             )
 
     def test_wsl_windows_cli_receives_translatable_profile_environment(self):
@@ -521,6 +493,17 @@ class MultiAITest(IntegrationFixture, unittest.TestCase):
             backend.apply(row)
         self.assertEqual(RENDER.plan_integrations(self.ctx, self.profile, {"global": True}, backend), ())
         self.assertTrue(json.loads(path.read_text(encoding="utf-8"))["personal"]["enabled"])
+
+    def test_global_install_removes_only_our_old_gemini_cli_hooks(self):
+        path = self.home / ".gemini/settings.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        ours = {"hooks": [{"type": "command", "command": "x --provider gemini --global-hook"}]}
+        theirs = {"hooks": [{"type": "command", "command": "other-tool"}]}
+        path.write_text(json.dumps({"theme": "dark", "hooks": {"AfterAgent": [ours, theirs]}}), encoding="utf-8")
+        backend = self.backend()
+        for row in RENDER.plan_integrations(self.ctx, self.profile, {"global": True}, backend):
+            backend.apply(row)
+        self.assertEqual(json.loads(path.read_text(encoding="utf-8")), {"theme": "dark", "hooks": {"AfterAgent": [theirs]}})
 
     def test_generic_global_installer_accepts_any_vault_name_and_all_providers(self):
         rows = RENDER.plan_integrations(self.ctx, self.profile, {"global": True}, self.backend())

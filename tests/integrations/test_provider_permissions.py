@@ -33,7 +33,7 @@ class ProviderPermissionsAndBoundariesTest(unittest.TestCase):
         }
 
         with patch("respected_brain.providers.runner._find_executable", return_value="dummy-cli"):
-            for provider in ("claude", "codex", "antigravity", "gemini"):
+            for provider in ("claude", "codex", "antigravity"):
                 for mode in ("text", "workspace"):
                     inv = _command(provider, "test prompt", mode=mode)
                     if inv is None:
@@ -65,23 +65,6 @@ class ProviderPermissionsAndBoundariesTest(unittest.TestCase):
             self.assertIn("--mode", ws_inv.argv)
             self.assertIn("accept-edits", ws_inv.argv)
             self.assertNotIn("--dangerously-skip-permissions", ws_inv.argv)
-
-    def test_gemini_uses_safe_modes_and_no_bypass(self):
-        """Gemini must use --sandbox and approval modes (plan in text, auto_edit in workspace) without bypass flags."""
-        with patch("respected_brain.providers.runner._find_executable", return_value="C:/path/gemini.cmd"):
-            text_inv = _command("gemini", "hello", mode="text")
-            self.assertIsNotNone(text_inv)
-            self.assertEqual(text_inv.argv, ["C:/path/gemini.cmd", "--sandbox", "--approval-mode", "plan", "--output-format", "json", "-p", ""])
-            self.assertNotIn("-y", text_inv.argv)
-            self.assertNotIn("--yolo", text_inv.argv)
-
-            ws_inv = _command("gemini", "hello", mode="workspace")
-            self.assertIsNotNone(ws_inv)
-            self.assertIn("--sandbox", ws_inv.argv)
-            self.assertIn("--approval-mode", ws_inv.argv)
-            self.assertIn("auto_edit", ws_inv.argv)
-            self.assertNotIn("-y", ws_inv.argv)
-            self.assertNotIn("--yolo", ws_inv.argv)
 
     def test_codex_enforces_read_only_in_text_and_workspace_write_in_workspace(self):
         """Codex must strictly bind sandbox modes based on execution mode."""

@@ -35,8 +35,6 @@ args = sys.argv[1:]
 if "{provider}" in ("antigravity", "agy"):
     # Output stream-json format as expected by model_runner
     print(json.dumps({{"event": "result", "result": {{"status": "OK", "response": "## Bağlam\\nE2E bağlam\\n\\n## Önemli Konuşmalar\\nE2E konuşma\\n\\n## Alınan Kararlar\\nE2E karar\\n\\n## Öğrenilenler\\nE2E öğrenilen\\n\\n## Yapılacaklar\\n- E2E tamamla"}}}}))
-elif "{provider}" == "gemini":
-    print(json.dumps({{"response": "## Bağlam\\nE2E bağlam\\n\\n## Önemli Konuşmalar\\nE2E konuşma\\n\\n## Alınan Kararlar\\nE2E karar\\n\\n## Öğrenilenler\\nE2E öğrenilen\\n\\n## Yapılacaklar\\n- E2E tamamla", "stats": {{}}, "error": None}}))
 else:
     print("## Bağlam\\nE2E bağlam\\n\\n## Önemli Konuşmalar\\nE2E konuşma\\n\\n## Alınan Kararlar\\nE2E karar\\n\\n## Öğrenilenler\\nE2E öğrenilen\\n\\n## Yapılacaklar\\n- E2E tamamla")
 sys.exit(0)
@@ -70,7 +68,7 @@ sys.exit(0)
         cursor-agent deliberately fails closed in text mode (tests.integrations.test_provider_permissions),
         so it is not a session summarizer and must not be asserted here.
         """
-        providers = ("claude", "codex", "antigravity", "gemini")
+        providers = ("claude", "codex", "antigravity")
 
         for provider in providers:
             with self.subTest(provider=provider):

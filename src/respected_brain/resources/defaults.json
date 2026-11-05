@@ -4,7 +4,6 @@
     "claude",
     "codex",
     "antigravity",
-    "gemini",
     "cursor"
   ],
   "provider_fallback": true,

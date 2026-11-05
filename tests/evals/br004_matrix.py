@@ -20,13 +20,12 @@ sys.path.insert(0, str(ROOT / "src"))
 from respected_brain.integrations.backend import IntegrationProfile  # noqa: E402
 from respected_brain.integrations.rendering import detect_clients  # noqa: E402
 
-CLIENTS = ("claude", "codex", "antigravity", "cursor", "gemini")
+CLIENTS = ("claude", "codex", "antigravity", "cursor")
 EXECUTABLES = {
     "claude": ("claude",),
     "codex": ("codex",),
     "antigravity": ("agy", "antigravity"),
     "cursor": ("cursor-agent", "cursor"),
-    "gemini": ("gemini",),
 }
 DEFAULT_EVIDENCE = ROOT / "tests/evals/results/br004-evidence.json"
 
@@ -46,7 +45,6 @@ def _executable(home: Path, client: str) -> str:
     known = {
         "claude": (home / ".local/bin/claude.exe", home / ".local/bin/claude"),
         "codex": (home / "AppData/Local/Programs/OpenAI/Codex/bin/codex.exe",),
-        "gemini": (home / ".local/bin/gemini.exe", home / ".local/bin/gemini"),
         "antigravity": (home / ".local/bin/agy.exe",),
         "cursor": (home / ".local/bin/cursor-agent.exe",),
     }
@@ -79,9 +77,6 @@ def _connection(home: Path, client: str) -> tuple[bool, bool | None]:
         return connected, True if connected else None
     if client == "antigravity":
         text = _read(home / ".gemini/config/hooks.json")
-        return _hook_marker(text, client), None
-    if client == "gemini":
-        text = _read(home / ".gemini/settings.json")
         return _hook_marker(text, client), None
     if client == "cursor":
         text = _read(home / ".cursor/hooks.json")
