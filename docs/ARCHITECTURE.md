@@ -203,7 +203,7 @@ program `distribution.json` hash'leriyle doğrulanır (bu bir yayıncı imzası 
 | `maintenance/`, `security/` | bakım araçları, Restic, Git anlık görüntüsü, sır taraması; ağ güvenliği, girdi sınırları |
 | `packaging/` | paket sözleşmesi, dondurulmuş dağıtım, kurucu |
 | `scenarios/` | çapraz senaryolar, sağlayıcı ve saldırı matrisleri |
-| `native/` | fiziksel paket smoke'u (yalnızca Windows, geçici köklerde); elle ya da CI'da paketle çalışır |
+| `native/` | fiziksel paket smoke'u (Windows ve WSL2'de doğrulandı, geçici köklerde); elle ya da CI'da paketle çalışır |
 | `support/` | ortak sahteler (test değil) |
 
 `tests/__init__.py` her çalıştırmada HOME, USERPROFILE, APPDATA ve LOCALAPPDATA'yı geçici klasöre yönlendirir; hiçbir test
@@ -221,7 +221,7 @@ Yayın kapısı, test sonuçları ve doğrulanmamış platform sınırları `doc
 | Konu | Durum |
 |---|---|
 | Kod imzası (Authenticode) | üretim sertifikası yok; yalnızca self-signed test sertifikası var, SmartScreen uyarır |
-| macOS, Linux, WSL | Windows x64 dondurulmuş paket ve WSL2/Linux kaynak testleri doğrulandı; Ubuntu kaynak test job'ı CI matrisinde var, uzak CI çalıştırılmadı. macOS gerçek donanım ve Linux dondurulmuş paket doğrulanmadı |
+| macOS, Linux, WSL | Windows x64 ve WSL2 üzerinde Linux x64 dondurulmuş paketleri doğrulandı (BR-030); Ubuntu kaynak test job'ı CI matrisinde var, uzak CI çalıştırılmadı. macOS gerçek donanım ve bare-metal Linux doğrulanmadı |
 | Gemini CLI, Cursor | Cursor BR-021 ile gerçek oturumda doğrulandı; Gemini CLI bu makinede kurulu değil. Claude Code, Codex, Antigravity ve OpenCode gerçek oturumla sınandı (Windows). Codex eklenti hook'ları kişinin onayından (`/hooks`) sonra çalışır ve içerik değişince onay düşer |
 | Boşluklu program yolu | Codex ve Antigravity hook komutları tırnaksız olmalı: boşluklu yol Windows'un 8.3 kısa adıyla yazılır. Kısa ad yoksa Codex `& "yol"` biçimine döner, Antigravity (tırnakları yeniden kaçırır) ve WSL profili çalışmaz |
 | Dizin anlık değil | dosya izleyici yok; normal aramada sorgu öncesi stale kontrolü ve refresh var, salt-okunur MCP eski sonucu filtreler; oturum dışı düzenleme sonraki sorguda, oturumda ya da günlük görevde dizine girer |

@@ -1349,4 +1349,42 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - Dizin tazeliği hâlâ sorgu anında; dosya izleyici eklenmedi.
 - Sonuç: **denetim tamamlandı; belgeler gerçek durumla hizalandı, dış bağımlılıklar açıkça bloke kaldı.**
 
+### BR-030 · Linux dondurulmuş paket doğrulaması — TAMAMLANDI
+- Tarih/saat: 2026-11-05 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `cc32be0` (BR-029 sonrası)
+- Değişen dosyalar:
+  - `.gitignore`: Linux dondurulmuş çıktısı `dist-linux/` Git dışında tutuluyor.
+  - `README.md`, `docs/ARCHITECTURE.md`, `docs/RELEASE-GATE.md`, `docs/ROADMAP.md`: Windows x64 ve WSL2 Linux x64 dondurulmuş paket kapsamı; macOS, bare-metal Linux ve uzak CI açık yazıldı.
+  - `tests/native/smoke/README.md`: Linux/WSL2 build ve smoke komutları eklendi.
+  - `tests/evals/results/br030-linux-smoke.json` (yeni): 25 kontrolün makine okunur sonucu.
+- Uygulama:
+  - Linux x64 dondurulmuş paket WSL2 Ubuntu 26.04 (`Linux 6.18.33.2-microsoft-standard-WSL2`, glibc 2.43, Python 3.14.4) üzerinde PyInstaller ile üretildi.
+  - Geçici program, veri, kasa ve HOME köklerinde temiz kurulum, onarım, beş sağlayıcı kaydı, hook, arama, MCP, flush, kaldırma/yeniden kurulum ve veri koruma doğrulandı.
+  - Smoke, yaşam döngüsü sürücüsü `respected_brain` paketini içe aktarabilsin diye izole sanal ortamda çalıştırıldı; bu paket bağımlılığı değildir.
+  - `dist-linux/` Git dışında tutuldu; binary commit edilmedi.
+- Komutlar ve sonuçlar:
+  - `python3 packaging/build_dist.py --platform linux --output dist-linux` → `0.1.0b1`.
+  - `python tests/native/smoke/platform_smoke.py --package dist-linux/RespectedBrain --output tests/evals/results/br030-linux-smoke.json` → **25/25 VERIFIED**, `overall=VERIFIED`.
+  - Odak: `python -m unittest tests.packaging.test_distribution tests.packaging.test_build_contents tests.packaging.test_posix_distribution -v` → **19 test OK, 2 skip** (EXIT=0); iki skip `dist/` içindeki Windows artefaktı nedeniyle beklenen platform skip'i.
+  - Tam paket ilk koşu: **1073 test, 1 failure, 32 skip**; tek hata `LateByteHttpDeadlineTest` zaman sınırında `0.1518785 > 0.15` oldu. Aynı test tek başına **OK**; temiz tam koşu **1073 test OK, 32 skip** (275.888 sn, EXIT=0).
+  - `git diff --check` → OK.
+- Kabul eşlemesi:
+  - Linux x64 dondurulmuş paket gerçekten üretildi ve smoke edildi; kaynak testiyle karıştırılmadı.
+  - WSL2 sonucu bare-metal Linux, başka dağıtım veya uzak CI kanıtı sayılmadı.
+  - Paketlenmemiş `dist-linux/` çıktısı yanlışlıkla depoya girmeyecek biçimde ignore edildi.
+- Artefaktlar (yol → sha256):
+  - `.gitignore` → `ED4C0DC21ABCDA83CCF6049EC3FBBEE4E54744CCEC1C23803FEBC57E2AC5BE14`
+  - `README.md` → `392C89B62CA425E559EDEE36E5D30A05F98DB3A52206C450A222BD07B7FF9945`
+  - `docs/ARCHITECTURE.md` → `225400E58021DC60965ACA4DEEC2BF879600465B49D75716715897E302F6A8AC`
+  - `docs/RELEASE-GATE.md` → `507CD1295F6FA8066D1247F0B14B22ADC4A14CC884AA6F3979D050FEE012CB7C`
+  - `docs/ROADMAP.md` → `8205F3D866D4BCCAA4E9BB2D22DAC09AD010DC34D833CD50B5AA79B7B9064A80`
+  - `tests/native/smoke/README.md` → `4E07EB3FCE985A6CEA579D0486F0EC23C2CB9B3A1B3EAF757EA01B0FCD061EF3`
+  - `tests/evals/results/br030-linux-smoke.json` → `610715DF20030E9CEF592A7169895B8F872681B507A4C1C19A48195493631D97`
+  - `dist-linux/RespectedBrain/respected-brain` → `00A16F41252BDA4A8DC915BF9FC74211C15BDB472DB16E1BE263186F348BA0B8`
+- Bilinen sınırlar / risk:
+  - Yalnızca WSL2 Ubuntu'da Linux x64 doğrulandı; fiziksel Linux makinesi ve diğer dağıtımlar denenmedi.
+  - macOS gerçek donanımı, Authenticode üretim imzası, OpenRouter gerçek çağrısı ve Gemini CLI oturumu dış kaynak ya da donanım gerektirdiği için açık.
+  - Uzak CI çalıştırılmadı; yerel WSL2 sonucu GitHub Actions kanıtı değildir.
+- Sonuç: **Linux x64 dondurulmuş paket doğrulandı ve belgelere gerçek kapsamıyla işlendi.**
+
 <!-- EVIDENCE:END -->

@@ -148,7 +148,7 @@ Kasa hiçbir durumda silinmez. Ayarlar ve çalışma verisi varsayılan olarak k
 
 <br>
 
-Beta yalnızca Windows'u destekler. macOS ve Linux kurulum betikleri var ama doğrulanmadı.
+Beta Windows x64 ve WSL2 üzerinde Linux x64 için doğrulandı. macOS, bare-metal Linux ve uzak CI henüz doğrulanmadı.
 
 </details>
 

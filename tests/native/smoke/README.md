@@ -9,7 +9,14 @@ güncelleme ve onarım, yalnızca sahipli girdileri kaldıran kaldırma.
 .\tests\native\smoke\windows-native.ps1 --output .\smoke-windows.json
 ```
 
-Şimdilik yalnızca Windows desteklenir; Linux ve macOS smoke betikleri o platformlar eklenince yazılır.
+```bash
+# WSL2 Ubuntu / Linux
+python3 packaging/build_dist.py --platform linux --output dist-linux
+python tests/native/smoke/platform_smoke.py --package dist-linux/RespectedBrain --output smoke-linux.json
+```
+
+Windows x64 ve WSL2 Ubuntu üzerinde doğrulandı; bare-metal Linux ve macOS henüz doğrulanmadı. Smoke, `respected_brain`
+paketini içe aktarabilen bir Python ortamında çalıştırılmalıdır.
 
 Başarı: çıkış kodu `0`, JSON'daki `overall` değeri `VERIFIED` ve her kontrol `VERIFIED`. Kanıt dosyası sistem bilgisi ve
 süreleri içerir; istem ya da döküm metni içermez.

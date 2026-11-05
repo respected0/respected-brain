@@ -64,6 +64,7 @@ env/
 ENV/
 build/
 dist/
+dist-linux/
 *.egg-info/
 *.egg
 
