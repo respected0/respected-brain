@@ -8,8 +8,8 @@
   `additionalContext` köprüsü eklendi; OpenCode v2.2.3 ile gerçek oturumda plugin yüklemesi, MCP el sıkışması ve
   transcript doğrulandı (`docs/ROADMAP-EXECUTION.md` BR-016). v1 `server` fallback'i ve araç yürütmesi smoke kapsamı dışında.
 - [ ] **OpenRouter / API tabanlı modeller — kısmen doğrulandı**: `providers/openrouter.py` adaptörü, `credential set openrouter`
-  kasası (DPAPI) ve testler hazır. Gerçek anahtarla ücretsiz bir modelde (`:free`) çağrı başarılı oldu. Ücretli çağrı ve gerçek
-  `cost` kaydı doğrulanmadı (bakiye yok); `auto` modunda ücretli sağlayıcıya geçilmez, açık `summary_provider=openrouter`
+  kasası (DPAPI) ve testler hazır. Gerçek anahtarla ücretsiz bir modelde (`:free`) çağrı başarılı oldu. Kullanım defterine ücretsiz çağrıda `cost: 0.0` yazıldı; sıfırdan büyük
+  gerçek maliyet doğrulanmadı (bakiye yok); `auto` modunda ücretli sağlayıcıya geçilmez, açık `summary_provider=openrouter`
   veya `provider_allow_paid=true` gerekir. Çin modelleri bu yoldan gelir.
 - [x] **ChatGPT (masaüstü/web) — kişisel hesap için bloke**: hook yok; custom MCP/full MCP yalnızca Business,
   Enterprise ve Edu müşterileri için ChatGPT web'de. Kişisel hesap/masaüstü için belgelenmiş bir yol yok; ayrıntı
