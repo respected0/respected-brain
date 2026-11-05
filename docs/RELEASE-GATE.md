@@ -1,7 +1,7 @@
 # Yayın Kapısı — Respected Brain
 
 Durum: **Windows x64 ve WSL2 üzerinde Linux x64 dondurulmuş paketleri için doğrulandı**; macOS, bare-metal Linux ve uzak CI doğrulanmadı. Authenticode uygulanmadı.
-Bu belge `0.1.0-beta.1` (`0.1.0b1`) yayın paketinin hangi kapılardan geçtiğini ve neyin kapsam dışı olduğunu kaydeder.
+Bu belge `0.1.0-beta.2` (`0.1.0b2`) yayın paketinin hangi kapılardan geçtiğini ve neyin kapsam dışı olduğunu kaydeder.
 
 ## Kapı matrisi
 

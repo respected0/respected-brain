@@ -1,6 +1,6 @@
 # Gizlilik: Respected Brain
 
-Bu metin Brain `0.1.0-beta.1` için geçerlidir (2026-10-24). Brain'in koduna bakarak yazıldı; kod değişirse metin de değişir.
+Bu metin Brain `0.1.0-beta.2` için geçerlidir (2026-11-05). Brain'in koduna bakarak yazıldı; kod değişirse metin de değişir.
 
 ## Kısaca
 
