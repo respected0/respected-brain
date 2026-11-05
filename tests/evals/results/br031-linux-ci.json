@@ -1,0 +1,33 @@
+{
+  "checked_at": "2026-11-05",
+  "timezone": "Europe/Istanbul",
+  "workflow": ".github/workflows/ci.yml",
+  "jobs": [
+    "native",
+    "source",
+    "source-linux",
+    "native-linux"
+  ],
+  "native_linux_job": {
+    "name": "native (ubuntu, Python 3.13)",
+    "runs_on": "ubuntu-latest",
+    "timeout_minutes": 35,
+    "python": "3.13",
+    "build_command": "python packaging/build_dist.py --platform linux --output dist",
+    "verify_command": "python -m unittest tests.packaging.test_distribution -v",
+    "smoke_command": "python tests/native/smoke/platform_smoke.py --package dist/RespectedBrain --output native-linux-smoke.json",
+    "artifact": {
+      "name": "smoke-linux",
+      "path": "native-linux-smoke.json",
+      "condition": "always()",
+      "if_no_files_found": "warn"
+    }
+  },
+  "yaml_parse": "ok",
+  "local_linux_evidence": {
+    "source": "tests/evals/results/br030-linux-smoke.json",
+    "frozen_smoke": "25/25 VERIFIED",
+    "full_suite": "1073 tests OK, 32 skipped"
+  },
+  "remote_ci": "not_run; do not claim CI passed"
+}

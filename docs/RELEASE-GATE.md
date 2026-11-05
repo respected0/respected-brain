@@ -15,7 +15,7 @@ Bu belge `0.1.0-beta.1` (`0.1.0b1`) yayın paketinin hangi kapılardan geçtiği
 | Fiziksel kurulum smoke'u | GEÇTİ | `tests/evals/results/br015-native-smoke.json` → 25/25 VERIFIED, `overall=VERIFIED` |
 | Hub ortak sözleşme conformance'ı | GEÇTİ | Hub deposunda `python -m unittest discover -s common/conformance -v` → 9 test OK; üç ürünün sözleşme kopyasını denetler |
 | Authenticode | UYGULANMADI | Sertifika yok; imzasız paket başarılı imza sayılmaz |
-| macOS / Linux / WSL | KISMEN | Windows x64 ve WSL2 üzerinde Linux x64 dondurulmuş paketleri doğrulandı (BR-030); Ubuntu kaynak test job'ı CI matrisinde (BR-026). macOS gerçek donanım, bare-metal Linux ve uzak CI doğrulanmadı |
+| macOS / Linux / WSL | KISMEN | Windows x64 ve WSL2 üzerinde Linux x64 dondurulmuş paketleri doğrulandı (BR-030); Ubuntu kaynak testi ve Linux frozen build/smoke job'ları CI matrisinde (BR-026/BR-031). macOS gerçek donanım, bare-metal Linux ve uzak CI doğrulanmadı |
 
 ## Fiziksel smoke kanıtı
 
@@ -54,7 +54,7 @@ BR-029 denetiminde kalan maddeler yeniden kontrol edildi; bunlar kod hatası de�
 | Gemini CLI gerçek oturum | Windows ve WSL2'de `gemini` kurulu değil | Kurulum ve gerçek oturum yapılmadı |
 | macOS | Gerçek macOS donanımı yok | Yalnızca platform simülasyonları çalışıyor |
 | Bare-metal Linux / diğer dağıtımlar | Yalnızca WSL2 Ubuntu üzerinde Linux x64 dondurulmuş paket doğrulandı | Fiziksel Linux makinesi ve diğer dağıtımlar denenmedi |
-| Uzak CI | `.github/workflows/ci.yml` içinde job tanımlı | GitHub Actions üzerinde çalıştırılmadı; yerel Linux sonucu CI kanıtı değildir |
+| Uzak CI | `.github/workflows/ci.yml` içinde Windows native/source, Ubuntu source ve Linux frozen build/smoke job'ları tanımlı | GitHub Actions üzerinde çalıştırılmadı; yerel Linux sonucu CI kanıtı değildir |
 
 ## Yeniden üretim
 

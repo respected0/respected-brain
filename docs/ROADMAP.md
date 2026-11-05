@@ -39,7 +39,8 @@
 - [ ] Kurucuyu Authenticode ile imzalamak (SmartScreen uyarısı). Üretim kod imzalama sertifikası yok; yalnızca
   self-signed `CN=Respected Test Signer` test sertifikası var ve bu SmartScreen güveni sağlamaz.
 - [ ] macOS / Linux / WSL: Windows x64 ve WSL2 üzerinde Linux x64 dondurulmuş paketleri doğrulandı (BR-030);
-  WSL2/Linux kaynak testleri gerçek (BR-019/BR-020), Ubuntu kaynak test job'ı CI matrisinde (BR-026).
+  WSL2/Linux kaynak testleri gerçek (BR-019/BR-020), Ubuntu kaynak testi ve Linux frozen build/smoke job'ları CI
+  matrisinde (BR-026/BR-031).
   macOS gerçek donanım, bare-metal Linux ve uzak CI doğrulaması açık.
 
 ## Güncelleme

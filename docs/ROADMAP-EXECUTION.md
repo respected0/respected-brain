@@ -1387,4 +1387,36 @@ Aşama geçişi takvimle değil kabul kriterleriyle yapılır.
   - Uzak CI çalıştırılmadı; yerel WSL2 sonucu GitHub Actions kanıtı değildir.
 - Sonuç: **Linux x64 dondurulmuş paket doğrulandı ve belgelere gerçek kapsamıyla işlendi.**
 
+
+### BR-031 · Linux dondurulmuş build ve smoke CI işi — TAMAMLANDI
+- Tarih/saat: 2026-11-05 (Europe/Istanbul)
+- Sürüm/temel commit: `0.1.0-beta.1` (`0.1.0b1`), `031f303` (BR-030 sonrası)
+- Değişen dosyalar:
+  - `.github/workflows/ci.yml`: `native-linux` job'ı eklendi (`ubuntu-latest`, Python 3.13, 35 dk): Linux frozen build, `test_distribution`, fiziksel smoke ve `smoke-linux` artifact'ı.
+  - `docs/ARCHITECTURE.md`, `docs/RELEASE-GATE.md`, `docs/ROADMAP.md`: CI matrisi Linux frozen build/smoke job'ı ile güncellendi; uzak CI'ın çalıştırılmadığı korundu.
+  - `tests/evals/results/br031-linux-ci.json` (yeni): job, komut ve yerel doğrulama kaydı.
+- Uygulama:
+  - Job, mevcut job'larla aynı pinned action SHA'larını kullanıyor.
+  - Build `python packaging/build_dist.py --platform linux --output dist` ile `dist/RespectedBrain` üretir; smoke aynı yolu kullanır.
+  - Smoke çıktısı `if: always()` ile yükleniyor; dosya yoksa `warn` veriyor.
+- Komutlar ve sonuçlar:
+  - YAML parse (PyYAML 6.0.3, Python 3.14.4): `CI_YAML_OK ['native', 'native-linux', 'source', 'source-linux']`.
+  - `br031-linux-ci.json` JSON parse → OK.
+  - Yerel Linux kanıtı BR-030'dan: 25/25 VERIFIED; tam paket 1073 test OK, 32 skip.
+  - `git diff --check` → OK.
+- Kabul eşlemesi:
+  - Linux frozen build ve smoke CI matrisinde tanımlı.
+  - Job uzak GitHub Actions üzerinde çalıştırılmadı; yerel WSL2 kanıtı uzak CI kanıtı sayılmadı.
+- Artefaktlar (yol → sha256):
+  - `.github/workflows/ci.yml` → `C4B96525E9D8B0070FB96F4D08E2CC43B6635CDEDC64E57127D3DA91D4D551B1`
+  - `docs/ARCHITECTURE.md` → `771602EE3D50651CA4F55026124AE7EEA6C0B794F366CF7712B7B82FC212F60C`
+  - `docs/RELEASE-GATE.md` → `EA9D64CD4F14B4F2679E97BA814C726518EC3EA56D85A645CB6687313037CE15`
+  - `docs/ROADMAP.md` → `1947670109FB65E56D0C80AA9E0F8357094649466E66295EC46EAB53C56EFA6A`
+  - `tests/evals/results/br031-linux-ci.json` → `9D44916DBB11846E188BFA999D53D43F9E93F4DA19ED789290333C8C63017A85`
+  - `docs/ROADMAP-EXECUTION.md`: kendi kanıt bloğunu taşıdığı için kendi hash'i listelenmiyor (önceki bloklarla aynı kural).
+- Bilinen sınırlar / risk:
+  - Uzak CI hiç çalıştırılmadı; job'ın GitHub üzerinde geçtiği doğrulanmadı.
+  - `ubuntu-latest` imajı, PyInstaller/glibc uyumu ve smoke'un temiz CI ortamındaki davranışı ilk uzak koşuda görülecek.
+  - macOS, Authenticode, OpenRouter, Gemini CLI ve bare-metal Linux hâlâ dış kaynak/donanım gerektiriyor.
+- Sonuç: **Linux frozen build/smoke job'ı CI matrisine eklendi; uzak CI doğrulanmadı.**
 <!-- EVIDENCE:END -->
